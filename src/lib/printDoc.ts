@@ -25,26 +25,26 @@ export function buildDocHtml(doc: PrintDoc): string {
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Inter','Segoe UI',system-ui,sans-serif;color:#1e293b;background:#f1f5f9;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .page{max-width:720px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 4px 24px rgba(15,23,42,.10)}
-  .doc-hdr{background:linear-gradient(135deg,#0c6478 0%,#1976E6 60%,#0891b2 100%);padding:24px 32px 20px;display:flex;justify-content:space-between;align-items:flex-start}
+  .doc-hdr{background:linear-gradient(135deg,#0D2032 0%,#C2481A 55%,#EE6B26 100%);padding:24px 32px 20px;display:flex;justify-content:space-between;align-items:flex-start}
   .brand-name{font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.3px}
   .brand-name em{color:rgba(255,255,255,.55);font-style:normal}
   .brand-sub{font-size:10px;color:rgba(255,255,255,.6);margin-top:3px;font-weight:500}
   .doc-kind{font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:20px;margin-bottom:5px;display:inline-block}
   .doc-date{font-size:11px;color:rgba(255,255,255,.7);text-align:right}
-  .divider{height:4px;background:linear-gradient(90deg,#1976E6,#06b6d4,#67e8f9)}
+  .divider{height:4px;background:linear-gradient(90deg,#C2481A,#EE6B26,#F58C4E)}
   .doc{padding:24px 32px 36px}
   .meta{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;font-size:13px}
   .meta b{color:#0f172a;font-size:14px;font-weight:700}
   .meta .lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:3px}
   .body{font-size:14px;line-height:1.65;white-space:pre-wrap}
-  .body h3{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:#1976E6;margin:18px 0 7px;padding-bottom:6px;border-bottom:1px solid #e2e8f0}
+  .body h3{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:#B84A16;margin:18px 0 7px;padding-bottom:6px;border-bottom:1px solid #e2e8f0}
   .body ol{margin:6px 0;padding-left:20px}
   .body li{margin:3px 0;color:#334155}
   .sign{margin-top:52px;text-align:right;padding-top:20px;border-top:1px solid #e2e8f0}
   .sign .line{font-family:'Segoe Script',cursive;font-size:19px;color:#0f172a}
   .sign .name{font-size:11px;color:#64748b;border-top:1px solid #cbd5e1;display:inline-block;padding-top:4px;margin-top:6px}
   .foot{margin-top:24px;font-size:10px;color:#94a3b8;display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #e2e8f0}
-  .foot-badge{font-size:10px;font-weight:700;color:#1976E6;background:#ecfeff;border:1px solid #a5f3fc;padding:2px 8px;border-radius:20px}
+  .foot-badge{font-size:10px;font-weight:700;color:#B84A16;background:#FFF3EC;border:1px solid #FBD5BC;padding:2px 8px;border-radius:20px}
   @media print{body{background:white}.page{max-width:none;box-shadow:none}.doc-hdr{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style></head>
 <body><div class="page">

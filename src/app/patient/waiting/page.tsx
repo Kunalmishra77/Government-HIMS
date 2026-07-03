@@ -72,12 +72,12 @@ function IPDFamilyTracker() {
       {/* OT status — shown if in OT */}
       {ipd.inOT && (
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 p-4 bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] rounded-xl"
+          className="flex items-center gap-3 p-4 bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] rounded-xl"
         >
-          <Scissors className="h-5 w-5 text-[var(--color-primary)] flex-shrink-0 animate-pulse" />
+          <Scissors className="h-5 w-5 text-[var(--color-accent)] flex-shrink-0 animate-pulse" />
           <div>
             <p className="text-sm font-bold text-[var(--color-primary-dark)]">Surgery in progress</p>
-            <p className="text-xs text-[var(--color-primary)] mt-0.5">{ipd.otProcedure} · Expected completion {ipd.otExpectedEnd}</p>
+            <p className="text-xs text-[var(--color-accent)] mt-0.5">{ipd.otProcedure} · Expected completion {ipd.otExpectedEnd}</p>
           </div>
         </motion.div>
       )}
@@ -88,7 +88,7 @@ function IPDFamilyTracker() {
         <div className="relative flex items-start justify-between">
           <div className="absolute top-6 left-6 right-6 h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[rgba(8,145,178,0.07)]0 rounded-full transition-all duration-700"
+              className="h-full bg-[rgba(238,107,38,0.07)]0 rounded-full transition-all duration-700"
               style={{ width: `${(journeyStep / (IPD_JOURNEY.length - 1)) * 100}%` }}
             />
           </div>
@@ -100,16 +100,16 @@ function IPDFamilyTracker() {
                 <div className={cn(
                   "h-12 w-12 rounded-2xl flex items-center justify-center border-2 transition-all",
                   done ? "bg-green-50 border-green-500" :
-                  active ? "bg-[rgba(8,145,178,0.07)] border-[var(--color-primary)] ring-4 ring-blue-50" :
+                  active ? "bg-[rgba(238,107,38,0.07)] border-[var(--color-primary)] ring-4 ring-primary/20" :
                   "bg-white border-slate-200"
                 )}>
                   {done
                     ? <CheckCircle className="h-5 w-5 text-green-500" />
-                    : <BedDouble className={cn("h-5 w-5", active ? "text-[var(--color-primary)]" : "text-slate-300")} />
+                    : <BedDouble className={cn("h-5 w-5", active ? "text-[var(--color-accent)]" : "text-slate-300")} />
                   }
                 </div>
                 <p className={cn("text-[10px] font-bold text-center leading-tight",
-                  done ? "text-green-600" : active ? "text-[var(--color-primary)]" : "text-slate-400"
+                  done ? "text-green-600" : active ? "text-[var(--color-accent)]" : "text-slate-400"
                 )}>
                   {step.label}
                 </p>
@@ -155,8 +155,8 @@ function IPDFamilyTracker() {
         </div>
       )}
 
-      <div className="p-4 rounded-xl flex items-start gap-3 bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)]">
-        <ShieldCheck className="h-5 w-5 mt-0.5 flex-shrink-0 text-[var(--color-primary)]" />
+      <div className="p-4 rounded-xl flex items-start gap-3 bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)]">
+        <ShieldCheck className="h-5 w-5 mt-0.5 flex-shrink-0 text-[var(--color-accent)]" />
         <p className="text-sm font-medium leading-relaxed text-[var(--color-primary-dark)]">
           <strong className="text-[var(--color-primary-dark)]">Privacy note:</strong> Clinical details are not shown here. For medical updates, please speak directly with the treating doctor or nursing team.
         </p>
@@ -198,8 +198,8 @@ export default function WaitingRoomPage() {
   const [viewMode, setViewMode] = useState<'opd' | 'ipd'>('opd')
   const [notifications] = useState([
     { id: 1, text: 'Your vitals have been recorded.', time: '2 min ago', icon: Activity, color: 'text-green-500', bg: 'bg-green-50' },
-    { id: 2, text: 'AI brief sent to Dr. Priya Nair.', time: '1 min ago', icon: Sparkles, color: 'text-[var(--color-primary)]', bg: 'bg-[rgba(8,145,178,0.07)]' },
-    { id: 3, text: '3 patients ahead of you.', time: 'Just now', icon: Users, color: 'text-[var(--color-primary)]', bg: 'bg-[rgba(8,145,178,0.07)]' },
+    { id: 2, text: 'AI brief sent to Dr. Priya Nair.', time: '1 min ago', icon: Sparkles, color: 'text-[var(--color-accent)]', bg: 'bg-[rgba(238,107,38,0.07)]' },
+    { id: 3, text: '3 patients ahead of you.', time: 'Just now', icon: Users, color: 'text-[var(--color-accent)]', bg: 'bg-[rgba(238,107,38,0.07)]' },
   ])
 
   /* Simulate queue countdown */
@@ -245,7 +245,7 @@ export default function WaitingRoomPage() {
             Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, {getFirstName(myPatient?.name ?? 'Patient')}
           </h1>
           <p className="text-sm mt-1 text-slate-500 font-medium">
-            Token <strong className="text-[var(--color-primary)]">#{myPatient?.token ?? '—'}</strong> • {myPatient?.department ?? 'General Medicine'} • {myPatient?.doctor ?? 'Your Doctor'}
+            Token <strong className="text-[var(--color-accent)]">#{myPatient?.token ?? '—'}</strong> • {myPatient?.department ?? 'General Medicine'} • {myPatient?.doctor ?? 'Your Doctor'}
           </p>
         </div>
         <button
@@ -274,7 +274,7 @@ export default function WaitingRoomPage() {
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Queue Position</p>
               <p className="text-3xl font-bold text-slate-900">#{queuePos} ahead</p>
-              <p className="text-xs font-medium text-[var(--color-primary)] mt-1">Updates in real-time</p>
+              <p className="text-xs font-medium text-[var(--color-accent)] mt-1">Updates in real-time</p>
             </div>
           </div>
         </motion.div>
@@ -295,7 +295,7 @@ export default function WaitingRoomPage() {
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Est. Wait Time</p>
               <p className="text-3xl font-bold text-slate-900">{waitMin} min</p>
-              <p className="text-xs font-medium text-[var(--color-primary)] mt-1">AI predicted</p>
+              <p className="text-xs font-medium text-[var(--color-accent)] mt-1">AI predicted</p>
             </div>
           </div>
         </motion.div>
@@ -311,7 +311,7 @@ export default function WaitingRoomPage() {
             {/* Progress line */}
             <div className="absolute top-6 left-6 right-6 h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-[rgba(8,145,178,0.07)]0 rounded-full"
+                className="h-full bg-[rgba(238,107,38,0.07)]0 rounded-full"
                 style={{ width: `${progressPct}%` }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               />
@@ -326,16 +326,16 @@ export default function WaitingRoomPage() {
                   <div
                     className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-300 border-2 ${
                       done ? 'bg-green-50 border-green-500 shadow-sm' : 
-                      active ? 'bg-[rgba(8,145,178,0.07)] border-[var(--color-primary)] shadow-md ring-4 ring-blue-50' : 
+                      active ? 'bg-[rgba(238,107,38,0.07)] border-[var(--color-primary)] shadow-md ring-4 ring-primary/20' : 
                       'bg-white border-slate-200'
                     }`}
                   >
                     <Icon
-                      className={`h-5 w-5 ${done ? 'text-green-500' : active ? 'text-[var(--color-primary)]' : 'text-slate-300'}`}
+                      className={`h-5 w-5 ${done ? 'text-green-500' : active ? 'text-[var(--color-accent)]' : 'text-slate-300'}`}
                     />
                   </div>
                   <p
-                    className={`text-xs font-bold text-center ${done ? 'text-green-600' : active ? 'text-[var(--color-primary)]' : 'text-slate-400'}`}
+                    className={`text-xs font-bold text-center ${done ? 'text-green-600' : active ? 'text-[var(--color-accent)]' : 'text-slate-400'}`}
                   >
                     {s.label}
                   </p>
@@ -348,10 +348,10 @@ export default function WaitingRoomPage() {
 
       {/* AI Brief Status */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-        <div className="hms-card p-6 border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]/30">
+        <div className="hms-card p-6 border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]/30">
           <div className="flex items-start gap-5">
-            <div className="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[rgba(8,145,178,0.12)] border border-[rgba(8,145,178,0.20)]">
-              <Sparkles className="h-6 w-6 text-[var(--color-primary)]" />
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[rgba(238,107,38,0.12)] border border-[rgba(238,107,38,0.20)]">
+              <Sparkles className="h-6 w-6 text-[var(--color-accent)]" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-2">
@@ -370,9 +370,9 @@ export default function WaitingRoomPage() {
                 </motion.p>
               </AnimatePresence>
               {/* Progress bar */}
-              <div className="mt-4 h-1.5 rounded-full bg-[rgba(8,145,178,0.12)]/50 overflow-hidden">
+              <div className="mt-4 h-1.5 rounded-full bg-[rgba(238,107,38,0.12)]/50 overflow-hidden">
                 <motion.div
-                  className="h-full bg-[rgba(8,145,178,0.07)]0 rounded-full"
+                  className="h-full bg-[rgba(238,107,38,0.07)]0 rounded-full"
                   animate={{ width: [`${(aiMsgIdx / AI_MESSAGES.length) * 80}%`, `${((aiMsgIdx + 1) / AI_MESSAGES.length) * 100}%`] }}
                   transition={{ duration: 3.2 }}
                 />

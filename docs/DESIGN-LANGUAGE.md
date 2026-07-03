@@ -25,7 +25,7 @@ The product has two audiences with opposite needs. Same tokens, different densit
 
 Surfaces are **white**; separation is by **hairline border first, soft shadow second**. Color is meaning, not decoration.
 
-- **Brand/accent:** one teal — the Agentix HIMS logo cyan `#0891B2`, applied through `--color-primary` (its AA-safe action shade `#0E7490`) / `--color-accent`. Used for primary actions, links, active state, focus, selection. Nothing else competes; no purple/indigo.
+- **Brand/accent:** one orange — the Agentix HIMS logo orange `#EE6B26`, applied through `--color-primary` (the exact logo orange, used for fills with navy `--color-on-primary` `#0D2032` text) and `--color-accent` (its AA-safe deep-orange text shade `#B84A16`, for links/emphasis on white). Paired with dark navy `#0D2032` for hero/dark surfaces. Used for primary actions, links, active state, focus, selection. Nothing else competes; no purple/indigo/teal.
 - **Status is semantic and fixed everywhere** — use `StatusPill` / status tokens, never raw hex:
   - 🔴 `critical` danger — life-threatening / immediate
   - 🟠 `urgent` — high priority, act soon

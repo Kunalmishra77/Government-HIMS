@@ -11,11 +11,12 @@ import { NeonBadge } from "@/components/ui/neon-badge"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { notifyAndAudit, notifyAndAuditMany } from "@/lib/notifyAndAudit"
+import { useTranslations } from "next-intl"
 
 const SEVERITY_COLOR: Record<IncidentSeverity, string> = {
   Low:      'bg-green-50 text-green-700 border-green-200',
   Medium:   'bg-amber-50 text-amber-700 border-amber-200',
-  High:     'bg-orange-50 text-orange-700 border-orange-200',
+  High:     'bg-primary-soft text-accent border-primary/20',
   Critical: 'bg-red-50 text-red-700 border-red-200',
 }
 
@@ -36,6 +37,7 @@ const emptyForm = {
 }
 
 export default function IncidentsPage() {
+  const t = useTranslations('quality')
   const { incidents, addIncident, resolveIncident } = useQualityStore()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(emptyForm)
@@ -51,7 +53,7 @@ export default function IncidentsPage() {
 
   const handleAdd = () => {
     if (!form.ward.trim() || !form.description.trim()) {
-      toast.error('Ward and description are required')
+      toast.error(t('incidents.validationError'))
       return
     }
     addIncident({
@@ -72,9 +74,9 @@ export default function IncidentsPage() {
         body: `${form.type} reported by Quality Team: ${form.description.slice(0, 140)}${form.description.length > 140 ? '…' : ''}`,
         audit: { action: 'incident_reported', resource: 'quality_incident', detail: `${form.severity} severity ${form.type} in ${form.ward}`, userName: 'Quality Team' },
       })
-      toast.success(`${form.severity} incident logged · Admin + Audit Officer escalated`)
+      toast.success(t('incidents.escalatedToast', { severity: form.severity }))
     } else {
-      toast.success('Incident logged')
+      toast.success(t('incidents.loggedToast'))
     }
     setForm(emptyForm)
     setShowForm(false)
@@ -111,7 +113,7 @@ export default function IncidentsPage() {
         audit: { action: 'incident_resolved', resource: 'quality_incident', resourceId: id, detail: `Resolved: ${resolveNote || 'Resolved'}`, userName: 'Quality Team' },
       })
     }
-    toast.success('Incident marked as resolved · admin notified')
+    toast.success(t('incidents.resolvedToast'))
     setResolvingId(null)
     setResolveNote('')
   }
@@ -120,15 +122,15 @@ export default function IncidentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Incident Register</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{t('incidents.title')}</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            {incidents.filter(i => i.status !== 'Resolved').length} open · {incidents.length} total
+            {t('incidents.summary', { open: incidents.filter(i => i.status !== 'Resolved').length, total: incidents.length })}
           </p>
         </div>
         <Button onClick={() => setShowForm(!showForm)}>
           {showForm
-            ? <><X className="h-4 w-4 mr-1.5" /> Cancel</>
-            : <><Plus className="h-4 w-4 mr-1.5" /> Log Incident</>
+            ? <><X className="h-4 w-4 mr-1.5" /> {t('incidents.cancel')}</>
+            : <><Plus className="h-4 w-4 mr-1.5" /> {t('incidents.logIncident')}</>
           }
         </Button>
       </div>
@@ -141,56 +143,56 @@ export default function IncidentsPage() {
             exit={{ opacity: 0, height: 0 }} className="overflow-hidden"
           >
             <Card className="p-5 border-red-200 bg-red-50/20">
-              <h3 className="text-sm font-bold text-slate-900 mb-4">Log New Incident</h3>
+              <h3 className="text-sm font-bold text-slate-900 mb-4">{t('incidents.logNewIncident')}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Type</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">{t('incidents.type')}</label>
                   <Select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as IncidentType }))}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
                     {INCIDENT_TYPES.map(t => <option key={t}>{t}</option>)}
                   </Select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Severity</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">{t('incidents.severity')}</label>
                   <Select value={form.severity} onChange={e => setForm(f => ({ ...f, severity: e.target.value as IncidentSeverity }))}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
                     {SEVERITIES.map(s => <option key={s}>{s}</option>)}
                   </Select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Ward / Location *</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">{t('incidents.wardLocation')}</label>
                   <input value={form.ward} onChange={e => setForm(f => ({ ...f, ward: e.target.value }))}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                    placeholder="e.g. General Ward 3" />
+                    placeholder={t('incidents.wardPlaceholder')} />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Patient ID (optional)</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">{t('incidents.patientIdOptional')}</label>
                   <input value={form.patientId} onChange={e => setForm(f => ({ ...f, patientId: e.target.value }))}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                    placeholder="PT-XXXXX" />
+                    placeholder={t('incidents.patientIdPlaceholder')} />
                 </div>
                 <div className="col-span-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Description *</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">{t('incidents.description')}</label>
                   <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-                    placeholder="Describe what happened..." />
+                    placeholder={t('incidents.descriptionPlaceholder')} />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Staff Involved</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">{t('incidents.staffInvolved')}</label>
                   <input value={form.staffInvolved} onChange={e => setForm(f => ({ ...f, staffInvolved: e.target.value }))}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                    placeholder="Name(s)" />
+                    placeholder={t('incidents.staffPlaceholder')} />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Corrective Action</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">{t('incidents.correctiveAction')}</label>
                   <input value={form.correctiveAction} onChange={e => setForm(f => ({ ...f, correctiveAction: e.target.value }))}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                    placeholder="Action taken / planned" />
+                    placeholder={t('incidents.correctiveActionPlaceholder')} />
                 </div>
               </div>
               <div className="mt-4 flex gap-3">
-                <Button onClick={handleAdd} className="flex-1">Log Incident</Button>
-                <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
+                <Button onClick={handleAdd} className="flex-1">{t('incidents.logIncident')}</Button>
+                <Button variant="secondary" onClick={() => setShowForm(false)}>{t('incidents.cancel')}</Button>
               </div>
             </Card>
           </motion.div>
@@ -204,7 +206,7 @@ export default function IncidentsPage() {
             className={cn("text-sm font-bold px-3 py-1.5 rounded-lg border transition-all cursor-pointer",
               filter === f ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
             )}>
-            {f}
+            {f === 'All' ? t('incidents.filterAll') : f === 'Open' ? t('incidents.filterOpen') : f}
           </button>
         ))}
       </div>
@@ -213,7 +215,7 @@ export default function IncidentsPage() {
       {filtered.length === 0 ? (
         <div className="text-center py-12 text-slate-400">
           <ShieldCheck className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="font-semibold">No incidents match this filter</p>
+          <p className="font-semibold">{t('incidents.noMatch')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -221,7 +223,7 @@ export default function IncidentsPage() {
             <motion.div key={incident.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               <Card className={cn("p-5",
                 incident.severity === 'Critical' && incident.status !== 'Resolved' ? "border-red-300 bg-red-50/20" :
-                incident.severity === 'High' && incident.status !== 'Resolved' ? "border-orange-200" : ""
+                incident.severity === 'High' && incident.status !== 'Resolved' ? "border-primary/20" : ""
               )}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -239,11 +241,11 @@ export default function IncidentsPage() {
                       <span>{incident.ward}</span>
                       {incident.patientId && <span>{incident.patientId}</span>}
                       <span>{new Date(incident.reportedAt).toLocaleDateString('en-IN')}</span>
-                      {incident.staffInvolved && <span>Staff: {incident.staffInvolved}</span>}
+                      {incident.staffInvolved && <span>{t('incidents.staffLabel', { staff: incident.staffInvolved })}</span>}
                     </div>
                     {incident.correctiveAction && (
                       <p className="text-xs text-slate-600 mt-1.5 bg-slate-50 rounded-lg px-2 py-1">
-                        <span className="font-semibold">Action:</span> {incident.correctiveAction}
+                        <span className="font-semibold">{t('incidents.actionLabel')}</span> {incident.correctiveAction}
                       </p>
                     )}
                     {/* Resolve inline form with CAPA template */}
@@ -252,22 +254,22 @@ export default function IncidentsPage() {
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mt-2">
                           <div className="flex items-center gap-2 mb-1.5">
                             <button onClick={() => setResolveNote(capaTemplate())}
-                              className="text-[10.5px] font-semibold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.14)] border border-[rgba(8,145,178,0.20)] px-2 py-0.5 rounded cursor-pointer">
-                              Insert CAPA template
+                              className="text-[10.5px] font-semibold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.14)] border border-[rgba(238,107,38,0.20)] px-2 py-0.5 rounded cursor-pointer">
+                              {t('incidents.insertCapa')}
                             </button>
-                            <span className="text-[10px] text-slate-400">Corrective + preventive action · NABH CQI</span>
+                            <span className="text-[10px] text-slate-400">{t('incidents.capaHint')}</span>
                           </div>
                           <div className="flex gap-2">
                             <textarea
                               value={resolveNote}
                               onChange={e => setResolveNote(e.target.value)}
-                              placeholder="Corrective action note... or click 'Insert CAPA template'"
+                              placeholder={t('incidents.resolvePlaceholder')}
                               rows={resolveNote.includes('\n') ? 8 : 1}
                               className="flex-1 rounded-lg border border-green-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                             />
                             <button onClick={() => handleResolve(incident.id)}
                               className="px-3 py-1.5 text-xs font-bold bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer">
-                              Confirm
+                              {t('incidents.confirm')}
                             </button>
                             <button onClick={() => setResolvingId(null)}
                               className="px-2 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 cursor-pointer">
@@ -283,7 +285,7 @@ export default function IncidentsPage() {
                       onClick={() => setResolvingId(incident.id)}
                       className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 text-xs font-bold transition-colors cursor-pointer border border-green-200 flex-shrink-0"
                     >
-                      <CheckCircle className="h-3.5 w-3.5" /> Resolve
+                      <CheckCircle className="h-3.5 w-3.5" /> {t('incidents.resolve')}
                     </button>
                   )}
                 </div>

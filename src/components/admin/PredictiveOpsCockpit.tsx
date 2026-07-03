@@ -91,11 +91,11 @@ export function PredictiveOpsCockpit({ className }: { className?: string }) {
 
   return (
     <section className={`rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-sm overflow-hidden ${className ?? ''}`}>
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-[rgba(8,145,178,0.06)] to-[rgba(8,145,178,0.04)]">
-        <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-surface-sunken">
+        <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
         <h3 className="text-[14px] font-semibold text-slate-900">Predictive Operations Cockpit</h3>
         <span className="text-[11px] text-slate-500">Live forecast over current state</span>
-        <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-primary)]">
+        <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-accent)]">
           <Sparkles className="h-3 w-3" /> HITL — accept or dismiss
         </span>
       </header>
@@ -128,7 +128,7 @@ export function PredictiveOpsCockpit({ className }: { className?: string }) {
                     {p.metric.deltaPct > 0 ? '+' : ''}{p.metric.deltaPct}%
                   </span>
                 ) : null}
-                <span className="ml-auto text-[10.5px] font-mono text-[var(--color-primary)]">{Math.round(p.confidence * 100)}% conf</span>
+                <span className="ml-auto text-[10.5px] font-mono text-[var(--color-accent)]">{Math.round(p.confidence * 100)}% conf</span>
               </div>
 
               <ul className="text-[11.5px] text-slate-600 space-y-0.5 pl-3.5 list-disc marker:text-[var(--color-primary-light)]">
@@ -138,7 +138,7 @@ export function PredictiveOpsCockpit({ className }: { className?: string }) {
               <div className="rounded-lg bg-white/80 ring-1 ring-slate-200/70 px-2.5 py-2 mt-auto">
                 <p className="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Suggested action</p>
                 <p className="text-[12px] text-slate-800 leading-snug flex items-start gap-1.5">
-                  <ArrowRight className="h-3 w-3 text-[var(--color-primary)] mt-0.5 flex-shrink-0" /> {p.recommendation}
+                  <ArrowRight className="h-3 w-3 text-[var(--color-accent)] mt-0.5 flex-shrink-0" /> {p.recommendation}
                 </p>
               </div>
 

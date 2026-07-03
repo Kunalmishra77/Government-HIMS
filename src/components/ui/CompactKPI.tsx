@@ -20,7 +20,7 @@ type Tone = "neutral" | "info" | "ok" | "warn" | "danger"
 // dot — restrained, Linear/Vercel-grade KPI tiles.
 const TONE: Record<Tone, { bg: string; ring: string; labelFg: string; dot: string }> = {
   neutral: { bg: "bg-surface-sunken", ring: "ring-border",      labelFg: "text-foreground-lighter", dot: "bg-foreground-placeholder" },
-  info:    { bg: "bg-accent-soft",    ring: "ring-primary/15",  labelFg: "text-primary",            dot: "bg-primary" },
+  info:    { bg: "bg-accent-soft",    ring: "ring-primary/15",  labelFg: "text-accent",            dot: "bg-primary" },
   ok:      { bg: "bg-success-bg",     ring: "ring-success/20",  labelFg: "text-success-strong",     dot: "bg-success" },
   warn:    { bg: "bg-warning-bg",     ring: "ring-warning/25",  labelFg: "text-brand-amber-strong", dot: "bg-warning" },
   danger:  { bg: "bg-danger-bg",      ring: "ring-danger/25",   labelFg: "text-danger-strong",      dot: "bg-danger" },

@@ -1,0 +1,16 @@
+{
+  "disclaimer": "AI suggestions are only to help the clinician decide. Please check before acting on them.",
+  "confidence": "AI Confidence",
+  "high": "High",
+  "medium": "Medium",
+  "low": "Low",
+  "accept": "Accept",
+  "reject": "Reject",
+  "modify": "Modify",
+  "rejectReason": "Reason for rejecting",
+  "reviewRequired": "Review needed",
+  "autoApply": "Auto-apply available",
+  "manualRecommended": "Enter manually (recommended)",
+  "feedbackThanks": "Thanks for your feedback",
+  "generating": "Getting AI suggestion…"
+}

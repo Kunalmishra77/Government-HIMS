@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { DURATION_OPTIONS } from "@/lib/intake/data"
 import { cn } from "@/lib/utils"
 
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function DurationStep({ symptoms, durations, onChange }: Props) {
+  const t = useTranslations("intake")
   const set = (symptom: string, value: string) => {
     const next = { ...durations }
     if (next[symptom] === value) {
@@ -23,7 +25,7 @@ export function DurationStep({ symptoms, durations, onChange }: Props) {
   return (
     <div className="h-full flex flex-col overflow-y-auto pr-1 gap-3">
       <p className="text-[13px] text-slate-500 flex-shrink-0">
-        Select how long you&apos;ve been experiencing each symptom. This helps the AI give a more accurate assessment.
+        {t('durationUi.intro')}
       </p>
 
       <div className="flex flex-col gap-2.5">
@@ -34,7 +36,7 @@ export function DurationStep({ symptoms, durations, onChange }: Props) {
               key={symptom}
               className="bg-white rounded-[16px] px-4 py-3 border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
             >
-              <p className="text-[14px] font-semibold text-slate-900 mb-2.5">{symptom}</p>
+              <p className="text-[14px] font-semibold text-slate-900 mb-2.5">{t.has(`symptom.${symptom}`) ? t(`symptom.${symptom}`) : symptom}</p>
               <div className="flex flex-wrap gap-1.5">
                 {DURATION_OPTIONS.map(opt => {
                   const active = selected === opt.value
@@ -44,13 +46,13 @@ export function DurationStep({ symptoms, durations, onChange }: Props) {
                       onClick={() => set(symptom, opt.value)}
                       aria-pressed={active}
                       className={cn(
-                        "h-8 px-3 rounded-[10px] text-[12px] font-medium border transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2]",
+                        "h-8 px-3 rounded-[10px] text-[12px] font-medium border transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26]",
                         active
-                          ? "bg-[#0891B2] border-[#0891B2] text-white shadow-sm"
-                          : "bg-slate-50 border-slate-200 text-slate-600 hover:border-[#0891B2]/40",
+                          ? "bg-[#EE6B26] border-[#EE6B26] text-[#0D2032] shadow-sm"
+                          : "bg-slate-50 border-slate-200 text-slate-600 hover:border-[#EE6B26]/40",
                       )}
                     >
-                      {opt.label}
+                      {t(`duration.${opt.value}`)}
                     </button>
                   )
                 })}
@@ -61,7 +63,7 @@ export function DurationStep({ symptoms, durations, onChange }: Props) {
       </div>
 
       <p className="text-[12px] text-slate-400 flex-shrink-0 pt-1">
-        You can skip any symptom — duration is optional but improves triage accuracy.
+        {t('durationUi.footer')}
       </p>
     </div>
   )

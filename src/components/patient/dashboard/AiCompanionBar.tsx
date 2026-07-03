@@ -18,7 +18,7 @@ export function AiCompanionBar() {
 
   return (
     <div
-      className="rounded-3xl shadow-[0_8px_28px_rgba(8,145,178,0.25)] p-4"
+      className="rounded-3xl shadow-[0_8px_28px_rgba(238,107,38,0.25)] p-4"
       style={{
         background: 'linear-gradient(#fff,#fff) padding-box, linear-gradient(to right,var(--color-primary),var(--color-primary-light),var(--color-primary)) border-box',
         border: '1.5px solid transparent',
@@ -34,7 +34,7 @@ export function AiCompanionBar() {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200 px-3 h-12 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-400 transition-shadow">
+      <div className="mt-3 flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200 px-3 h-12 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary/25 transition-shadow">
         <input
           value={text}
           onChange={e => setText(e.target.value)}
@@ -42,7 +42,7 @@ export function AiCompanionBar() {
           aria-label="Ask the AI health companion"
           className="intake-input flex-1 bg-transparent border-none text-[15px] text-slate-900 placeholder:text-slate-400"
         />
-        <button aria-label="Speak" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[var(--color-primary)] hover:bg-[rgba(8,145,178,0.10)] transition-colors"><Mic className="h-4.5 w-4.5" /></button>
+        <button aria-label="Speak" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[var(--color-accent)] hover:bg-[rgba(238,107,38,0.10)] transition-colors"><Mic className="h-4.5 w-4.5" /></button>
         <button aria-label="Send" className="h-8 w-8 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center active:scale-95 transition-transform"><ArrowUp className="h-4.5 w-4.5" /></button>
       </div>
 
@@ -50,7 +50,7 @@ export function AiCompanionBar() {
         {SUGGESTIONS.map((s, i) => (
           <button key={s.q} onClick={() => setActive(active === i ? null : i)}
             className={cn("text-[13px] font-medium px-3 py-1.5 rounded-full border transition-all active:scale-95",
-              active === i ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white" : "bg-white border-slate-200 text-slate-600 hover:border-[rgba(8,145,178,0.30)]")}>
+              active === i ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white" : "bg-white border-slate-200 text-slate-600 hover:border-[rgba(238,107,38,0.30)]")}>
             {s.q}
           </button>
         ))}
@@ -59,10 +59,10 @@ export function AiCompanionBar() {
       <AnimatePresence>
         {active !== null && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-            <div className="mt-3 rounded-2xl bg-[rgba(8,145,178,0.07)]/70 border border-[rgba(8,145,178,0.15)] p-4">
+            <div className="mt-3 rounded-2xl bg-[rgba(238,107,38,0.07)]/70 border border-[rgba(238,107,38,0.15)] p-4">
               <p className="text-[14px] text-slate-800 leading-relaxed">{SUGGESTIONS[active].a}</p>
               <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-slate-400">
-                <ShieldCheck className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                <ShieldCheck className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                 AI-generated for guidance · always verify with your doctor
               </div>
             </div>

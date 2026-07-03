@@ -1,6 +1,8 @@
 "use client"
 
 import { use, useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
+import { LocaleToggle } from "@/components/ui/LocaleToggle"
 import { usePatientStore } from "@/store/usePatientStore"
 import { useAuditStore } from "@/store/useAuditStore"
 import { useCameraStore } from "@/store/useCameraStore"
@@ -11,10 +13,11 @@ const CONDITION_CONFIG = {
   Stable: { color: 'bg-green-100 border-green-300 text-green-800', icon: CheckCircle },
   Monitoring: { color: 'bg-amber-100 border-amber-300 text-amber-800', icon: Activity },
   Critical: { color: 'bg-red-100 border-red-300 text-red-800', icon: AlertTriangle },
-  Discharging: { color: 'bg-[rgba(8,145,178,0.12)] border-[rgba(8,145,178,0.30)] text-[var(--color-primary-dark)]', icon: CheckCircle },
+  Discharging: { color: 'bg-[rgba(238,107,38,0.12)] border-[rgba(238,107,38,0.30)] text-[var(--color-primary-dark)]', icon: CheckCircle },
 }
 
 function CameraFeedStub({ wardRoom }: { wardRoom: string }) {
+  const t = useTranslations('family-track')
   const [time, setTime] = useState(new Date())
 
   useEffect(() => {
@@ -44,11 +47,11 @@ function CameraFeedStub({ wardRoom }: { wardRoom: string }) {
           <div className="h-16 w-16 bg-slate-700/60 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-600">
             <Camera className="h-8 w-8 text-slate-400" />
           </div>
-          <p className="text-slate-400 text-sm font-medium">Hospital Room Camera</p>
+          <p className="text-slate-400 text-sm font-medium">{t('cameraStub.roomCamera')}</p>
           <p className="text-slate-500 text-xs mt-1">{wardRoom}</p>
           <div className="flex items-center gap-1.5 justify-center mt-2">
             <div className="h-1.5 w-1.5 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-green-400 text-xs font-medium">Stream Active</span>
+            <span className="text-green-400 text-xs font-medium">{t('cameraStub.streamActive')}</span>
           </div>
         </div>
       </div>
@@ -56,7 +59,7 @@ function CameraFeedStub({ wardRoom }: { wardRoom: string }) {
       {/* LIVE badge */}
       <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 bg-red-600 rounded px-2 py-0.5">
         <div className="h-1.5 w-1.5 bg-white rounded-full animate-pulse" />
-        <span className="text-white text-[10px] font-bold tracking-widest">LIVE</span>
+        <span className="text-white text-[10px] font-bold tracking-widest">{t('cameraStub.live')}</span>
       </div>
 
       {/* Timestamp */}
@@ -72,7 +75,7 @@ function CameraFeedStub({ wardRoom }: { wardRoom: string }) {
       {/* Connection status */}
       <div className="absolute bottom-3 right-3 z-30 flex items-center gap-1 bg-black/60 rounded px-2 py-0.5">
         <Wifi className="h-3 w-3 text-green-400" />
-        <span className="text-green-400 text-[10px] font-medium">Connected</span>
+        <span className="text-green-400 text-[10px] font-medium">{t('cameraStub.connected')}</span>
       </div>
     </div>
   )
@@ -80,6 +83,7 @@ function CameraFeedStub({ wardRoom }: { wardRoom: string }) {
 
 export default function FamilyTrackPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params)
+  const t = useTranslations('family-track')
   const getPatientByFamilyToken = usePatientStore((s) => s.getPatientByFamilyToken)
   const log = useAuditStore((s) => s.log)
   const requests = useCameraStore((s) => s.requests)
@@ -109,8 +113,8 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
           <div className="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield className="h-8 w-8 text-slate-400" />
           </div>
-          <h1 className="text-xl font-bold text-slate-800 mb-2">Access Not Available</h1>
-          <p className="text-slate-500 text-sm">This tracking link is invalid or consent has not been granted.</p>
+          <h1 className="text-xl font-bold text-slate-800 mb-2">{t('accessNotAvailable')}</h1>
+          <p className="text-slate-500 text-sm">{t('accessNotAvailableDetail')}</p>
         </div>
       </div>
     )
@@ -125,7 +129,12 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
     ? new Date(status.lastUpdatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
     : null
 
-  const wardRoom = status?.wardRoom ?? 'Patient Ward'
+  const wardRoom = status?.wardRoom ?? t('defaultWard')
+
+  const conditionKey = condition
+    ? `condition${condition.charAt(0).toUpperCase()}${condition.slice(1).toLowerCase()}`
+    : null
+  const conditionLabel = conditionKey && t.has(conditionKey) ? t(conditionKey) : condition
 
   const handleRequestCamera = () => {
     requestCamera(patient.id, patient.name, wardRoom, token)
@@ -162,11 +171,12 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Privacy banner */}
-      <div className="bg-[rgba(8,145,178,0.07)] border-b border-[rgba(8,145,178,0.15)] px-4 py-2.5 text-center">
-        <p className="text-xs text-[var(--color-primary)] font-medium flex items-center justify-center gap-1.5">
+      <div className="bg-[rgba(238,107,38,0.07)] border-b border-[rgba(238,107,38,0.15)] px-4 py-2.5 flex items-center justify-center gap-3">
+        <p className="text-xs text-[var(--color-accent)] font-medium flex items-center justify-center gap-1.5">
           <Shield className="h-3.5 w-3.5" />
-          This page shows non-clinical journey information only. No medical data is shared.
+          {t('privacyBanner')}
         </p>
+        <LocaleToggle />
       </div>
 
       <div className="max-w-lg mx-auto p-6 space-y-5">
@@ -174,10 +184,10 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
         <div className="text-center pt-4">
           <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-1.5 text-sm text-slate-500 font-medium mb-4">
             <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse" />
-            Live Status
+            {t('liveStatus')}
           </div>
           <h1 className="text-2xl font-bold text-slate-900">{patient.name}</h1>
-          <p className="text-slate-500 text-sm mt-1">Token #{patient.token} · {patient.department}</p>
+          <p className="text-slate-500 text-sm mt-1">{t('tokenDept', { token: patient.token, department: patient.department })}</p>
         </div>
 
         {/* Condition badge */}
@@ -185,8 +195,8 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
           <div className={`flex items-center justify-center gap-3 rounded-xl border px-5 py-4 ${conditionConfig.color}`}>
             <ConditionIcon className="h-6 w-6" />
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Condition</p>
-              <p className="text-lg font-bold">{condition}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide opacity-70">{t('condition')}</p>
+              <p className="text-lg font-bold">{conditionLabel}</p>
             </div>
           </div>
         )}
@@ -196,7 +206,7 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase tracking-wide mb-2">
               <Activity className="h-3.5 w-3.5" />
-              Current Status
+              {t('currentStatus')}
             </div>
             <p className="text-lg font-semibold text-slate-900">{status.journeyStatus}</p>
           </div>
@@ -207,7 +217,7 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase tracking-wide mb-2">
               <MapPin className="h-3.5 w-3.5" />
-              Location
+              {t('location')}
             </div>
             <p className="text-lg font-semibold text-slate-900">{status.wardRoom}</p>
           </div>
@@ -218,9 +228,9 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase tracking-wide mb-2">
               <Clock className="h-3.5 w-3.5" />
-              Estimated Wait
+              {t('estimatedWait')}
             </div>
-            <p className="text-lg font-semibold text-slate-900">~{status.estimatedWaitMinutes} minutes</p>
+            <p className="text-lg font-semibold text-slate-900">{t('estimatedWaitValue', { minutes: status.estimatedWaitMinutes })}</p>
           </div>
         )}
 
@@ -228,7 +238,7 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
         {!status?.journeyStatus && !status?.wardRoom && !condition && (
           <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
             <Activity className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">Status update not yet available. Please check back shortly.</p>
+            <p className="text-slate-500 text-sm">{t('noStatusYet')}</p>
           </div>
         )}
 
@@ -237,10 +247,10 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
           <div className="px-5 py-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <Video className="h-4 w-4 text-slate-600" />
-              <h3 className="font-semibold text-slate-900 text-sm">Live Room Camera</h3>
+              <h3 className="font-semibold text-slate-900 text-sm">{t('liveRoomCamera')}</h3>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              View the hospital room camera feed — requires nurse approval
+              {t('liveRoomCameraDesc')}
             </p>
           </div>
 
@@ -252,7 +262,7 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
                 className="w-full flex items-center justify-center gap-2 py-3 bg-[var(--color-primary)] text-white rounded-xl font-semibold text-sm hover:bg-[var(--color-primary-dark)] active:scale-95 transition-all"
               >
                 <Camera className="h-4 w-4" />
-                Request Live Camera
+                {t('requestLiveCamera')}
               </button>
             )}
 
@@ -260,13 +270,13 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
             {cameraRequest?.status === 'pending' && (
               <div className="text-center py-4">
                 <div className="h-10 w-10 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-sm font-semibold text-slate-700">Awaiting Nurse Approval</p>
-                <p className="text-xs text-slate-500 mt-1">A nurse will enable the camera shortly</p>
+                <p className="text-sm font-semibold text-slate-700">{t('awaitingApproval')}</p>
+                <p className="text-xs text-slate-500 mt-1">{t('awaitingApprovalDesc')}</p>
                 <button
                   onClick={handleEndSession}
                   className="mt-3 text-xs text-slate-400 hover:text-slate-600 underline-offset-2 hover:underline transition-colors"
                 >
-                  Cancel request
+                  {t('cancelRequest')}
                 </button>
               </div>
             )}
@@ -278,13 +288,13 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-xs text-green-600 font-medium flex items-center gap-1.5">
                     <CheckCircle className="h-3.5 w-3.5" />
-                    Approved by {cameraRequest.approvedBy ?? 'Nurse'}
+                    {t('approvedBy', { name: cameraRequest.approvedBy ?? t('nurse') })}
                   </p>
                   <button
                     onClick={handleEndSession}
                     className="text-xs text-red-500 hover:text-red-700 font-semibold transition-colors"
                   >
-                    End Session
+                    {t('endSession')}
                   </button>
                 </div>
               </div>
@@ -296,13 +306,13 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
                 <div className="h-10 w-10 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-red-200">
                   <VideoOff className="h-5 w-5 text-red-500" />
                 </div>
-                <p className="text-sm font-semibold text-slate-700">Request Declined</p>
-                <p className="text-xs text-slate-500 mt-1">The nurse has declined the camera request at this time</p>
+                <p className="text-sm font-semibold text-slate-700">{t('requestDeclined')}</p>
+                <p className="text-xs text-slate-500 mt-1">{t('requestDeclinedDesc')}</p>
                 <button
                   onClick={handleRequestCamera}
-                  className="mt-3 text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-semibold transition-colors"
+                  className="mt-3 text-xs text-[var(--color-accent)] hover:text-[var(--color-primary-dark)] font-semibold transition-colors"
                 >
-                  Request again
+                  {t('requestAgain')}
                 </button>
               </div>
             )}
@@ -311,12 +321,12 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
 
         {/* Last updated */}
         {lastUpdated && (
-          <p className="text-center text-xs text-slate-400">Last updated at {lastUpdated}</p>
+          <p className="text-center text-xs text-slate-400">{t('lastUpdatedAt', { time: lastUpdated })}</p>
         )}
 
         {/* Footer */}
         <div className="border-t border-slate-200 pt-4 text-center">
-          <p className="text-xs text-slate-400">Powered by Agentix HIMS · DISHA Compliant</p>
+          <p className="text-xs text-slate-400">{t('poweredBy')}</p>
         </div>
       </div>
     </div>

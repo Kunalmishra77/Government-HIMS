@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 type TabId = 'overview' | 'facilities' | 'workforce' | 'integration' | 'quality'
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'facilities', label: 'Facilities' },
-  { id: 'workforce', label: 'Workforce' },
-  { id: 'integration', label: 'Allopathy integration' },
-  { id: 'quality', label: 'Quality & protocols' },
+const TAB_IDS: { id: TabId; labelKey: string }[] = [
+  { id: 'overview', labelKey: 'ayush.tabOverview' },
+  { id: 'facilities', labelKey: 'ayush.tabFacilities' },
+  { id: 'workforce', labelKey: 'ayush.tabWorkforce' },
+  { id: 'integration', labelKey: 'ayush.tabIntegration' },
+  { id: 'quality', labelKey: 'ayush.tabQuality' },
 ]
 
 const FACILITY_TYPES = [
@@ -21,19 +22,20 @@ const FACILITY_TYPES = [
 ]
 
 export default function AyushPage() {
+  const t = useTranslations('secretary')
   const [tab, setTab] = useState<TabId>('overview')
 
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">AYUSH</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">आयुष · Ayurveda, Yoga, Unani, Siddha, Homeopathy department</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('ayush.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('ayush.subtitle')}</p>
       </div>
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-lg text-sm transition-all ${tab === t.id ? 'bg-white text-[var(--color-primary)] font-semibold shadow' : 'font-medium text-slate-500 hover:text-slate-700'}`}>
-            {t.label}
+        {TAB_IDS.map(tb => (
+          <button key={tb.id} onClick={() => setTab(tb.id)}
+            className={`px-4 py-2 rounded-lg text-sm transition-all ${tab === tb.id ? 'bg-white text-[var(--color-accent)] font-semibold shadow' : 'font-medium text-slate-500 hover:text-slate-700'}`}>
+            {t(tb.labelKey)}
           </button>
         ))}
       </div>
@@ -56,15 +58,15 @@ export default function AyushPage() {
           </div>
           <div className="bg-white border border-[var(--color-border)] rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
             <div className="px-5 py-3.5 border-b border-[var(--color-border)]">
-              <p className="text-sm font-semibold text-[var(--color-foreground)]">Facility breakdown</p>
+              <p className="text-sm font-semibold text-[var(--color-foreground)]">{t('ayush.facilityBreakdown')}</p>
             </div>
             <div className="divide-y divide-[var(--color-border)]">
               {FACILITY_TYPES.map(f => (
                 <div key={f.type} className="px-5 py-3 flex items-center justify-between">
                   <p className="text-sm font-medium text-[var(--color-foreground)]">{f.type}</p>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-emerald-600 font-medium">{f.active} active</span>
-                    <span className="text-xs text-[var(--color-foreground-lighter)]">/ {f.count} total</span>
+                    <span className="text-xs text-emerald-600 font-medium">{t('ayush.active', { count: f.active })}</span>
+                    <span className="text-xs text-[var(--color-foreground-lighter)]">{t('ayush.ofTotal', { count: f.count })}</span>
                   </div>
                 </div>
               ))}
@@ -74,7 +76,7 @@ export default function AyushPage() {
       )}
       {tab !== 'overview' && (
         <div className="text-center py-16 text-[var(--color-foreground-muted)]">
-          <p className="text-sm">Detailed {TABS.find(t => t.id === tab)?.label} module coming in next sprint</p>
+          <p className="text-sm">{t('ayush.comingSoon', { tab: t(TAB_IDS.find(x => x.id === tab)?.labelKey ?? 'ayush.tabOverview') })}</p>
         </div>
       )}
     </div>

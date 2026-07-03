@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { motion } from "framer-motion"
 import { Bed, User, Clock, CheckCircle2, Wrench } from "lucide-react"
 import { useAdmissionStore } from "@/store/useAdmissionStore"
@@ -17,13 +18,14 @@ const WARD_ORDER = ['ICU', 'General Ward', 'Semi-Private', 'Private Room', 'Day 
 
 const BED_STATUS_STYLE: Record<string, { bg: string; border: string; text: string; dot: string }> = {
   Available: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-800', dot: 'bg-green-500' },
-  Occupied: { bg: 'bg-[rgba(8,145,178,0.07)]', border: 'border-[rgba(8,145,178,0.20)]', text: 'text-[var(--color-primary-dark)]', dot: 'bg-[rgba(8,145,178,0.07)]0' },
+  Occupied: { bg: 'bg-[rgba(238,107,38,0.07)]', border: 'border-[rgba(238,107,38,0.20)]', text: 'text-[var(--color-primary-dark)]', dot: 'bg-[rgba(238,107,38,0.07)]0' },
   Cleaning: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800', dot: 'bg-yellow-500' },
-  Reserved: { bg: 'bg-[rgba(8,145,178,0.07)]', border: 'border-[rgba(8,145,178,0.20)]', text: 'text-[var(--color-primary-dark)]', dot: 'bg-[rgba(8,145,178,0.07)]0' },
+  Reserved: { bg: 'bg-[rgba(238,107,38,0.07)]', border: 'border-[rgba(238,107,38,0.20)]', text: 'text-[var(--color-primary-dark)]', dot: 'bg-[rgba(238,107,38,0.07)]0' },
   Maintenance: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', dot: 'bg-red-500' },
 }
 
 function BedCard({ bed, side = 'right' }: { bed: BedType; side?: 'left' | 'right' }) {
+  const t = useTranslations('admission')
   const { markBedForCleaning, confirmBedReady } = useAdmissionStore()
   const { addTask } = useHousekeepingStore()
   const style = BED_STATUS_STYLE[bed.status]
@@ -40,11 +42,11 @@ function BedCard({ bed, side = 'right' }: { bed: BedType; side?: 'left' | 'right
     })
     notifyAndAudit({
       to: 'housekeeping', type: 'system', priority: 'high',
-      title: `Bed cleaning required · ${bed.bedNumber}`,
-      body: `Bed ${bed.bedNumber} (${bed.ward}) needs turnover. Discharge complete.`,
-      audit: { action: 'housekeeping_bed_turned', resource: 'bed', resourceId: bed.id, detail: `Bed ${bed.bedNumber} → cleaning`, userName: 'Admission desk' },
+      title: t('beds.cleaningRequiredTitle', { bedNumber: bed.bedNumber }),
+      body: t('beds.cleaningRequiredBody', { bedNumber: bed.bedNumber, ward: bed.ward }),
+      audit: { action: 'housekeeping_bed_turned', resource: 'bed', resourceId: bed.id, detail: `Bed ${bed.bedNumber} → cleaning`, userName: t('beds.auditDeskUser') },
     })
-    toast.success(`Bed ${bed.bedNumber} queued for cleaning · housekeeping notified`)
+    toast.success(t('beds.queuedForCleaning', { bedNumber: bed.bedNumber }))
   }
 
   return (
@@ -67,15 +69,15 @@ function BedCard({ bed, side = 'right' }: { bed: BedType; side?: 'left' | 'right
           }
           className="text-[10px] px-1.5"
         >
-          {bed.status}
+          {t.has(`bedStatus.${bed.status}`) ? t(`bedStatus.${bed.status}`) : bed.status}
         </NeonBadge>
       </div>
 
-      <p className="text-xs text-slate-500 font-medium">{bed.floor} floor</p>
+      <p className="text-xs text-slate-500 font-medium">{t('beds.floor', { floor: bed.floor })}</p>
 
       {bed.status === 'Occupied' && bed.occupantName && (
         <div className="flex items-center gap-1.5">
-          <User className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+          <User className="h-3.5 w-3.5 text-[var(--color-accent)]" />
           <span className="text-xs font-semibold text-[var(--color-primary-dark)] truncate">{bed.occupantName}</span>
         </div>
       )}
@@ -83,12 +85,12 @@ function BedCard({ bed, side = 'right' }: { bed: BedType; side?: 'left' | 'right
       {bed.status === 'Cleaning' && (
         <div className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5 text-yellow-600" />
-          <span className="text-xs text-yellow-800">Being cleaned</span>
+          <span className="text-xs text-yellow-800">{t('beds.beingCleaned')}</span>
         </div>
       )}
 
       {bed.lastCleaned && bed.status === 'Available' && (
-        <p className="text-[10px] text-slate-400">Cleaned: {new Date(bed.lastCleaned).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
+        <p className="text-[10px] text-slate-400">{t('beds.cleaned', { time: new Date(bed.lastCleaned).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) })}</p>
       )}
 
       <div className="flex gap-1.5 mt-1">
@@ -97,7 +99,7 @@ function BedCard({ bed, side = 'right' }: { bed: BedType; side?: 'left' | 'right
             onClick={handleMarkCleaning}
             className="text-[10px] font-semibold px-2 py-1 rounded bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200 transition-colors cursor-pointer"
           >
-            Mark for Cleaning
+            {t('beds.markForCleaning')}
           </button>
         )}
         {bed.status === 'Cleaning' && (
@@ -106,15 +108,15 @@ function BedCard({ bed, side = 'right' }: { bed: BedType; side?: 'left' | 'right
               confirmBedReady(bed.id)
               notifyAndAudit({
                 to: 'bed_manager', type: 'system', priority: 'medium',
-                title: `Bed ready · ${bed.bedNumber}`,
-                body: `Bed ${bed.bedNumber} (${bed.ward}) is verified clean and available.`,
-                audit: { action: 'housekeeping_bed_turned', resource: 'bed', resourceId: bed.id, detail: `Bed ready ${bed.bedNumber}`, userName: 'Housekeeping' },
+                title: t('beds.bedReadyTitle', { bedNumber: bed.bedNumber }),
+                body: t('beds.bedReadyBody', { bedNumber: bed.bedNumber, ward: bed.ward }),
+                audit: { action: 'housekeeping_bed_turned', resource: 'bed', resourceId: bed.id, detail: `Bed ready ${bed.bedNumber}`, userName: t('beds.auditHousekeepingUser') },
               })
-              toast.success(`Bed ${bed.bedNumber} marked as ready · admissions notified`)
+              toast.success(t('beds.markedReady', { bedNumber: bed.bedNumber }))
             }}
             className="text-[10px] font-semibold px-2 py-1 rounded bg-green-100 text-green-700 border border-green-200 hover:bg-green-200 transition-colors cursor-pointer"
           >
-            Mark Ready
+            {t('beds.markReady')}
           </button>
         )}
       </div>
@@ -123,9 +125,12 @@ function BedCard({ bed, side = 'right' }: { bed: BedType; side?: 'left' | 'right
 }
 
 export default function BedBoardPage() {
+  const t = useTranslations('admission')
   const { beds } = useAdmissionStore()
   const [filterWard, setFilterWard] = useState<string>('All')
   const [filterStatus, setFilterStatus] = useState<string>('All')
+  const wardLabel = (w: string) => w === 'All' ? t('filters.all') : (t.has(`wards.${w}`) ? t(`wards.${w}`) : w)
+  const statusLabel = (s: string) => s === 'All' ? t('filters.all') : (t.has(`bedStatus.${s}`) ? t(`bedStatus.${s}`) : s)
 
   const filtered = beds.filter(b =>
     (filterWard === 'All' || b.ward === filterWard) &&
@@ -155,19 +160,19 @@ export default function BedBoardPage() {
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white border rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-          <p className="text-xs font-semibold text-slate-500 mt-1">Total Beds</p>
+          <p className="text-xs font-semibold text-slate-500 mt-1">{t('stats.totalBeds')}</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-700">{stats.available}</p>
-          <p className="text-xs font-semibold text-green-600 mt-1">Available</p>
+          <p className="text-xs font-semibold text-green-600 mt-1">{t('stats.available')}</p>
         </div>
-        <div className="bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-[var(--color-primary)]">{stats.occupied}</p>
-          <p className="text-xs font-semibold text-[var(--color-primary)] mt-1">Occupied ({Math.round(stats.occupied / stats.total * 100)}%)</p>
+        <div className="bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] rounded-xl p-4 text-center">
+          <p className="text-2xl font-bold text-[var(--color-accent)]">{stats.occupied}</p>
+          <p className="text-xs font-semibold text-[var(--color-accent)] mt-1">{t('stats.occupied', { percent: Math.round(stats.occupied / stats.total * 100) })}</p>
         </div>
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-yellow-700">{stats.cleaning}</p>
-          <p className="text-xs font-semibold text-yellow-600 mt-1">Being Cleaned</p>
+          <p className="text-xs font-semibold text-yellow-600 mt-1">{t('stats.beingCleaned')}</p>
         </div>
       </div>
 
@@ -183,7 +188,7 @@ export default function BedBoardPage() {
                 filterWard === ward ? "bg-[var(--color-primary)] text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
               )}
             >
-              {ward}
+              {wardLabel(ward)}
             </button>
           ))}
         </div>
@@ -197,7 +202,7 @@ export default function BedBoardPage() {
                 filterStatus === status ? "bg-slate-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
               )}
             >
-              {status}
+              {statusLabel(status)}
             </button>
           ))}
         </div>
@@ -210,12 +215,12 @@ export default function BedBoardPage() {
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Bed className="h-5 w-5 text-slate-500" />
-              <h3 className="font-bold text-slate-900">{ward}</h3>
-              <NeonBadge variant="muted" className="text-[10px]">{wardBeds.length} beds</NeonBadge>
-              <NeonBadge variant="success" className="text-[10px]">{wardBeds.filter(b => b.status === 'Available').length} available</NeonBadge>
+              <h3 className="font-bold text-slate-900">{wardLabel(ward)}</h3>
+              <NeonBadge variant="muted" className="text-[10px]">{t('beds.bedsCount', { count: wardBeds.length })}</NeonBadge>
+              <NeonBadge variant="success" className="text-[10px]">{t('beds.availableCount', { count: wardBeds.filter(b => b.status === 'Available').length })}</NeonBadge>
             </div>
             <span className="text-sm font-semibold text-slate-500">
-              {Math.round(wardBeds.filter(b => b.status === 'Occupied').length / wardBeds.length * 100)}% occupied
+              {t('beds.percentOccupied', { percent: Math.round(wardBeds.filter(b => b.status === 'Occupied').length / wardBeds.length * 100) })}
             </span>
           </div>
           <div className="p-4 grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">

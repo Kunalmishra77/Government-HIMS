@@ -45,12 +45,12 @@ const STAGES: StageConfig[] = [
     label: 'Collecting Docs',
     description: 'Upload required documents',
     icon: ClipboardList,
-    headerBg:  'bg-cyan-50/60',
-    columnBg:  'bg-cyan-50/30',
+    headerBg:  'bg-primary-soft',
+    columnBg:  'bg-primary-soft',
     borderTop: 'border-t-[var(--color-primary)]',
     cardBorder:'border-l-[var(--color-primary)]',
-    iconRing:  'bg-cyan-100 text-[var(--color-primary)]',
-    badgeCls:  'bg-cyan-100 text-[var(--color-primary)]',
+    iconRing:  'bg-accent-soft text-[var(--color-accent)]',
+    badgeCls:  'bg-accent-soft text-[var(--color-accent)]',
     ctaCls:    'bg-slate-100 hover:bg-slate-200 text-slate-700',
   },
   {
@@ -58,12 +58,12 @@ const STAGES: StageConfig[] = [
     label: 'Pre-Auth Sent',
     description: 'Awaiting TPA decision',
     icon: Send,
-    headerBg:  'bg-blue-50/60',
-    columnBg:  'bg-blue-50/30',
-    borderTop: 'border-t-blue-500',
-    cardBorder:'border-l-blue-400',
-    iconRing:  'bg-blue-100 text-blue-700',
-    badgeCls:  'bg-blue-100 text-blue-700',
+    headerBg:  'bg-surface-sunken',
+    columnBg:  'bg-surface-sunken',
+    borderTop: 'border-t-slate-400',
+    cardBorder:'border-l-slate-400',
+    iconRing:  'bg-surface-sunken text-accent',
+    badgeCls:  'bg-surface-sunken text-accent',
     ctaCls:    '',
   },
   {
@@ -97,13 +97,13 @@ const STAGES: StageConfig[] = [
     label: 'Final Claim',
     description: 'Submit for settlement',
     icon: PackageCheck,
-    headerBg:  'bg-cyan-50/60',
-    columnBg:  'bg-cyan-50/30',
-    borderTop: 'border-t-cyan-500',
-    cardBorder:'border-l-cyan-500',
-    iconRing:  'bg-cyan-100 text-cyan-700',
-    badgeCls:  'bg-cyan-100 text-cyan-700',
-    ctaCls:    'bg-cyan-600 hover:bg-cyan-700 text-white',
+    headerBg:  'bg-primary-soft',
+    columnBg:  'bg-primary-soft',
+    borderTop: 'border-t-orange-500',
+    cardBorder:'border-l-orange-500',
+    iconRing:  'bg-accent-soft text-accent',
+    badgeCls:  'bg-accent-soft text-accent',
+    ctaCls:    'bg-primary hover:bg-primary-dark text-white',
   },
 ]
 
@@ -116,8 +116,8 @@ function initials(name: string) {
 }
 
 const AVATAR_COLORS = [
-  'bg-[var(--color-primary)] text-white', 'bg-cyan-600 text-white', 'bg-emerald-600 text-white',
-  'bg-amber-600 text-white', 'bg-blue-600 text-white',   'bg-rose-600 text-white',
+  'bg-[var(--color-primary)] text-white', 'bg-primary text-white', 'bg-emerald-600 text-white',
+  'bg-amber-600 text-white', 'bg-secondary text-white',   'bg-rose-600 text-white',
 ]
 function avatarColor(name: string) {
   const n = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
@@ -223,7 +223,7 @@ function DocUploadModal({ claim, onClose, onDone }: {
                 ) : (
                   <button
                     onClick={() => markUploaded(doc)}
-                    className="flex items-center gap-1.5 text-[12px] font-bold text-[var(--color-primary)] bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 px-3 py-1.5 rounded-lg flex-shrink-0 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-[var(--color-accent)] bg-primary-soft hover:bg-accent-soft border border-primary/20 px-3 py-1.5 rounded-lg flex-shrink-0 transition-colors cursor-pointer"
                   >
                     <Upload className="h-3.5 w-3.5" /> Upload
                   </button>
@@ -408,12 +408,12 @@ function TPAPatientCard({ claim, cfg }: { claim: InsuranceClaim; cfg: StageConfi
 
           {/* Awaiting chip (pre_auth_sent) */}
           {stage === 'pre_auth_sent' && (
-            <div className="mb-3 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
-              <Hourglass className="h-3.5 w-3.5 text-blue-500 flex-shrink-0 animate-pulse" />
+            <div className="mb-3 flex items-center gap-2 bg-surface-sunken border border-border rounded-lg px-3 py-2.5">
+              <Hourglass className="h-3.5 w-3.5 text-accent flex-shrink-0 animate-pulse" />
               <div className="min-w-0">
-                <p className="text-[12px] font-semibold text-blue-800 leading-tight">Awaiting TPA response</p>
+                <p className="text-[12px] font-semibold text-accent leading-tight">Awaiting TPA response</p>
                 {liveClaim.tpaReferenceId && (
-                  <p className="text-[11px] text-blue-600 font-mono mt-0.5">{liveClaim.tpaReferenceId}</p>
+                  <p className="text-[11px] text-accent font-mono mt-0.5">{liveClaim.tpaReferenceId}</p>
                 )}
               </div>
             </div>
@@ -525,7 +525,7 @@ export default function InsurancePipelinePage() {
               End-to-end TPA cashless workflow · {totalActive} active case{totalActive !== 1 ? 's' : ''}
             </p>
           </div>
-          <div className="h-9 w-9 rounded-xl bg-[rgba(8,145,178,0.08)] text-[var(--color-primary)] flex items-center justify-center flex-shrink-0">
+          <div className="h-9 w-9 rounded-xl bg-[rgba(238,107,38,0.08)] text-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
             <Activity className="h-5 w-5" />
           </div>
         </div>

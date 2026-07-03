@@ -38,7 +38,7 @@ export function LabAnomalyPanel({ patientName }: { patientName?: string }) {
         onClick={run}
         disabled={loading}
         aria-busy={loading}
-        className="flex items-center gap-2 px-3.5 py-2 bg-[var(--color-primary)] text-white text-[13px] font-semibold rounded-xl hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+        className="flex items-center gap-2 px-3.5 py-2 bg-[var(--color-primary)] text-white text-[13px] font-semibold rounded-xl hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Bot className="h-4 w-4" aria-hidden="true" />}
         {loading ? 'Scanning…' : 'AI anomaly scan'}

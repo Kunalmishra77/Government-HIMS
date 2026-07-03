@@ -34,6 +34,12 @@ export type Referral = {
   notes: string
   urgent: boolean
   orderedAt: string
+  // Patient linkage + inbox lifecycle (optional: legacy referral records omit these).
+  patientId?: string
+  patientName?: string
+  fromDepartment?: string
+  status?: 'pending' | 'accepted'
+  acceptedAt?: string
 }
 
 export type AdmissionOrder = {
@@ -80,6 +86,7 @@ interface ConsultationState {
   removeRadiologyOrder: (id: string) => void
   markRadiologyOrderSent: (id: string) => void
   addReferral: (referral: Omit<Referral, 'id' | 'orderedAt'>) => void
+  acceptReferral: (id: string) => void
   removeReferral: (id: string) => void
   setAdmissionOrder: (order: Omit<AdmissionOrder, 'id' | 'orderedAt' | 'sent'> | null) => void
   markAdmissionSent: () => void
@@ -182,7 +189,11 @@ export const useConsultationStore = create<ConsultationState>()(persist((set) =>
 
   addReferral: (referral) =>
     set((s) => ({
-      referrals: [...s.referrals, { ...referral, id: `REF-${Date.now()}`, orderedAt: new Date().toISOString() }],
+      referrals: [...s.referrals, { status: 'pending' as const, ...referral, id: `REF-${Date.now()}`, orderedAt: new Date().toISOString() }],
+    })),
+  acceptReferral: (id) =>
+    set((s) => ({
+      referrals: s.referrals.map(r => r.id === id ? { ...r, status: 'accepted' as const, acceptedAt: new Date().toISOString() } : r),
     })),
   removeReferral: (id) => set((s) => ({ referrals: s.referrals.filter(r => r.id !== id) })),
 

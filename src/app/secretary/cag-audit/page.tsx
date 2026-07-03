@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { FileText, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
 
 const CAG_ITEMS = [
@@ -18,32 +19,33 @@ const RTI_ITEMS = [
 
 const STATUS_STYLES = {
   pending: { badge: 'bg-amber-100 text-amber-700', border: 'border-l-amber-400' },
-  draft: { badge: 'bg-blue-100 text-blue-700', border: 'border-l-blue-400' },
+  draft: { badge: 'bg-surface-sunken text-accent', border: 'border-l-slate-400' },
   overdue: { badge: 'bg-rose-100 text-rose-700', border: 'border-l-rose-500' },
   submitted: { badge: 'bg-emerald-100 text-emerald-700', border: 'border-l-emerald-400' },
 }
 
 export default function CagAuditPage() {
+  const t = useTranslations('secretary')
   const [tab, setTab] = useState<'cag' | 'rti'>('cag')
   const overdue = [...CAG_ITEMS, ...RTI_ITEMS].filter(i => i.status === 'overdue' || i.daysLeft < 7).length
 
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">CAG Audit & RTI</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">CAG और RTI · Compliance tracking with SLA counters</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('cagAudit.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('cagAudit.subtitle')}</p>
       </div>
       {overdue > 0 && (
         <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-center gap-3">
           <AlertTriangle className="h-5 w-5 text-rose-600 flex-shrink-0" />
-          <p className="text-sm text-rose-700 font-medium">{overdue} items overdue or due within 7 days — immediate action required</p>
+          <p className="text-sm text-rose-700 font-medium">{t('cagAudit.overdueAlert', { count: overdue })}</p>
         </div>
       )}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
-        {(['cag', 'rti'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-5 py-2 rounded-lg text-sm transition-all ${tab === t ? 'bg-white text-[var(--color-primary)] font-semibold shadow' : 'font-medium text-slate-500 hover:text-slate-700'}`}>
-            {t === 'cag' ? 'CAG Audit paras' : 'RTI applications'}
+        {(['cag', 'rti'] as const).map(tb => (
+          <button key={tb} onClick={() => setTab(tb)}
+            className={`px-5 py-2 rounded-lg text-sm transition-all ${tab === tb ? 'bg-white text-[var(--color-accent)] font-semibold shadow' : 'font-medium text-slate-500 hover:text-slate-700'}`}>
+            {tb === 'cag' ? t('cagAudit.tabCag') : t('cagAudit.tabRti')}
           </button>
         ))}
       </div>
@@ -58,18 +60,18 @@ export default function CagAuditPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.badge}`}>{item.status}</span>
                     {item.daysLeft < 0 ? (
-                      <span className="text-[10px] text-rose-600 font-bold">{Math.abs(item.daysLeft)} days overdue</span>
+                      <span className="text-[10px] text-rose-600 font-bold">{t('cagAudit.daysOverdue', { count: Math.abs(item.daysLeft) })}</span>
                     ) : (
-                      <span className={`text-[10px] font-medium ${item.daysLeft < 15 ? 'text-amber-600' : 'text-[var(--color-foreground-lighter)]'}`}>{item.daysLeft} days left</span>
+                      <span className={`text-[10px] font-medium ${item.daysLeft < 15 ? 'text-amber-600' : 'text-[var(--color-foreground-lighter)]'}`}>{t('cagAudit.daysLeft', { count: item.daysLeft })}</span>
                     )}
                   </div>
                   <p className="text-sm font-semibold text-[var(--color-foreground)]">{item.report}</p>
                   <p className="text-xs text-[var(--color-foreground-muted)] mt-0.5">{item.para}</p>
-                  {item.amount && <p className="text-xs text-rose-600 font-medium mt-1">Financial implication: {item.amount}</p>}
+                  {item.amount && <p className="text-xs text-rose-600 font-medium mt-1">{t('cagAudit.financialImplication', { amount: item.amount })}</p>}
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                  <button className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg">Draft reply</button>
-                  <button className="px-3 py-1.5 border border-[var(--color-border)] text-xs font-medium rounded-lg">Assign</button>
+                  <button className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg">{t('cagAudit.draftReply')}</button>
+                  <button className="px-3 py-1.5 border border-[var(--color-border)] text-xs font-medium rounded-lg">{t('cagAudit.assign')}</button>
                 </div>
               </div>
             </div>
@@ -84,13 +86,13 @@ export default function CagAuditPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.badge}`}>{item.status}</span>
-                    <span className={`text-[10px] font-medium ${item.daysLeft < 7 ? 'text-rose-600' : 'text-[var(--color-foreground-lighter)]'}`}>{item.daysLeft} days left · Due {item.dueDate}</span>
+                    <span className={`text-[10px] font-medium ${item.daysLeft < 7 ? 'text-rose-600' : 'text-[var(--color-foreground-lighter)]'}`}>{t('cagAudit.daysLeftDue', { count: item.daysLeft, date: item.dueDate })}</span>
                   </div>
                   <p className="text-sm font-semibold text-[var(--color-foreground)]">{item.subject}</p>
-                  <p className="text-xs text-[var(--color-foreground-muted)] mt-0.5">Applicant: {item.applicant}</p>
+                  <p className="text-xs text-[var(--color-foreground-muted)] mt-0.5">{t('cagAudit.applicant', { applicant: item.applicant })}</p>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                  <button className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg">Draft reply</button>
+                  <button className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg">{t('cagAudit.draftReply')}</button>
                 </div>
               </div>
             </div>

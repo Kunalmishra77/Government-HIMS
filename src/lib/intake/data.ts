@@ -180,9 +180,9 @@ export function triageScore(
   if (symptoms.includes('Fever') && isVeryLong('Fever')) return { level: 'Critical', color: 'text-red-600', variant: 'danger' }
 
   // High: 2+ high-risk symptoms, OR single high-risk lingering, OR 5+ symptoms total
-  if (highCount >= 2) return { level: 'High', color: 'text-orange-600', variant: 'orange' }
-  if (anyHighLingering) return { level: 'High', color: 'text-orange-600', variant: 'orange' }
-  if (symptoms.length >= 5) return { level: 'High', color: 'text-orange-600', variant: 'orange' }
+  if (highCount >= 2) return { level: 'High', color: 'text-accent', variant: 'orange' }
+  if (anyHighLingering) return { level: 'High', color: 'text-accent', variant: 'orange' }
+  if (symptoms.length >= 5) return { level: 'High', color: 'text-accent', variant: 'orange' }
 
   // Medium: 3+ symptoms or any high-risk symptom present
   if (symptoms.length >= 3) return { level: 'Medium', color: 'text-amber-500', variant: 'warning' }
@@ -193,7 +193,7 @@ export function triageScore(
 
 const TRIAGE_DISPLAY: Record<TriageLevel, { color: string; variant: TriageVariant }> = {
   Critical: { color: 'text-red-600', variant: 'danger' },
-  High: { color: 'text-orange-600', variant: 'orange' },
+  High: { color: 'text-accent', variant: 'orange' },
   Medium: { color: 'text-amber-500', variant: 'warning' },
   Low: { color: 'text-green-500', variant: 'success' },
 }
@@ -207,12 +207,16 @@ export function effectiveTriage(form: IntakeForm): { level: TriageLevel; color: 
 
 // ── Step flow configuration ──────────────────────────────────────────
 export type StepId =
-  | 'welcome' | 'consultType' | 'method' | 'aadhaar' | 'voice'
+  | 'welcome' | 'voice' | 'aadhaar'
   | 'about' | 'symptoms' | 'symptomDuration' | 'department'
   | 'slot' | 'reports' | 'family' | 'review' | 'payment' | 'success'
 
+// The AI voice agent is the single entry point after Welcome. From there it
+// either books the whole visit conversationally, or hands off to the typed form
+// (about → …) or the Aadhaar scan. Consultation type and registration method are
+// no longer screens — the assistant asks them out loud.
 export const STEP_ORDER: StepId[] = [
-  'welcome', 'consultType', 'method', 'aadhaar', 'voice',
+  'welcome', 'voice', 'aadhaar',
   'about', 'symptoms', 'symptomDuration', 'department',
   'slot', 'reports', 'family', 'review', 'payment', 'success',
 ]
@@ -220,8 +224,8 @@ export const STEP_ORDER: StepId[] = [
 /** The steps actually shown for the current branch (conditionals filtered out). */
 export function visibleSteps(form: IntakeForm): StepId[] {
   return STEP_ORDER.filter((id) => {
+    if (id === 'voice') return true
     if (id === 'aadhaar') return form.method === 'aadhaar'
-    if (id === 'voice') return form.method === 'voice'
     if (id === 'slot') return form.consultationType === 'video'
     return true
   })
@@ -229,8 +233,6 @@ export function visibleSteps(form: IntakeForm): StepId[] {
 
 export const STEP_TITLES: Record<StepId, string> = {
   welcome: 'Welcome',
-  consultType: 'How would you like to consult?',
-  method: 'How would you like to enter details?',
   aadhaar: 'Scan your Aadhaar',
   voice: 'Tell us in your words',
   about: 'Your details',
@@ -248,7 +250,6 @@ export const STEP_TITLES: Record<StepId, string> = {
 /** Whether the primary CTA is enabled for a given step. */
 export function canContinue(id: StepId, form: IntakeForm): boolean {
   switch (id) {
-    case 'consultType': return form.consultationType !== ''
     case 'about': {
       const n = parseInt(form.age, 10)
       return form.name.trim().length > 0

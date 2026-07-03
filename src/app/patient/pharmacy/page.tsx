@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 
 const RX_STATUS: Record<PrepStatus, { label: string; tint: string }> = {
   queued: { label: "Queued at pharmacy", tint: "bg-amber-50 text-amber-700" },
-  preparing: { label: "Being prepared", tint: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]" },
+  preparing: { label: "Being prepared", tint: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]" },
   ready: { label: "Ready for collection", tint: "bg-green-50 text-green-700" },
   collected: { label: "Collected", tint: "bg-slate-100 text-slate-500" },
 }
@@ -89,12 +89,12 @@ export default function PharmacyPage() {
                     const unavailable = m.inStock === false
                     const substituted = !!m.substitutedFrom
                     return (
-                      <span key={i} className={cn("text-[12px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1", unavailable ? "bg-red-50 text-red-600" : substituted ? "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]" : "text-slate-600 bg-slate-100")}>
+                      <span key={i} className={cn("text-[12px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1", unavailable ? "bg-red-50 text-red-600" : substituted ? "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]" : "text-slate-600 bg-slate-100")}>
                         {m.name} ×{m.quantity}
                         {m.supply === "advised_outside" && <span className="text-[10px] font-bold text-amber-700">· buy from outside</span>}
-                        {m.supply === "order_raised" && <span className="text-[10px] font-bold text-[var(--color-primary)]">· being arranged</span>}
+                        {m.supply === "order_raised" && <span className="text-[10px] font-bold text-[var(--color-accent)]">· being arranged</span>}
                         {unavailable && (m.supply ?? "pharmacy") === "pharmacy" && <span className="text-[10px] font-bold text-red-600">· not in stock</span>}
-                        {substituted && <span className="text-[10px] font-bold text-[var(--color-primary)]">· substituted (was {m.substitutedFrom})</span>}
+                        {substituted && <span className="text-[10px] font-bold text-[var(--color-accent)]">· substituted (was {m.substitutedFrom})</span>}
                       </span>
                     )
                   })}
@@ -130,7 +130,7 @@ export default function PharmacyPage() {
             <div key={m.name} className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <span className="h-10 w-10 rounded-2xl bg-[rgba(8,145,178,0.07)] flex items-center justify-center flex-shrink-0"><Pill className="h-5 w-5 text-[var(--color-primary)]" /></span>
+                  <span className="h-10 w-10 rounded-2xl bg-[rgba(238,107,38,0.07)] flex items-center justify-center flex-shrink-0"><Pill className="h-5 w-5 text-[var(--color-accent)]" /></span>
                   <div>
                     <p className="text-[16px] font-bold text-slate-900">{m.name}</p>
                     <p className="text-[13px] text-slate-500">{m.purpose}</p>
@@ -144,7 +144,7 @@ export default function PharmacyPage() {
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <span className="text-[12px] font-semibold text-slate-400 flex items-center gap-1 mr-1"><Clock className="h-3.5 w-3.5" /> Reminders</span>
-                {m.times.map(t => <span key={t} className="text-[12.5px] font-semibold px-2.5 py-1 rounded-lg bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]">{t}</span>)}
+                {m.times.map(t => <span key={t} className="text-[12.5px] font-semibold px-2.5 py-1 rounded-lg bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]">{t}</span>)}
               </div>
 
               <div className="mt-3 flex items-center justify-between">
@@ -172,10 +172,10 @@ export default function PharmacyPage() {
       <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
-            <span className="h-10 w-10 rounded-2xl bg-[rgba(8,145,178,0.07)] flex items-center justify-center flex-shrink-0"><Truck className="h-5 w-5 text-[var(--color-primary)]" /></span>
+            <span className="h-10 w-10 rounded-2xl bg-[rgba(238,107,38,0.07)] flex items-center justify-center flex-shrink-0"><Truck className="h-5 w-5 text-[var(--color-accent)]" /></span>
             Home delivery
           </h3>
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]">ETA today, 6:30 PM</span>
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]">ETA today, 6:30 PM</span>
         </div>
         <p className="text-[12.5px] text-slate-500 ml-12 -mt-1">Order #RX-2026-4471 · 3 items</p>
 
@@ -187,7 +187,7 @@ export default function PharmacyPage() {
                 <div className={cn("h-8 w-8 rounded-full flex items-center justify-center", i <= DELIVERY_CURRENT ? "bg-[var(--color-primary)] text-white" : "bg-slate-100 text-slate-400")}>
                   {i < DELIVERY_CURRENT ? <CheckCircle className="h-4.5 w-4.5" /> : <s.Icon className="h-4 w-4" />}
                 </div>
-                <span className={cn("text-[11px] font-semibold text-center", i <= DELIVERY_CURRENT ? "text-[var(--color-primary)]" : "text-slate-400")}>{s.label}</span>
+                <span className={cn("text-[11px] font-semibold text-center", i <= DELIVERY_CURRENT ? "text-[var(--color-accent)]" : "text-slate-400")}>{s.label}</span>
               </div>
               {i < DELIVERY_STAGES.length - 1 && <div className={cn("flex-1 h-0.5 mx-1 -mt-4 rounded", i < DELIVERY_CURRENT ? "bg-[var(--color-primary)]" : "bg-slate-200")} />}
             </div>
@@ -206,7 +206,7 @@ export default function PharmacyPage() {
       {/* Pharmacy bills */}
       <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5">
         <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2 mb-3">
-          <span className="h-10 w-10 rounded-2xl bg-[rgba(8,145,178,0.07)] flex items-center justify-center flex-shrink-0"><Receipt className="h-5 w-5 text-[var(--color-primary)]" /></span>
+          <span className="h-10 w-10 rounded-2xl bg-[rgba(238,107,38,0.07)] flex items-center justify-center flex-shrink-0"><Receipt className="h-5 w-5 text-[var(--color-accent)]" /></span>
           Pharmacy bills
         </h3>
         <div className="rounded-2xl bg-slate-50 p-4 space-y-2">
@@ -218,7 +218,7 @@ export default function PharmacyPage() {
           ))}
           <div className="border-t border-slate-200 pt-2 flex items-center justify-between font-bold text-[14px]">
             <span className="text-slate-900">Total</span>
-            <span className="text-[var(--color-primary)]">₹{billTotal}</span>
+            <span className="text-[var(--color-accent)]">₹{billTotal}</span>
           </div>
         </div>
       </div>

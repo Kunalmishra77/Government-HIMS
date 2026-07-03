@@ -19,11 +19,11 @@ import { usePatientProfileStore } from "@/store/usePatientProfileStore"
 import { LogOut, ChevronRight as ChevronRightIcon } from "lucide-react"
 
 const PILLAR_CONFIG: Record<ClearancePillar, { label: string; icon: React.ElementType; color: string }> = {
-  doctor:    { label: 'Doctor',    icon: Stethoscope, color: 'text-[var(--color-primary)]' },
+  doctor:    { label: 'Doctor',    icon: Stethoscope, color: 'text-[var(--color-accent)]' },
   nursing:   { label: 'Nursing',   icon: User,        color: 'text-green-500' },
-  pharmacy:  { label: 'Pharmacy',  icon: Pill,        color: 'text-[var(--color-primary)]' },
-  billing:   { label: 'Billing',   icon: Receipt,     color: 'text-orange-500' },
-  insurance: { label: 'Insurance', icon: ShieldCheck, color: 'text-[var(--color-primary)]' },
+  pharmacy:  { label: 'Pharmacy',  icon: Pill,        color: 'text-[var(--color-accent)]' },
+  billing:   { label: 'Billing',   icon: Receipt,     color: 'text-accent' },
+  insurance: { label: 'Insurance', icon: ShieldCheck, color: 'text-[var(--color-accent)]' },
 }
 
 const PILLARS: ClearancePillar[] = ['doctor', 'nursing', 'pharmacy', 'billing', 'insurance']
@@ -121,7 +121,7 @@ function PatientCard({ patient, highlighted = false, dimmed = false }: { patient
       className={cn(
         "bg-white border shadow-sm rounded-xl overflow-hidden transition-all",
         patient.exitClearanceIssued && "opacity-60",
-        highlighted && "ring-2 ring-blue-400 ring-offset-2 shadow-md",
+        highlighted && "ring-2 ring-primary/25 ring-offset-2 shadow-md",
         dimmed && "opacity-50",
       )}
     >
@@ -142,7 +142,7 @@ function PatientCard({ patient, highlighted = false, dimmed = false }: { patient
             <span className="text-sm text-slate-500">{patient.payerType}</span>
             {(patient.payerType?.includes('PMJAY') || patient.payerType?.includes('CMHIS')) &&
               getProfile(patient.patientId)?.abhaId && (
-                <span className="text-xs text-teal-600 font-medium">
+                <span className="text-xs text-accent font-medium">
                   · ABHA: {getProfile(patient.patientId)?.abhaId}
                 </span>
               )
@@ -241,7 +241,7 @@ function PatientCard({ patient, highlighted = false, dimmed = false }: { patient
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Blockers ({unresolvedBlockers.length} active)</p>
-                  <button onClick={() => setShowBlockerForm(!showBlockerForm)} className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] flex items-center gap-1 cursor-pointer">
+                  <button onClick={() => setShowBlockerForm(!showBlockerForm)} className="text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-primary-dark)] flex items-center gap-1 cursor-pointer">
                     <Plus className="h-3 w-3" /> Add Blocker
                   </button>
                 </div>
@@ -304,12 +304,12 @@ function PatientCard({ patient, highlighted = false, dimmed = false }: { patient
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Discharge Summary</p>
                   {!patient.summaryDrafted && (
-                    <button onClick={handleDraftSummary} className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] flex items-center gap-1 cursor-pointer">
+                    <button onClick={handleDraftSummary} className="text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-primary-dark)] flex items-center gap-1 cursor-pointer">
                       <Sparkles className="h-3 w-3" /> AI Draft
                     </button>
                   )}
                   {patient.summaryDrafted && (
-                    <button onClick={() => setShowSummary(!showSummary)} className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] cursor-pointer">
+                    <button onClick={() => setShowSummary(!showSummary)} className="text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-primary-dark)] cursor-pointer">
                       {showSummary ? "Hide" : "View"} Summary
                     </button>
                   )}
@@ -367,7 +367,7 @@ function PatientCard({ patient, highlighted = false, dimmed = false }: { patient
                   }
                 </Button>
                 {!patient.summaryApproved && !patient.exitClearanceIssued && (
-                  <p className="text-xs text-center text-orange-600 font-medium mt-2">Discharge summary must be approved before exit</p>
+                  <p className="text-xs text-center text-accent font-medium mt-2">Discharge summary must be approved before exit</p>
                 )}
               </div>
             </div>
@@ -494,7 +494,7 @@ export default function DischargeDashboard() {
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-600">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--color-primary-light)] opacity-60 motion-safe:animate-ping" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[rgba(8,145,178,0.07)]0" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[rgba(238,107,38,0.07)]0" />
               </span>
               {today.length} in flight
             </span>
@@ -505,9 +505,9 @@ export default function DischargeDashboard() {
         </div>
         <div className="px-4 pb-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 lg:gap-4 items-stretch">
           {[
-            { label: 'Initiated',   sub: 'Order + draft',     count: initiated,      icon: FileText,     fg: 'text-slate-900', card: 'border-slate-200 bg-white', chip: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',     ring: 'ring-blue-300' },
+            { label: 'Initiated',   sub: 'Order + draft',     count: initiated,      icon: FileText,     fg: 'text-slate-900', card: 'border-slate-200 bg-white', chip: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',     ring: 'ring-primary/25' },
             { label: 'Clearing',    sub: 'Pillars in flight', count: clearing,       icon: Clock,        fg: 'text-slate-900', card: 'border-slate-200 bg-white', chip: 'bg-amber-50 text-amber-600',   ring: 'ring-amber-300' },
-            { label: 'Ready',       sub: '8/9 cleared',       count: ready,          icon: CheckCircle2, fg: 'text-slate-900', card: 'border-slate-200 bg-white', chip: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]', ring: 'ring-cyan-300' },
+            { label: 'Ready',       sub: '8/9 cleared',       count: ready,          icon: CheckCircle2, fg: 'text-slate-900', card: 'border-slate-200 bg-white', chip: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]', ring: 'ring-primary/25' },
             { label: 'Exit issued', sub: 'Today',             count: cleared.length, icon: LogOut,       fg: 'text-slate-900', card: 'border-slate-200 bg-white', chip: 'bg-emerald-50 text-emerald-600', ring: 'ring-emerald-300' },
             { label: 'Blockers',    sub: 'Stuck steps',       count: blockerCount,   icon: AlertCircle,  alert: true, ring: 'ring-red-300',
               fg: blockerCount > 0 ? 'text-red-600' : 'text-slate-300',
@@ -553,10 +553,10 @@ export default function DischargeDashboard() {
       {/* Header stats */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: "Discharging Today", value: today.length, color: "text-[var(--color-primary)]", bg: "bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)]" },
+          { label: "Discharging Today", value: today.length, color: "text-[var(--color-accent)]", bg: "bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)]" },
           { label: "Active Blockers", value: blockerCount, color: blockerCount > 0 ? "text-red-600" : "text-green-600", bg: blockerCount > 0 ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200" },
           { label: "Clearances Obtained", value: `${clearancesDone}/${clearancesTotal}`, color: "text-green-600", bg: "bg-green-50 border-green-200" },
-          { label: "Exits Issued Today", value: cleared.length, color: "text-[var(--color-primary)]", bg: "bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)]" },
+          { label: "Exits Issued Today", value: cleared.length, color: "text-[var(--color-accent)]", bg: "bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)]" },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={cn("rounded-xl border p-5", bg)}>
             <p className={cn("text-3xl font-bold", color)}>{value}</p>
@@ -582,7 +582,7 @@ export default function DischargeDashboard() {
           <h2 className="text-lg font-bold text-slate-900">Today's Discharge Queue</h2>
           {highlightStage && (
             <button onClick={() => setHighlightStage(null)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] text-[var(--color-primary)] hover:bg-[rgba(8,145,178,0.14)] transition-colors cursor-pointer">
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] text-[var(--color-accent)] hover:bg-[rgba(238,107,38,0.14)] transition-colors cursor-pointer">
               Highlighting: {highlightStage} · {highlightCount}
               <X className="h-3 w-3" />
             </button>

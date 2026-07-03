@@ -3,19 +3,21 @@
 import { useState } from "react"
 import { Stethoscope, Users, Building2, Video, FlaskConical, Pill, BedDouble } from "lucide-react"
 import { useDoctorStatsStore, STAT_DOCTORS, PERIODS, type PeriodKey } from "@/store/useDoctorStatsStore"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 const CARD = "rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_4px_16px_rgba(15,23,42,0.04)]"
 const COLS = [
-  { key: 'consults', label: 'Consults', icon: Users },
-  { key: 'opd', label: 'In-person', icon: Building2 },
-  { key: 'online', label: 'Online', icon: Video },
-  { key: 'tests', label: 'Tests', icon: FlaskConical },
-  { key: 'prescriptions', label: 'Rx', icon: Pill },
-  { key: 'admissions', label: 'Admits', icon: BedDouble },
+  { key: 'consults', labelKey: 'docActivity.colConsults', icon: Users },
+  { key: 'opd', labelKey: 'docActivity.colInPerson', icon: Building2 },
+  { key: 'online', labelKey: 'docActivity.colOnline', icon: Video },
+  { key: 'tests', labelKey: 'docActivity.colTests', icon: FlaskConical },
+  { key: 'prescriptions', labelKey: 'docActivity.colRx', icon: Pill },
+  { key: 'admissions', labelKey: 'docActivity.colAdmits', icon: BedDouble },
 ] as const
 
 export default function AdminDoctorActivity() {
+  const t = useTranslations('admin')
   const totalsFor = useDoctorStatsStore(s => s.totalsFor)
   const [period, setPeriod] = useState<PeriodKey>('month')
 
@@ -26,8 +28,8 @@ export default function AdminDoctorActivity() {
   return (
     <div className="max-w-5xl mx-auto pb-8">
       <div className="mb-4">
-        <h1 className="text-[24px] font-bold text-slate-900 tracking-tight flex items-center gap-2"><Stethoscope className="h-6 w-6 text-[var(--color-primary)]" /> Doctor Activity</h1>
-        <p className="text-[13px] text-slate-500 mt-1">Per-doctor consultations, tests, prescriptions & admissions — for accountability.</p>
+        <h1 className="text-[24px] font-bold text-slate-900 tracking-tight flex items-center gap-2"><Stethoscope className="h-6 w-6 text-[var(--color-accent)]" /> {t('docActivity.title')}</h1>
+        <p className="text-[13px] text-slate-500 mt-1">{t('docActivity.subtitle')}</p>
       </div>
 
       {/* Period selector */}
@@ -35,7 +37,7 @@ export default function AdminDoctorActivity() {
         {PERIODS.map(p => (
           <button key={p.key} onClick={() => setPeriod(p.key)}
             className={cn("px-3 py-1.5 rounded-lg text-[12.5px] font-semibold transition", period === p.key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
-            {p.label}
+            {t.has(`docActivity.period.${p.key}`) ? t(`docActivity.period.${p.key}`) : p.label}
           </button>
         ))}
       </div>
@@ -46,19 +48,19 @@ export default function AdminDoctorActivity() {
           <div key={c.key} className={cn(CARD, "p-4")}>
             <span className="h-8 w-8 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center"><c.icon className="h-4 w-4" /></span>
             <p className="text-[20px] font-bold text-slate-900 mt-2 leading-none tabular-nums">{grand[c.key].toLocaleString('en-IN')}</p>
-            <p className="text-[11.5px] font-semibold text-slate-500 mt-1">{c.label}</p>
+            <p className="text-[11.5px] font-semibold text-slate-500 mt-1">{t(c.labelKey)}</p>
           </div>
         ))}
       </div>
 
       {/* Per-doctor table */}
       <div className={cn(CARD, "p-5 overflow-x-auto")}>
-        <h3 className="text-[15px] font-bold text-slate-900 mb-3">By doctor</h3>
+        <h3 className="text-[15px] font-bold text-slate-900 mb-3">{t('docActivity.byDoctor')}</h3>
         <table className="w-full border-collapse min-w-[640px]">
           <thead>
             <tr className="border-b border-slate-100">
-              <th className="text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 pb-2.5 pr-3">Doctor</th>
-              {COLS.map(c => <th key={c.key} className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 pb-2.5 px-2">{c.label}</th>)}
+              <th className="text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 pb-2.5 pr-3">{t('docActivity.doctor')}</th>
+              {COLS.map(c => <th key={c.key} className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 pb-2.5 px-2">{t(c.labelKey)}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -72,7 +74,7 @@ export default function AdminDoctorActivity() {
                 </td>
                 {COLS.map(c => (
                   <td key={c.key} className="py-3 px-2 text-center">
-                    <span className={cn("text-[14px] font-bold tabular-nums", c.key === 'consults' ? "text-[var(--color-primary)]" : "text-slate-800")}>{t[c.key].toLocaleString('en-IN')}</span>
+                    <span className={cn("text-[14px] font-bold tabular-nums", c.key === 'consults' ? "text-[var(--color-accent)]" : "text-slate-800")}>{t[c.key].toLocaleString('en-IN')}</span>
                   </td>
                 ))}
               </tr>

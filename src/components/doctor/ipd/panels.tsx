@@ -30,7 +30,7 @@ export function RoundModal({ ip, onClose }: { ip: Inpatient; onClose: () => void
   const [note, setNote] = useState('')
   const [plan, setPlan] = useState('')
   const [condition, setCond] = useState<Condition>(ip.condition)
-  const field = "w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100"
+  const field = "w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-primary/20"
 
   const save = () => {
     if (!note.trim()) { toast.error('Add a progress note'); return }
@@ -89,7 +89,7 @@ export function SurgeryPanel({ ip }: { ip: Inpatient }) {
   const [ot, setOt] = useState('OT-1')
   const [when, setWhen] = useState(() => { const d = new Date(Date.now() + 2 * 3600000); d.setMinutes(0); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) })
   const [postOp, setPostOp] = useState('')
-  const field = "w-full h-9 rounded-lg border border-slate-200 px-2.5 text-[13px] text-slate-900 outline-none focus:ring-2 focus:ring-blue-100"
+  const field = "w-full h-9 rounded-lg border border-slate-200 px-2.5 text-[13px] text-slate-900 outline-none focus:ring-2 focus:ring-primary/20"
 
   if (!sg) {
     return (
@@ -171,7 +171,7 @@ export function DischargePanel({ ip }: { ip: Inpatient }) {
   const [summary, setSummary] = useState(d?.summary ?? `Admitted with ${ip.diagnosis}. Treated and clinically stable. Fit for discharge with the plan below.`)
   const [fu, setFu] = useState(d?.followUpDate ?? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10))
   const [flags, setFlags] = useState(d?.redFlags.join(', ') ?? 'Chest pain or breathlessness, High fever, Persistent vomiting')
-  const field = "w-full rounded-lg border border-slate-200 px-2.5 py-2 text-[13px] text-slate-900 outline-none focus:ring-2 focus:ring-blue-100"
+  const field = "w-full rounded-lg border border-slate-200 px-2.5 py-2 text-[13px] text-slate-900 outline-none focus:ring-2 focus:ring-primary/20"
 
   if (ip.stage === 'discharged') return (
     <div className="space-y-2">
@@ -193,7 +193,7 @@ export function DischargePanel({ ip }: { ip: Inpatient }) {
             <span className={cn("text-[12.5px] font-medium flex items-center gap-1.5", d.pillars[p.key] ? "text-slate-700" : "text-slate-400")}>
               {d.pillars[p.key] ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Clock className="h-3.5 w-3.5 text-amber-400" />} {p.label}
             </span>
-            {!d.pillars[p.key] && <button onClick={() => clearPillar(ip.patientId, p.key)} className="text-[11px] font-bold text-[var(--color-primary)]">Clear</button>}
+            {!d.pillars[p.key] && <button onClick={() => clearPillar(ip.patientId, p.key)} className="text-[11px] font-bold text-[var(--color-accent)]">Clear</button>}
           </div>
         ))}
       </div>

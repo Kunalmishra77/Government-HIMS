@@ -34,10 +34,10 @@ const STATUS_TINT: Record<StudyStatus, string> = {
   ordered: 'bg-slate-100 text-slate-600',
   scheduled: 'bg-amber-50 text-amber-700',
   arrived: 'bg-amber-50 text-amber-700',
-  acquiring: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  acquired: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  reading: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  reported: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
+  acquiring: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  acquired: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  reading: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  reported: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
   verified: 'bg-emerald-50 text-emerald-700',
   released: 'bg-emerald-50 text-emerald-700',
   cancelled: 'bg-red-50 text-red-700',
@@ -116,8 +116,8 @@ export default function RadiologyPage() {
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="flex items-start gap-3">
                     <span className={cn('h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0',
-                      hasCritical ? 'bg-red-50' : 'bg-[rgba(8,145,178,0.07)]')}>
-                      <ScanLine className={cn('h-5 w-5', hasCritical ? 'text-red-600' : 'text-[var(--color-primary)]')} />
+                      hasCritical ? 'bg-red-50' : 'bg-[rgba(238,107,38,0.07)]')}>
+                      <ScanLine className={cn('h-5 w-5', hasCritical ? 'text-red-600' : 'text-[var(--color-accent)]')} />
                     </span>
                     <div>
                       <p className="text-[16px] font-bold text-slate-900">{study.name}</p>
@@ -149,8 +149,8 @@ export default function RadiologyPage() {
 
                 {/* Plain-language AI summary */}
                 <div className={cn('rounded-2xl p-3 flex items-start gap-2.5',
-                  hasCritical ? 'bg-red-50 border border-red-100' : 'bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.15)]')}>
-                  <Sparkles className={cn('h-4 w-4 flex-shrink-0 mt-0.5', hasCritical ? 'text-red-600' : 'text-[var(--color-primary)]')} />
+                  hasCritical ? 'bg-red-50 border border-red-100' : 'bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.15)]')}>
+                  <Sparkles className={cn('h-4 w-4 flex-shrink-0 mt-0.5', hasCritical ? 'text-red-600' : 'text-[var(--color-accent)]')} />
                   <div className="min-w-0">
                     <p className={cn('text-[11px] font-bold', hasCritical ? 'text-red-900' : 'text-[var(--color-primary-dark)]')}>What this means · AI explanation (not a diagnosis)</p>
                     <p className={cn('text-[13px] mt-0.5', hasCritical ? 'text-red-800' : 'text-[var(--color-primary-dark)]')}>{plainSummary(study)}</p>

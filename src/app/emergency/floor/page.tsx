@@ -23,20 +23,22 @@ import { useRadiologyStudiesStore } from "@/store/useRadiologyStudiesStore"
 import { notifyAndAudit } from "@/lib/notifyAndAudit"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
-const DISPOSITIONS: { value: Disposition; label: string; tone: string }[] = [
-  { value: 'admit_ward', label: 'Admit ward', tone: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] ring-blue-200' },
-  { value: 'admit_icu',  label: 'Admit ICU',  tone: 'bg-red-50 text-red-700 ring-red-200' },
-  { value: 'admit_hdu',  label: 'Admit HDU',  tone: 'bg-orange-50 text-orange-700 ring-orange-200' },
-  { value: 'discharge',  label: 'Discharge',  tone: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
-  { value: 'transfer',   label: 'Transfer',   tone: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] ring-blue-200' },
-  { value: 'against_medical_advice', label: 'AMA', tone: 'bg-amber-50 text-amber-700 ring-amber-200' },
-  { value: 'deceased',   label: 'Deceased',   tone: 'bg-slate-100 text-slate-700 ring-slate-200' },
+const DISPOSITIONS: { value: Disposition; tone: string }[] = [
+  { value: 'admit_ward', tone: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] ring-primary/25' },
+  { value: 'admit_icu',  tone: 'bg-red-50 text-red-700 ring-red-200' },
+  { value: 'admit_hdu',  tone: 'bg-primary-soft text-accent ring-primary/25' },
+  { value: 'discharge',  tone: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
+  { value: 'transfer',   tone: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] ring-primary/25' },
+  { value: 'against_medical_advice', tone: 'bg-amber-50 text-amber-700 ring-amber-200' },
+  { value: 'deceased',   tone: 'bg-slate-100 text-slate-700 ring-slate-200' },
 ]
 
 const minsSince = (iso: string) => Math.round((Date.now() - new Date(iso).getTime()) / 60000)
 
 export default function ERFloor() {
+  const t = useTranslations('emergency')
   const patients = useERStore(s => s.patients)
   const mci = useERStore(s => s.mciActive)
   const toggleMCI = useERStore(s => s.toggleMCI)
@@ -81,14 +83,14 @@ export default function ERFloor() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-[#0F172A] flex items-center gap-2">
-            <Activity className="h-6 w-6 text-red-600" /> ER Floor
+            <Activity className="h-6 w-6 text-red-600" /> {t('floor.title')}
           </h1>
-          <p className="text-sm text-[#64748B] mt-1">Treatment areas · NEWS2 / qSOFA at the bedside · disposition closes the visit</p>
+          <p className="text-sm text-[#64748B] mt-1">{t('floor.subtitle')}</p>
         </div>
-        <button onClick={() => { toggleMCI(); toast(mci ? 'MCI mode cleared' : 'MCI MODE activated — all teams on standby') }}
+        <button onClick={() => { toggleMCI(); toast(mci ? t('mci.cleared') : t('mci.activatedStandby')) }}
           className={cn('flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl cursor-pointer',
             mci ? 'bg-red-100 text-red-700 ring-1 ring-red-300 animate-pulse' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
-          <AlertTriangle className="h-3.5 w-3.5" />{mci ? 'MCI ACTIVE — click to clear' : 'Declare MCI'}
+          <AlertTriangle className="h-3.5 w-3.5" />{mci ? t('mci.activeClear') : t('mci.declare')}
         </button>
       </div>
 
@@ -103,7 +105,7 @@ export default function ERFloor() {
           ))}
         </div>
         <div className="flex gap-1 p-1 rounded-xl bg-slate-100">
-          {([['all', 'All'], ['mine', 'My patients']] as const).map(([k, label]) => (
+          {([['all', t('floor.scopeAll')], ['mine', t('floor.scopeMine')]] as const).map(([k, label]) => (
             <button key={k} onClick={() => setScope(k)}
               className={cn('px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer transition',
                 scope === k ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>{label}</button>
@@ -115,7 +117,7 @@ export default function ERFloor() {
         {rows.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <Activity className="h-9 w-9 mb-2 opacity-40" />
-            <p className="text-sm font-semibold">No patients in {TREATMENT_AREAS.find(a => a.code === area)?.label}</p>
+            <p className="text-sm font-semibold">{t('floor.noPatientsInArea', { area: TREATMENT_AREAS.find(a => a.code === area)?.label ?? area })}</p>
           </div>
         )}
         {rows.map(p => {
@@ -132,7 +134,7 @@ export default function ERFloor() {
               labOrders={patientLabOrders}
               radStudies={patientRadStudies}
               onToggle={() => setExpandedId(id => id === p.id ? null : p.id)}
-              onClaim={() => { claim(p.id, me); toast.success(`${p.name} on your counter`) }}
+              onClaim={() => { claim(p.id, me); toast.success(t('floor.onYourCounter', { name: p.name })) }}
               onDraft={(patch) => setDraft(prev => ({ ...prev, [p.id]: { ...(prev[p.id] ?? {}), ...patch } }))}
               onSaveVitals={() => {
                 const v = draft[p.id]
@@ -140,22 +142,22 @@ export default function ERFloor() {
                 if (!v || Object.keys(v).length === 0) { return }
                 recordVitals(p.id, v, me.name)
                 setDraft(prev => { const c = { ...prev }; delete c[p.id]; return c })
-                toast.success('Vitals updated')
+                toast.success(t('floor.vitalsUpdated'))
               }}
               onDispoNote={(v) => setDispoNote(prev => ({ ...prev, [p.id]: v }))}
               onDispose={(d) => {
                 // Block disposition on trauma cases without MLC documentation.
                 if (p.trauma && !p.mlc && (d === 'admit_ward' || d === 'admit_icu' || d === 'admit_hdu' || d === 'deceased' || d === 'discharge')) {
-                  toast.error('MLC documentation required before disposition on this trauma case')
+                  toast.error(t('floor.mlcRequired'))
                   setMlcFor(p)
                   return
                 }
                 setDisposition(p.id, d, dispoNote[p.id])
-                toast.success(`Disposition: ${DISPOSITIONS.find(x => x.value === d)?.label}`)
+                toast.success(t('floor.dispositionSet', { label: t(`dispositions.${d}`) }))
               }}
               onComplete={() => {
                 dispose(p.id)
-                toast.success(`${p.name} discharged from ER`)
+                toast.success(t('floor.dischargedFromER', { name: p.name }))
               }}
               onOpenMLC={() => setMlcFor(p)}
               onPlaceLab={(testCode, label) => {
@@ -163,9 +165,9 @@ export default function ERFloor() {
                   patientId: p.patientId, patientName: p.name,
                   source: 'ER', doctorName: me.name, paymentMode: 'Cash',
                   testCodes: [testCode],
-                  clinicalNotes: `STAT from ER · ${p.chiefComplaint}`,
+                  clinicalNotes: t('floor.clinicalNotes', { complaint: p.chiefComplaint }),
                 })
-                toast.success(`${label} ordered · Lab notified`)
+                toast.success(t('floor.labOrderedNotified', { label }))
               }}
               onPlaceRad={(code, label) => {
                 addRadOrder({
@@ -175,17 +177,17 @@ export default function ERFloor() {
                   clinicalQuestion: p.chiefComplaint,
                   priority: 'STAT',
                 })
-                toast.success(`${label} ordered · Radiology notified`)
+                toast.success(t('floor.radOrderedNotified', { label }))
               }}
               onPlaceProtocol={(label, role) => {
                 notifyAndAudit({
                   to: role, type: 'system', priority: 'high',
-                  title: `ER protocol order · ${p.name}`,
-                  body: `${label} for ${p.name} (${p.chiefComplaint}). Bedside in ER ${p.bedNumber ?? p.area ?? ''}.`,
+                  title: t('floor.protocolTitle', { name: p.name }),
+                  body: t('floor.protocolBody', { label, name: p.name, complaint: p.chiefComplaint, location: p.bedNumber ?? p.area ?? '' }),
                   patientName: p.name,
-                  audit: { action: role === 'pharmacy' ? 'prescription_create' : 'er_triage', resource: 'er_patient', resourceId: p.id, detail: `ER protocol: ${label}`, userName: me.name },
+                  audit: { action: role === 'pharmacy' ? 'prescription_create' : 'er_triage', resource: 'er_patient', resourceId: p.id, detail: t('floor.protocolDetail', { label }), userName: me.name },
                 })
-                toast.success(`${label} · ${role} notified`)
+                toast.success(t('floor.protocolNotified', { label, role }))
               }}
             />
           )
@@ -206,21 +208,21 @@ export default function ERFloor() {
 // entry: label, catalog code, kind (lab/imaging/protocol), target role
 // (for protocol orders the role that gets notified — pharmacy, nurse).
 type ERQuickOrder =
-  | { kind: 'lab';      code: string; label: string; icon: React.ElementType }
-  | { kind: 'imaging';  code: string; label: string; icon: React.ElementType }
-  | { kind: 'protocol'; role: 'pharmacy' | 'nurse'; label: string; icon: React.ElementType }
+  | { kind: 'lab';      code: string; labelKey: string; icon: React.ElementType }
+  | { kind: 'imaging';  code: string; labelKey: string; icon: React.ElementType }
+  | { kind: 'protocol'; role: 'pharmacy' | 'nurse'; labelKey: string; icon: React.ElementType }
 
 const ER_QUICK_ORDERS: ERQuickOrder[] = [
-  { kind: 'lab',      code: 'CBC',         label: 'STAT CBC',                icon: FlaskConical },
-  { kind: 'lab',      code: 'TROPI',       label: 'STAT Troponin I',         icon: Heart },
-  { kind: 'lab',      code: 'RFT',         label: 'STAT RFT + electrolytes', icon: FlaskConical },
-  { kind: 'lab',      code: 'CRP',         label: 'STAT CRP',                icon: FlaskConical },
-  { kind: 'imaging',  code: 'XR_CHEST',    label: 'STAT chest X-ray',        icon: ScanLine },
-  { kind: 'imaging',  code: 'CT_HEAD',     label: 'STAT CT Head (non-con)',  icon: ScanLine },
-  { kind: 'imaging',  code: 'US_ABDO',     label: 'STAT USG abdomen (FAST)', icon: ScanLine },
-  { kind: 'protocol', role: 'pharmacy', label: 'IV fluids · RL 500 mL',      icon: Droplet },
-  { kind: 'protocol', role: 'nurse',    label: 'O₂ 4L nasal cannula',         icon: Wind },
-  { kind: 'protocol', role: 'pharmacy', label: 'Loading-dose protocol',       icon: Pill },
+  { kind: 'lab',      code: 'CBC',         labelKey: 'statCbc',        icon: FlaskConical },
+  { kind: 'lab',      code: 'TROPI',       labelKey: 'statTroponin',   icon: Heart },
+  { kind: 'lab',      code: 'RFT',         labelKey: 'statRft',        icon: FlaskConical },
+  { kind: 'lab',      code: 'CRP',         labelKey: 'statCrp',        icon: FlaskConical },
+  { kind: 'imaging',  code: 'XR_CHEST',    labelKey: 'statChestXray',  icon: ScanLine },
+  { kind: 'imaging',  code: 'CT_HEAD',     labelKey: 'statCtHead',     icon: ScanLine },
+  { kind: 'imaging',  code: 'US_ABDO',     labelKey: 'statUsgAbdomen', icon: ScanLine },
+  { kind: 'protocol', role: 'pharmacy', labelKey: 'ivFluids',    icon: Droplet },
+  { kind: 'protocol', role: 'nurse',    labelKey: 'oxygen',      icon: Wind },
+  { kind: 'protocol', role: 'pharmacy', labelKey: 'loadingDose', icon: Pill },
 ]
 
 function FloorRow(props: {
@@ -242,6 +244,7 @@ function FloorRow(props: {
   onPlaceRad: (code: string, label: string) => void
   onPlaceProtocol: (label: string, role: 'pharmacy' | 'nurse') => void
 }) {
+  const t = useTranslations('emergency')
   const { p, meId, expanded, draft, dispoNote } = props
   const v = latestVitals(p)
   const n = v ? news2(v) : null
@@ -251,7 +254,7 @@ function FloorRow(props: {
 
   return (
     <div className={cn('rounded-xl bg-white ring-1 overflow-hidden',
-      n?.band === 'high' ? 'ring-red-300' : q?.positive ? 'ring-orange-200' : 'ring-slate-200/70')}>
+      n?.band === 'high' ? 'ring-red-300' : q?.positive ? 'ring-primary/25' : 'ring-slate-200/70')}>
       <div className="flex items-center gap-3 p-3 sm:p-4">
         {p.esi && (
           <span className={cn('flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded', ESI_STYLE[p.esi].bg, ESI_STYLE[p.esi].fg)}>ESI {p.esi}</span>
@@ -262,25 +265,25 @@ function FloorRow(props: {
             <span className="font-bold text-slate-900 truncate">{p.name}</span>
             <span className="text-[11px] font-bold text-slate-400">{p.age}{p.gender}</span>
             {p.bedNumber && <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-0.5"><Bed className="h-3 w-3" />{p.bedNumber}</span>}
-            {p.trauma && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">TRAUMA</span>}
+            {p.trauma && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">{t('floor.trauma')}</span>}
             {p.trauma && (
               p.mlc
                 ? <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 flex items-center gap-1">
-                    <CheckCircle2 className="h-2.5 w-2.5" />MLC {p.mlc.mlcNumber}
+                    <CheckCircle2 className="h-2.5 w-2.5" />{t('floor.mlcNumber', { number: p.mlc.mlcNumber })}
                   </span>
                 : <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-700 flex items-center gap-1">
-                    <FileWarning className="h-2.5 w-2.5" />MLC pending
+                    <FileWarning className="h-2.5 w-2.5" />{t('floor.mlcPending')}
                   </span>
             )}
             {n && n.band !== 'low' && (
               <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded',
                 n.band === 'high' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700')}>NEWS2 {n.score}</span>
             )}
-            {q?.positive && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-700">qSOFA+</span>}
-            {p.assignedTo && <span className="text-[11px] font-semibold text-slate-400">· {mine ? 'your counter' : `on ${p.assignedTo.name}`}</span>}
+            {q?.positive && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-accent">qSOFA+</span>}
+            {p.assignedTo && <span className="text-[11px] font-semibold text-slate-400">· {mine ? t('floor.yourCounter') : t('floor.onCounter', { name: p.assignedTo.name })}</span>}
             {p.disposition && (
               <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded ring-1',
-                DISPOSITIONS.find(d => d.value === p.disposition)?.tone)}>{DISPOSITIONS.find(d => d.value === p.disposition)?.label}</span>
+                DISPOSITIONS.find(d => d.value === p.disposition)?.tone)}>{t(`dispositions.${p.disposition}`)}</span>
             )}
           </div>
           <p className="text-xs text-slate-500 mt-0.5 truncate flex items-center gap-1 flex-wrap">
@@ -295,21 +298,21 @@ function FloorRow(props: {
             <button onClick={props.onOpenMLC}
               className={cn("flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg cursor-pointer border whitespace-nowrap",
                 p.mlc ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-300')}>
-              <FileWarning className="h-3 w-3" />{p.mlc ? 'MLC filed' : 'File MLC'}
+              <FileWarning className="h-3 w-3" />{p.mlc ? t('floor.mlcFiled') : t('floor.fileMlc')}
             </button>
           )}
           {!p.assignedTo && (
             <button onClick={props.onClaim}
               className="flex items-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-xl cursor-pointer"
-              style={{ background: 'linear-gradient(135deg,#EF4444,#F97316)', boxShadow: '0 2px 8px rgba(239,68,68,0.25)' }}>
-              <Hand className="h-3.5 w-3.5" />Accept
+              style={{ background: 'linear-gradient(135deg,#EF4444,#EE6B26)', boxShadow: '0 2px 8px rgba(239,68,68,0.25)' }}>
+              <Hand className="h-3.5 w-3.5" />{t('floor.accept')}
             </button>
           )}
           {p.phase === 'awaiting_disposition' && mine && (
             <button onClick={props.onComplete}
               className="flex items-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-xl cursor-pointer"
               style={{ background: 'linear-gradient(135deg,#16A34A,var(--color-primary-dark))' }}>
-              <Send className="h-3.5 w-3.5" />Complete ER visit
+              <Send className="h-3.5 w-3.5" />{t('floor.completeVisit')}
             </button>
           )}
           <button onClick={props.onToggle} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer text-slate-400">
@@ -323,7 +326,7 @@ function FloorRow(props: {
           {/* Vitals trend */}
           {p.vitalsHistory.length > 0 && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-2">Vitals trend</p>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-2">{t('floor.vitalsTrend')}</p>
               <div className="space-y-1">
                 {p.vitalsHistory.slice().reverse().slice(0, 3).map((vh, i) => (
                   <div key={i} className="text-[11px] text-slate-600 flex items-center gap-2 flex-wrap">
@@ -334,7 +337,7 @@ function FloorRow(props: {
                     {vh.hr !== undefined && <span><b>HR</b> {vh.hr}</span>}
                     {vh.temp !== undefined && <span><b>T</b> {vh.temp}°</span>}
                     {vh.gcs !== undefined && <span><b>GCS</b> {vh.gcs}</span>}
-                    <span className="text-slate-400">by {vh.by}</span>
+                    <span className="text-slate-400">{t('floor.recordedBy', { name: vh.by ?? "" })}</span>
                   </div>
                 ))}
               </div>
@@ -354,16 +357,16 @@ function FloorRow(props: {
           )}
 
           {q && q.positive && (
-            <div className="rounded-lg p-3 ring-1 ring-orange-200 bg-orange-50">
-              <p className="text-[11px] font-bold text-orange-700 flex items-center gap-1"><ShieldAlert className="h-3 w-3" />qSOFA positive · sepsis suspected</p>
-              <p className="text-[11px] text-orange-700 mt-1">Criteria: {q.criteria.join(' · ')}. Consider sepsis bundle: blood cultures + lactate + broad-spectrum antibiotic within 1h.</p>
+            <div className="rounded-lg p-3 ring-1 ring-primary/25 bg-primary-soft">
+              <p className="text-[11px] font-bold text-accent flex items-center gap-1"><ShieldAlert className="h-3 w-3" />{t('floor.qsofaPositive')}</p>
+              <p className="text-[11px] text-accent mt-1">{t('floor.qsofaCriteria', { criteria: q.criteria.join(' · ') })}</p>
             </div>
           )}
 
           {/* Quick vitals update — only when claimed by me */}
           {mine && p.phase !== 'awaiting_disposition' && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-2">Update vitals</p>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-2">{t('floor.updateVitals')}</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                 <VitalInput label="RR" icon={Wind} value={draft.rr} onChange={v => props.onDraft({ rr: v })} />
                 <VitalInput label="SpO2" value={draft.spo2} onChange={v => props.onDraft({ spo2: v })} />
@@ -378,7 +381,7 @@ function FloorRow(props: {
               <div className="flex justify-end mt-2">
                 <button onClick={props.onSaveVitals}
                   className="text-[11px] font-bold text-white px-3 py-1.5 rounded-lg cursor-pointer"
-                  style={{ background: 'linear-gradient(135deg,#EF4444,#F97316)' }}>Save vitals</button>
+                  style={{ background: 'linear-gradient(135deg,#EF4444,#EE6B26)' }}>{t('floor.saveVitals')}</button>
               </div>
             </div>
           )}
@@ -389,11 +392,12 @@ function FloorRow(props: {
           {mine && p.phase !== 'awaiting_disposition' && (
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1">
-                <Zap className="h-3 w-3 text-orange-500" />STAT orders
+                <Zap className="h-3 w-3 text-accent" />{t('floor.statOrders')}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
                 {ER_QUICK_ORDERS.map((o) => {
                   const Icon = o.icon
+                  const label = t(`floor.quickOrder.${o.labelKey}`)
                   // Already-ordered indicator — don't disable, but show "ordered" badge
                   // so the doctor can stack orders intentionally if needed.
                   const already = o.kind === 'lab'
@@ -402,18 +406,18 @@ function FloorRow(props: {
                     ? props.radStudies.some(s => s.code === o.code && s.status !== 'released' && s.status !== 'verified')
                     : false
                   return (
-                    <button key={o.label}
+                    <button key={o.labelKey}
                       onClick={() => {
-                        if (o.kind === 'lab')      props.onPlaceLab(o.code, o.label)
-                        else if (o.kind === 'imaging') props.onPlaceRad(o.code, o.label)
-                        else                       props.onPlaceProtocol(o.label, o.role)
+                        if (o.kind === 'lab')      props.onPlaceLab(o.code, label)
+                        else if (o.kind === 'imaging') props.onPlaceRad(o.code, label)
+                        else                       props.onPlaceProtocol(label, o.role)
                       }}
                       className={cn("flex items-center gap-1.5 h-9 px-2 rounded-lg border text-[11px] font-bold cursor-pointer transition text-left",
                         o.kind === 'lab' ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
-                        : o.kind === 'imaging' ? 'bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)] hover:bg-[rgba(8,145,178,0.14)]'
-                        : 'bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)] hover:bg-[rgba(8,145,178,0.14)]')}>
+                        : o.kind === 'imaging' ? 'bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)] hover:bg-[rgba(238,107,38,0.14)]'
+                        : 'bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)] hover:bg-[rgba(238,107,38,0.14)]')}>
                       <Icon className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate">{o.label}</span>
+                      <span className="truncate">{label}</span>
                       {already && <span className="ml-auto text-[9px] font-bold text-emerald-600">✓</span>}
                     </button>
                   )
@@ -427,38 +431,38 @@ function FloorRow(props: {
           {(props.labOrders.length > 0 || props.radStudies.length > 0) && (
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1">
-                <Stethoscope className="h-3 w-3 text-[var(--color-primary)]" />Investigations ({props.labOrders.reduce((n, o) => n + o.tests.length, 0) + props.radStudies.length})
+                <Stethoscope className="h-3 w-3 text-[var(--color-accent)]" />{t('floor.investigations', { count: props.labOrders.reduce((n, o) => n + o.tests.length, 0) + props.radStudies.length })}
               </p>
               <div className="space-y-1">
-                {props.labOrders.flatMap(o => o.tests).slice(0, 6).map(t => {
-                  const status = t.status
-                  const crit = t.analytes.some(a => a.flag === 'CH' || a.flag === 'CL')
-                  const flagged = t.analytes.filter(a => a.flag !== 'N').length
+                {props.labOrders.flatMap(o => o.tests).slice(0, 6).map(test => {
+                  const status = test.status
+                  const crit = test.analytes.some(a => a.flag === 'CH' || a.flag === 'CL')
+                  const flagged = test.analytes.filter(a => a.flag !== 'N').length
                   return (
-                    <div key={t.id} className="flex items-center gap-2 text-[11px] py-1 px-2 rounded bg-white ring-1 ring-slate-200">
+                    <div key={test.id} className="flex items-center gap-2 text-[11px] py-1 px-2 rounded bg-white ring-1 ring-slate-200">
                       <FlaskConical className="h-2.5 w-2.5 text-amber-600 flex-shrink-0" />
-                      <span className="font-bold text-slate-900 truncate flex-1">{t.name}</span>
+                      <span className="font-bold text-slate-900 truncate flex-1">{test.name}</span>
                       <span className={cn("text-[9.5px] font-bold uppercase px-1.5 py-0.5 rounded",
                         status === 'released'   ? (crit ? 'bg-red-100 text-red-700' : flagged > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')
-                        : status === 'verified' ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
-                        : status === 'entered'  ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
-                        : status === 'in_progress' || status === 'on_bench' ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
+                        : status === 'verified' ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
+                        : status === 'entered'  ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
+                        : status === 'in_progress' || status === 'on_bench' ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
                         : 'bg-slate-100 text-slate-500')}>
                         {status.replace('_', ' ')}
                       </span>
-                      {crit && <span className="text-[9.5px] font-bold text-red-700">CRITICAL</span>}
+                      {crit && <span className="text-[9.5px] font-bold text-red-700">{t('floor.critical')}</span>}
                     </div>
                   )
                 })}
                 {props.radStudies.slice(0, 4).map(s => (
                   <div key={s.id} className="flex items-center gap-2 text-[11px] py-1 px-2 rounded bg-white ring-1 ring-slate-200">
-                    <ScanLine className="h-2.5 w-2.5 text-[var(--color-primary)] flex-shrink-0" />
+                    <ScanLine className="h-2.5 w-2.5 text-[var(--color-accent)] flex-shrink-0" />
                     <span className="font-bold text-slate-900 truncate flex-1">{s.modality} {s.name}</span>
                     <span className={cn("text-[9.5px] font-bold uppercase px-1.5 py-0.5 rounded",
                       s.status === 'released' ? 'bg-emerald-100 text-emerald-700'
-                      : s.status === 'verified' ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
-                      : s.status === 'reported' ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
-                      : s.status === 'acquired' ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
+                      : s.status === 'verified' ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
+                      : s.status === 'reported' ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
+                      : s.status === 'acquired' ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
                       : s.status === 'acquiring' || s.status === 'arrived' ? 'bg-amber-100 text-amber-700'
                       : 'bg-slate-100 text-slate-500')}>
                       {s.status.replace('_', ' ')}
@@ -472,21 +476,21 @@ function FloorRow(props: {
           {/* Disposition */}
           {mine && p.phase !== 'awaiting_disposition' && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-2">Disposition</p>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-2">{t('floor.disposition')}</p>
               <textarea value={dispoNote} onChange={e => props.onDispoNote(e.target.value)} rows={2}
-                placeholder="Disposition note (handover summary)"
+                placeholder={t('floor.dispositionNotePlaceholder')}
                 className="w-full text-[12px] rounded-md border border-slate-200 p-1.5 focus:outline-none focus:ring-2 focus:ring-red-200" />
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {DISPOSITIONS.map(d => (
                   <button key={d.value} onClick={() => props.onDispose(d.value)}
-                    className={cn('text-[11px] font-bold px-2.5 py-1 rounded-lg ring-1 cursor-pointer', d.tone)}>{d.label}</button>
+                    className={cn('text-[11px] font-bold px-2.5 py-1 rounded-lg ring-1 cursor-pointer', d.tone)}>{t(`dispositions.${d.value}`)}</button>
                 ))}
               </div>
             </div>
           )}
 
           {p.dispositionNote && (
-            <p className="text-[11px] text-slate-600 bg-white ring-1 ring-slate-200 rounded-md p-2"><b>Handover:</b> {p.dispositionNote}</p>
+            <p className="text-[11px] text-slate-600 bg-white ring-1 ring-slate-200 rounded-md p-2"><b>{t('floor.handover')}</b> {p.dispositionNote}</p>
           )}
         </div>
       )}

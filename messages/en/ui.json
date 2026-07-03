@@ -1,0 +1,11 @@
+{
+  "status": {
+    "critical": "Critical",
+    "urgent": "Urgent",
+    "caution": "Caution",
+    "stable": "Stable",
+    "info": "Info",
+    "pending": "Pending",
+    "done": "Done"
+  }
+}

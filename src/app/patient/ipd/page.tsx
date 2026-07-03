@@ -17,8 +17,8 @@ import { cn } from "@/lib/utils"
 const EVENT_DOT: Record<string, string> = { info: 'bg-slate-300', success: 'bg-green-500', warning: 'bg-amber-500', critical: 'bg-red-500' }
 
 const CONDITION_TINT: Record<Condition, string> = {
-  Critical: 'bg-red-100 text-red-700', Serious: 'bg-orange-100 text-orange-700',
-  Stable: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]', Improving: 'bg-green-100 text-green-700', 'Discharge-ready': 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]',
+  Critical: 'bg-red-100 text-red-700', Serious: 'bg-accent-soft text-accent',
+  Stable: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]', Improving: 'bg-green-100 text-green-700', 'Discharge-ready': 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]',
 }
 const fmt = (iso: string) => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
@@ -47,7 +47,7 @@ export default function IpdPage() {
   useEffect(() => { setMounted(true) }, [])
   if (!mounted) return (
     <div className="max-w-3xl mx-auto py-20 flex justify-center">
-      <div className="h-8 w-8 rounded-full border-4 border-[rgba(8,145,178,0.20)] border-t-blue-600 animate-spin" role="status" aria-label="Loading" />
+      <div className="h-8 w-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" role="status" aria-label="Loading" />
     </div>
   )
 
@@ -79,7 +79,7 @@ export default function IpdPage() {
       </div>
 
       {/* Admission header */}
-      <div className="rounded-3xl p-5 text-white bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] shadow-[0_10px_30px_rgba(8,145,178,0.25)]">
+      <div className="rounded-3xl p-5 text-white bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] shadow-[0_10px_30px_rgba(238,107,38,0.25)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2"><BedDouble className="h-5 w-5" /><span className="text-[13px] font-bold uppercase tracking-wider text-white/80">Admitted</span></div>
           <span className={cn("text-[12px] font-bold px-2.5 py-1 rounded-full", CONDITION_TINT[ip.condition])}>{ip.condition}</span>
@@ -102,7 +102,7 @@ export default function IpdPage() {
                 <div className={cn("h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-bold", i <= phase ? "bg-[var(--color-primary)] text-white" : "bg-slate-100 text-slate-400")}>
                   {i < phase ? <CheckCircle className="h-4 w-4" /> : i + 1}
                 </div>
-                <span className={cn("text-[11px] font-semibold", i <= phase ? "text-[var(--color-primary)]" : "text-slate-400")}>{p}</span>
+                <span className={cn("text-[11px] font-semibold", i <= phase ? "text-[var(--color-accent)]" : "text-slate-400")}>{p}</span>
               </div>
               {i < PHASES.length - 1 && <div className={cn("flex-1 h-0.5 mx-1 -mt-4 rounded", i < phase ? "bg-[var(--color-primary)]" : "bg-slate-200")} />}
             </div>
@@ -111,10 +111,10 @@ export default function IpdPage() {
       </div>
 
       {/* AI summary */}
-      <div className="rounded-3xl bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.15)] p-5">
+      <div className="rounded-3xl bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.15)] p-5">
         <div className="flex items-center gap-2 mb-2">
-          <span className="h-9 w-9 rounded-2xl bg-[rgba(8,145,178,0.12)] flex items-center justify-center flex-shrink-0"><Sparkles className="h-4.5 w-4.5 text-[var(--color-primary)]" /></span>
-          <div><p className="text-[14px] font-bold text-[var(--color-primary-dark)]">How you&apos;re doing</p><p className="text-[12px] text-[var(--color-primary)]">AI summary · in plain language</p></div>
+          <span className="h-9 w-9 rounded-2xl bg-[rgba(238,107,38,0.12)] flex items-center justify-center flex-shrink-0"><Sparkles className="h-4.5 w-4.5 text-[var(--color-accent)]" /></span>
+          <div><p className="text-[14px] font-bold text-[var(--color-primary-dark)]">How you&apos;re doing</p><p className="text-[12px] text-[var(--color-accent)]">AI summary · in plain language</p></div>
         </div>
         <p className="text-[13.5px] text-[var(--color-primary-dark)] leading-relaxed">
           {insight.patientReassurance}{last ? ` At the last round, ${ip.admittingDoctor} noted: “${last.note}”.` : ''}
@@ -125,7 +125,7 @@ export default function IpdPage() {
       {/* Curated care timeline — every step, in plain language */}
       {timeline.length > 0 && (
         <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5">
-          <h3 className="text-[15px] font-bold text-slate-900 mb-1 flex items-center gap-2"><Activity className="h-4.5 w-4.5 text-[var(--color-primary)]" /> Your care timeline</h3>
+          <h3 className="text-[15px] font-bold text-slate-900 mb-1 flex items-center gap-2"><Activity className="h-4.5 w-4.5 text-[var(--color-accent)]" /> Your care timeline</h3>
           <p className="text-[12px] text-slate-500 mb-3">Everything happening in your care, explained simply.</p>
           <div className="space-y-3">
             {timeline.map(e => (
@@ -146,12 +146,12 @@ export default function IpdPage() {
 
       {/* Doctor rounds timeline */}
       <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5">
-        <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><Stethoscope className="h-4.5 w-4.5 text-[var(--color-primary)]" /> Doctor rounds</h3>
+        <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><Stethoscope className="h-4.5 w-4.5 text-[var(--color-accent)]" /> Doctor rounds</h3>
         {next && <div className="flex items-center gap-2 text-[12.5px] font-semibold text-amber-600 bg-amber-50 rounded-xl px-3 py-2 mb-3"><Clock className="h-3.5 w-3.5" /> Next round expected ~{fmtTime(next.scheduledAt)}</div>}
         <div className="space-y-3">
           {completedRounds.map(r => (
             <div key={r.id} className="flex gap-3">
-              <div className="flex flex-col items-center flex-shrink-0"><span className="h-8 w-8 rounded-full bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] flex items-center justify-center"><Stethoscope className="h-4 w-4" /></span><span className="w-px flex-1 bg-slate-100 mt-1" /></div>
+              <div className="flex flex-col items-center flex-shrink-0"><span className="h-8 w-8 rounded-full bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] flex items-center justify-center"><Stethoscope className="h-4 w-4" /></span><span className="w-px flex-1 bg-slate-100 mt-1" /></div>
               <div className="flex-1 pb-1">
                 <div className="flex items-center justify-between"><p className="text-[13.5px] font-bold text-slate-900">{r.doctor}</p><span className="text-[11.5px] text-slate-400">{fmtTime(r.doneAt!)}</span></div>
                 <p className="text-[13px] text-slate-600 mt-0.5">{r.note}</p>
@@ -203,11 +203,11 @@ export default function IpdPage() {
 
       {/* Medicines (MAR) */}
       <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5">
-        <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><Pill className="h-4.5 w-4.5 text-[var(--color-primary)]" /> Your medicines</h3>
+        <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><Pill className="h-4.5 w-4.5 text-[var(--color-accent)]" /> Your medicines</h3>
         <div className="space-y-2">
           {ip.meds.map((m, i) => (
             <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
-              <span className="h-9 w-9 rounded-xl bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] flex items-center justify-center flex-shrink-0"><Pill className="h-4.5 w-4.5" /></span>
+              <span className="h-9 w-9 rounded-xl bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] flex items-center justify-center flex-shrink-0"><Pill className="h-4.5 w-4.5" /></span>
               <div className="flex-1 min-w-0"><p className="text-[14px] font-semibold text-slate-900">{m.name} {m.dose}</p><p className="text-[12px] text-slate-500">{m.freq} · {m.route}</p></div>
             </div>
           ))}
@@ -265,7 +265,7 @@ export default function IpdPage() {
             {d.meds.length > 0 && (
               <div className="mt-3">
                 <p className={cn("text-[11px] font-bold uppercase tracking-wide mb-1.5", done ? "text-white/70" : "text-slate-400")}>Take-home medicines</p>
-                <div className="flex flex-wrap gap-1.5">{d.meds.map((m, i) => <span key={i} className={cn("text-[12px] font-medium px-2.5 py-1 rounded-full", done ? "bg-white/15 text-white" : "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]")}>{m.name} {m.dose} · {m.freq}</span>)}</div>
+                <div className="flex flex-wrap gap-1.5">{d.meds.map((m, i) => <span key={i} className={cn("text-[12px] font-medium px-2.5 py-1 rounded-full", done ? "bg-white/15 text-white" : "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]")}>{m.name} {m.dose} · {m.freq}</span>)}</div>
               </div>
             )}
             {d.redFlags.length > 0 && (

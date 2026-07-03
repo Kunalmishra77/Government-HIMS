@@ -26,8 +26,8 @@ const ANALYZERS: { name: string; bench: Bench; vendor: string }[] = [
 ]
 
 const SOURCE_TINT: Record<LabSource, string> = {
-  OPD: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]', IPD: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  ICU: 'bg-red-50 text-red-700', OT: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]', ER: 'bg-orange-50 text-orange-700',
+  OPD: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]', IPD: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  ICU: 'bg-red-50 text-red-700', OT: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]', ER: 'bg-primary-soft text-accent',
 }
 const PRIORITY_TINT: Record<Priority, string> = {
   STAT: 'bg-red-100 text-red-700', Urgent: 'bg-amber-100 text-amber-700', Routine: 'bg-slate-100 text-slate-600',
@@ -144,12 +144,12 @@ export default function AnalyzerFeedPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Cpu className="h-6 w-6 text-[var(--color-primary)]" />Analyzer feed
+            <Cpu className="h-6 w-6 text-[var(--color-accent)]" />Analyzer feed
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Modern lab default — collected samples auto-loaded onto analyzers ·
             results push to LIMS over HL7 · no human types numbers for routine assays.{' '}
-            <Link href="/lab/benches" className="font-bold text-[var(--color-primary)] hover:underline">Manual entries</Link>{' '}available as fallback.
+            <Link href="/lab/benches" className="font-bold text-[var(--color-accent)] hover:underline">Manual entries</Link>{' '}available as fallback.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -164,8 +164,8 @@ export default function AnalyzerFeedPage() {
       </div>
 
       {/* Help banner */}
-      <div className="rounded-xl border border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)] p-3 flex items-start gap-2">
-        <Zap className="h-4 w-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
+      <div className="rounded-xl border border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)] p-3 flex items-start gap-2">
+        <Zap className="h-4 w-4 text-[var(--color-accent)] flex-shrink-0 mt-0.5" />
         <div className="text-[12px] text-[var(--color-primary-dark)]">
           <p className="font-bold mb-0.5">How this works</p>
           <p>
@@ -174,7 +174,7 @@ export default function AnalyzerFeedPage() {
             on their own. Results land in the <Link href="/lab/verify" className="font-bold underline">Verification</Link> queue
             for pathologist sign-off — same as a real lab.
           </p>
-          <p className="mt-1 text-[11px] text-[var(--color-primary)]">
+          <p className="mt-1 text-[11px] text-[var(--color-accent)]">
             <b>Fallback:</b> Need to override a result (dilution, reagent error) or run a manual assay (micro, smear, ESR)?
             Use <Link href="/lab/benches" className="font-bold underline">Manual entries</Link> — section tech can claim,
             type values, and finish entry just like before.
@@ -189,10 +189,10 @@ export default function AnalyzerFeedPage() {
           return (
             <div key={a.name} className="rounded-xl bg-white border border-slate-200 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-2 flex-wrap"
-                style={{ background: items.length > 0 ? 'linear-gradient(135deg,rgba(8,145,178,0.07),rgba(8,145,178,0.06))' : '#F8FAFC' }}>
+                style={{ background: items.length > 0 ? 'linear-gradient(135deg,rgba(238,107,38,0.07),rgba(238,107,38,0.06))' : '#F8FAFC' }}>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                    <Activity className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <Activity className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                     {a.name}
                   </p>
                   <p className="text-[10.5px] text-slate-500">{a.vendor} · {a.bench} bench</p>
@@ -200,7 +200,7 @@ export default function AnalyzerFeedPage() {
                 <div className="flex items-center gap-2">
                   <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded border",
                     items.length === 0 ? 'border-slate-200 bg-slate-50 text-slate-500'
-                      : 'border-cyan-200 bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]')}>
+                      : 'border-primary/20 bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]')}>
                     {items.length} pending
                   </span>
                   <button onClick={() => runBatchFor(a.name)} disabled={items.length === 0}
@@ -232,7 +232,7 @@ export default function AnalyzerFeedPage() {
                       </p>
                     </div>
                     <button onClick={() => runOne(test.id)}
-                      className="text-[10.5px] font-bold px-2 py-1 rounded bg-slate-100 hover:bg-[rgba(8,145,178,0.12)] text-slate-700 hover:text-[var(--color-primary)] cursor-pointer">
+                      className="text-[10.5px] font-bold px-2 py-1 rounded bg-slate-100 hover:bg-[rgba(238,107,38,0.12)] text-slate-700 hover:text-[var(--color-accent)] cursor-pointer">
                       Run
                     </button>
                   </li>

@@ -43,7 +43,7 @@ const CAT_LABELS: Record<keyof FeedbackCategoryRatings, { label: string; low: st
 }
 
 const NPS_COLORS = [
-  '#EF4444','#EF4444','#F97316','#F97316','#F97316',
+  '#EF4444','#EF4444','#EE6B26','#EE6B26','#EE6B26',
   '#EAB308','#EAB308','#22C55E','#22C55E','#22C55E','#16A34A',
 ]
 
@@ -273,7 +273,7 @@ export default function PatientFeedbackPage() {
     <div className="pb-8 space-y-6 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <MessageSquarePlus className="h-6 w-6 text-[var(--color-primary)]" /> Feedback & Experience
+          <MessageSquarePlus className="h-6 w-6 text-[var(--color-accent)]" /> Feedback & Experience
         </h1>
         <p className="text-sm text-slate-500 mt-0.5">Your feedback helps us improve care for everyone.</p>
       </div>
@@ -364,7 +364,7 @@ export default function PatientFeedbackPage() {
                   {rec.themes.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {rec.themes.map(t => (
-                        <span key={t} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]">{t}</span>
+                        <span key={t} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]">{t}</span>
                       ))}
                     </div>
                   )}

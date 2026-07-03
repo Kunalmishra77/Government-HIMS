@@ -1,0 +1,75 @@
+{
+  "brand": "Agentix HIMS",
+  "hero": {
+    "title": "सही डॉक्टर ढूंढें",
+    "subtitle": "लक्षण, स्पेशलिटी या डॉक्टर के नाम से सर्च करें",
+    "searchPlaceholder": "जैसे \"चेस्ट पेन\", \"डॉ. मेहता\", \"कार्डियोलॉजी\"",
+    "suggested": "सुझाव:"
+  },
+  "tabs": {
+    "search": "डॉक्टर ढूंढें",
+    "eligibility": "कैशलेस एलिजिबिलिटी",
+    "documents": "डॉक्यूमेंट चेकलिस्ट"
+  },
+  "search": {
+    "all": "सभी",
+    "yrsExp": "{years} साल का अनुभव",
+    "reviews": "({count} रिव्यू)",
+    "perVisit": "प्रति विज़िट",
+    "fullyBooked": "आज पूरी तरह बुक",
+    "book": "बुक करें",
+    "emptyTitle": "कोई डॉक्टर नहीं मिला",
+    "emptySubtitle": "कोई और लक्षण या स्पेशलिटी ट्राई करें"
+  },
+  "specialty": {
+    "General Medicine": "जनरल मेडिसिन",
+    "Cardiology": "कार्डियोलॉजी",
+    "Orthopedics": "ऑर्थोपेडिक्स",
+    "Dermatology": "डर्मेटोलॉजी",
+    "Gastroenterology": "गैस्ट्रोएंटेरोलॉजी",
+    "Neurology": "न्यूरोलॉजी"
+  },
+  "eligibility": {
+    "providerLabel": "आपका इंश्योरेंस प्रोवाइडर",
+    "selectPlaceholder": "इंश्योरर चुनें...",
+    "cashlessTitle": "Agentix HIMS पर कैशलेस उपलब्ध है",
+    "cashlessBody": "{insurer} एक कैशलेस पार्टनर है। आप बिना पहले पेमेंट किए इलाज करवा सकते हैं — TPA सीधे हॉस्पिटल के साथ सेटल करेगा।",
+    "cashlessPoint1": "✓ प्लान्ड एडमिशन के लिए प्री-ऑथराइज़ेशन ज़रूरी है",
+    "cashlessPoint2": "✓ इमरजेंसी एडमिशन की सूचना 24 घंटे के अंदर दी जा सकती है",
+    "cashlessPoint3": "✓ रूम रेंट की लिमिट पॉलिसी की शर्तों के अनुसार",
+    "noCashlessTitle": "कैशलेस उपलब्ध नहीं है",
+    "noCashlessBody": "{insurer} हमारे कैशलेस नेटवर्क में नहीं है। आपको खुद पेमेंट करना होगा और रीइम्बर्समेंट क्लेम सबमिट करना होगा।",
+    "noCashlessPoint1": "• सभी ओरिजिनल बिल और रसीदें जमा करें",
+    "noCashlessPoint2": "• क्लेम के लिए डिस्चार्ज समरी और केस पेपर ज़रूरी हैं",
+    "noCashlessPoint3": "• डिस्चार्ज के 30 दिन के अंदर सबमिट करें",
+    "helpdeskTitle": "इंश्योरेंस हेल्पडेस्क",
+    "helpdeskBody": "प्री-ऑथराइज़ेशन और TPA से जुड़े सवालों के लिए इंश्योरेंस डेस्क (ग्राउंड फ्लोर) पर जाएं या Ext. 1050 पर कॉल करें"
+  },
+  "documents": {
+    "visitTypeLabel": "विज़िट टाइप",
+    "heading": "साथ लाने वाले डॉक्यूमेंट — {visitType}",
+    "tipTitle": "टिप",
+    "tipBody": "स्कैन की हुई कॉपी अपने फोन (Google Drive / DigiLocker) में रखें ताकि हॉस्पिटल डेस्क पर जल्दी एक्सेस मिल सके।"
+  },
+  "visitType": {
+    "OPD Self-Pay": "OPD सेल्फ-पे",
+    "IPD Self-Pay": "IPD सेल्फ-पे",
+    "Cashless Insurance": "कैशलेस इंश्योरेंस",
+    "Corporate / TPA": "कॉर्पोरेट / TPA"
+  },
+  "docs": {
+    "photoIdFull": "वैलिड फोटो ID (आधार / PAN / पासपोर्ट)",
+    "prevPrescriptionOptional": "पिछली प्रिस्क्रिप्शन या रिपोर्ट (अगर हो तो)",
+    "photoId": "वैलिड फोटो ID",
+    "recentBloodReports": "हाल की ब्लड रिपोर्ट",
+    "prevPrescription": "पिछली प्रिस्क्रिप्शन",
+    "priorImaging": "कोई पुरानी इमेजिंग (X-Ray, MRI आदि)",
+    "insuranceCard": "हेल्थ इंश्योरेंस कार्ड",
+    "policyDocument": "पॉलिसी डॉक्यूमेंट / ई-कार्ड",
+    "referralLetter": "रेफरल लेटर (अगर इंश्योरर को चाहिए)",
+    "prevDischargeSummary": "पिछली हॉस्पिटल डिस्चार्ज समरी (अगर हो तो)",
+    "corporateCard": "कॉर्पोरेट हेल्थ कार्ड",
+    "employeeId": "एम्प्लॉई ID",
+    "preAuthLetter": "एम्प्लॉयर से प्री-ऑथराइज़ेशन लेटर"
+  }
+}

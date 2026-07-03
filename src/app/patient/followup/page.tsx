@@ -70,7 +70,7 @@ export default function FollowUpPage() {
       </div>
 
       {/* Patient + visit header */}
-      <div className="rounded-3xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] text-white p-5 shadow-[0_10px_30px_rgba(8,145,178,0.25)]">
+      <div className="rounded-3xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] text-white p-5 shadow-[0_10px_30px_rgba(238,107,38,0.25)]">
         <div className="flex items-center gap-2 text-[12px] font-semibold text-white/80 mb-1">
           {mode === 'video' ? <Video className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
           {mode === 'video' ? 'Video consultation' : 'In-person OPD visit'} · today
@@ -80,12 +80,12 @@ export default function FollowUpPage() {
       </div>
 
       {/* AI visit summary */}
-      <div className="rounded-3xl bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.15)] p-5">
+      <div className="rounded-3xl bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.15)] p-5">
         <div className="flex items-center gap-2 mb-2">
-          <span className="h-9 w-9 rounded-2xl bg-[rgba(8,145,178,0.12)] flex items-center justify-center flex-shrink-0"><Sparkles className="h-4.5 w-4.5 text-[var(--color-primary)]" /></span>
+          <span className="h-9 w-9 rounded-2xl bg-[rgba(238,107,38,0.12)] flex items-center justify-center flex-shrink-0"><Sparkles className="h-4.5 w-4.5 text-[var(--color-accent)]" /></span>
           <div>
             <p className="text-[14px] font-bold text-[var(--color-primary-dark)]">Your visit, in plain language</p>
-            <p className="text-[12px] text-[var(--color-primary)]">AI summary · reviewed by your doctor</p>
+            <p className="text-[12px] text-[var(--color-accent)]">AI summary · reviewed by your doctor</p>
           </div>
         </div>
         <p className="text-[13.5px] text-[var(--color-primary-dark)] leading-relaxed">
@@ -97,13 +97,13 @@ export default function FollowUpPage() {
 
       {/* Follow-up appointment */}
       <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5">
-        <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><Calendar className="h-4.5 w-4.5 text-[var(--color-primary)]" /> Book your follow-up</h3>
+        <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><Calendar className="h-4.5 w-4.5 text-[var(--color-accent)]" /> Book your follow-up</h3>
         {!booked ? (
           <div className="flex gap-2">
             <input
               type="date" value={followupDate} min={new Date().toISOString().slice(0, 10)}
               onChange={e => setFollowupDate(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-200 px-3.5 py-2.5 text-[14px] text-slate-800 outline-none focus:border-[rgba(8,145,178,0.30)] focus:ring-2 focus:ring-blue-100"
+              className="flex-1 rounded-xl border border-slate-200 px-3.5 py-2.5 text-[14px] text-slate-800 outline-none focus:border-[rgba(238,107,38,0.30)] focus:ring-2 focus:ring-primary/20"
             />
             <button
               onClick={() => { if (!followupDate) { toast.error('Please pick a date'); return } setBooked(true); toast.success('Follow-up booked', { description: `${doctor} on ${new Date(followupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` }) }}
@@ -128,11 +128,11 @@ export default function FollowUpPage() {
       <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2"><Clock className="h-4.5 w-4.5 text-amber-600" /> Medicine reminders</h3>
-          {meds.length > 0 && <Link href="/patient/pharmacy" className="text-[12.5px] font-semibold text-[var(--color-primary)] flex items-center gap-1">Pharmacy <ArrowRight className="h-3.5 w-3.5" /></Link>}
+          {meds.length > 0 && <Link href="/patient/pharmacy" className="text-[12.5px] font-semibold text-[var(--color-accent)] flex items-center gap-1">Pharmacy <ArrowRight className="h-3.5 w-3.5" /></Link>}
         </div>
         {meds.length === 0 ? (
           <p className="text-[13px] text-slate-500 bg-slate-50 rounded-xl p-3">
-            Your medicine schedule will appear here once you review and accept your <Link href="/patient/orders" className="font-semibold text-[var(--color-primary)]">doctor&apos;s orders</Link>.
+            Your medicine schedule will appear here once you review and accept your <Link href="/patient/orders" className="font-semibold text-[var(--color-accent)]">doctor&apos;s orders</Link>.
           </p>
         ) : (
           <div className="space-y-2">
@@ -198,7 +198,7 @@ export default function FollowUpPage() {
       {/* Documents + emergency */}
       <div className="grid sm:grid-cols-2 gap-3">
         <Link href="/patient/downloads" className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5 flex items-center gap-3 hover:bg-slate-50 transition">
-          <span className="h-10 w-10 rounded-2xl bg-[rgba(8,145,178,0.07)] flex items-center justify-center flex-shrink-0"><FileText className="h-5 w-5 text-[var(--color-primary)]" /></span>
+          <span className="h-10 w-10 rounded-2xl bg-[rgba(238,107,38,0.07)] flex items-center justify-center flex-shrink-0"><FileText className="h-5 w-5 text-[var(--color-accent)]" /></span>
           <div className="flex-1">
             <p className="text-[14px] font-bold text-slate-900">Visit documents</p>
             <p className="text-[12px] text-slate-500">Summary, prescription & bills</p>

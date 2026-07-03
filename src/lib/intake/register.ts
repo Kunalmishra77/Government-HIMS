@@ -4,6 +4,7 @@
 
 import { usePatientProfileStore, emptyProfile } from '@/store/usePatientProfileStore'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useJourneyStore } from '@/store/useJourneyStore'
 import { usePatientLiveStore } from '@/store/usePatientLiveStore'
 import { notifyAndAuditMany } from '@/lib/notifyAndAudit'
 import type { Patient } from '@/store/usePatientStore'
@@ -91,6 +92,10 @@ export function registerPatientFromIntake(form: IntakeForm, deps: RegisterDeps):
       form.name,
     )
   }
+
+  // Register the patient in the monitoring/SLA journey view so the admin cockpit
+  // tracks self/voice check-ins the same as desk registrations.
+  useJourneyStore.getState().addPatient(newId, form.name, mode === 'video' ? (form.slotDoctor || 'Dr. Priya Nair') : 'Dr. Priya Nair')
 
   let familyToken: string | null = null
   if (form.dishaConsent && form.familyPhone.trim()) {

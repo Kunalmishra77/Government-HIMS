@@ -104,7 +104,7 @@ export default function OrderDesk() {
               </div>
             </Field>
           </div>
-          <button onClick={submit} className="u-press mt-4 w-full h-10 rounded-xl bg-primary-dark text-white font-semibold text-sm hover:bg-primary transition-colors cursor-pointer inline-flex items-center justify-center gap-2">
+          <button onClick={submit} className="u-press mt-4 w-full h-10 rounded-xl bg-primary-dark text-[#0D2032] font-semibold text-sm hover:bg-primary transition-colors cursor-pointer inline-flex items-center justify-center gap-2">
             <Plus className="h-4 w-4" /> Create order
           </button>
         </div>
@@ -155,7 +155,7 @@ export default function OrderDesk() {
         <div className="px-5 py-4 border-b border-border flex items-center gap-2">
           <ClipboardCheck className="h-4 w-4 text-primary-dark" />
           <h3 className="text-sm font-bold text-foreground">Awaiting scheduling</h3>
-          <Link href="/radiology/schedule" className="ml-auto text-[12px] font-semibold text-primary hover:underline">Open scheduling →</Link>
+          <Link href="/radiology/schedule" className="ml-auto text-[12px] font-semibold text-accent hover:underline">Open scheduling →</Link>
         </div>
         {ordered.length === 0 ? (
           <EmptyState icon={ClipboardCheck} title="No orders awaiting workup" size="sm" />

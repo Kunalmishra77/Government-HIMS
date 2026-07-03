@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { HeartPulse, Baby, TrendingDown } from 'lucide-react'
 
 const DISTRICTS_MCH = [
@@ -24,6 +25,7 @@ function Bar({ pct, warn }: { pct: number; warn: boolean }) {
 }
 
 export default function MchPage() {
+  const t = useTranslations('secretary')
   const stateMmr = 163
   const stateImr = 38
   const stateImmunization = 87
@@ -31,16 +33,16 @@ export default function MchPage() {
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">MCH & Immunization</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">MCH और टीकाकरण · Maternal, child health and immunization state overview</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('mch.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('mch.subtitle')}</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
-          { label: 'State MMR', value: String(stateMmr), sub: 'per 1L live births', warn: stateMmr > 100 },
-          { label: 'State IMR', value: String(stateImr), sub: 'per 1K live births', warn: stateImr > 30 },
-          { label: 'Full immunization', value: `${stateImmunization}%`, sub: 'children 12-23 months', warn: false },
-          { label: 'ANC coverage', value: '76%', sub: '4+ ANC visits', warn: true },
-          { label: 'Institutional deliveries', value: '89%', sub: 'of all deliveries', warn: false },
+          { label: t('mch.kpiMmr'), value: String(stateMmr), sub: t('mch.kpiMmrSub'), warn: stateMmr > 100 },
+          { label: t('mch.kpiImr'), value: String(stateImr), sub: t('mch.kpiImrSub'), warn: stateImr > 30 },
+          { label: t('mch.kpiImmunization'), value: `${stateImmunization}%`, sub: t('mch.kpiImmunizationSub'), warn: false },
+          { label: t('mch.kpiAnc'), value: '76%', sub: t('mch.kpiAncSub'), warn: true },
+          { label: t('mch.kpiInstitutional'), value: '89%', sub: t('mch.kpiInstitutionalSub'), warn: false },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -53,17 +55,17 @@ export default function MchPage() {
       {/* District comparison table */}
       <div className="bg-white border border-[var(--color-border)] rounded-2xl overflow-auto" style={{ boxShadow: 'var(--shadow-card)' }}>
         <div className="px-5 py-3.5 border-b border-[var(--color-border)]">
-          <p className="text-sm font-semibold text-[var(--color-foreground)]">District MCH performance — worst & best</p>
+          <p className="text-sm font-semibold text-[var(--color-foreground)]">{t('mch.tableTitle')}</p>
         </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-raised)]">
-              <th className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">District</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">MMR</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">IMR</th>
-              <th className="px-5 py-3 text-left w-40 text-xs font-semibold text-[var(--color-foreground-muted)]">Immunization</th>
-              <th className="px-5 py-3 text-left w-40 text-xs font-semibold text-[var(--color-foreground-muted)]">ANC 4+</th>
-              <th className="px-5 py-3 text-left w-40 text-xs font-semibold text-[var(--color-foreground-muted)]">Inst. Delivery</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">{t('common.district')}</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">{t('mch.colMmr')}</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">{t('mch.colImr')}</th>
+              <th className="px-5 py-3 text-left w-40 text-xs font-semibold text-[var(--color-foreground-muted)]">{t('mch.colImmunization')}</th>
+              <th className="px-5 py-3 text-left w-40 text-xs font-semibold text-[var(--color-foreground-muted)]">{t('mch.colAnc')}</th>
+              <th className="px-5 py-3 text-left w-40 text-xs font-semibold text-[var(--color-foreground-muted)]">{t('mch.colInstDelivery')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">

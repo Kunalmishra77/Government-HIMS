@@ -14,12 +14,13 @@ import { EmptyState } from "@/components/ui/EmptyState"
 import { motion, AnimatePresence } from "framer-motion"
 import { FlaskConical, Pill, Droplets, Send, ArrowUpRight, Scissors, CheckCircle2, Sparkles, Clock, Stethoscope } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 const KIND: Record<OrderKind, { icon: React.ElementType; tint: string }> = {
-  test:     { icon: FlaskConical, tint: "bg-accent-soft text-primary border-primary/20" },
-  med:      { icon: Pill,         tint: "bg-accent-soft text-primary border-primary/20" },
-  iv:       { icon: Droplets,     tint: "bg-accent-soft text-primary border-primary/20" },
-  referral: { icon: Send,         tint: "bg-accent-soft text-primary border-primary/20" },
+  test:     { icon: FlaskConical, tint: "bg-accent-soft text-accent border-primary/20" },
+  med:      { icon: Pill,         tint: "bg-accent-soft text-accent border-primary/20" },
+  iv:       { icon: Droplets,     tint: "bg-accent-soft text-accent border-primary/20" },
+  referral: { icon: Send,         tint: "bg-accent-soft text-accent border-primary/20" },
   icu:      { icon: ArrowUpRight, tint: "bg-danger-bg text-danger border-danger/20" },
   ot:       { icon: Scissors,     tint: "bg-danger-bg text-danger border-danger/20" },
 }
@@ -34,6 +35,7 @@ const timeAgo = (iso: string) => {
 }
 
 export default function NurseOrdersPage() {
+  const t = useTranslations('nurse')
   const allInpatients = useInpatientStore(s => s.inpatients)
   const acknowledgeOrder = useInpatientStore(s => s.acknowledgeOrder)
   const activeWard = useShiftStore(s => s.activeWard)
@@ -47,21 +49,21 @@ export default function NurseOrdersPage() {
     acknowledgeOrder(o.patientId, { key: o.key, label: o.label })
     addNotification({
       type: "order_done", priority: "medium",
-      title: `Order completed — ${o.label}`,
-      body: `${o.label} for ${o.patientName} (${o.ward} ${o.bed}) — done by ${NURSE}.`,
+      title: t('orders.orderCompletedTitle', { label: o.label }),
+      body: t('orders.orderCompletedBody', { label: o.label, name: o.patientName, ward: o.ward, bed: o.bed, nurse: NURSE }),
       targetRole: "doctor", patientName: o.patientName, channels: ["in_app"],
     })
-    toast.success(`Done: ${o.label} · ${o.requestedBy} notified`)
+    toast.success(t('orders.orderDoneToast', { label: o.label, by: o.requestedBy }))
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <p className="t-body text-foreground-lighter">{activeWard} · action each order, then the ordering doctor is notified</p>
+        <p className="t-body text-foreground-lighter">{t('orders.subtitle', { ward: activeWard })}</p>
         <div className="flex items-center gap-2 flex-wrap">
           <WardSwitcher />
-          <div className="flex items-center gap-2 text-xs font-semibold text-primary bg-accent-soft border border-primary/20 rounded-full px-3 py-1.5">
-            <Sparkles className="h-3.5 w-3.5" /> AI-prioritised{highCount > 0 ? ` · ${highCount} high` : ""}
+          <div className="flex items-center gap-2 text-xs font-semibold text-accent bg-accent-soft border border-primary/20 rounded-full px-3 py-1.5">
+            <Sparkles className="h-3.5 w-3.5" /> {highCount > 0 ? t('orders.aiPrioritisedHigh', { count: highCount }) : t('orders.aiPrioritised')}
           </div>
         </div>
       </div>
@@ -69,8 +71,8 @@ export default function NurseOrdersPage() {
       {orders.length === 0 ? (
         <EmptyState
           icon={CheckCircle2}
-          title="All orders actioned"
-          description="New doctor orders will appear here automatically."
+          title={t('orders.allActioned')}
+          description={t('orders.allActionedDesc')}
           size="sm"
         />
       ) : (
@@ -97,9 +99,9 @@ export default function NurseOrdersPage() {
                             {o.patientName} · {o.ward} {o.bed}{o.detail ? ` · ${o.detail}` : ""}
                           </p>
                           <div className="flex items-center gap-3 mt-1 text-[11px] flex-wrap">
-                            <span className="flex items-center gap-1 text-primary font-semibold"><Stethoscope className="h-3 w-3" /> Ordered by {o.requestedBy}</span>
+                            <span className="flex items-center gap-1 text-accent font-semibold"><Stethoscope className="h-3 w-3" /> {t('orders.orderedBy', { name: o.requestedBy })}</span>
                             <span className="flex items-center gap-1 text-foreground-placeholder"><Clock className="h-3 w-3" /> {timeAgo(o.at)}</span>
-                            <span className="flex items-center gap-1 text-primary font-semibold"><Sparkles className="h-3 w-3" /> {o.aiReason}</span>
+                            <span className="flex items-center gap-1 text-accent font-semibold"><Sparkles className="h-3 w-3" /> {o.aiReason}</span>
                           </div>
                         </div>
                       </div>
@@ -107,8 +109,8 @@ export default function NurseOrdersPage() {
                         onClick={() => action(o)}
                         className="u-press flex flex-col items-center gap-0.5 text-sm font-bold text-white bg-success hover:bg-success-strong px-4 py-2 rounded-xl shadow-xs cursor-pointer transition-colors flex-shrink-0"
                       >
-                        <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Mark done</span>
-                        <span className="text-[9px] font-medium text-white/80">notifies {o.requestedBy.replace(/^Dr\.?\s*/, "Dr. ")}</span>
+                        <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> {t('orders.markDone')}</span>
+                        <span className="text-[9px] font-medium text-white/80">{t('orders.notifies', { name: o.requestedBy.replace(/^Dr\.?\s*/, "Dr. ") })}</span>
                       </button>
                     </div>
                   </Card>

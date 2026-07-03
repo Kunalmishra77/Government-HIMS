@@ -33,7 +33,7 @@ const INITIAL_DOCS: RequiredDoc[] = [
 
 const STATUS_CONFIG: Record<DocStatus, { label: string; color: string; icon: React.ElementType }> = {
   required:  { label: 'Required',  color: 'bg-slate-100 text-slate-600',   icon: AlertCircle },
-  uploaded:  { label: 'Uploaded',  color: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]',     icon: FileText },
+  uploaded:  { label: 'Uploaded',  color: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]',     icon: FileText },
   verified:  { label: 'Verified',  color: 'bg-green-100 text-green-700',   icon: CheckCircle },
   rejected:  { label: 'Rejected',  color: 'bg-red-100 text-red-700',       icon: X },
 }
@@ -95,7 +95,7 @@ export default function InsuranceDocumentsPage() {
           <p className="text-xs font-bold text-green-800/60 uppercase tracking-wide mb-1">Verified</p>
           <p className="text-2xl font-black text-slate-900">{verifiedCount}</p>
         </div>
-        <div className="bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] rounded-xl p-4">
+        <div className="bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] rounded-xl p-4">
           <p className="text-xs font-bold text-[var(--color-primary-dark)]/60 uppercase tracking-wide mb-1">Uploaded</p>
           <p className="text-2xl font-black text-slate-900">{docs.filter((d) => d.status === 'uploaded').length}</p>
         </div>
@@ -128,7 +128,7 @@ export default function InsuranceDocumentsPage() {
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">{doc.description}</p>
                     {doc.uploadedFile && (
-                      <p className="text-xs text-[var(--color-primary)] mt-1 flex items-center gap-1">
+                      <p className="text-xs text-[var(--color-accent)] mt-1 flex items-center gap-1">
                         <FileText className="h-3 w-3" />{doc.uploadedFile}
                       </p>
                     )}

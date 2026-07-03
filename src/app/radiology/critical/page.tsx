@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   Siren, Phone, ArrowUpCircle, CheckCircle2, Clock, AlertTriangle, ShieldCheck,
 } from "lucide-react"
@@ -33,13 +34,14 @@ function isCritical(s: RadiologyStudy): boolean {
 }
 
 export default function CriticalResults() {
+  const t = useTranslations("radiology")
   const studies = useRadiologyStudiesStore(s => s.studies)
   const logCallback = useRadiologyStudiesStore(s => s.logCallback)
   const ackResult = useRadiologyStudiesStore(s => s.ackResult)
   const startEscalation = useRadiologyStudiesStore(s => s.startEscalation)
   const ackEscalation = useRadiologyStudiesStore(s => s.ackEscalation)
   const me = useAuthStore(s => s.currentUser)
-  const meName = me?.name ?? "Radiology"
+  const meName = me?.name ?? t("critical.defaultMeName")
   const [callbackFor, setCallbackFor] = useState<string | null>(null)
   const [recipient, setRecipient] = useState("")
 
@@ -55,22 +57,22 @@ export default function CriticalResults() {
 
   const findingLabel = (s: RadiologyStudy) => {
     const f = (s.aiFindings ?? detectFindings(s).data).find(x => x.category === "critical")
-    return f?.label ?? (isCriticalText(s.reportSections?.impression) ? s.reportSections.impression : "Critical finding")
+    return f?.label ?? (isCriticalText(s.reportSections?.impression) ? s.reportSections.impression : t("critical.criticalFinding"))
   }
 
   const onCallback = (s: RadiologyStudy) => {
-    const to = recipient.trim() || s.doctorName || "ordering doctor"
+    const to = recipient.trim() || s.doctorName || t("critical.defaultRecipient")
     logCallback(s.id, meName, to)
     notifyAndAudit({
       to: "doctor", type: "critical_value", priority: "critical",
-      title: `Critical radiology finding · ${s.patientName}`,
-      body: `${s.name}: ${findingLabel(s)}. Verbal callback logged to ${to}. Acknowledge to close SLA.`,
+      title: t("critical.notifyCallbackTitle", { patient: s.patientName }),
+      body: t("critical.notifyCallbackBody", { name: s.name, finding: findingLabel(s), recipient: to }),
       patientName: s.patientName,
       channels: ["in_app", "sms"],
-      audit: { action: "radiology_critical_callback", resource: "radiology_study", resourceId: s.id, detail: `Callback to ${to} — ${findingLabel(s)}`, userName: meName },
+      audit: { action: "radiology_critical_callback", resource: "radiology_study", resourceId: s.id, detail: t("critical.notifyCallbackDetail", { recipient: to, finding: findingLabel(s) }), userName: meName },
     })
     setCallbackFor(null); setRecipient("")
-    toast.success(`Callback logged to ${to}`)
+    toast.success(t("critical.toastCallbackLogged", { recipient: to }))
   }
 
   const onEscalate = (s: RadiologyStudy) => {
@@ -78,42 +80,42 @@ export default function CriticalResults() {
     const level = (s.escalation?.level ?? 0) + 1
     notifyAndAuditMany(["doctor", "admin"], {
       type: "critical_value", priority: "critical",
-      title: `Escalation L${level} · ${s.patientName}`,
-      body: `Unacknowledged critical ${s.name} finding (${findingLabel(s)}) escalated to level ${level}.`,
+      title: t("critical.notifyEscalationTitle", { level, patient: s.patientName }),
+      body: t("critical.notifyEscalationBody", { name: s.name, finding: findingLabel(s), level }),
       patientName: s.patientName,
       channels: ["in_app", "sms"],
-      audit: { action: "radiology_critical_callback", resource: "radiology_study", resourceId: s.id, detail: `Escalated to L${level}`, userName: meName },
+      audit: { action: "radiology_critical_callback", resource: "radiology_study", resourceId: s.id, detail: t("critical.notifyEscalationDetail", { level }), userName: meName },
     })
-    toast.warning(`Escalated to level ${level}`)
+    toast.warning(t("critical.toastEscalated", { level }))
   }
 
   const onAck = (s: RadiologyStudy) => {
     ackResult(s.id)
     if (s.escalation) ackEscalation(s.id, meName)
-    toast.success(`Acknowledged — SLA closed for ${s.patientName}`)
+    toast.success(t("critical.toastAcknowledged", { patient: s.patientName }))
   }
 
   return (
     <div className="space-y-6">
       <p className="t-body text-foreground-lighter">
-        Closed-loop communication · {SLA_MIN}-minute SLA · escalation ladder · acknowledgment capture
+        {t("critical.subtitle", { sla: SLA_MIN })}
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Open criticals" value={open.length} sub="awaiting acknowledgment" icon={AlertTriangle} color="red" />
-        <StatCard label="SLA breached" value={slaBreached.length} sub={`> ${SLA_MIN} min open`} icon={Clock} color="amber" />
-        <StatCard label="Acknowledged" value={acked.length} sub="loop closed" icon={CheckCircle2} color="green" />
-        <StatCard label="Total flagged" value={criticals.length} sub="critical findings" icon={ShieldCheck} color="blue" />
+        <StatCard label={t("critical.kpiOpen")} value={open.length} sub={t("critical.kpiOpenSub")} icon={AlertTriangle} color="red" />
+        <StatCard label={t("critical.kpiSlaBreached")} value={slaBreached.length} sub={t("critical.kpiSlaBreachedSub", { sla: SLA_MIN })} icon={Clock} color="amber" />
+        <StatCard label={t("critical.kpiAcknowledged")} value={acked.length} sub={t("critical.kpiAcknowledgedSub")} icon={CheckCircle2} color="green" />
+        <StatCard label={t("critical.kpiTotalFlagged")} value={criticals.length} sub={t("critical.kpiTotalFlaggedSub")} icon={ShieldCheck} color="blue" />
       </div>
 
       {/* Board */}
       <div className="rounded-2xl border border-border bg-surface shadow-card">
         <div className="px-5 py-4 border-b border-border flex items-center gap-2">
           <Siren className="h-4 w-4 text-danger" />
-          <h3 className="text-sm font-bold text-foreground">Critical findings board</h3>
+          <h3 className="text-sm font-bold text-foreground">{t("critical.boardTitle")}</h3>
         </div>
         {criticals.length === 0 ? (
-          <EmptyState icon={ShieldCheck} title="No critical findings — all clear" size="sm" />
+          <EmptyState icon={ShieldCheck} title={t("critical.noCritical")} size="sm" />
         ) : (
           <div className="divide-y divide-border-light">
             {criticals.map(s => {
@@ -133,19 +135,19 @@ export default function CriticalResults() {
                         <span className="text-[11px] text-foreground-placeholder">{s.name}</span>
                       </div>
                       <p className="text-[12.5px] font-semibold text-danger-strong mt-0.5">{findingLabel(s)}</p>
-                      <p className="text-[11px] text-foreground-lighter mt-0.5">Reported {mins}m ago · Dr ordering: {s.doctorName}{s.callback ? ` · called ${s.callback.recipient} by ${s.callback.calledBy}` : ""}{s.escalation ? ` · escalated L${s.escalation.level}` : ""}</p>
+                      <p className="text-[11px] text-foreground-lighter mt-0.5">{t("critical.reportedAgoOrdering", { mins, doctor: s.doctorName })}{s.callback ? t("critical.called", { recipient: s.callback.recipient, caller: s.callback.calledBy }) : ""}{s.escalation ? t("critical.escalated", { level: s.escalation.level }) : ""}</p>
                       {/* SLA timer */}
                       {!s.acknowledgedAt && (
                         <div className="mt-2 max-w-xs">
                           <div className="flex items-center justify-between text-[10px] font-semibold mb-0.5">
-                            <span className={breached ? "text-danger" : "text-foreground-lighter"}>SLA {breached ? "BREACHED" : `${Math.max(0, SLA_MIN - mins)}m left`}</span>
+                            <span className={breached ? "text-danger" : "text-foreground-lighter"}>{breached ? t("critical.slaBreached") : t("critical.slaLeft", { mins: Math.max(0, SLA_MIN - mins) })}</span>
                           </div>
                           <div className="h-1.5 rounded-full bg-surface-sunken overflow-hidden">
                             <div className={cn("h-full rounded-full", breached ? "bg-danger" : pct > 70 ? "bg-warning" : "bg-primary")} style={{ width: `${pct}%` }} />
                           </div>
                         </div>
                       )}
-                      {s.acknowledgedAt && <p className="text-[11px] font-semibold text-success-strong mt-1">Acknowledged · loop closed</p>}
+                      {s.acknowledgedAt && <p className="text-[11px] font-semibold text-success-strong mt-1">{t("critical.ackClosed")}</p>}
                     </div>
 
                     {/* Actions */}
@@ -155,20 +157,20 @@ export default function CriticalResults() {
                           <div className="flex items-center gap-1.5">
                             <input autoFocus value={recipient} onChange={e => setRecipient(e.target.value)}
                               placeholder={s.doctorName} className="h-8 w-36 px-2 rounded-lg text-[12px] border border-border bg-surface focus:outline-none focus:border-primary transition-colors" />
-                            <button onClick={() => onCallback(s)} className="u-press h-8 px-3 rounded-lg text-[12px] font-semibold bg-primary-dark text-white hover:bg-primary cursor-pointer transition-colors">Log</button>
+                            <button onClick={() => onCallback(s)} className="u-press h-8 px-3 rounded-lg text-[12px] font-semibold bg-primary-dark text-[#0D2032] hover:bg-primary cursor-pointer transition-colors">{t("critical.log")}</button>
                           </div>
                         ) : (
                           <button onClick={() => { setCallbackFor(s.id); setRecipient("") }}
                             className="u-press inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-semibold bg-danger text-white hover:bg-danger-strong cursor-pointer transition-colors">
-                            <Phone className="h-3.5 w-3.5" /> Log callback
+                            <Phone className="h-3.5 w-3.5" /> {t("critical.logCallback")}
                           </button>
                         )}
                         <div className="flex gap-1.5">
                           <button onClick={() => onEscalate(s)} className="u-press inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[12px] font-semibold bg-warning-bg text-brand-amber-strong border border-warning/30 hover:bg-warning-bg/70 cursor-pointer transition-colors">
-                            <ArrowUpCircle className="h-3.5 w-3.5" /> Escalate
+                            <ArrowUpCircle className="h-3.5 w-3.5" /> {t("critical.escalate")}
                           </button>
                           <button onClick={() => onAck(s)} className="u-press inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[12px] font-semibold bg-success text-white hover:bg-success-strong cursor-pointer transition-colors">
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Ack
+                            <CheckCircle2 className="h-3.5 w-3.5" /> {t("critical.ack")}
                           </button>
                         </div>
                       </div>

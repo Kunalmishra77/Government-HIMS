@@ -3,8 +3,8 @@ import type { IpdEventType, Condition, IpdStage } from '@/store/useInpatientStor
 // Shared IPD labels/tints reused across the table, drawer and full-page chart (DRY).
 
 export const CONDITION_TINT: Record<Condition, string> = {
-  Critical: 'bg-red-100 text-red-700', Serious: 'bg-orange-100 text-orange-700',
-  Stable: 'bg-sky-100 text-sky-700', Improving: 'bg-emerald-100 text-emerald-700',
+  Critical: 'bg-red-100 text-red-700', Serious: 'bg-accent-soft text-accent',
+  Stable: 'bg-surface-sunken text-accent', Improving: 'bg-emerald-100 text-emerald-700',
   'Discharge-ready': 'bg-green-100 text-green-700',
 }
 
@@ -16,19 +16,19 @@ export const STAGE_LABEL: Record<IpdStage, string> = {
 
 export const EVENT_META: Record<IpdEventType, { label: string; color: string }> = {
   admission: { label: 'Admission', color: 'text-slate-500' },
-  round: { label: 'Round', color: 'text-blue-600' },
-  condition_change: { label: 'Condition', color: 'text-orange-600' },
+  round: { label: 'Round', color: 'text-accent' },
+  condition_change: { label: 'Condition', color: 'text-accent' },
   note: { label: 'Note', color: 'text-slate-600' },
-  med_start: { label: 'Med started', color: 'text-blue-600' },
+  med_start: { label: 'Med started', color: 'text-accent' },
   med_stop: { label: 'Med stopped', color: 'text-rose-600' },
   med_change: { label: 'Med changed', color: 'text-amber-600' },
-  test_order: { label: 'Test ordered', color: 'text-cyan-600' },
-  test_result: { label: 'Result', color: 'text-cyan-600' },
+  test_order: { label: 'Test ordered', color: 'text-accent' },
+  test_result: { label: 'Result', color: 'text-accent' },
   diet_change: { label: 'Diet', color: 'text-lime-600' },
-  referral: { label: 'Referral', color: 'text-blue-600' },
+  referral: { label: 'Referral', color: 'text-accent' },
   icu_transfer: { label: 'ICU transfer', color: 'text-red-600' },
-  ot_booking: { label: 'OT booking', color: 'text-cyan-600' },
-  surgery_status: { label: 'Surgery', color: 'text-cyan-700' },
+  ot_booking: { label: 'OT booking', color: 'text-accent' },
+  surgery_status: { label: 'Surgery', color: 'text-accent' },
   discharge_step: { label: 'Discharge', color: 'text-green-600' },
   discharged: { label: 'Discharged', color: 'text-green-700' },
 }

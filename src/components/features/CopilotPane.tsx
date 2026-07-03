@@ -27,8 +27,8 @@ const PRIORITY_STYLES = {
     icon: <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />,
   },
   info: {
-    border: 'border-l-blue-400',
-    icon: <Info className="h-3.5 w-3.5 text-[var(--color-primary)] flex-shrink-0" />,
+    border: 'border-l-slate-400',
+    icon: <Info className="h-3.5 w-3.5 text-[var(--color-accent)] flex-shrink-0" />,
   },
   suggestion: {
     border: 'border-l-amber-400',
@@ -151,7 +151,7 @@ export function CopilotPane({ role, patientId, patientName, wardId }: CopilotPan
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-bold text-sm leading-tight">AI Copilot</p>
-                <p className="text-[#6EC9DC] text-[11px] capitalize">{role} assistant</p>
+                <p className="text-[#F58C4E] text-[11px] capitalize">{role} assistant</p>
               </div>
               {shadowMode && (
                 <span className="text-[10px] font-bold bg-amber-400/30 text-amber-200 px-1.5 py-0.5 rounded uppercase tracking-wide">
@@ -171,7 +171,7 @@ export function CopilotPane({ role, patientId, patientName, wardId }: CopilotPan
             {chips.length > 0 && (
               <div className="flex flex-wrap gap-1 px-3 py-2 border-b border-slate-100 bg-slate-50 flex-shrink-0">
                 {chips.map((chip) => (
-                  <span key={chip} className="text-[10px] font-medium bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] px-2 py-0.5 rounded-full border border-cyan-100">
+                  <span key={chip} className="text-[10px] font-medium bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] px-2 py-0.5 rounded-full border border-primary/20">
                     {chip}
                   </span>
                 ))}
@@ -183,8 +183,8 @@ export function CopilotPane({ role, patientId, patientName, wardId }: CopilotPan
               {/* Ready state */}
               {!hasLoaded && !loading && (
                 <div className="flex flex-col items-center justify-center h-48 text-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-[rgba(8,145,178,0.12)] flex items-center justify-center">
-                    <Bot className="h-6 w-6 text-[var(--color-primary)]" />
+                  <div className="h-12 w-12 rounded-2xl bg-[rgba(238,107,38,0.12)] flex items-center justify-center">
+                    <Bot className="h-6 w-6 text-[var(--color-accent)]" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-700">Ready to assist</p>
@@ -275,7 +275,7 @@ export function CopilotPane({ role, patientId, patientName, wardId }: CopilotPan
 
         {/* Pulse ring when open */}
         {open && (
-          <span className="absolute inset-0 rounded-full ring-2 ring-cyan-300 ring-offset-2 animate-pulse pointer-events-none" />
+          <span className="absolute inset-0 rounded-full ring-2 ring-primary/25 ring-offset-2 animate-pulse pointer-events-none" />
         )}
       </button>
     </>,

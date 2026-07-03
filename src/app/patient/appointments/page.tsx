@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, Clock, Stethoscope, Plus, ChevronLeft, ChevronRight, X, CheckCircle, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -85,7 +86,7 @@ function MiniCalendar({ selected, onSelect }: { selected: Date; onSelect: (d: Da
                 "w-8 h-8 mx-auto rounded-full text-xs font-medium transition-all cursor-pointer",
                 isPast ? "text-slate-300 cursor-not-allowed" :
                 isSelected ? "bg-[var(--color-primary)] text-white font-bold" :
-                isToday ? "text-[var(--color-primary)] font-bold ring-1 ring-blue-300" :
+                isToday ? "text-[var(--color-accent)] font-bold ring-1 ring-primary/25" :
                 "text-slate-700 hover:bg-slate-100"
               )}
             >
@@ -99,6 +100,7 @@ function MiniCalendar({ selected, onSelect }: { selected: Date; onSelect: (d: Da
 }
 
 export default function PatientAppointments() {
+  const t = useTranslations('patient')
   const { appointments, bookAppointment, cancelAppointment } = usePatientStore()
   const [mode, setMode] = useState<'list' | 'book'>('list')
   const [step, setStep] = useState<'doctor' | 'date' | 'confirm'>('doctor')
@@ -131,12 +133,12 @@ export default function PatientAppointments() {
     })
     notifyAndAuditMany(['reception', 'doctor'], {
       type: 'appointment', priority: 'medium',
-      title: `New appointment booked`,
+      title: t('appointments.notifBookedTitle'),
       body: `Patient booked with ${selectedDoctor.name} (${selectedDoctor.specialty}) on ${selectedDate.toLocaleDateString('en-IN')} at ${selectedSlot}.`,
       patientName: 'Kiran Patil',
       audit: { action: 'reception_registered', resource: 'appointment', detail: `Patient self-booked appointment with ${selectedDoctor.name} on ${selectedDate.toISOString().slice(0,10)} at ${selectedSlot}`, userName: 'Patient' },
     })
-    toast.success(`Appointment booked with ${selectedDoctor.name} on ${selectedDate.toLocaleDateString('en-IN')} at ${selectedSlot}`)
+    toast.success(t('appointments.toastBooked', { doctor: selectedDoctor.name, date: selectedDate.toLocaleDateString('en-IN'), time: selectedSlot }))
     setMode('list')
     setStep('doctor')
     setSelectedDoctor(null)
@@ -149,9 +151,9 @@ export default function PatientAppointments() {
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">My Appointments</h2>
+        <h2 className="text-2xl font-bold text-slate-900">{t('appointments.title')}</h2>
         <Button onClick={() => { setMode(mode === 'book' ? 'list' : 'book'); setStep('doctor') }}>
-          {mode === 'book' ? <><X className="h-4 w-4 mr-1.5" /> Cancel</> : <><Plus className="h-4 w-4 mr-1.5" /> Book New</>}
+          {mode === 'book' ? <><X className="h-4 w-4 mr-1.5" /> {t('appointments.cancel')}</> : <><Plus className="h-4 w-4 mr-1.5" /> {t('appointments.bookNew')}</>}
         </Button>
       </div>
 
@@ -169,7 +171,7 @@ export default function PatientAppointments() {
                   )}>
                     {['doctor', 'date', 'confirm'].indexOf(step) > i ? '✓' : i + 1}
                   </div>
-                  <span className={cn("text-xs font-semibold capitalize", step === s ? "text-slate-900" : "text-slate-400")}>{s}</span>
+                  <span className={cn("text-xs font-semibold capitalize", step === s ? "text-slate-900" : "text-slate-400")}>{t(`appointments.step${s.charAt(0).toUpperCase() + s.slice(1)}`)}</span>
                   {i < 2 && <div className="h-px w-6 bg-slate-200" />}
                 </div>
               ))}
@@ -184,7 +186,7 @@ export default function PatientAppointments() {
                       className={cn("text-sm font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer",
                         specialty === s ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                       )}>
-                      {s}
+                      {s === 'All' ? t('appointments.specialtyAll') : s}
                     </button>
                   ))}
                 </div>
@@ -193,12 +195,12 @@ export default function PatientAppointments() {
                     <button
                       key={doc.id}
                       onClick={() => { setSelectedDoctor(doc); setStep('date') }}
-                      className="w-full text-left bg-white border border-slate-200 rounded-xl p-4 hover:border-[rgba(8,145,178,0.30)] hover:bg-[rgba(8,145,178,0.10)]/20 transition-all cursor-pointer"
+                      className="w-full text-left bg-white border border-slate-200 rounded-xl p-4 hover:border-[rgba(238,107,38,0.30)] hover:bg-[rgba(238,107,38,0.10)]/20 transition-all cursor-pointer"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.15)] flex items-center justify-center">
-                            <User className="h-5 w-5 text-[var(--color-primary)]" />
+                          <div className="h-10 w-10 rounded-full bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.15)] flex items-center justify-center">
+                            <User className="h-5 w-5 text-[var(--color-accent)]" />
                           </div>
                           <div>
                             <p className="font-bold text-slate-900 text-sm">{doc.name}</p>
@@ -207,7 +209,7 @@ export default function PatientAppointments() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-bold text-slate-900">₹{doc.fee}</p>
-                          <p className="text-[11px] text-green-600 font-semibold mt-0.5">Next: {doc.nextAvailable}</p>
+                          <p className="text-[11px] text-green-600 font-semibold mt-0.5">{t('appointments.next', { when: doc.nextAvailable === 'Today' ? t('consultations.dayToday') : doc.nextAvailable === 'Tomorrow' ? t('consultations.dayTomorrow') : doc.nextAvailable })}</p>
                         </div>
                       </div>
                     </button>
@@ -219,23 +221,23 @@ export default function PatientAppointments() {
             {/* Step 2: Date & Slot */}
             {step === 'date' && selectedDoctor && (
               <div className="space-y-4">
-                <button onClick={() => setStep('doctor')} className="flex items-center gap-1 text-sm text-[var(--color-primary)] font-semibold cursor-pointer hover:underline">
-                  <ChevronLeft className="h-4 w-4" /> Change doctor
+                <button onClick={() => setStep('doctor')} className="flex items-center gap-1 text-sm text-[var(--color-accent)] font-semibold cursor-pointer hover:underline">
+                  <ChevronLeft className="h-4 w-4" /> {t('appointments.changeDoctor')}
                 </button>
-                <div className="bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] rounded-xl p-3 flex items-center gap-3">
-                  <User className="h-5 w-5 text-[var(--color-primary)] flex-shrink-0" />
+                <div className="bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] rounded-xl p-3 flex items-center gap-3">
+                  <User className="h-5 w-5 text-[var(--color-accent)] flex-shrink-0" />
                   <div>
                     <p className="font-bold text-[var(--color-primary-dark)] text-sm">{selectedDoctor.name}</p>
-                    <p className="text-xs text-[var(--color-primary)]">{selectedDoctor.specialty} · ₹{selectedDoctor.fee}</p>
+                    <p className="text-xs text-[var(--color-accent)]">{selectedDoctor.specialty} · ₹{selectedDoctor.fee}</p>
                   </div>
                 </div>
                 <MiniCalendar selected={selectedDate} onSelect={(d) => { setSelectedDate(d); setSelectedSlot(null) }} />
                 <div>
                   <p className="text-sm font-bold text-slate-700 mb-2">
-                    Available slots — {selectedDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}
+                    {t('appointments.availableSlots', { date: selectedDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' }) })}
                   </p>
                   {availableSlots.length === 0 ? (
-                    <p className="text-sm text-slate-500 bg-slate-50 rounded-xl p-4 text-center">No slots available on this date</p>
+                    <p className="text-sm text-slate-500 bg-slate-50 rounded-xl p-4 text-center">{t('appointments.noSlots')}</p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {availableSlots.map(slot => (
@@ -243,7 +245,7 @@ export default function PatientAppointments() {
                           key={slot}
                           onClick={() => setSelectedSlot(slot)}
                           className={cn("px-4 py-2 rounded-xl border text-sm font-semibold transition-all cursor-pointer",
-                            selectedSlot === slot ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]" : "bg-white border-slate-200 text-slate-700 hover:border-[rgba(8,145,178,0.30)]"
+                            selectedSlot === slot ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]" : "bg-white border-slate-200 text-slate-700 hover:border-[rgba(238,107,38,0.30)]"
                           )}
                         >
                           {slot}
@@ -257,7 +259,7 @@ export default function PatientAppointments() {
                   onClick={() => setStep('confirm')}
                   className="w-full"
                 >
-                  Continue
+                  {t('appointments.continue')}
                 </Button>
               </div>
             )}
@@ -265,11 +267,11 @@ export default function PatientAppointments() {
             {/* Step 3: Confirm */}
             {step === 'confirm' && selectedDoctor && selectedSlot && (
               <div className="space-y-4">
-                <button onClick={() => setStep('date')} className="flex items-center gap-1 text-sm text-[var(--color-primary)] font-semibold cursor-pointer hover:underline">
-                  <ChevronLeft className="h-4 w-4" /> Change slot
+                <button onClick={() => setStep('date')} className="flex items-center gap-1 text-sm text-[var(--color-accent)] font-semibold cursor-pointer hover:underline">
+                  <ChevronLeft className="h-4 w-4" /> {t('appointments.changeSlot')}
                 </button>
                 <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-                  <h3 className="font-bold text-slate-900">Booking Summary</h3>
+                  <h3 className="font-bold text-slate-900">{t('appointments.bookingSummary')}</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-slate-700">
                       <Stethoscope className="h-4 w-4 text-slate-400" />
@@ -285,12 +287,12 @@ export default function PatientAppointments() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                    <span className="text-sm font-semibold text-slate-600">Consultation fee</span>
+                    <span className="text-sm font-semibold text-slate-600">{t('appointments.consultationFee')}</span>
                     <span className="text-sm font-bold text-slate-900">₹{selectedDoctor.fee}</span>
                   </div>
                 </div>
                 <Button onClick={handleBook} className="w-full">
-                  <CheckCircle className="h-4 w-4 mr-1.5" /> Confirm Appointment
+                  <CheckCircle className="h-4 w-4 mr-1.5" /> {t('appointments.confirmAppointment')}
                 </Button>
               </div>
             )}
@@ -303,8 +305,8 @@ export default function PatientAppointments() {
             {active.length === 0 && (
               <div className="text-center py-12 text-slate-400">
                 <Calendar className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p className="font-semibold">No upcoming appointments</p>
-                <p className="text-sm mt-1">Book your first appointment above</p>
+                <p className="font-semibold">{t('appointments.noUpcoming')}</p>
+                <p className="text-sm mt-1">{t('appointments.bookFirst')}</p>
               </div>
             )}
             {active.map((appt, i) => (
@@ -314,11 +316,11 @@ export default function PatientAppointments() {
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         <NeonBadge variant={appt.status === 'confirmed' ? 'success' : 'blue'}>
-                          {appt.status === 'confirmed' ? '✓ Confirmed' : 'Upcoming'}
+                          {appt.status === 'confirmed' ? t('appointments.confirmed') : t('appointments.upcoming')}
                         </NeonBadge>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-[var(--color-primary)]" />
+                        <Calendar className="h-4 w-4 text-[var(--color-accent)]" />
                         <span className="font-semibold text-slate-900">
                           {new Date(appt.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })} · {appt.time}
                         </span>
@@ -338,11 +340,11 @@ export default function PatientAppointments() {
                           patientName: 'Kiran Patil',
                           audit: { action: 'reception_registered', resource: 'appointment', resourceId: appt.id, detail: `Patient cancelled appointment`, userName: 'Kiran Patil' },
                         })
-                        toast.success('Appointment cancelled · staff notified')
+                        toast.success(t('appointments.toastCancelled'))
                       }}
                       className="text-xs font-semibold text-red-500 hover:text-red-700 cursor-pointer px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
                     >
-                      Cancel
+                      {t('appointments.cancel')}
                     </button>
                   </div>
                 </div>
@@ -351,7 +353,7 @@ export default function PatientAppointments() {
 
             {cancelled.length > 0 && (
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Cancelled</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('appointments.cancelledHeading')}</p>
                 {cancelled.map(appt => (
                   <div key={appt.id} className="bg-slate-50 rounded-xl border border-slate-200 p-4 opacity-60">
                     <p className="text-sm font-semibold text-slate-600 line-through">{appt.doctorName} — {appt.time}</p>

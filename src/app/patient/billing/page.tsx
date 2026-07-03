@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 import {
   Receipt, CreditCard, CheckCircle2, Clock, ShieldCheck, Download,
   Stethoscope, ClipboardList, BedDouble, ArrowRight,
@@ -54,6 +54,7 @@ const ADMISSION = {
 }
 
 export default function PatientBilling() {
+  const t = useTranslations('patient')
   const currentUser = useAuthStore(s => s.currentUser)
   const { items, doctor, received, paid } = usePatientOrdersStore()
 
@@ -68,19 +69,19 @@ export default function PatientBilling() {
   return (
     <div className="max-w-3xl mx-auto pb-10 space-y-5">
       <div>
-        <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">Billing &amp; Payments</h1>
+        <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">{t('billing.title')}</h1>
         <p className="text-[13px] text-slate-500 mt-1">{name} · {pid}</p>
       </div>
 
       {/* Summary tiles */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-4">
-          <p className="text-[12px] text-slate-400 font-semibold">Billed this visit</p>
+          <p className="text-[12px] text-slate-400 font-semibold">{t('billing.billedThisVisit')}</p>
           <p className="text-[20px] font-bold text-slate-900 mt-0.5">₹{500 + (received ? ordersTotal : 0)}</p>
         </div>
         <div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-4">
-          <p className="text-[12px] text-slate-400 font-semibold">Insurance covered</p>
-          <p className="text-[20px] font-bold text-[var(--color-primary)] mt-0.5">₹{ADMISSION.covered.toLocaleString('en-IN')}</p>
+          <p className="text-[12px] text-slate-400 font-semibold">{t('billing.insuranceCovered')}</p>
+          <p className="text-[20px] font-bold text-[var(--color-accent)] mt-0.5">₹{ADMISSION.covered.toLocaleString('en-IN')}</p>
         </div>
         <div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-4">
           <p className="text-[12px] text-slate-400 font-semibold">Outstanding</p>
@@ -90,7 +91,7 @@ export default function PatientBilling() {
 
       {/* Consultation fee — paid at check-in */}
       <BillCard
-        icon={<Stethoscope className="h-5 w-5 text-[var(--color-primary)]" />} tint="bg-[rgba(8,145,178,0.07)]"
+        icon={<Stethoscope className="h-5 w-5 text-[var(--color-accent)]" />} tint="bg-[rgba(238,107,38,0.07)]"
         id={`INV-OPD-${new Date().getFullYear()}-118`} date={`${today} · paid at check-in`}
         title="OPD Consultation" status="paid"
         lines={[{ desc: `Consultation — ${doctor}`, amount: 500 }]}
@@ -100,7 +101,7 @@ export default function PatientBilling() {
       {/* Doctor's orders bill — second payment moment */}
       {received && (
         <BillCard
-          icon={<ClipboardList className="h-5 w-5 text-[var(--color-primary)]" />} tint="bg-[rgba(8,145,178,0.07)]"
+          icon={<ClipboardList className="h-5 w-5 text-[var(--color-accent)]" />} tint="bg-[rgba(238,107,38,0.07)]"
           id={`INV-RX-${new Date().getFullYear()}-118`} date={`${today} · prescribed by ${doctor}`}
           title="Doctor's orders — tests & medicines" status={paid ? 'paid' : 'pending'}
           lines={kept.map(i => ({ desc: `${i.name}${i.kind === 'medicine' ? ` × ${i.qty}` : ''}`, amount: lineTotal(i) }))}
@@ -129,8 +130,8 @@ export default function PatientBilling() {
             <span className="font-semibold text-slate-900">₹{ADMISSION.total.toLocaleString('en-IN')}</span>
           </div>
           <div className="flex items-center justify-between text-[13px]">
-            <span className="text-[var(--color-primary)] flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> Cashless approved · {ADMISSION.insurer}</span>
-            <span className="font-semibold text-[var(--color-primary)]">− ₹{ADMISSION.covered.toLocaleString('en-IN')}</span>
+            <span className="text-[var(--color-accent)] flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> Cashless approved · {ADMISSION.insurer}</span>
+            <span className="font-semibold text-[var(--color-accent)]">− ₹{ADMISSION.covered.toLocaleString('en-IN')}</span>
           </div>
           <div className="border-t border-slate-200 pt-2.5 flex items-center justify-between">
             <span className="text-[13px] font-bold text-slate-900">Your co-pay (paid)</span>
@@ -138,7 +139,7 @@ export default function PatientBilling() {
           </div>
           {/* coverage bar */}
           <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
-            <div className="h-full bg-[rgba(8,145,178,0.07)]0 rounded-full" style={{ width: `${Math.round((ADMISSION.covered / ADMISSION.total) * 100)}%` }} />
+            <div className="h-full bg-[rgba(238,107,38,0.07)]0 rounded-full" style={{ width: `${Math.round((ADMISSION.covered / ADMISSION.total) * 100)}%` }} />
           </div>
           <p className="text-[11.5px] text-slate-400">{Math.round((ADMISSION.covered / ADMISSION.total) * 100)}% covered by your insurer · {100 - Math.round((ADMISSION.covered / ADMISSION.total) * 100)}% co-pay</p>
         </div>
@@ -183,7 +184,7 @@ function BillCard({
         ))}
         <div className="border-t border-slate-200 pt-2 flex justify-between font-bold">
           <span className="text-slate-900">Total</span>
-          <span className="text-[var(--color-primary)]">₹{total}</span>
+          <span className="text-[var(--color-accent)]">₹{total}</span>
         </div>
       </div>
 

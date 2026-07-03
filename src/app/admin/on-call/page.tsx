@@ -12,6 +12,7 @@ import { canDo } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { SwapRequestModal } from "@/components/admin/SwapRequestModal"
+import { useTranslations } from "next-intl"
 
 // On-call rotation is stored locally in component state for Phase 2; will be
 // promoted to its own slice in `useHRStore.onCallRotations` in a follow-up.
@@ -46,10 +47,13 @@ function fmtTime(s: string): string {
 }
 
 export default function OnCallPage() {
+  const t = useTranslations('admin')
   const currentUser = useAuthStore(s => s.currentUser)
   const staff = useHRStore(s => s.staff)
 
   const canWrite = canDo(currentUser?.role, 'hr.duty.write')
+  const deptLabel = (d: string) => t.has(`onCall.dept.${d}`) ? t(`onCall.dept.${d}`) : d
+  const shiftLabel = (s: string) => t.has(`onCall.shift.${s}`) ? t(`onCall.shift.${s}`) : s
 
   const [weekOffset, setWeekOffset] = useState(0)
   const [swapOpenFor, setSwapOpenFor] = useState<OnCallSlot | null>(null)
@@ -92,7 +96,7 @@ export default function OnCallPage() {
   const getStaffById = (id: string): StaffMember | undefined => staff.find(s => s.id === id)
 
   const handleEditSlot = (slot: OnCallSlot) => {
-    if (!canWrite) { toast.error("You don't have permission to edit on-call rotations"); return }
+    if (!canWrite) { toast.error(t('onCall.noPermission')); return }
     setSwapOpenFor(slot)
   }
 
@@ -101,42 +105,42 @@ export default function OnCallPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Phone className="h-6 w-6 text-orange-600" />On-Call Rotation
+            <Phone className="h-6 w-6 text-accent" />{t('onCall.title')}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Critical-department on-call schedule · {ON_CALL_DEPTS.length} departments · 14-day rolling window</p>
+          <p className="text-sm text-slate-500 mt-1">{t('onCall.subtitle', { count: ON_CALL_DEPTS.length })}</p>
         </div>
       </div>
 
       {/* Who's on-call NOW */}
-      <div className="rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50/40 p-4">
+      <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary-soft to-amber-50/40 p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-4 w-4 text-orange-600 animate-pulse" />
-          <h3 className="text-sm font-bold text-orange-800">Live · who's on-call right now</h3>
-          <span className="text-[10px] font-bold uppercase tracking-wide text-orange-700 bg-orange-100 px-2 py-0.5 rounded">
+          <Sparkles className="h-4 w-4 text-accent animate-pulse" />
+          <h3 className="text-sm font-bold text-accent">{t('onCall.liveNow')}</h3>
+          <span className="text-[10px] font-bold uppercase tracking-wide text-accent bg-accent-soft px-2 py-0.5 rounded">
             {fmtTime(new Date().toISOString())}
           </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {nowOnCall.length === 0 ? (
-            <p className="text-xs text-orange-700 col-span-3 italic">No on-call assignments for the current shift.</p>
+            <p className="text-xs text-accent col-span-3 italic">{t('onCall.noAssignments')}</p>
           ) : nowOnCall.map((slot, i) => {
             const member = getStaffById(slot.staffId)
             const Icon = ON_CALL_DEPTS.find(d => d.dept === slot.department)?.icon ?? Phone
             return (
               <motion.div key={`${slot.date}-${slot.department}-${slot.shift}`}
                 initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="rounded-lg bg-white border border-orange-100 p-3 flex items-center gap-3">
-                <span className="h-9 w-9 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center flex-shrink-0">
+                className="rounded-lg bg-white border border-primary/20 p-3 flex items-center gap-3">
+                <span className="h-9 w-9 rounded-xl bg-accent-soft text-accent flex items-center justify-center flex-shrink-0">
                   <Icon className="h-4 w-4" />
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-slate-800 truncate">{member?.name ?? slot.staffId}</p>
-                  <p className="text-[11px] text-slate-500">{slot.department} · {slot.shift}</p>
+                  <p className="text-[11px] text-slate-500">{deptLabel(slot.department)} · {shiftLabel(slot.shift)}</p>
                 </div>
                 {member?.phone && (
                   <a href={`tel:${member.phone}`}
                     className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold cursor-pointer">
-                    <Phone className="h-3 w-3" />Call
+                    <Phone className="h-3 w-3" />{t('onCall.call')}
                   </a>
                 )}
               </motion.div>
@@ -152,7 +156,7 @@ export default function OnCallPage() {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="text-sm font-bold text-slate-700 min-w-[120px] text-center">
-            {weekOffset === 0 ? 'This week' : weekOffset > 0 ? `+${weekOffset} week` : `${weekOffset} week`}
+            {weekOffset === 0 ? t('onCall.thisWeek') : weekOffset > 0 ? t('onCall.weekAhead', { n: weekOffset }) : t('onCall.weekBehind', { n: weekOffset })}
           </span>
           <button onClick={() => setWeekOffset(w => w + 1)} className="p-1 rounded-lg hover:bg-slate-100 cursor-pointer">
             <ChevronRight className="h-4 w-4" />
@@ -166,12 +170,12 @@ export default function OnCallPage() {
         <table className="w-full text-sm" style={{ minWidth: 1000 }}>
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500 sticky left-0 bg-slate-50 z-10 min-w-[140px]">Department</th>
+              <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500 sticky left-0 bg-slate-50 z-10 min-w-[140px]">{t('onCall.department')}</th>
               {dateRange.map(date => {
                 const isToday = date === dateOffset(0)
                 return (
                   <th key={date} className={cn('text-center px-2 py-3 text-[10px] font-bold uppercase tracking-wide',
-                    isToday ? 'text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)]' : 'text-slate-500')}>
+                    isToday ? 'text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)]' : 'text-slate-500')}>
                     <div>{fmtDate(date).split(',')[0]}</div>
                     <div className="text-[9px] text-slate-400">{fmtDate(date).split(',')[1]}</div>
                   </th>
@@ -187,7 +191,7 @@ export default function OnCallPage() {
                     <span className="h-7 w-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
                       <Icon className="h-3.5 w-3.5" />
                     </span>
-                    <span className="text-xs font-bold text-slate-800">{dept}</span>
+                    <span className="text-xs font-bold text-slate-800">{deptLabel(dept)}</span>
                   </div>
                 </td>
                 {dateRange.map(date => {
@@ -201,7 +205,7 @@ export default function OnCallPage() {
                         {dayMember ? (
                           <button onClick={() => day && handleEditSlot(day)}
                             className="block w-full text-[10px] font-bold px-1.5 py-1 rounded bg-amber-50 text-amber-800 hover:bg-amber-100 cursor-pointer truncate"
-                            title={`Day: ${dayMember.name} (${dayMember.role})`}>
+                            title={t('onCall.dayTooltip', { name: dayMember.name, role: dayMember.role })}>
                             ☀ {dayMember.name.replace('Dr. ', '').split(' ')[0]}
                           </button>
                         ) : (
@@ -209,8 +213,8 @@ export default function OnCallPage() {
                         )}
                         {nightMember ? (
                           <button onClick={() => night && handleEditSlot(night)}
-                            className="block w-full text-[10px] font-bold px-1.5 py-1 rounded bg-[rgba(8,145,178,0.07)] text-[var(--color-primary-dark)] hover:bg-[rgba(8,145,178,0.14)] cursor-pointer truncate"
-                            title={`Night: ${nightMember.name} (${nightMember.role})`}>
+                            className="block w-full text-[10px] font-bold px-1.5 py-1 rounded bg-[rgba(238,107,38,0.07)] text-[var(--color-primary-dark)] hover:bg-[rgba(238,107,38,0.14)] cursor-pointer truncate"
+                            title={t('onCall.nightTooltip', { name: nightMember.name, role: nightMember.role })}>
                             ☾ {nightMember.name.replace('Dr. ', '').split(' ')[0]}
                           </button>
                         ) : (
@@ -228,17 +232,17 @@ export default function OnCallPage() {
 
       {/* Legend */}
       <div className="flex items-center gap-3 text-xs flex-wrap">
-        <span className="font-semibold text-slate-500">Shifts:</span>
+        <span className="font-semibold text-slate-500">{t('onCall.shifts')}</span>
         <div className="flex items-center gap-1">
           <span className="h-2 w-3 rounded-sm bg-amber-400" />
-          <span className="text-[11px] font-semibold text-slate-600">☀ Day (08:00–20:00)</span>
+          <span className="text-[11px] font-semibold text-slate-600">{t('onCall.dayLegend')}</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="h-2 w-3 rounded-sm bg-[var(--color-primary)]" />
-          <span className="text-[11px] font-semibold text-slate-600">☾ Night (20:00–08:00)</span>
+          <span className="text-[11px] font-semibold text-slate-600">{t('onCall.nightLegend')}</span>
         </div>
         <span className="text-slate-300">·</span>
-        <span className="text-[11px] text-slate-500">Live banner refreshes per shift · click any slot to file a swap request.</span>
+        <span className="text-[11px] text-slate-500">{t('onCall.legendNote')}</span>
       </div>
 
       <SwapRequestModal

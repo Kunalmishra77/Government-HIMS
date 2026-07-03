@@ -95,7 +95,7 @@ export default function AiCommandCenter() {
         <p className="t-body text-foreground-lighter max-w-2xl">
           High-risk AI queue · workload forecast · natural-language operations assistant
         </p>
-        <Link href="/radiology/critical" className="u-press inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-semibold text-white bg-primary-dark hover:bg-primary transition-colors">
+        <Link href="/radiology/critical" className="u-press inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-semibold text-[#0D2032] bg-primary-dark hover:bg-primary transition-colors">
           <Siren className="h-4 w-4" /> Critical Results
         </Link>
       </div>
@@ -114,7 +114,7 @@ export default function AiCommandCenter() {
       {pendingQueue.length > 0 && (
         <div className="hms-card">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
-            <ScanLine className="h-4 w-4 text-primary" />
+            <ScanLine className="h-4 w-4 text-accent" />
             <h3 className="t-title text-foreground">In Queue — awaiting scan</h3>
             <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-accent-soft text-primary-dark text-[11px] font-bold">{pendingQueue.length}</span>
             <span className="ml-auto text-[11px] font-semibold text-foreground-placeholder">sorted by priority</span>
@@ -124,7 +124,7 @@ export default function AiCommandCenter() {
               const st = studyStatusToken(study.status)
               return (
                 <div key={study.id} className="u-row flex items-center gap-3 px-5 py-3.5">
-                  <span className="h-8 w-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-accent-soft text-primary text-xs font-bold border border-primary/15">
+                  <span className="h-8 w-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-accent-soft text-accent text-xs font-bold border border-primary/15">
                     {idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -236,7 +236,7 @@ export default function AiCommandCenter() {
                 aria-label="Ask the operations assistant"
                 className="w-full h-10 pl-3.5 pr-10 rounded-xl text-[13px] bg-surface-sunken border border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
-              <button type="submit" aria-label="Ask" className="u-press absolute right-1.5 top-1.5 h-7 w-7 rounded-lg bg-primary-dark text-white flex items-center justify-center hover:bg-primary cursor-pointer transition-colors">
+              <button type="submit" aria-label="Ask" className="u-press absolute right-1.5 top-1.5 h-7 w-7 rounded-lg bg-primary-dark text-[#0D2032] flex items-center justify-center hover:bg-primary cursor-pointer transition-colors">
                 <Send className="h-3.5 w-3.5" />
               </button>
             </form>

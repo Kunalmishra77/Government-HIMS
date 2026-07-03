@@ -10,6 +10,19 @@
  *
  * Bundles reference the real catalogs (`labCatalog`, `radiologyCatalog`) so
  * codes/names never drift. Pure + dependency-free → trivially testable.
+ *
+ * i18n: Plain data module (no React hooks). The English `label`,
+ * `presentation`, `diagnosis`, admission `reason`, and med `instructions`
+ * below stay as canonical values. Components localize at render time via the
+ * `orderSets` namespace, keyed by set `id`:
+ *   const t = useTranslations('orderSets')
+ *   t(`${def.id}.label`)              // localized card title
+ *   t(`${def.id}.presentation`)       // localized one-line hint
+ *   t(`${def.id}.diagnosis`)          // localized working diagnosis
+ *   t(`${def.id}.admissionReason`)    // when def.admission is present
+ *   t(`${def.id}.med.<slug>`)         // per-med instruction (see JSON keys)
+ * Drug names, dosages and durations are clinical/proper-noun values and are
+ * intentionally NOT translated. See messages/{en,hi}/orderSets.json.
  */
 
 import { LAB_CATALOG } from './labCatalog'

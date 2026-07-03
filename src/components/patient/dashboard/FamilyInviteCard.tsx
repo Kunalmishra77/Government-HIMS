@@ -204,7 +204,7 @@ export function FamilyInviteCard({ className }: { className?: string }) {
               </div>
               <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${
                 i.status === "accepted" ? "bg-emerald-100 text-emerald-700"
-              : i.status === "delivered" ? "bg-sky-100 text-sky-700"
+              : i.status === "delivered" ? "bg-surface-sunken text-accent"
               : "bg-amber-100 text-amber-700"
               }`}>
                 {i.status === "accepted" ? <Check className="h-2.5 w-2.5" /> : <Clock className="h-2.5 w-2.5" />}

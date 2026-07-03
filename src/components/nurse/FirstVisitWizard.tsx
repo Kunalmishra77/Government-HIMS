@@ -6,11 +6,11 @@ import { motion } from "framer-motion"
 import { X, ChevronLeft, ChevronRight, CheckCircle2, ShieldAlert, Sparkles, UserPlus, AlertTriangle } from "lucide-react"
 import { useVitalsDraft } from "./useVitalsDraft"
 import { VitalsFields, VitalsAiPanel } from "./VitalsFields"
-import { emptyProfile, type PatientProfile, type SmokingStatus, type AlcoholStatus, type PregnancyStatus, type PayerType } from "@/store/usePatientProfileStore"
-import { BLOOD_GROUPS, RELATIONS, LANGUAGES, missingMandatory, bmiBand, allergyMedConflicts, riskSnapshot, type VitalsDraft } from "@/lib/patientProfile"
+import { emptyProfile, type PatientProfile, type SmokingStatus, type AlcoholStatus, type PregnancyStatus } from "@/store/usePatientProfileStore"
+import { BLOOD_GROUPS, missingMandatory, bmiBand, allergyMedConflicts, riskSnapshot, type VitalsDraft } from "@/lib/patientProfile"
 import type { VitalsRecord } from "@/store/useInpatientStore"
 
-const STEP_LABELS = ["Identity & contact", "Emergency contact", "Clinical history", "Lifestyle & measurements", "Vitals", "Review"]
+const STEP_LABELS = ["Clinical history", "Lifestyle & measurements", "Vitals", "Review"]
 const numOrUndef = (s: string) => { const n = parseFloat(s); return isNaN(n) ? undefined : n }
 
 function TextField({ label, value, onChange, placeholder, type = "text" }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
@@ -84,7 +84,7 @@ export function FirstVisitWizard({ title, subtitle, meta, initial, onClose, onCo
   const snapshot = useMemo(() => riskSnapshot(p, vd, meta), [p, vd, meta])
 
   const finish = async () => {
-    if (missing.length) { setStep(missing.includes("Core vitals (HR, BP, RR, SpO₂, temp)") ? 4 : 0); return }
+    if (missing.length) { setStep(missing.includes("Core vitals (HR, BP, RR, SpO₂, temp)") ? 2 : 0); return }
     setSaving(true)
     await new Promise(r => setTimeout(r, 250))
     const vitals: Omit<VitalsRecord, "id" | "at"> = { ...api.draft, weight: p.weightKg, height: p.heightCm }
@@ -99,32 +99,6 @@ export function FirstVisitWizard({ title, subtitle, meta, initial, onClose, onCo
   const renderBody = () => {
     switch (step) {
       case 0: return (
-        <div className="space-y-3">
-          <p className="text-xs text-slate-500">Name, age, gender and phone were captured at registration. Complete the rest below.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <TextField label="Address" value={p.address ?? ""} onChange={v => upd({ address: v })} placeholder="House, street, area" />
-            <TextField label="City" value={p.city ?? ""} onChange={v => upd({ city: v })} placeholder="City" />
-            <TextField label="Pincode" value={p.pincode ?? ""} onChange={v => upd({ pincode: v })} placeholder="411014" />
-            <TextField label="ABHA / National ID" value={p.abhaId ?? ""} onChange={v => upd({ abhaId: v })} placeholder="14-XXXX-XXXX-XXXX" />
-            <SelectField label="Preferred language" value={p.preferredLanguage ?? ""} onChange={v => upd({ preferredLanguage: v })} options={LANGUAGES} />
-            <SelectField label="Marital status" value={p.maritalStatus ?? ""} onChange={v => upd({ maritalStatus: v })} options={["Single", "Married", "Widowed", "Other"]} />
-            <TextField label="Occupation" value={p.occupation ?? ""} onChange={v => upd({ occupation: v })} placeholder="e.g. Teacher" />
-            <SelectField label="Payer" value={p.payerType ?? ""} onChange={v => upd({ payerType: v as PayerType })} options={["Self-pay", "Insurance", "Govt scheme", "Corporate"]} />
-            {p.payerType === "Insurance" && <>
-              <TextField label="Insurer" value={p.insurer ?? ""} onChange={v => upd({ insurer: v })} placeholder="Star Health…" />
-              <TextField label="Policy no." value={p.policyNo ?? ""} onChange={v => upd({ policyNo: v })} placeholder="Policy number" />
-            </>}
-          </div>
-        </div>
-      )
-      case 1: return (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <TextField label="Contact name" value={p.emergencyName ?? ""} onChange={v => upd({ emergencyName: v })} placeholder="Full name" />
-          <SelectField label="Relationship" value={p.emergencyRelation ?? ""} onChange={v => upd({ emergencyRelation: v })} options={RELATIONS} />
-          <TextField label="Phone" type="tel" value={p.emergencyPhone ?? ""} onChange={v => upd({ emergencyPhone: v })} placeholder="+91 …" />
-        </div>
-      )
-      case 2: return (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <SelectField label="Blood group" value={p.bloodGroup ?? ""} onChange={v => upd({ bloodGroup: v })} options={BLOOD_GROUPS} />
@@ -147,7 +121,7 @@ export function FirstVisitWizard({ title, subtitle, meta, initial, onClose, onCo
           )}
         </div>
       )
-      case 3: return (
+      case 1: return (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <SelectField label="Smoking" value={p.smoking ?? ""} onChange={v => upd({ smoking: v as SmokingStatus })} options={["Never", "Former", "Current"]} />
@@ -163,17 +137,17 @@ export function FirstVisitWizard({ title, subtitle, meta, initial, onClose, onCo
           </div>
         </div>
       )
-      case 4: return (
+      case 2: return (
         <div className="space-y-5">
           <p className="text-xs text-slate-500">Comprehensive first-visit vitals. Height/weight from the previous step fill the record automatically.</p>
           <VitalsFields api={api} hideAnthropometrics />
           <VitalsAiPanel news={api.news} anomalies={api.anomalies} />
         </div>
       )
-      case 5: return (
+      case 3: return (
         <div className="space-y-4">
-          <div className="rounded-xl border border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)] p-4">
-            <p className="flex items-center gap-2 text-xs font-bold text-[var(--color-primary)] uppercase tracking-wider mb-1"><Sparkles className="h-4 w-4" /> AI risk snapshot</p>
+          <div className="rounded-xl border border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)] p-4">
+            <p className="flex items-center gap-2 text-xs font-bold text-[var(--color-accent)] uppercase tracking-wider mb-1"><Sparkles className="h-4 w-4" /> AI risk snapshot</p>
             <p className="text-sm font-semibold text-slate-800">{snapshot}</p>
           </div>
           <div>
@@ -217,9 +191,9 @@ export function FirstVisitWizard({ title, subtitle, meta, initial, onClose, onCo
         <div className="px-6 py-4 border-b border-slate-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.15)] flex items-center justify-center"><UserPlus className="h-5 w-5 text-[var(--color-primary)]" /></div>
+              <div className="h-9 w-9 rounded-xl bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.15)] flex items-center justify-center"><UserPlus className="h-5 w-5 text-[var(--color-accent)]" /></div>
               <div>
-                <h2 id="wizard-title" className="text-base font-bold text-slate-900">Complete patient profile</h2>
+                <h2 id="wizard-title" className="text-base font-bold text-slate-900">Complete Vitals</h2>
                 <p className="text-sm text-slate-500 font-medium">{title}{subtitle ? ` · ${subtitle}` : ""}</p>
               </div>
             </div>
@@ -227,7 +201,7 @@ export function FirstVisitWizard({ title, subtitle, meta, initial, onClose, onCo
           </div>
           <div className="flex items-center gap-1.5 mt-3">
             {STEP_LABELS.map((_, i) => (
-              <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= step ? "bg-[rgba(8,145,178,0.07)]0" : "bg-slate-200"}`} />
+              <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= step ? "bg-[var(--color-primary)]" : "bg-slate-200"}`} />
             ))}
           </div>
           <p className="text-xs font-semibold text-slate-500 mt-1.5">Step {step + 1} of {STEP_LABELS.length} · {STEP_LABELS[step]}</p>
@@ -250,7 +224,7 @@ export function FirstVisitWizard({ title, subtitle, meta, initial, onClose, onCo
           ) : (
             <button onClick={finish} disabled={saving || missing.length > 0}
               className="ml-auto flex items-center gap-1.5 h-10 px-5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-              <CheckCircle2 className="h-4 w-4" /> {saving ? "Saving…" : "Complete profile & vitals"}
+              <CheckCircle2 className="h-4 w-4" /> {saving ? "Saving…" : "Complete Vitals"}
             </button>
           )}
         </div>

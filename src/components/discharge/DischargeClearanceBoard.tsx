@@ -152,7 +152,7 @@ const STEPS: Step[] = [
 
 const STATUS_STYLES: Record<StepStatus, { dot: string; ring: string; label: string; chip: string }> = {
   cleared:     { dot: 'bg-emerald-500', ring: 'ring-emerald-100', label: 'Cleared',     chip: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  in_progress: { dot: 'bg-[rgba(8,145,178,0.07)]0',    ring: 'ring-blue-100',    label: 'In progress', chip: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] border-[rgba(8,145,178,0.20)]' },
+  in_progress: { dot: 'bg-[rgba(238,107,38,0.07)]0',    ring: 'ring-primary/20',    label: 'In progress', chip: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] border-[rgba(238,107,38,0.20)]' },
   pending:     { dot: 'bg-slate-300',   ring: 'ring-slate-100',   label: 'Pending',     chip: 'bg-slate-50 text-slate-500 border-slate-200' },
   blocked:     { dot: 'bg-red-500',     ring: 'ring-red-100',     label: 'Blocker',     chip: 'bg-red-50 text-red-700 border-red-200' },
 }

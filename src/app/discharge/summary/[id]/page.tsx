@@ -45,8 +45,8 @@ function ClinicalView({ d }: { d: DischargeSummary }) {
       </div>
 
       {d.otNotes && (
-        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-          <p className="text-xs font-bold text-orange-700 uppercase tracking-wide mb-1">Surgical / OT Notes</p>
+        <div className="p-3 bg-primary-soft border border-primary/20 rounded-lg">
+          <p className="text-xs font-bold text-accent uppercase tracking-wide mb-1">Surgical / OT Notes</p>
           <p className="text-xs text-slate-700">{d.otNotes}</p>
         </div>
       )}
@@ -55,7 +55,7 @@ function ClinicalView({ d }: { d: DischargeSummary }) {
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Procedures Done</p>
         <div className="flex flex-wrap gap-1.5">
           {d.proceduresDone.map((p, i) => (
-            <span key={i} className="text-xs bg-[rgba(8,145,178,0.07)] text-[#0E7490] px-2 py-0.5 rounded-full border border-[rgba(8,145,178,0.20)]">{p}</span>
+            <span key={i} className="text-xs bg-[rgba(238,107,38,0.07)] text-[#B84A16] px-2 py-0.5 rounded-full border border-[rgba(238,107,38,0.20)]">{p}</span>
           ))}
         </div>
       </div>
@@ -87,12 +87,12 @@ function ClinicalView({ d }: { d: DischargeSummary }) {
       {d.ivTherapyLog.length > 0 && (
         <div>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <Droplets className="h-3.5 w-3.5 text-[#0E7490]" />
+            <Droplets className="h-3.5 w-3.5 text-[#B84A16]" />
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">IV Therapy Log</p>
           </div>
           <div className="space-y-1">
             {d.ivTherapyLog.map((iv, i) => (
-              <div key={i} className="flex items-center justify-between p-2 bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.15)] rounded-lg text-xs">
+              <div key={i} className="flex items-center justify-between p-2 bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.15)] rounded-lg text-xs">
                 <span className="font-semibold text-slate-800">{iv.fluid}</span>
                 <span className="text-slate-500">{iv.rate} · {iv.totalVolume}</span>
               </div>
@@ -105,7 +105,7 @@ function ClinicalView({ d }: { d: DischargeSummary }) {
       {d.labTrends.length > 0 && (
         <div>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <FlaskConical className="h-3.5 w-3.5 text-[#0E7490]" />
+            <FlaskConical className="h-3.5 w-3.5 text-[#B84A16]" />
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Lab Result Trends</p>
           </div>
           <div className="rounded-lg overflow-hidden border border-slate-200">
@@ -145,10 +145,10 @@ function ClinicalView({ d }: { d: DischargeSummary }) {
       {d.imagingFindings && (
         <div>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <ScanLine className="h-3.5 w-3.5 text-[#0E7490]" />
+            <ScanLine className="h-3.5 w-3.5 text-[#B84A16]" />
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Imaging Findings</p>
           </div>
-          <p className="text-xs text-slate-700 p-3 bg-[rgba(8,145,178,0.07)] border border-cyan-100 rounded-lg">{d.imagingFindings}</p>
+          <p className="text-xs text-slate-700 p-3 bg-[rgba(238,107,38,0.07)] border border-primary/20 rounded-lg">{d.imagingFindings}</p>
         </div>
       )}
 
@@ -175,11 +175,11 @@ function ClinicalView({ d }: { d: DischargeSummary }) {
         <ul className="space-y-1">
           {d.followUpInstructions.map((f, i) => (
             <li key={i} className="text-xs text-slate-700 flex items-start gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#0891B2] flex-shrink-0 mt-1.5" />{f}
+              <span className="h-1.5 w-1.5 rounded-full bg-[#EE6B26] flex-shrink-0 mt-1.5" />{f}
             </li>
           ))}
         </ul>
-        <p className="text-xs font-semibold text-[#0E7490] mt-1.5">Next visit: {d.followUpDate}</p>
+        <p className="text-xs font-semibold text-[#B84A16] mt-1.5">Next visit: {d.followUpDate}</p>
       </div>
 
       <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -362,7 +362,7 @@ export default function DischargeSummaryPage() {
           {/* Actions */}
           <div className="flex items-center gap-2 flex-wrap">
             <button onClick={printSummary}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0E7490] hover:bg-[#155E75] text-white text-[13px] font-bold cursor-pointer">
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#C2481A] hover:bg-[#9A3A14] text-white text-[13px] font-bold cursor-pointer">
               <Printer className="h-4 w-4" /> Print summary
             </button>
             <button onClick={downloadPatientCopy}

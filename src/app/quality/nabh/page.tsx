@@ -14,15 +14,16 @@ import { buildNabhEvidence, NABH_CHAPTERS } from "@/lib/nabhEvidence"
 import { suggestCAPA, type CapaReport } from "@/ai-services/suggest-capa"
 import type { AiEnvelope } from "@/types/ai"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 const NABH_BENCHMARKS = {
-  handHygieneCompliancePct: { target: 90, label: 'Hand Hygiene', unit: '%', higherIsBetter: true },
-  cauti1000cathdays: { target: 1.0, label: 'CAUTI Rate', unit: '/1000 cath-days', higherIsBetter: false },
-  clabsi1000linedays: { target: 0.5, label: 'CLABSI Rate', unit: '/1000 line-days', higherIsBetter: false },
-  fallRatePer1000patientdays: { target: 1.5, label: 'Fall Rate', unit: '/1000 pt-days', higherIsBetter: false },
-  medicationErrorRate: { target: 0.2, label: 'Medication Errors', unit: '%', higherIsBetter: false },
-  re30dayReadmissionPct: { target: 3.0, label: '30-day Readmission', unit: '%', higherIsBetter: false },
-  patientSatisfactionNPS: { target: 75, label: 'Patient NPS', unit: '', higherIsBetter: true },
+  handHygieneCompliancePct: { target: 90, labelKey: 'handHygiene', unit: '%', higherIsBetter: true },
+  cauti1000cathdays: { target: 1.0, labelKey: 'cauti', unit: '/1000 cath-days', higherIsBetter: false },
+  clabsi1000linedays: { target: 0.5, labelKey: 'clabsi', unit: '/1000 line-days', higherIsBetter: false },
+  fallRatePer1000patientdays: { target: 1.5, labelKey: 'fallRate', unit: '/1000 pt-days', higherIsBetter: false },
+  medicationErrorRate: { target: 0.2, labelKey: 'medicationErrors', unit: '%', higherIsBetter: false },
+  re30dayReadmissionPct: { target: 3.0, labelKey: 'readmission', unit: '%', higherIsBetter: false },
+  patientSatisfactionNPS: { target: 75, labelKey: 'patientNps', unit: '', higherIsBetter: true },
 }
 
 const TREND_DATA = [
@@ -35,6 +36,7 @@ const TREND_DATA = [
 ]
 
 export default function NabhCockpitPage() {
+  const t = useTranslations('quality')
   const { nabh, incidents } = useQualityStore()
   const auditEntries = useAuditStore(s => s.entries)
   const [capaEnvelope, setCapaEnvelope] = useState<AiEnvelope<CapaReport> | null>(null)
@@ -59,15 +61,15 @@ export default function NabhCockpitPage() {
       ? Math.min(100, (Number(value) / bench.target) * 100)
       : Math.min(100, (bench.target / Math.max(Number(value), 0.01)) * 100)
     const onTarget = bench.higherIsBetter ? Number(value) >= bench.target : Number(value) <= bench.target
-    return { name: bench.label, value: Math.round(pct), fill: onTarget ? '#22c55e' : '#ef4444', key, actual: value, target: bench.target, unit: bench.unit, onTarget }
+    return { name: t(`nabh.bench.${bench.labelKey}`), value: Math.round(pct), fill: onTarget ? '#22c55e' : '#ef4444', key, actual: value, target: bench.target, unit: bench.unit, onTarget }
   })
 
   return (
     <div className="space-y-6 p-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div>
-          <NeonBadge variant="teal" className="mb-2"><ShieldCheck className="h-3 w-3" /> NABH Quality Cockpit</NeonBadge>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Quality Intelligence Dashboard</h2>
+          <NeonBadge variant="teal" className="mb-2"><ShieldCheck className="h-3 w-3" /> {t('nabh.badge')}</NeonBadge>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{t('nabh.heading')}</h2>
         </div>
         <button
           onClick={runCapaAnalysis}
@@ -75,7 +77,7 @@ export default function NabhCockpitPage() {
           className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
         >
           <Sparkles className={`h-4 w-4 ${capaLoading ? 'animate-spin' : ''}`} />
-          {capaLoading ? 'Analysing…' : 'Run AI CAPA Analysis'}
+          {capaLoading ? t('nabh.analysing') : t('nabh.runCapa')}
         </button>
       </motion.div>
 
@@ -101,7 +103,7 @@ export default function NabhCockpitPage() {
               </p>
               <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">{item.name}</p>
               <p className={cn("text-[10px] font-semibold mt-0.5", item.onTarget ? "text-green-600" : "text-red-600")}>
-                {item.onTarget ? '✓ On target' : `Target: ${item.target}`}
+                {item.onTarget ? t('nabh.onTarget') : t('nabh.targetValue', { target: item.target })}
               </p>
             </Card>
           </motion.div>
@@ -112,14 +114,14 @@ export default function NabhCockpitPage() {
       <Card className="p-5">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[var(--color-primary)]" />
-            <h3 className="font-bold text-slate-900 text-sm">Live audit-trail evidence</h3>
+            <ShieldCheck className="h-4 w-4 text-[var(--color-accent)]" />
+            <h3 className="font-bold text-slate-900 text-sm">{t('nabh.liveEvidence')}</h3>
             <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
-              {readyChapters}/{NABH_CHAPTERS.length} chapters
+              {t('nabh.chaptersCount', { ready: readyChapters, total: NABH_CHAPTERS.length })}
             </span>
           </div>
-          <Link href="/audit/reports" className="text-xs font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1">
-            Full evidence report <ArrowRight className="h-3 w-3" />
+          <Link href="/audit/reports" className="text-xs font-bold text-[var(--color-accent)] hover:underline flex items-center gap-1">
+            {t('nabh.fullEvidenceReport')} <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -143,7 +145,7 @@ export default function NabhCockpitPage() {
         </div>
         {auditEntries.length > 0 && (
           <div className="mt-3 pt-3 border-t border-slate-100">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1.5">Most recent qualifying events</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1.5">{t('nabh.recentEvents')}</p>
             <div className="space-y-1">
               {auditEntries.slice(0, 3).map(e => {
                 const s = severityOf(e.action)
@@ -167,7 +169,7 @@ export default function NabhCockpitPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Card className="p-5">
           <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-green-600" /> Hand Hygiene & NPS Trend
+            <TrendingUp className="h-4 w-4 text-green-600" /> {t('nabh.handHygieneNpsTrend')}
           </h3>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={TREND_DATA}>
@@ -175,15 +177,15 @@ export default function NabhCockpitPage() {
               <XAxis dataKey="week" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} domain={[50, 100]} />
               <Tooltip />
-              <Line type="monotone" dataKey="handHygiene" stroke="#22c55e" strokeWidth={2} dot={false} name="Hand Hygiene %" />
-              <Line type="monotone" dataKey="nps" stroke="var(--color-primary)" strokeWidth={2} dot={false} name="NPS" />
+              <Line type="monotone" dataKey="handHygiene" stroke="#22c55e" strokeWidth={2} dot={false} name={t('nabh.series.handHygiene')} />
+              <Line type="monotone" dataKey="nps" stroke="var(--color-primary)" strokeWidth={2} dot={false} name={t('nabh.series.nps')} />
             </LineChart>
           </ResponsiveContainer>
         </Card>
 
         <Card className="p-5">
           <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <TrendingDown className="h-4 w-4 text-[var(--color-primary)]" /> Falls & Readmission Trend
+            <TrendingDown className="h-4 w-4 text-[var(--color-accent)]" /> {t('nabh.fallsReadmissionTrend')}
           </h3>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={TREND_DATA}>
@@ -191,8 +193,8 @@ export default function NabhCockpitPage() {
               <XAxis dataKey="week" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Line type="monotone" dataKey="falls" stroke="#f59e0b" strokeWidth={2} dot={false} name="Fall Rate" />
-              <Line type="monotone" dataKey="readmission" stroke="#ef4444" strokeWidth={2} dot={false} name="Readmission %" />
+              <Line type="monotone" dataKey="falls" stroke="#f59e0b" strokeWidth={2} dot={false} name={t('nabh.series.fallRate')} />
+              <Line type="monotone" dataKey="readmission" stroke="#ef4444" strokeWidth={2} dot={false} name={t('nabh.series.readmission')} />
             </LineChart>
           </ResponsiveContainer>
         </Card>
@@ -201,38 +203,38 @@ export default function NabhCockpitPage() {
       {/* CAPA Recommendations */}
       {capaEnvelope && (
         <div className="space-y-4">
-          <h3 className="font-bold text-slate-900 text-lg">AI CAPA Recommendations</h3>
+          <h3 className="font-bold text-slate-900 text-lg">{t('nabh.capaRecommendations')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {capaEnvelope.data.suggestions.map(capa => (
               <Card key={capa.id} className={cn("p-5 border-l-4",
                 capa.priority === 'critical' ? 'border-l-red-500' :
                 capa.priority === 'high' ? 'border-l-orange-400' :
-                capa.priority === 'medium' ? 'border-l-amber-400' : 'border-l-blue-300'
+                capa.priority === 'medium' ? 'border-l-amber-400' : 'border-l-slate-400'
               )}>
                 <div className="flex items-start justify-between mb-2">
                   <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded border",
                     capa.priority === 'critical' ? 'bg-red-50 border-red-200 text-red-700' :
-                    capa.priority === 'high' ? 'bg-orange-50 border-orange-200 text-orange-700' :
-                    capa.priority === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]'
+                    capa.priority === 'high' ? 'bg-primary-soft border-primary/20 text-accent' :
+                    capa.priority === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]'
                   )}>{capa.priority}</span>
                   <span className="text-[10px] text-slate-400 uppercase font-medium">{capa.category}</span>
                 </div>
                 <p className="font-bold text-slate-900 text-sm mb-2">{capa.title}</p>
                 <div className="space-y-1.5 text-xs text-slate-600">
-                  <p><span className="font-semibold">Root cause:</span> {capa.rootCause}</p>
-                  <p><span className="font-semibold">Immediate:</span> {capa.immediateAction}</p>
-                  <p><span className="font-semibold">Preventive:</span> {capa.preventiveAction}</p>
+                  <p><span className="font-semibold">{t('nabh.rootCause')}</span> {capa.rootCause}</p>
+                  <p><span className="font-semibold">{t('nabh.immediate')}</span> {capa.immediateAction}</p>
+                  <p><span className="font-semibold">{t('nabh.preventive')}</span> {capa.preventiveAction}</p>
                 </div>
                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs text-slate-500">
                   <span>{capa.responsible}</span>
-                  <span>By {capa.targetDate}</span>
+                  <span>{t('nabh.by', { date: capa.targetDate })}</span>
                 </div>
               </Card>
             ))}
           </div>
 
           <HitlReviewCard
-            title="AI CAPA Analysis"
+            title={t('nabh.capaTitle')}
             envelope={capaEnvelope}
             featureId="capa_analysis"
             renderContent={() => null}
@@ -245,7 +247,7 @@ export default function NabhCockpitPage() {
       {!capaEnvelope && !capaLoading && (
         <Card className="p-8 text-center">
           <CheckCircle className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">Run AI CAPA Analysis to generate corrective and preventive action recommendations.</p>
+          <p className="text-slate-500">{t('nabh.emptyState')}</p>
         </Card>
       )}
     </div>

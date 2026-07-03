@@ -2,6 +2,7 @@
 
 import { Select } from "@/components/ui/Select"
 import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ShieldCheck, AlertTriangle, CheckCircle2, X, ChevronRight, FlaskConical,
@@ -33,8 +34,8 @@ const PRIORITY_TINT: Record<Priority, string> = {
   STAT: 'bg-red-100 text-red-700', Urgent: 'bg-amber-100 text-amber-700', Routine: 'bg-slate-100 text-slate-600',
 }
 const SOURCE_TINT: Record<LabSource, string> = {
-  OPD: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]', IPD: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  ICU: 'bg-red-50 text-red-700', OT: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]', ER: 'bg-orange-50 text-orange-700',
+  OPD: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]', IPD: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  ICU: 'bg-red-50 text-red-700', OT: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]', ER: 'bg-primary-soft text-accent',
 }
 const BENCH_LABEL: Record<Bench, string> = {
   HEMA: 'Hematology', BIOCHEM: 'Biochemistry', IMMUNO: 'Immunology',
@@ -45,6 +46,7 @@ const minsAgo = (iso: string) => Math.round((Date.now() - new Date(iso).getTime(
 const fmt = (iso?: string) => iso ? new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'
 
 export default function VerifyQueue() {
+  const t = useTranslations('lab')
   const orders = useLabOrdersStore(s => s.orders)
   const verifyTest = useLabOrdersStore(s => s.verifyTest)
   const releaseTest = useLabOrdersStore(s => s.releaseTest)
@@ -98,19 +100,19 @@ export default function VerifyQueue() {
     notifyAndAudit({
       to: 'doctor', type: 'lab_result',
       priority: test.analytes.some(a => a.flag === 'CH' || a.flag === 'CL') ? 'critical' : 'medium',
-      title: `${test.name} verified · ${order.patientName}`,
-      body: `Verified and released by ${meName}. ${test.analytes.filter(a => a.flag !== 'N').length} abnormal flag${test.analytes.filter(a => a.flag !== 'N').length !== 1 ? 's' : ''}.`,
+      title: t('verify.verifiedToastTitle', { test: test.name, name: order.patientName }),
+      body: t('verify.verifiedToastBody', { verifier: meName, count: test.analytes.filter(a => a.flag !== 'N').length }),
       patientName: order.patientName,
       audit: { action: 'lab_result_released', resource: 'lab_test', resourceId: test.id, detail: `Verified ${test.name} for ${order.patientName}`, userName: meName },
     })
-    toast.success(`${test.name} verified · ${order.patientName}`)
+    toast.success(t('verify.verifiedToast', { test: test.name, name: order.patientName }))
   }
 
   const onReject = (test: TestRun) => {
     if (rejectReason === 'hemolyzed' || rejectReason === 'clotted' || rejectReason === 'insufficient'
         || rejectReason === 'wrong_tube' || rejectReason === 'unlabeled' || rejectReason === 'contaminated') {
       rejectTest(test.id, rejectReason)
-      toast(`${test.name} rejected — back to entry for re-work`)
+      toast(t('verify.rejectedToast', { test: test.name }))
       setRejectingId(null)
     }
   }
@@ -120,10 +122,10 @@ export default function VerifyQueue() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-emerald-600" />Pathologist verification
+            <ShieldCheck className="h-6 w-6 text-emerald-600" />{t('verify.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Sign off entered results · second-read with reference ranges + delta-check · release to ordering doctor
+            {t('verify.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -140,9 +142,9 @@ export default function VerifyQueue() {
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)] p-3">
-          <p className="text-2xl font-bold text-[var(--color-primary)]">{enteredCount}</p>
-          <p className="text-xs font-semibold text-[var(--color-primary)] mt-1">Pending verification</p>
+        <div className="rounded-xl border border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)] p-3">
+          <p className="text-2xl font-bold text-[var(--color-accent)]">{enteredCount}</p>
+          <p className="text-xs font-semibold text-[var(--color-accent)] mt-1">Pending verification</p>
         </div>
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
           <p className="text-2xl font-bold text-emerald-700">{verifiedCount}</p>
@@ -311,11 +313,11 @@ export default function VerifyQueue() {
         )}
       </div>
 
-      <div className="bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] rounded-xl p-4">
+      <div className="bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] rounded-xl p-4">
         <p className="text-xs font-bold text-[var(--color-primary-dark)] flex items-center gap-1.5">
           <ChevronRight className="h-3 w-3" />After release
         </p>
-        <p className="text-[11px] text-[var(--color-primary)] mt-1">
+        <p className="text-[11px] text-[var(--color-accent)] mt-1">
           On release, the doctor gets a notification (critical-priority if any CH/CL flag), the patient portal updates,
           billing logs the test, and the audit row is written.
         </p>

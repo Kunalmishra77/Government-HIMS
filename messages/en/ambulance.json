@@ -1,0 +1,89 @@
+{
+  "dashboard": {
+    "title": "Ambulance Dashboard",
+    "subtitle": "Fleet management, dispatch, and trip tracking",
+    "available": "Available",
+    "onTrip": "On Trip",
+    "maintenance": "Maintenance",
+    "activeTrips": "Active Trips",
+    "fleetStatus": "Fleet Status",
+    "driver": "Driver: {name}",
+    "noActiveTripsTitle": "No active trips",
+    "noActiveTripsDesc": "All vehicles are available or on standby",
+    "chiefComplaint": "Chief complaint: {complaint}"
+  },
+  "dispatch": {
+    "title": "Dispatch Console",
+    "activeTrips": "Active trips ({count})",
+    "noActiveTrips": "No active trips right now.",
+    "stageProgress": "{current} of {total}",
+    "advanceTo": "→ {stage}",
+    "fleet": "Fleet",
+    "logFuel": "Log fuel",
+    "newDispatch": "New dispatch",
+    "selectVehicle": "Select vehicle *",
+    "chooseVehicle": "— Choose available vehicle —",
+    "pickupLocation": "Pickup location *",
+    "pickupPlaceholder": "Street address",
+    "destination": "Destination *",
+    "destinationPlaceholder": "Hospital / facility",
+    "chiefComplaint": "Chief complaint",
+    "complaintPlaceholder": "e.g. Chest pain, RTA, Unconscious",
+    "callerName": "Caller name",
+    "callerPhone": "Caller phone",
+    "dispatchNow": "Dispatch Now",
+    "fuelModalTitle": "Log fuel · {vehicle}",
+    "close": "Close",
+    "newFuelLevel": "New fuel level (%)",
+    "cancel": "Cancel",
+    "save": "Save",
+    "toast": {
+      "fuelSaved": "{vehicle} fuel at {pct}%",
+      "dispatchRequired": "Vehicle + pickup + destination required",
+      "dispatched": "Dispatched · {driver} + ER notified",
+      "driverFallback": "Driver",
+      "tripClosed": "Trip closed · {vehicle} now available",
+      "stageAdvanced": "{vehicle} → {stage}"
+    },
+    "notify": {
+      "fuelTitle": "Fuel logged · {vehicle}",
+      "fuelBody": "Fuel topped up to {pct}% for {vehicle}.",
+      "dispatchTitle": "Dispatch · {vehicle}",
+      "dispatchBody": "{driver} dispatched to {pickup} → {destination}{complaint}. Caller: {caller} {phone}.",
+      "callerUnknown": "unknown",
+      "tripClosedTitle": "Trip closed · {vehicle}",
+      "tripClosedBody": "{vehicle} returned. {pickup} → {destination}."
+    }
+  },
+  "log": {
+    "title": "Trip Log",
+    "subtitle": "Live dispatch console · response-time tracking · NABH COP evidence",
+    "tabActive": "active",
+    "tabHistory": "history",
+    "noTrips": "No trips in this view",
+    "dispatchedAt": "Dispatched {time} ({mins} min ago)",
+    "callerPrefix": "caller:",
+    "responseTime": "Response time: {mins} min",
+    "completedAt": "Completed {time}",
+    "advanceTo": "Advance to {stage}",
+    "footer": "Dispatch & completion fire NABH COP audit events with response time evidence."
+  },
+  "status": {
+    "available": "Available",
+    "on_trip": "On Trip",
+    "maintenance": "Maintenance",
+    "out_of_service": "Out Of Service",
+    "dispatched": "Dispatched",
+    "en_route": "En route",
+    "at_scene": "At scene",
+    "transporting": "Transporting",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "tripType": {
+    "emergency": "Emergency",
+    "transfer": "Transfer",
+    "discharge": "Discharge",
+    "routine": "Routine"
+  }
+}

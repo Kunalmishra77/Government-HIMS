@@ -1,0 +1,50 @@
+{
+  "bed_allocated": {
+    "title": "New admission · Bed {bed}",
+    "body": "{patientName} assigned to {bed}. Receive at the ward."
+  },
+  "ot_confirmed": {
+    "title": "OT confirmed · {procedure}",
+    "body": "{patientName}'s surgery is confirmed for {time} in {theatre}."
+  },
+  "medicines_ready": {
+    "title": "Medicines ready",
+    "body": "{patientName}'s medicines are ready for collection at the pharmacy."
+  },
+  "discharge_initiated": {
+    "title": "Discharge started",
+    "body": "Discharge process started for {patientName}."
+  },
+  "discharge_ready": {
+    "title": "Discharge ready",
+    "body": "{patientName} is ready for discharge."
+  },
+  "followup_reminder": {
+    "title": "Follow-up reminder",
+    "body": "Reminder: {patientName}'s follow-up is due on {date}."
+  },
+  "critical_value": {
+    "title": "Critical result · {test}",
+    "body": "Critical value for {patientName}: {test} = {value}. Please review now."
+  },
+  "lab_result": {
+    "title": "Lab result ready",
+    "body": "{test} result for {patientName} is now available."
+  },
+  "bed_request": {
+    "title": "Bed requested",
+    "body": "A bed has been requested for {patientName}."
+  },
+  "drug_interaction": {
+    "title": "Drug interaction alert",
+    "body": "Possible interaction detected for {patientName}. Please review the prescription."
+  },
+  "allergy_alert": {
+    "title": "Allergy alert",
+    "body": "{patientName} has a recorded allergy that may conflict with this order."
+  },
+  "appointment": {
+    "title": "Appointment update",
+    "body": "{patientName}'s appointment has been updated."
+  }
+}

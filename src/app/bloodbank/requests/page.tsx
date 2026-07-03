@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 import {
   Droplets, Clock, ShieldCheck, AlertTriangle, CheckCircle2, FileText,
   ScanLine, ChevronDown, ChevronRight, Search, Beaker,
@@ -17,6 +18,7 @@ const fmt = (iso: string) => new Date(iso).toLocaleString('en-IN', { day: '2-dig
 const CHECK_ORDER: BedsideCheck[] = ['patient_id_match', 'group_abo', 'group_rh', 'expiry_ok', 'bag_integrity', 'consent']
 
 export default function BloodBankRequestsPage() {
+  const t                      = useTranslations('bloodbank')
   const currentUser            = useAuthStore(s => s.currentUser)
   const requests               = useBloodBankStore(s => s.crossMatchRequests)
   const units                  = useBloodBankStore(s => s.units)
@@ -53,43 +55,43 @@ export default function BloodBankRequestsPage() {
   const onCrossMatch = (req: CrossMatchRequest) => {
     const reserved = crossMatch(req.id)
     if (reserved.length === 0) {
-      toast.error(`No FEFO units available for ${req.bloodGroup} ${req.component}`)
+      toast.error(t('requests.noFefoToast', { group: req.bloodGroup, component: req.component }))
       return
     }
     setTab('compatible')
     setOpen(req.id)
-    toast.success(`${reserved.length} unit(s) reserved · ${req.patientName}`)
+    toast.success(t('requests.reservedToast', { count: reserved.length, patient: req.patientName }))
   }
 
   const onMarkIncompatible = async (req: CrossMatchRequest) => {
     const values = await prompt({
-      title: `Mark crossmatch incompatible · ${req.patientName}`,
-      body: 'Will be audit-logged. Lab will be asked to retest with another donor.',
+      title: t('requests.markIncompatibleTitle', { patient: req.patientName }),
+      body: t('requests.markIncompatibleBody'),
       tone: 'danger',
-      confirmLabel: 'Mark incompatible',
+      confirmLabel: t('requests.markIncompatibleConfirm'),
       fields: [
-        { id: 'note', label: 'Reason', type: 'textarea',
-          defaultValue: 'Donor antibody screen positive',
+        { id: 'note', label: t('requests.reasonLabel'), type: 'textarea',
+          defaultValue: t('requests.reasonDefault'),
           required: true },
       ],
     })
     if (!values) return
     markIncompatible(req.id, values.note)
-    toast.success(`Marked incompatible · ${req.patientName}`)
+    toast.success(t('requests.markedIncompatibleToast', { patient: req.patientName }))
   }
 
   const onIssue = (req: CrossMatchRequest) => {
     const checks = req.bedsideChecks ?? {}
     const allChecked = CHECK_ORDER.every(c => checks[c])
     if (!allChecked) {
-      toast.error('Complete all bedside safety checks before issue')
+      toast.error(t('requests.completeChecksToast'))
       return
     }
-    const issuer = currentUser?.name ?? 'Blood Bank Tech'
+    const issuer = currentUser?.name ?? t('requests.defaultIssuer')
     issueReservedUnits(req.id, issuer)
     setTab('issued')
     setOpen(req.id)
-    toast.success(`Issued ${req.reservedUnitIds?.length ?? 0} bag(s) · ${req.patientName}`)
+    toast.success(t('requests.issuedToast', { count: req.reservedUnitIds?.length ?? 0, patient: req.patientName }))
   }
 
   return (
@@ -97,24 +99,24 @@ export default function BloodBankRequestsPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Droplets className="h-6 w-6 text-red-600" />Cross-match &amp; Issue
+            <Droplets className="h-6 w-6 text-red-600" />{t('requests.title')}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">FEFO unit recommendation · bedside safety checks · NABH-compliant traceability</p>
+          <p className="text-sm text-slate-500 mt-1">{t('requests.subtitle')}</p>
         </div>
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Search patient / group…"
+          <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t('requests.searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-300" />
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-100 w-fit">
-        {(['pending', 'compatible', 'issued'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={cn('px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition capitalize',
-              tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
-            {t} <span className="text-slate-400">{counts[t]}</span>
+        {(['pending', 'compatible', 'issued'] as const).map(tabKey => (
+          <button key={tabKey} onClick={() => setTab(tabKey)}
+            className={cn('px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition',
+              tab === tabKey ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
+            {t(`requests.tab${tabKey.charAt(0).toUpperCase() + tabKey.slice(1)}`)} <span className="text-slate-400">{counts[tabKey]}</span>
           </button>
         ))}
       </div>
@@ -124,7 +126,7 @@ export default function BloodBankRequestsPage() {
         {filtered.length === 0 ? (
           <div className="bg-white rounded-xl border border-slate-200 p-10 text-center">
             <CheckCircle2 className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-slate-500">Nothing in this queue</p>
+            <p className="text-sm font-semibold text-slate-500">{t('requests.nothingInQueue')}</p>
           </div>
         ) : filtered.map(req => {
           const checks = req.bedsideChecks ?? {}
@@ -147,19 +149,19 @@ export default function BloodBankRequestsPage() {
                   <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
                     {req.patientName}
                     <span className="text-[11px] font-bold text-slate-400">{req.patientId} · {req.id}</span>
-                    {req.status === 'pending' && <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Pending</span>}
-                    {req.status === 'compatible' && <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">Cross-matched</span>}
-                    {req.status === 'incompatible' && <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-700">Incompatible</span>}
-                    {req.status === 'issued' && <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]">Issued</span>}
+                    {req.status === 'pending' && <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{t('requests.statusPending')}</span>}
+                    {req.status === 'compatible' && <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{t('requests.statusCrossMatched')}</span>}
+                    {req.status === 'incompatible' && <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-700">{t('requests.statusIncompatible')}</span>}
+                    {req.status === 'issued' && <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]">{t('requests.statusIssued')}</span>}
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {req.units} × {req.component} · requested by {req.requestedBy} · {fmt(req.requestedAt)}
+                    {t('requests.requestLine', { units: req.units, component: req.component, name: req.requestedBy, time: fmt(req.requestedAt) })}
                   </p>
                   {req.status === 'issued' && req.issuedAt && (
-                    <p className="text-[11px] text-emerald-700 mt-0.5">Issued by {req.issuedBy} · {fmt(req.issuedAt)}</p>
+                    <p className="text-[11px] text-emerald-700 mt-0.5">{t('requests.issuedBy', { name: req.issuedBy ?? '', time: fmt(req.issuedAt) })}</p>
                   )}
                   {req.status === 'incompatible' && req.incompatibilityNote && (
-                    <p className="text-[11px] text-red-700 mt-0.5">Reason: {req.incompatibilityNote}</p>
+                    <p className="text-[11px] text-red-700 mt-0.5">{t('requests.reason', { note: req.incompatibilityNote })}</p>
                   )}
                 </div>
                 {isOpen ? <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0" />
@@ -173,11 +175,11 @@ export default function BloodBankRequestsPage() {
                     <>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1.5 flex items-center gap-1.5">
-                          <Beaker className="h-3 w-3" />FEFO recommended units
+                          <Beaker className="h-3 w-3" />{t('requests.fefoRecommended')}
                         </p>
                         {recommended.length === 0 ? (
                           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
-                            <AlertTriangle className="h-3.5 w-3.5" />No FEFO-eligible {req.bloodGroup} {req.component} in inventory.
+                            <AlertTriangle className="h-3.5 w-3.5" />{t('requests.noFefo', { group: req.bloodGroup, component: req.component })}
                           </div>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -185,8 +187,8 @@ export default function BloodBankRequestsPage() {
                               const days = Math.round((new Date(u.expiresOn).getTime() - Date.now()) / 86400000)
                               return (
                                 <div key={u.id} className="rounded-lg bg-white border border-slate-200 p-2.5 text-xs">
-                                  <p className="font-bold text-slate-800">{u.bagNumber} · {u.bloodGroup} {u.component}</p>
-                                  <p className="text-[11px] text-slate-500 mt-0.5">Collected {u.collectedOn} · expires {u.expiresOn} ({days}d)</p>
+                                  <p className="font-bold text-slate-800">{t('requests.unitBag', { bag: u.bagNumber, group: u.bloodGroup, component: u.component })}</p>
+                                  <p className="text-[11px] text-slate-500 mt-0.5">{t('requests.collectedExpires', { collected: u.collectedOn, expires: u.expiresOn, days })}</p>
                                 </div>
                               )
                             })}
@@ -196,11 +198,11 @@ export default function BloodBankRequestsPage() {
                       <div className="flex gap-2">
                         <button onClick={() => onCrossMatch(req)} disabled={recommended.length === 0}
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                          <ShieldCheck className="h-3.5 w-3.5" />Cross-match &amp; reserve
+                          <ShieldCheck className="h-3.5 w-3.5" />{t('requests.crossMatchReserve')}
                         </button>
                         <button onClick={() => onMarkIncompatible(req)}
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-red-50 hover:bg-red-100 text-red-700 cursor-pointer">
-                          <AlertTriangle className="h-3.5 w-3.5" />Mark incompatible
+                          <AlertTriangle className="h-3.5 w-3.5" />{t('requests.markIncompatible')}
                         </button>
                       </div>
                     </>
@@ -211,20 +213,20 @@ export default function BloodBankRequestsPage() {
                     <>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1.5 flex items-center gap-1.5">
-                          <ScanLine className="h-3 w-3" />Reserved units
+                          <ScanLine className="h-3 w-3" />{t('requests.reservedUnits')}
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {reservedUnits.map(u => (
                             <div key={u.id} className="rounded-lg bg-white border border-emerald-200 p-2.5 text-xs">
-                              <p className="font-bold text-slate-800">{u.bagNumber} · {u.bloodGroup} {u.component}</p>
-                              <p className="text-[11px] text-slate-500 mt-0.5">Expires {u.expiresOn} · donor {u.donorId}</p>
+                              <p className="font-bold text-slate-800">{t('requests.unitBag', { bag: u.bagNumber, group: u.bloodGroup, component: u.component })}</p>
+                              <p className="text-[11px] text-slate-500 mt-0.5">{t('requests.expiresDonor', { expires: u.expiresOn, donor: u.donorId })}</p>
                             </div>
                           ))}
                         </div>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1.5">
-                          Bedside transfusion safety checklist
+                          {t('requests.bedsideChecklist')}
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                           {CHECK_ORDER.map(c => {
@@ -245,11 +247,11 @@ export default function BloodBankRequestsPage() {
                       <div className="flex gap-2">
                         <button onClick={() => onIssue(req)} disabled={!allChecked}
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                          <CheckCircle2 className="h-3.5 w-3.5" />Issue {reservedUnits.length} bag(s)
+                          <CheckCircle2 className="h-3.5 w-3.5" />{t('requests.issueBags', { count: reservedUnits.length })}
                         </button>
                         {!allChecked && (
                           <span className="text-[11px] font-bold text-amber-600 flex items-center gap-1 px-2">
-                            <AlertTriangle className="h-3 w-3" />Complete all checks first
+                            <AlertTriangle className="h-3 w-3" />{t('requests.completeChecksFirst')}
                           </span>
                         )}
                       </div>
@@ -260,19 +262,19 @@ export default function BloodBankRequestsPage() {
                   {req.status === 'issued' && (
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1.5 flex items-center gap-1.5">
-                        <FileText className="h-3 w-3" />Traceability
+                        <FileText className="h-3 w-3" />{t('requests.traceability')}
                       </p>
                       <div className="space-y-1.5">
                         {(req.issuedUnitIds ?? []).map(uid => {
                           const u = units.find(x => x.id === uid)
                           if (!u) return null
                           return (
-                            <div key={uid} className="rounded-lg bg-white border border-cyan-200 p-2.5 text-xs">
+                            <div key={uid} className="rounded-lg bg-white border border-primary/20 p-2.5 text-xs">
                               <p className="font-bold text-slate-800 flex items-center gap-1.5">
-                                <Clock className="h-3 w-3 text-[var(--color-primary)]" />Bag {u.bagNumber} → {req.patientName} ({req.patientId})
+                                <Clock className="h-3 w-3 text-[var(--color-accent)]" />{t('requests.bagTo', { bag: u.bagNumber, patient: req.patientName, patientId: req.patientId })}
                               </p>
                               <p className="text-[11px] text-slate-500 mt-0.5">
-                                {u.bloodGroup} {u.component} · donor {u.donorId} · audit logged to Blood Bank module (NABH ROM)
+                                {t('requests.traceDetail', { group: u.bloodGroup, component: u.component, donor: u.donorId })}
                               </p>
                             </div>
                           )

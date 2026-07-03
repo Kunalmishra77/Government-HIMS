@@ -44,7 +44,7 @@ export function LiveJourneyCard() {
             <p className="text-[22px] font-bold text-slate-900 tracking-tight mt-0.5">{meta?.action}</p>
             {isFirst && (
               <div className="flex gap-6 mt-4">
-                <div className="flex items-center gap-2"><Users className="h-5 w-5 text-[var(--color-primary)]" /><span className="text-[15px] text-slate-700"><b className="text-slate-900">{aheadOfYou}</b> {mode === 'video' ? 'ahead in line' : 'ahead of you'}</span></div>
+                <div className="flex items-center gap-2"><Users className="h-5 w-5 text-[var(--color-accent)]" /><span className="text-[15px] text-slate-700"><b className="text-slate-900">{aheadOfYou}</b> {mode === 'video' ? 'ahead in line' : 'ahead of you'}</span></div>
                 <div className="flex items-center gap-2"><Clock className="h-5 w-5 text-amber-500" /><span className="text-[15px] text-slate-700">~<b className="text-slate-900">{etaMinutes}</b> min</span></div>
               </div>
             )}
@@ -78,7 +78,7 @@ export function LiveJourneyCard() {
         )}
 
         {isDone && (
-          <motion.div key="done" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="rounded-2xl p-5 bg-gradient-to-br from-[rgba(8,145,178,0.07)] to-[rgba(8,145,178,0.05)] text-center">
+          <motion.div key="done" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="rounded-2xl p-5 bg-surface-sunken text-center">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
             <p className="text-[20px] font-bold text-slate-900">{mode === 'video' ? 'Consultation complete' : 'Visit complete'}</p>
             <p className="text-[14px] text-slate-500 mt-0.5">{mode === 'video' ? 'Summary ready · medicines on the way.' : 'Your summary & follow-up plan are ready below.'}</p>
@@ -97,10 +97,10 @@ export function LiveJourneyCard() {
               <div key={s.key} className="flex items-center flex-1 last:flex-none">
                 <div className="flex flex-col items-center gap-1">
                   <div className={cn("h-9 w-9 rounded-full flex items-center justify-center transition-colors relative", done || active ? "bg-[var(--color-primary)] text-white" : "bg-slate-100 text-slate-400")}>
-                    {active && <span className="absolute inset-0 rounded-full bg-[rgba(8,145,178,0.07)]0/40 animate-ping" />}
+                    {active && <span className="absolute inset-0 rounded-full bg-[rgba(238,107,38,0.07)]0/40 animate-ping" />}
                     {done ? <CheckCircle className="h-5 w-5 relative" /> : <StepIcon className="h-4 w-4 relative" />}
                   </div>
-                  <span className={cn("text-[10px] font-semibold", active ? "text-[var(--color-primary)]" : done ? "text-slate-600" : "text-slate-400")}>{s.short}</span>
+                  <span className={cn("text-[10px] font-semibold", active ? "text-[var(--color-accent)]" : done ? "text-slate-600" : "text-slate-400")}>{s.short}</span>
                 </div>
                 {i < stages.length - 1 && <div className={cn("flex-1 h-0.5 mx-1 -mt-4 rounded", done ? "bg-[var(--color-primary)]" : "bg-slate-200")} />}
               </div>

@@ -147,11 +147,11 @@ export default function BillingPackages() {
         {packages.map((pkg) => (
           <div key={pkg.id} className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col">
             <div className="flex items-start justify-between mb-3">
-              <span className="text-[11px] font-bold px-2 py-0.5 bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] rounded-full border border-[rgba(8,145,178,0.20)]">{pkg.category}</span>
-              <button onClick={() => setEditing(pkg)} className="text-[10.5px] font-semibold text-slate-500 hover:text-[var(--color-primary)] cursor-pointer">Edit</button>
+              <span className="text-[11px] font-bold px-2 py-0.5 bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] rounded-full border border-[rgba(238,107,38,0.20)]">{pkg.category}</span>
+              <button onClick={() => setEditing(pkg)} className="text-[10.5px] font-semibold text-slate-500 hover:text-[var(--color-accent)] cursor-pointer">Edit</button>
             </div>
             <p className="font-bold text-slate-900 leading-tight mb-2">{pkg.name}</p>
-            <p className="text-2xl font-black text-[var(--color-primary)] mb-3">₹{pkg.price.toLocaleString('en-IN')}</p>
+            <p className="text-2xl font-black text-[var(--color-accent)] mb-3">₹{pkg.price.toLocaleString('en-IN')}</p>
             <div className="flex-1">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Includes</p>
               <ul className="space-y-1">
@@ -163,7 +163,7 @@ export default function BillingPackages() {
               </ul>
             </div>
             <button onClick={() => applyToBill(pkg)}
-              className="mt-4 w-full py-2 text-sm font-semibold border border-[rgba(8,145,178,0.20)] text-[var(--color-primary)] rounded-xl hover:bg-[rgba(8,145,178,0.10)] transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer">
+              className="mt-4 w-full py-2 text-sm font-semibold border border-[rgba(238,107,38,0.20)] text-[var(--color-accent)] rounded-xl hover:bg-[rgba(238,107,38,0.10)] transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer">
               <Receipt className="h-4 w-4" /> Apply to Bill
             </button>
           </div>

@@ -6,10 +6,13 @@
 // masked Aadhaar (XXXX-XXXX-7382), a deterministic OTP, and a 14-XXXX-XXXX-XXXX
 // ABHA number (matching the in-app ABHA sandbox + the seeded patient profiles).
 
+import { portraitDataUri } from '@/lib/avatars'
+
 export type Gender = 'Male' | 'Female' | 'Other'
 
 export interface AadhaarDemographics {
   name: string
+  fathersName?: string  // guardian / father's name as printed on Aadhaar
   dob: string          // DD-MM-YYYY
   age: number
   gender: Gender
@@ -20,6 +23,7 @@ export interface AadhaarDemographics {
   district: string
   state: string
   pincode: string
+  photo: string        // Aadhaar photograph (data-URI)
 }
 
 export interface AbhaProfile {
@@ -39,22 +43,25 @@ const abhaAddressFor = (abhaNumber: string) => `${abhaNumber.replace(/\D/g, '')}
 const MOCK_AADHAAR_DB: Record<string, AadhaarRecord> = {
   '7382': {
     maskedAadhaar: 'XXXX-XXXX-7382',
-    name: 'Anil Kumar Verma', dob: '12-04-1988', age: 38, gender: 'Male',
+    name: 'Anil Kumar Verma', fathersName: 'Ram Prasad Verma', dob: '12-04-1988', age: 38, gender: 'Male',
     phone: '9876543210', email: 'anil.verma@example.in',
     address: '24, Civil Lines', city: 'Lucknow', district: 'Lucknow', state: 'Uttar Pradesh', pincode: '226001',
+    photo: portraitDataUri('Anil Kumar Verma', 'Male'),
   },
   '9012': {
     maskedAadhaar: 'XXXX-XXXX-9012',
-    name: 'Kiran Patil', dob: '03-07-1971', age: 55, gender: 'Male',
+    name: 'Kiran Patil', fathersName: 'Dattatray Patil', dob: '03-07-1971', age: 55, gender: 'Male',
     phone: '9900112233', email: 'kiran.patil@example.in',
     address: '12, Shanti Nagar, Sector 4', city: 'Pune', district: 'Pune', state: 'Maharashtra', pincode: '411014',
+    photo: portraitDataUri('Kiran Patil', 'Male'),
     linkedAbha: { abhaNumber: '14-2841-7762-9012', abhaAddress: abhaAddressFor('14-2841-7762-9012') },
   },
   '4455': {
     maskedAadhaar: 'XXXX-XXXX-4455',
-    name: 'Sunita Devi', dob: '19-11-1995', age: 30, gender: 'Female',
+    name: 'Sunita Devi', fathersName: 'Mohan Lal', dob: '19-11-1995', age: 30, gender: 'Female',
     phone: '9812345678',
     address: '7, Gandhi Marg', city: 'Kanpur', district: 'Kanpur Nagar', state: 'Uttar Pradesh', pincode: '208001',
+    photo: portraitDataUri('Sunita Devi', 'Female'),
   },
 }
 
@@ -100,8 +107,8 @@ export function verifyAadhaarOtp(code: string, ref: string): boolean {
 export function fetchAadhaarDemographics(aadhaar: string): AadhaarDemographics {
   const r = recordFor(aadhaar)
   return {
-    name: r.name, dob: r.dob, age: r.age, gender: r.gender, phone: r.phone, email: r.email,
-    address: r.address, city: r.city, district: r.district, state: r.state, pincode: r.pincode,
+    name: r.name, fathersName: r.fathersName, dob: r.dob, age: r.age, gender: r.gender, phone: r.phone, email: r.email,
+    address: r.address, city: r.city, district: r.district, state: r.state, pincode: r.pincode, photo: r.photo,
   }
 }
 

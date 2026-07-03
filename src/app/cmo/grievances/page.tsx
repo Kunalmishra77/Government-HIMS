@@ -1,6 +1,7 @@
 "use client"
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { CmoPageHeader } from '@/components/cmo/layout/CmoPageHeader'
 import { MetricTile } from '@/components/shared/MetricTile'
 import { cn } from '@/lib/utils'
@@ -13,10 +14,11 @@ const GRIEVANCES = [
   { id: 'g5', type: 'internal', title: 'Harassment complaint — PHC staff', raisedBy: 'Anonymous', ageHours: 12, status: 'open', slaBreached: false },
 ]
 
-const TABS = ['RTI', 'Citizen grievances', 'Internal grievances']
+const TAB_KEYS = ['grievances.tabRti', 'grievances.tabCitizen', 'grievances.tabInternal']
 const TAB_TYPES = ['rti', 'citizen', 'internal']
 
 export default function CmoGrievancesPage() {
+  const t = useTranslations('cmo')
   const [tab, setTab] = useState(0)
   const [grievances, setGrievances] = useState(GRIEVANCES)
 
@@ -24,19 +26,19 @@ export default function CmoGrievancesPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      <CmoPageHeader title="RTI & grievances · RTI और शिकायतें" />
+      <CmoPageHeader title={t('grievances.title')} />
       <div className="grid grid-cols-3 gap-3">
-        <MetricTile label="RTI pending" value={grievances.filter(g => g.type === 'rti' && g.status !== 'resolved').length} variant="warning" />
-        <MetricTile label="Grievances open" value={grievances.filter(g => g.type !== 'rti' && g.status !== 'resolved').length} />
-        <MetricTile label="SLA breached" value={grievances.filter(g => g.slaBreached).length} variant="critical" />
+        <MetricTile label={t('grievances.rtiPending')} value={grievances.filter(g => g.type === 'rti' && g.status !== 'resolved').length} variant="warning" />
+        <MetricTile label={t('grievances.grievancesOpen')} value={grievances.filter(g => g.type !== 'rti' && g.status !== 'resolved').length} />
+        <MetricTile label={t('grievances.slaBreached')} value={grievances.filter(g => g.slaBreached).length} variant="critical" />
       </div>
 
       <div className="flex gap-1 border-b border-slate-200">
-        {TABS.map((t, i) => (
-          <button key={t} onClick={() => setTab(i)}
+        {TAB_KEYS.map((tabKey, i) => (
+          <button key={tabKey} onClick={() => setTab(i)}
             className={cn('text-[12px] font-semibold px-3 py-2.5 border-b-2 -mb-px transition-colors',
-              tab === i ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800')}>
-            {t} ({grievances.filter(g => g.type === TAB_TYPES[i]).length})
+              tab === i ? 'border-border text-accent' : 'border-transparent text-slate-500 hover:text-slate-800')}>
+            {t('grievances.tabWithCount', { tab: t(tabKey), count: grievances.filter(g => g.type === TAB_TYPES[i]).length })}
           </button>
         ))}
       </div>
@@ -46,22 +48,22 @@ export default function CmoGrievancesPage() {
           <div key={g.id} className={cn('bg-white border rounded-xl p-4', g.slaBreached ? 'border-red-300' : 'border-slate-200')}>
             <div className="flex items-start gap-3">
               <div className="flex-1">
-                {g.slaBreached && <span className="text-[9px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded mr-2">SLA BREACH</span>}
+                {g.slaBreached && <span className="text-[9px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded mr-2">{t('grievances.slaBreach')}</span>}
                 <span className="text-[13px] font-semibold text-slate-900">{g.title}</span>
-                <p className="text-[11px] text-slate-500 mt-0.5">{g.raisedBy} · {g.ageHours}h ago · {g.status}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">{t('grievances.raisedAgo', { raisedBy: g.raisedBy, hours: g.ageHours, status: g.status })}</p>
               </div>
               <button
                 onClick={() => {
                   setGrievances(gs => gs.map(x => x.id === g.id ? {...x, status: 'resolved'} : x))
-                  toast.success('Response drafted · RTI reply sent')
+                  toast.success(t('grievances.responseDrafted'))
                 }}
-                className="text-[11px] font-semibold px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Respond
+                className="text-[11px] font-semibold px-3 py-1.5 bg-secondary text-white rounded-lg hover:bg-secondary-light">
+                {t('grievances.respond')}
               </button>
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <p className="text-center py-10 text-slate-400 text-[13px]">No {TABS[tab].toLowerCase()} items</p>}
+        {filtered.length === 0 && <p className="text-center py-10 text-slate-400 text-[13px]">{t('grievances.noItems', { tab: t(TAB_KEYS[tab]) })}</p>}
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ import { toast } from "sonner"
 import { useDialogs } from "@/components/ui/ConfirmDialog"
 import { useNotificationStore } from "@/store/useNotificationStore"
 import { notifyAndAuditMany } from "@/lib/notifyAndAudit"
+import { useTranslations } from "next-intl"
 
 const STATUS_TINT: Record<StaffMember['status'], string> = {
   active:      'bg-emerald-100 text-emerald-700',
@@ -35,16 +36,16 @@ const STATUS_LABEL: Record<StaffMember['status'], string> = {
 }
 
 const ROLE_TINT: Record<string, string> = {
-  doctor: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
+  doctor: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
   nurse: 'bg-emerald-50 text-emerald-700',
   emergency: 'bg-red-50 text-red-700',
-  ot: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  radiology: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  lab: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  pharmacy: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  admin: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  quality: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  audit_officer: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
+  ot: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  radiology: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  lab: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  pharmacy: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  admin: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  quality: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  audit_officer: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
 }
 
 const fmtDate = (s?: string) => s ? new Date(s.includes('T') ? s : s + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
@@ -52,8 +53,10 @@ const fmtDate = (s?: string) => s ? new Date(s.includes('T') ? s : s + 'T00:00:0
 type StatusTab = 'all' | 'active' | 'on_leave' | 'inactive' | 'terminated'
 
 export default function StaffManagementPage() {
+  const t = useTranslations('admin')
   const currentUser = useAuthStore(s => s.currentUser)
   const staff = useHRStore(s => s.staff)
+  const statusLabel = (s: StaffMember['status']) => t.has(`users.status.${s}`) ? t(`users.status.${s}`) : STATUS_LABEL[s]
 
   const [tab, setTab] = useState<StatusTab>('active')
   const [search, setSearch] = useState('')
@@ -106,10 +109,10 @@ export default function StaffManagementPage() {
   const credentialHealth = (member: StaffMember) => {
     if (member.credentials.length === 0) return { tint: 'text-slate-300', label: '—' }
     const expired = member.credentials.filter(c => !c.expiryDate.startsWith('2099') && c.expiryDate < today).length
-    if (expired > 0) return { tint: 'text-red-600', label: `${expired} expired` }
+    if (expired > 0) return { tint: 'text-red-600', label: t('users.credExpired', { count: expired }) }
     const soon = member.credentials.filter(c => !c.expiryDate.startsWith('2099') && (new Date(c.expiryDate).getTime() - new Date(today).getTime()) / 86400000 <= 90).length
-    if (soon > 0) return { tint: 'text-amber-600', label: `${soon} due ≤90d` }
-    return { tint: 'text-emerald-600', label: 'All valid' }
+    if (soon > 0) return { tint: 'text-amber-600', label: t('users.credDueSoon', { count: soon }) }
+    return { tint: 'text-emerald-600', label: t('users.credAllValid') }
   }
 
   // ── Bulk actions ─────────────────────────────────────────────────────
@@ -146,7 +149,7 @@ export default function StaffManagementPage() {
       a.click()
       URL.revokeObjectURL(url)
     }
-    toast.success(`Exported ${rows.length} staff records`)
+    toast.success(t('users.exported', { count: rows.length }))
   }
 
   return (
@@ -154,21 +157,21 @@ export default function StaffManagementPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Users className="h-6 w-6 text-[var(--color-primary)]" />Staff Management
+            <Users className="h-6 w-6 text-[var(--color-accent)]" />{t('users.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            {staff.length} staff members · canonical directory · audited mutations · NABH HRM evidence
+            {t('users.subtitle', { count: staff.length })}
           </p>
         </div>
         <div className="flex gap-2">
           <button onClick={exportCSV}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
-            <Download className="h-3.5 w-3.5" />Export CSV
+            <Download className="h-3.5 w-3.5" />{t('users.exportCsv')}
           </button>
           {canWrite && (
             <button onClick={() => setShowWizard(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white cursor-pointer">
-              <UserPlus className="h-3.5 w-3.5" />Add staff
+              <UserPlus className="h-3.5 w-3.5" />{t('users.addStaff')}
             </button>
           )}
         </div>
@@ -176,13 +179,13 @@ export default function StaffManagementPage() {
 
       {/* Status tabs */}
       <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-100 w-fit overflow-x-auto">
-        {(['active', 'on_leave', 'inactive', 'terminated', 'all'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            data-testid={`staff-tab-${t}`}
+        {(['active', 'on_leave', 'inactive', 'terminated', 'all'] as const).map(tabKey => (
+          <button key={tabKey} onClick={() => setTab(tabKey)}
+            data-testid={`staff-tab-${tabKey}`}
             className={cn('px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer whitespace-nowrap',
-              tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
-            {t === 'all' ? 'All' : STATUS_LABEL[t as StaffMember['status']]}
-            <span className="ml-1 text-slate-400">{tabCounts[t]}</span>
+              tab === tabKey ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
+            {tabKey === 'all' ? t('users.tabAll') : statusLabel(tabKey as StaffMember['status'])}
+            <span className="ml-1 text-slate-400">{tabCounts[tabKey]}</span>
           </button>
         ))}
       </div>
@@ -192,27 +195,27 @@ export default function StaffManagementPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name / ID / email / department"
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-300" />
+            placeholder={t('users.searchPlaceholder')}
+            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/25" />
         </div>
-        <FilterChip label="Role" icon={Briefcase} value={roleFilter} onChange={setRoleFilter} options={allRoles} />
-        <FilterChip label="Dept" icon={Building2} value={deptFilter} onChange={setDeptFilter} options={allDepts} />
-        <FilterChip label="Contract" icon={Filter} value={contractFilter} onChange={setContractFilter} options={allContracts} />
+        <FilterChip label={t('users.filterRole')} icon={Briefcase} value={roleFilter} onChange={setRoleFilter} options={allRoles} allLabel={t('users.filterAll')} />
+        <FilterChip label={t('users.filterDept')} icon={Building2} value={deptFilter} onChange={setDeptFilter} options={allDepts} allLabel={t('users.filterAll')} />
+        <FilterChip label={t('users.filterContract')} icon={Filter} value={contractFilter} onChange={setContractFilter} options={allContracts} allLabel={t('users.filterAll')} />
       </div>
 
       {/* Bulk action bar */}
       {selected.size > 0 && (
         <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[rgba(8,145,178,0.07)] border border-cyan-200">
-          <span className="text-xs font-bold text-[var(--color-primary-dark)]">{selected.size} selected</span>
+          className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[rgba(238,107,38,0.07)] border border-primary/20">
+          <span className="text-xs font-bold text-[var(--color-primary-dark)]">{t('users.selectedCount', { count: selected.size })}</span>
           <button onClick={async () => {
             const values = await prompt({
-              title: `Send broadcast to ${selected.size} selected`,
-              body: 'Pushed as an in-app notification to each recipient. Audited.',
-              confirmLabel: 'Send broadcast',
+              title: t('users.broadcastTitle', { count: selected.size }),
+              body: t('users.broadcastBody'),
+              confirmLabel: t('users.sendBroadcast'),
               fields: [
-                { id: 'title', label: 'Title', placeholder: 'e.g. Mandatory training Mon 09:00', required: true },
-                { id: 'body',  label: 'Message', type: 'textarea', required: true },
+                { id: 'title', label: t('users.broadcastTitleField'), placeholder: t('users.broadcastTitlePlaceholder'), required: true },
+                { id: 'body',  label: t('users.broadcastMessage'), type: 'textarea', required: true },
               ],
             })
             if (!values) return
@@ -224,19 +227,19 @@ export default function StaffManagementPage() {
                 targetUserId: id, channels: ['in_app'],
               })
             }
-            toast.success(`Broadcast sent to ${ids.length} staff`)
+            toast.success(t('users.broadcastSent', { count: ids.length }))
             setSelected(new Set())
-          }} className="text-xs font-bold text-[var(--color-primary)] hover:underline cursor-pointer">Send broadcast</button>
+          }} className="text-xs font-bold text-[var(--color-accent)] hover:underline cursor-pointer">{t('users.sendBroadcast')}</button>
           <span className="text-slate-300">·</span>
           <button onClick={async () => {
             const values = await prompt({
-              title: `Bulk deactivate ${selected.size} staff?`,
-              body: 'Each member loses portal access. Audited per staff.',
+              title: t('users.bulkDeactivateTitle', { count: selected.size }),
+              body: t('users.bulkDeactivateBody'),
               tone: 'danger',
-              confirmLabel: 'Deactivate selected',
+              confirmLabel: t('users.deactivateSelected'),
               fields: [
-                { id: 'reason', label: 'Reason', type: 'textarea',
-                  placeholder: 'e.g. Restructure / temporary suspension / end of contract',
+                { id: 'reason', label: t('users.reason'), type: 'textarea',
+                  placeholder: t('users.reasonPlaceholder'),
                   required: true },
               ],
             })
@@ -245,16 +248,16 @@ export default function StaffManagementPage() {
             for (const id of ids) deactivateStaff(id, values.reason, actorName)
             notifyAndAuditMany(['admin', 'audit_officer'], {
               type: 'system', priority: 'high',
-              title: `${ids.length} staff deactivated`,
-              body: `${actorName} deactivated ${ids.length} staff member${ids.length !== 1 ? 's' : ''}. Reason: ${values.reason}.`,
+              title: t('users.notifyDeactivatedTitle', { count: ids.length }),
+              body: t('users.notifyDeactivatedBody', { actor: actorName, count: ids.length, reason: values.reason }),
               audit: { action: 'hr_staff_deactivated', resource: 'staff', resourceId: ids.join(','), detail: `Bulk deactivate ${ids.length} · reason: ${values.reason}`, userName: actorName },
             })
-            toast.success(`${ids.length} staff deactivated`)
+            toast.success(t('users.deactivatedCount', { count: ids.length }))
             setSelected(new Set())
-          }} className="text-xs font-bold text-amber-700 hover:underline cursor-pointer">Bulk deactivate</button>
+          }} className="text-xs font-bold text-amber-700 hover:underline cursor-pointer">{t('users.bulkDeactivate')}</button>
           <span className="text-slate-300">·</span>
           <button onClick={() => setSelected(new Set())}
-            className="text-xs font-bold text-slate-500 hover:underline cursor-pointer ml-auto">Clear</button>
+            className="text-xs font-bold text-slate-500 hover:underline cursor-pointer ml-auto">{t('users.clear')}</button>
         </motion.div>
       )}
 
@@ -269,15 +272,15 @@ export default function StaffManagementPage() {
                   onChange={toggleSelectAll}
                   className="cursor-pointer" />
               </th>
-              {['Staff', 'Role', 'Department', 'Status', 'Credentials', 'Last login', ''].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{h}</th>
+              {[['colStaff','Staff'], ['colRole','Role'], ['colDepartment','Department'], ['colStatus','Status'], ['colCredentials','Credentials'], ['colLastLogin','Last login'], ['colEmpty','']].map(([k]) => (
+                <th key={k} className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{k === 'colEmpty' ? '' : t(`users.${k}`)}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400 italic">
-                No staff members match these filters.
+                {t('users.noMatch')}
               </td></tr>
             ) : filtered.map((m, i) => {
               const ch = credentialHealth(m)
@@ -305,14 +308,14 @@ export default function StaffManagementPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={cn('text-[10px] font-bold uppercase px-1.5 py-0.5 rounded', ROLE_TINT[m.role] ?? 'bg-slate-50 text-slate-700')}>
-                      {m.role.replace('_', ' ')}
+                      {t.has(`coverage.role.${m.role}`) ? t(`coverage.role.${m.role}`) : m.role.replace('_', ' ')}
                     </span>
                     <p className="text-[11px] text-slate-500 mt-0.5">{m.designation}</p>
                   </td>
                   <td className="px-4 py-3 text-slate-700 text-xs">{m.department}</td>
                   <td className="px-4 py-3">
                     <span className={cn('text-[10px] font-bold uppercase px-1.5 py-0.5 rounded', STATUS_TINT[m.status])}>
-                      {STATUS_LABEL[m.status]}
+                      {statusLabel(m.status)}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -335,7 +338,7 @@ export default function StaffManagementPage() {
       </div>
 
       <p className="text-[11px] text-slate-400">
-        Showing {filtered.length} of {staff.length} staff members · canonical source: <code>useHRStore</code> · every change audit-logged to NABH HRM chapter
+        {t('users.footer', { shown: filtered.length, total: staff.length })}
       </p>
 
       {/* Profile drawer */}
@@ -349,12 +352,13 @@ export default function StaffManagementPage() {
 }
 
 // ─── Filter chip ────────────────────────────────────────────────────────
-function FilterChip({ label, icon: Icon, value, onChange, options }: {
+function FilterChip({ label, icon: Icon, value, onChange, options, allLabel }: {
   label: string
   icon: React.ElementType
   value: string
   onChange: (v: string) => void
   options: string[]
+  allLabel: string
 }) {
   return (
     <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-white border border-slate-200">
@@ -362,7 +366,7 @@ function FilterChip({ label, icon: Icon, value, onChange, options }: {
       <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</span>
       <Select value={value} onChange={(e) => onChange(e.target.value)}
         className="text-xs font-bold text-slate-700 bg-transparent outline-none cursor-pointer">
-        {options.map(o => <option key={o} value={o} className="font-normal">{o.toString().replace('_', ' ')}</option>)}
+        {options.map(o => <option key={o} value={o} className="font-normal">{o === 'All' ? allLabel : o.toString().replace('_', ' ')}</option>)}
       </Select>
     </div>
   )

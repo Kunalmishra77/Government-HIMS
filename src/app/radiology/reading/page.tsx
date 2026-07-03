@@ -166,8 +166,8 @@ function ReadingRow(props: {
             <span className="font-bold text-foreground truncate">{s.patientName}</span>
             <span className="text-[11px] font-bold text-foreground-placeholder">{s.patientId}</span>
             {s.wardBed && <span className="text-[11px] font-semibold text-foreground-lighter flex items-center gap-0.5"><Bed className="h-3 w-3" />{s.wardBed}</span>}
-            <span className="text-[12px] font-bold text-primary">{s.name}</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-primary">{s.modality}</span>
+            <span className="text-[12px] font-bold text-accent">{s.name}</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-accent">{s.modality}</span>
             <span className="chip chip-neutral">{cat?.template ?? "general"}</span>
             {s.readingBy && <span className="text-[11px] font-semibold text-foreground-placeholder">· {mine ? "your queue" : `on ${s.readingBy.name}`}</span>}
           </div>
@@ -188,7 +188,7 @@ function ReadingRow(props: {
         <div className="flex-shrink-0 flex items-center gap-2">
           {s.status === "acquired" && (
             <button onClick={props.onClaim}
-              className="u-press flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark px-3 py-2 rounded-xl shadow-xs cursor-pointer transition-colors">
+              className="u-press flex items-center gap-1.5 text-xs font-bold text-[#0D2032] hover:text-[#0D2032] bg-primary hover:bg-primary-dark px-3 py-2 rounded-xl shadow-xs cursor-pointer transition-colors">
               <Hand className="h-3.5 w-3.5" />Read
             </button>
           )}
@@ -231,10 +231,10 @@ function ReadingRow(props: {
           {/* AI prelim */}
           <div className="rounded-lg border border-primary/20 bg-accent-soft p-2.5">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-[11px] font-bold text-primary flex items-center gap-1"><Sparkles className="h-3 w-3" />AI prelim</p>
+              <p className="text-[11px] font-bold text-accent flex items-center gap-1"><Sparkles className="h-3 w-3" />AI prelim</p>
               {s.status === "reading" && mine && (
                 <button onClick={props.onAI}
-                  className="u-press text-[10px] font-bold text-primary bg-surface hover:bg-accent-soft border border-primary/20 px-2 py-0.5 rounded cursor-pointer transition-colors">
+                  className="u-press text-[10px] font-bold text-accent bg-surface hover:bg-accent-soft border border-primary/20 px-2 py-0.5 rounded cursor-pointer transition-colors">
                   {s.aiPrelim ? "Regenerate" : "Generate"}
                 </button>
               )}
@@ -248,7 +248,7 @@ function ReadingRow(props: {
               <p className="text-[11px] font-bold text-primary-dark flex items-center gap-1"><Wand2 className="h-3 w-3" />AI structured findings</p>
               <span className="text-[10px] text-foreground-placeholder">{s.modality} · {s.bodyPart}</span>
               {mine && s.status === "reading" && (
-                <button onClick={acceptAiDraft} className="u-press ml-auto text-[10.5px] font-bold text-white bg-primary-dark hover:bg-primary px-2.5 py-1 rounded-lg cursor-pointer inline-flex items-center gap-1 transition-colors">
+                <button onClick={acceptAiDraft} className="u-press ml-auto text-[10.5px] font-bold text-[#0D2032] bg-primary-dark hover:bg-primary px-2.5 py-1 rounded-lg cursor-pointer inline-flex items-center gap-1 transition-colors">
                   <Sparkles className="h-3 w-3" />Insert draft impression
                 </button>
               )}

@@ -15,19 +15,20 @@ import { ShiftTemplateModal } from "@/components/admin/ShiftTemplateModal"
 import { notifyAndAudit } from "@/lib/notifyAndAudit"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 const SHIFTS: ShiftType[] = ['Morning', 'Evening', 'Night', 'Off']
 
 const SHIFT_COLOR: Record<ShiftType, string> = {
   Morning: 'bg-amber-100 text-amber-800 border-amber-300',
-  Evening: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary-dark)] border-[rgba(8,145,178,0.30)]',
-  Night:   'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary-dark)] border-[rgba(8,145,178,0.30)]',
+  Evening: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-primary-dark)] border-[rgba(238,107,38,0.30)]',
+  Night:   'bg-[rgba(238,107,38,0.12)] text-[var(--color-primary-dark)] border-[rgba(238,107,38,0.30)]',
   Off:     'bg-slate-50 text-slate-400 border-slate-200',
 }
 
 const SHIFT_DOT: Record<ShiftType, string> = {
   Morning: 'bg-amber-500',
-  Evening: 'bg-[rgba(8,145,178,0.07)]0',
+  Evening: 'bg-[rgba(238,107,38,0.07)]0',
   Night:   'bg-[var(--color-primary)]',
   Off:     'bg-slate-200',
 }
@@ -54,6 +55,8 @@ function formatDayNum(s: string): string {
 }
 
 export default function RosterPage() {
+  const t = useTranslations('admin')
+  const shiftLabel = (s: string) => t.has(`roster.shift.${s}`) ? t(`roster.shift.${s}`) : s
   const currentUser = useAuthStore(s => s.currentUser)
   const staff = useHRStore(s => s.staff)
   const shifts = useHRStore(s => s.shifts)
@@ -123,14 +126,14 @@ export default function RosterPage() {
   }
 
   const handleCellChange = (staffId: string, date: string, shift: ShiftType) => {
-    if (!canWrite) { toast.error("You don't have permission to edit shifts"); setEditCell(null); return }
+    if (!canWrite) { toast.error(t('roster.noPermissionEdit')); setEditCell(null); return }
     updateShift(staffId, date, shift, actorName)
     const staff = filteredStaff.find(s => s.id === staffId)
     if (staff) {
       notifyAndAudit({
         to: 'admin', type: 'system', priority: 'low',
-        title: `Shift updated · ${staff.name}`,
-        body: `${staff.name} (${staff.role}, ${staff.department}) shift on ${date} set to ${shift} by ${actorName}.`,
+        title: t('roster.shiftUpdatedTitle', { name: staff.name }),
+        body: t('roster.shiftUpdatedBody', { name: staff.name, role: staff.role, dept: staff.department, date, shift: shiftLabel(shift), actor: actorName }),
         audit: { action: 'hr_shift_set', resource: 'roster', resourceId: `${staffId}:${date}`, detail: `Shift ${date} → ${shift}`, userName: actorName },
       })
     }
@@ -149,22 +152,22 @@ export default function RosterPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-[var(--color-primary)]" />Staff Roster
+            <Calendar className="h-6 w-6 text-[var(--color-accent)]" />{t('roster.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            {filteredStaff.length} staff · {weeksToShow * 7}-day window · conflict-aware · audit-logged
+            {t('roster.subtitle', { staff: filteredStaff.length, days: weeksToShow * 7 })}
           </p>
         </div>
         <div className="flex gap-2 items-center">
           {pendingLeave.length > 0 && (
             <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
-              <AlertTriangle className="h-3 w-3" />{pendingLeave.length} leave pending
+              <AlertTriangle className="h-3 w-3" />{t('roster.leavePending', { count: pendingLeave.length })}
             </span>
           )}
           {canBulk && (
             <button onClick={() => setTemplateOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white cursor-pointer">
-              <Sparkles className="h-3.5 w-3.5" />Apply pattern
+              <Sparkles className="h-3.5 w-3.5" />{t('roster.applyPattern')}
               {selectedRows.size > 0 && <span className="text-[10px] bg-white/30 px-1 rounded">{selectedRows.size}</span>}
             </button>
           )}
@@ -174,21 +177,21 @@ export default function RosterPage() {
       {/* Conflict summary strip */}
       {(conflictsSummary.critical > 0 || conflictsSummary.warning > 0) && (
         <div className="rounded-xl border border-slate-200 bg-white p-3 flex items-center gap-3 flex-wrap">
-          <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Conflicts in window</span>
+          <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('roster.conflictsInWindow')}</span>
           {conflictsSummary.critical > 0 && (
             <span className="flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-full">
-              <AlertTriangle className="h-3 w-3" />{conflictsSummary.critical} critical
+              <AlertTriangle className="h-3 w-3" />{t('roster.criticalCount', { count: conflictsSummary.critical })}
             </span>
           )}
           {conflictsSummary.warning > 0 && (
             <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-              {conflictsSummary.warning} warning
+              {t('roster.warningCount', { count: conflictsSummary.warning })}
             </span>
           )}
           <button onClick={() => setShowConflicts(v => !v)}
-            className="ml-auto flex items-center gap-1 text-[11px] font-bold text-[var(--color-primary)] hover:underline cursor-pointer">
+            className="ml-auto flex items-center gap-1 text-[11px] font-bold text-[var(--color-accent)] hover:underline cursor-pointer">
             {showConflicts ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-            {showConflicts ? 'Hide markers' : 'Show markers'}
+            {showConflicts ? t('roster.hideMarkers') : t('roster.showMarkers')}
           </button>
         </div>
       )}
@@ -196,7 +199,7 @@ export default function RosterPage() {
       {/* Pending leave requests */}
       {pendingLeave.length > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
-          <h3 className="text-sm font-bold text-slate-900 mb-2">Pending leave requests</h3>
+          <h3 className="text-sm font-bold text-slate-900 mb-2">{t('roster.pendingLeaveRequests')}</h3>
           <div className="space-y-2">
             {pendingLeave.map(leave => (
               <div key={leave.id} className="flex items-center justify-between gap-3 p-2.5 bg-white rounded-lg border border-amber-100">
@@ -211,27 +214,27 @@ export default function RosterPage() {
                       approveLeave(leave.id, actorName)
                       notifyAndAudit({
                         to: 'admin', type: 'system', priority: 'low',
-                        title: `Leave approved · ${leave.staffName}`,
-                        body: `Leave for ${leave.staffName} (${leave.fromDate} → ${leave.toDate}) approved. Reason: ${leave.reason}.`,
+                        title: t('roster.leaveApprovedTitle', { name: leave.staffName }),
+                        body: t('roster.leaveApprovedBody', { name: leave.staffName, from: leave.fromDate, to: leave.toDate, reason: leave.reason }),
                         audit: { action: 'hr_leave_approved', resource: 'leave_request', resourceId: leave.id, detail: `Approved leave for ${leave.staffName}`, userName: actorName },
                       })
-                      toast.success(`Leave approved for ${leave.staffName} · staff notified`)
+                      toast.success(t('roster.leaveApprovedToast', { name: leave.staffName }))
                     }}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold cursor-pointer">
-                    <CheckCircle className="h-3 w-3" />Approve
+                    <CheckCircle className="h-3 w-3" />{t('roster.approve')}
                   </button>
                   <button onClick={() => {
                       rejectLeave(leave.id, actorName)
                       notifyAndAudit({
                         to: 'admin', type: 'system', priority: 'low',
-                        title: `Leave rejected · ${leave.staffName}`,
-                        body: `Leave for ${leave.staffName} (${leave.fromDate} → ${leave.toDate}) rejected.`,
+                        title: t('roster.leaveRejectedTitle', { name: leave.staffName }),
+                        body: t('roster.leaveRejectedBody', { name: leave.staffName, from: leave.fromDate, to: leave.toDate }),
                         audit: { action: 'hr_leave_rejected', resource: 'leave_request', resourceId: leave.id, detail: `Rejected leave for ${leave.staffName}`, userName: actorName },
                       })
-                      toast.success(`Leave rejected for ${leave.staffName} · staff notified`)
+                      toast.success(t('roster.leaveRejectedToast', { name: leave.staffName }))
                     }}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-[11px] font-bold cursor-pointer">
-                    <X className="h-3 w-3" />Reject
+                    <X className="h-3 w-3" />{t('roster.reject')}
                   </button>
                 </div>
               </div>
@@ -247,7 +250,7 @@ export default function RosterPage() {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="text-sm font-bold text-slate-700 min-w-[120px] text-center">
-            {weekOffset === 0 ? 'This week' : weekOffset > 0 ? `+${weekOffset} week` : `${weekOffset} week`}
+            {weekOffset === 0 ? t('roster.thisWeek') : weekOffset > 0 ? t('roster.weekAhead', { n: weekOffset }) : t('roster.weekBehind', { n: weekOffset })}
           </span>
           <button onClick={() => setWeekOffset(w => w + 1)} className="p-1 rounded-lg hover:bg-slate-100 cursor-pointer">
             <ChevronRight className="h-4 w-4" />
@@ -260,7 +263,7 @@ export default function RosterPage() {
               data-testid={`roster-weeks-${n}`}
               className={cn('px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer',
                 weeksToShow === n ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
-              {n} weeks
+              {t('roster.weeksLabel', { n })}
             </button>
           ))}
         </div>
@@ -269,7 +272,7 @@ export default function RosterPage() {
           <Filter className="h-3.5 w-3.5 text-slate-400" />
           <Select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}
             className="text-xs font-bold border border-slate-300 rounded-xl px-2 py-1.5 bg-white">
-            {departments.map(d => <option key={d}>{d}</option>)}
+            {departments.map(d => <option key={d} value={d}>{d === 'All' ? t('roster.allDepts') : d}</option>)}
           </Select>
         </div>
       </div>
@@ -285,19 +288,19 @@ export default function RosterPage() {
                   onChange={toggleAllRows}
                   className="cursor-pointer" />
               </th>
-              <th className="text-left px-2 py-2 font-bold text-slate-600 sticky left-0 bg-slate-50/60 z-10 min-w-[170px]">Staff</th>
+              <th className="text-left px-2 py-2 font-bold text-slate-600 sticky left-0 bg-slate-50/60 z-10 min-w-[170px]">{t('roster.colStaff')}</th>
               {dateRange.map(date => {
                 const isToday = date === getDateStr(0)
                 const cov = shiftCoverage.find(c => c.date === date)
                 const hasAlert = (cov?.alerts.length ?? 0) > 0
                 return (
                   <th key={date} className={cn('text-center px-1.5 py-2 font-bold text-slate-600',
-                    isToday && 'bg-[rgba(8,145,178,0.07)]',
+                    isToday && 'bg-[rgba(238,107,38,0.07)]',
                     hasAlert && 'bg-red-50/30')}>
-                    <div className={cn('text-[10px]', isToday ? 'text-[var(--color-primary)] font-extrabold' : 'text-slate-500')}>
+                    <div className={cn('text-[10px]', isToday ? 'text-[var(--color-accent)] font-extrabold' : 'text-slate-500')}>
                       {formatDayShort(date)}
                     </div>
-                    <div className={cn('text-xs', isToday ? 'text-[var(--color-primary)]' : 'text-slate-700')}>{formatDayNum(date)}</div>
+                    <div className={cn('text-xs', isToday ? 'text-[var(--color-accent)]' : 'text-slate-700')}>{formatDayNum(date)}</div>
                     {hasAlert && (
                       <AlertTriangle className="h-3 w-3 text-red-500 mx-auto mt-0.5"
                         aria-label={cov?.alerts.join(' · ')} />
@@ -312,7 +315,7 @@ export default function RosterPage() {
               <motion.tr key={member.id}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: rowIdx * 0.01 }}
                 className={cn('border-b border-slate-100 last:border-0 hover:bg-slate-50/50',
-                  selectedRows.has(member.id) && 'bg-[rgba(8,145,178,0.07)]/30')}>
+                  selectedRows.has(member.id) && 'bg-[rgba(238,107,38,0.07)]/30')}>
                 <td className="px-3 py-2">
                   <input type="checkbox" checked={selectedRows.has(member.id)} onChange={() => toggleRow(member.id)}
                     className="cursor-pointer" />
@@ -328,13 +331,13 @@ export default function RosterPage() {
                   const cellConflicts = conflictIdx.get(`${member.id}@${date}`) ?? []
                   const sev = worstSeverity(cellConflicts)
                   return (
-                    <td key={date} className={cn('px-1 py-1.5 text-center', isToday && 'bg-[rgba(8,145,178,0.07)]/40')}>
+                    <td key={date} className={cn('px-1 py-1.5 text-center', isToday && 'bg-[rgba(238,107,38,0.07)]/40')}>
                       {isEditing ? (
                         <Select value={shift} autoFocus
                           onBlur={() => setEditCell(null)}
                           onChange={e => handleCellChange(member.id, date, e.target.value as ShiftType)}
-                          className="text-[11px] rounded-lg border border-cyan-400 px-1 py-1 focus:outline-none bg-white">
-                          {SHIFTS.map(s => <option key={s}>{s}</option>)}
+                          className="text-[11px] rounded-lg border border-primary px-1 py-1 focus:outline-none bg-white">
+                          {SHIFTS.map(s => <option key={s} value={s}>{shiftLabel(s)}</option>)}
                         </Select>
                       ) : (
                         <button onClick={() => canWrite && setEditCell({ staffId: member.id, date })}
@@ -358,15 +361,15 @@ export default function RosterPage() {
 
       {/* Legend */}
       <div className="flex items-center gap-3 text-xs flex-wrap">
-        <span className="font-semibold text-slate-500">Shifts:</span>
+        <span className="font-semibold text-slate-500">{t('roster.shiftsLegend')}</span>
         {SHIFTS.map(s => (
           <div key={s} className="flex items-center gap-1">
             <span className={cn('h-2 w-3 rounded-sm', SHIFT_DOT[s])} />
-            <span className="text-[11px] font-semibold text-slate-600">{s}</span>
+            <span className="text-[11px] font-semibold text-slate-600">{shiftLabel(s)}</span>
           </div>
         ))}
         <span className="text-slate-300">·</span>
-        <span className="text-[11px] text-slate-500">Click any cell to edit · ring = conflict ({conflictsSummary.critical} critical, {conflictsSummary.warning} warning)</span>
+        <span className="text-[11px] text-slate-500">{t('roster.clickToEdit', { critical: conflictsSummary.critical, warning: conflictsSummary.warning })}</span>
       </div>
 
       <ShiftTemplateModal open={templateOpen} onClose={() => setTemplateOpen(false)}

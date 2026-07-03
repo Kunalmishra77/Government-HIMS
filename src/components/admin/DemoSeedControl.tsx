@@ -39,14 +39,14 @@ export function DemoSeedControl() {
         title="Reset all browser-persisted demo data and reseed Kiran's journey."
         aria-label="Reset demo data"
       >
-        <Database className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+        <Database className="h-3.5 w-3.5 text-[var(--color-accent)]" />
         Demo data
       </button>
 
       {openConfirm ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40">
           <div className="w-[min(440px,90vw)] rounded-2xl bg-white p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-[var(--color-primary)]">
+            <div className="flex items-center gap-2 text-[var(--color-accent)]">
               <Database className="h-4 w-4" />
               <h2 className="text-sm font-semibold">Reset & reseed demo data</h2>
             </div>

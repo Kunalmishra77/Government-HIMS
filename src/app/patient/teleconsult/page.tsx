@@ -147,7 +147,7 @@ export default function TeleconsultPage() {
               )}
             </div>
             {/* AI scribe + duration */}
-            <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-[rgba(8,145,178,0.07)]0/90 px-2.5 py-1 rounded-full"><Sparkles className="h-3.5 w-3.5 text-white" /><span className="text-white text-[11px] font-bold">AI scribe noting</span></div>
+            <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-[rgba(238,107,38,0.07)]0/90 px-2.5 py-1 rounded-full"><Sparkles className="h-3.5 w-3.5 text-white" /><span className="text-white text-[11px] font-bold">AI scribe noting</span></div>
             <div className="absolute bottom-3 left-3 bg-black/40 backdrop-blur px-2.5 py-1 rounded-full text-white text-[12px] font-semibold">{mmss}</div>
           </div>
           <div className="bg-slate-800 py-3 flex items-center justify-center gap-3">
@@ -165,8 +165,8 @@ export default function TeleconsultPage() {
           <h2 className="text-[20px] font-bold text-slate-900">Consultation complete</h2>
           <p className="text-[14px] text-slate-500 mt-1 mb-5">Call duration {mmss} with {doctor}. Your e-prescription &amp; summary are ready.</p>
           <div className="grid grid-cols-2 gap-3 mb-5 text-left">
-            <div className="rounded-2xl bg-slate-50 p-3.5 flex items-center gap-2.5"><FileText className="h-5 w-5 text-[var(--color-primary)]" /><div><p className="text-[13px] font-bold text-slate-900">e-Prescription</p><p className="text-[11px] text-slate-500">2 medicines</p></div></div>
-            <div className="rounded-2xl bg-slate-50 p-3.5 flex items-center gap-2.5"><Stethoscope className="h-5 w-5 text-[var(--color-primary)]" /><div><p className="text-[13px] font-bold text-slate-900">Visit summary</p><p className="text-[11px] text-slate-500">Plain-language</p></div></div>
+            <div className="rounded-2xl bg-slate-50 p-3.5 flex items-center gap-2.5"><FileText className="h-5 w-5 text-[var(--color-accent)]" /><div><p className="text-[13px] font-bold text-slate-900">e-Prescription</p><p className="text-[11px] text-slate-500">2 medicines</p></div></div>
+            <div className="rounded-2xl bg-slate-50 p-3.5 flex items-center gap-2.5"><Stethoscope className="h-5 w-5 text-[var(--color-accent)]" /><div><p className="text-[13px] font-bold text-slate-900">Visit summary</p><p className="text-[11px] text-slate-500">Plain-language</p></div></div>
           </div>
           <button onClick={() => router.push('/patient/dashboard')} className="w-full py-3.5 rounded-2xl font-semibold text-[16px] text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-all active:scale-[0.98]">Back to dashboard</button>
         </motion.div>

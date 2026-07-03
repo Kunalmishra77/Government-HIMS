@@ -10,11 +10,11 @@ const ICON: Record<LiveEventType, React.ElementType> = {
   progress: CheckCircle2, call: Navigation, result: FlaskConical, ai: Sparkles, message: MessageSquare, info: Bell,
 }
 const TINT: Record<LiveEventType, string> = {
-  progress: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]",
+  progress: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]",
   call: "bg-emerald-50 text-emerald-600",
-  result: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]",
-  ai: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]",
-  message: "bg-sky-50 text-sky-600",
+  result: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]",
+  ai: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]",
+  message: "bg-surface-sunken text-accent",
   info: "bg-slate-100 text-slate-500",
 }
 

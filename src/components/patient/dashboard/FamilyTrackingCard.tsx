@@ -41,7 +41,7 @@ export function FamilyTrackingCard() {
   return (
     <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5">
       <div className="flex items-center gap-2 mb-3">
-        <span className="h-8 w-8 rounded-xl bg-[rgba(8,145,178,0.07)] flex items-center justify-center"><QrCode className="h-4.5 w-4.5 text-[var(--color-primary)]" /></span>
+        <span className="h-8 w-8 rounded-xl bg-[rgba(238,107,38,0.07)] flex items-center justify-center"><QrCode className="h-4.5 w-4.5 text-[var(--color-accent)]" /></span>
         <div>
           <h3 className="text-[15px] font-bold text-slate-900 leading-tight">Family live tracking</h3>
           <p className="text-[12px] text-slate-400">Let your family follow your visit — no medical data</p>

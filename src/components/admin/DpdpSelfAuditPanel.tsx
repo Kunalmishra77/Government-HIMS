@@ -72,8 +72,8 @@ export function DpdpSelfAuditPanel({ className }: { className?: string }) {
 
   return (
     <section className={`rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-sm overflow-hidden ${className ?? ''}`}>
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-[rgba(8,145,178,0.06)] to-[rgba(8,145,178,0.04)]">
-        <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-surface-sunken">
+        <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
         <h3 className="text-[14px] font-semibold text-slate-900">DPDP / DISHA Self-Audit</h3>
         <span className="text-[11px] text-slate-500">Five principles · live over audit trail</span>
         <span className={`ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide ${TONE_STYLES[overallTone].badge}`}>
@@ -112,7 +112,7 @@ export function DpdpSelfAuditPanel({ className }: { className?: string }) {
               <div className="rounded-lg bg-white/80 ring-1 ring-slate-200/70 px-2.5 py-2 mt-auto">
                 <p className="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Recommended action</p>
                 <p className="text-[12px] text-slate-800 leading-snug flex items-start gap-1.5">
-                  <ArrowRight className="h-3 w-3 text-[var(--color-primary)] mt-0.5 flex-shrink-0" /> {d.recommendation}
+                  <ArrowRight className="h-3 w-3 text-[var(--color-accent)] mt-0.5 flex-shrink-0" /> {d.recommendation}
                 </p>
               </div>
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { ShieldCheck, TrendingUp, AlertTriangle } from 'lucide-react'
 
 const PMJAY_DISTRICTS = [
@@ -18,6 +19,7 @@ const STATE_SCHEMES = [
 ]
 
 export default function SchemesPage() {
+  const t = useTranslations('secretary')
   const totalClaims = PMJAY_DISTRICTS.reduce((s, d) => s + d.claims, 0)
   const totalAmount = PMJAY_DISTRICTS.reduce((s, d) => s + d.amount, 0)
   const totalFraud = PMJAY_DISTRICTS.reduce((s, d) => s + d.fraudFlags, 0)
@@ -25,19 +27,19 @@ export default function SchemesPage() {
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">PM-JAY & State Schemes</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">PM-JAY और राज्य योजनाएं · Scheme performance monitoring</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('schemes.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('schemes.subtitle')}</p>
       </div>
 
       {/* PM-JAY KPIs */}
       <div>
-        <h2 className="text-base font-semibold text-[var(--color-foreground)] mb-3">Ayushman Bharat PM-JAY</h2>
+        <h2 className="text-base font-semibold text-[var(--color-foreground)] mb-3">{t('schemes.pmjayTitle')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Claims today', value: totalClaims.toLocaleString(), sub: 'All districts' },
-            { label: 'Amount today', value: `₹${totalAmount.toFixed(1)} Cr`, sub: 'Settled' },
-            { label: 'AI fraud flags', value: String(totalFraud), sub: 'Needs review', warn: true },
-            { label: 'Claim rejection rate', value: '6.2%', sub: 'State average' },
+            { label: t('schemes.kpiClaimsToday'), value: totalClaims.toLocaleString(), sub: t('schemes.kpiClaimsTodaySub') },
+            { label: t('schemes.kpiAmountToday'), value: `₹${totalAmount.toFixed(1)} Cr`, sub: t('schemes.kpiAmountTodaySub') },
+            { label: t('schemes.kpiFraudFlags'), value: String(totalFraud), sub: t('schemes.kpiFraudFlagsSub'), warn: true },
+            { label: t('schemes.kpiRejection'), value: '6.2%', sub: t('schemes.kpiRejectionSub') },
           ].map(k => (
             <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
               <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -50,15 +52,15 @@ export default function SchemesPage() {
 
       <div className="bg-white border border-[var(--color-border)] rounded-2xl overflow-auto" style={{ boxShadow: 'var(--shadow-card)' }}>
         <div className="px-5 py-3.5 border-b border-[var(--color-border)]">
-          <p className="text-sm font-semibold text-[var(--color-foreground)]">PM-JAY district snapshot</p>
+          <p className="text-sm font-semibold text-[var(--color-foreground)]">{t('schemes.districtSnapshot')}</p>
         </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-raised)]">
-              <th className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">District</th>
-              <th className="px-5 py-3 text-right text-xs font-semibold text-[var(--color-foreground-muted)]">Claims</th>
-              <th className="px-5 py-3 text-right text-xs font-semibold text-[var(--color-foreground-muted)]">Amount (Cr)</th>
-              <th className="px-5 py-3 text-right text-xs font-semibold text-[var(--color-foreground-muted)]">Fraud flags</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">{t('common.district')}</th>
+              <th className="px-5 py-3 text-right text-xs font-semibold text-[var(--color-foreground-muted)]">{t('schemes.colClaims')}</th>
+              <th className="px-5 py-3 text-right text-xs font-semibold text-[var(--color-foreground-muted)]">{t('schemes.colAmount')}</th>
+              <th className="px-5 py-3 text-right text-xs font-semibold text-[var(--color-foreground-muted)]">{t('schemes.colFraudFlags')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">
@@ -76,14 +78,14 @@ export default function SchemesPage() {
 
       {/* State schemes */}
       <div>
-        <h2 className="text-base font-semibold text-[var(--color-foreground)] mb-3">State health schemes</h2>
+        <h2 className="text-base font-semibold text-[var(--color-foreground)] mb-3">{t('schemes.stateSchemes')}</h2>
         <div className="space-y-3">
           {STATE_SCHEMES.map(s => (
             <div key={s.name} className="bg-white border border-[var(--color-border)] rounded-xl p-4 flex items-center justify-between" style={{ boxShadow: 'var(--shadow-card)' }}>
               <div>
                 <p className="text-sm font-medium text-[var(--color-foreground)]">{s.name}</p>
                 <p className="text-[10px] text-[var(--color-foreground-lighter)]" style={{ fontFamily: 'Noto Sans Devanagari' }}>{s.hi}</p>
-                <p className="text-xs text-[var(--color-foreground-muted)] mt-0.5">{s.beneficiaries.toLocaleString()} beneficiaries</p>
+                <p className="text-xs text-[var(--color-foreground-muted)] mt-0.5">{t('schemes.beneficiaries', { count: s.beneficiaries.toLocaleString() })}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-[var(--color-foreground)]">{s.amount}</p>

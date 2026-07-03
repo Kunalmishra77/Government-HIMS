@@ -42,8 +42,8 @@ const STAGE_META: Record<StageKey, { label: string; icon: React.ElementType; acc
   diagnostics:  { label: 'Tests Ordered', icon: FlaskConical, accent: '#F59E0B' },
   pharmacy:     { label: 'Medication', icon: Pill, accent: '#EC4899' },
   surgery:      { label: 'Surgery / OT', icon: Building2, accent: 'var(--color-primary)' },
-  admission:    { label: 'Admission Required', icon: Bed, accent: '#0891B2' },
-  billing:      { label: 'Payment Confirmed', icon: Receipt, accent: '#F97316' },
+  admission:    { label: 'Admission Required', icon: Bed, accent: '#EE6B26' },
+  billing:      { label: 'Payment Confirmed', icon: Receipt, accent: '#EE6B26' },
   discharge:    { label: "You're Being Discharged", icon: LogOut, accent: '#16A34A' },
 }
 
@@ -274,7 +274,7 @@ function FlowCard({ event, stage }: { event: JourneyEvent; stage: StageKey }) {
 
       {insight && (
         <div className="mt-3 flex items-start gap-2 rounded-lg bg-[color:var(--color-primary-soft)] px-3 py-2">
-          <Sparkles className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
+          <Sparkles className="h-3.5 w-3.5 text-accent flex-shrink-0 mt-0.5" />
           <p className="t-caption text-foreground-muted leading-relaxed">{insight}</p>
         </div>
       )}

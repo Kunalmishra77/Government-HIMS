@@ -1,0 +1,136 @@
+{
+  "shell": {
+    "back": "Back",
+    "stepOf": "{current} of {total}",
+    "headerCheckin": "Patient Check-in",
+    "headerVoice": "Voice Check-in"
+  },
+  "welcome": {
+    "title": "Welcome to\nAgentix HIMS",
+    "subtitle": "Book your hospital appointment in a few easy steps. Talk naturally to our AI assistant, fill in your details yourself, or use Aadhaar for instant verification and auto-fill.",
+    "badgePrivate": "Private & secure",
+    "badgeTime": "About 2 minutes",
+    "start": "Get started",
+    "footer": "No app needed · right in your browser"
+  },
+  "cta": {
+    "continue": "Continue",
+    "payConfirm": "Pay & confirm",
+    "confirmBooking": "Confirm booking"
+  },
+  "stepTitle": {
+    "welcome": "Welcome",
+    "aadhaar": "Scan your Aadhaar",
+    "voice": "Tell us in your words",
+    "about": "Your details",
+    "symptoms": "Select your symptoms",
+    "symptomDuration": "How long have you had these?",
+    "department": "AI department recommendation",
+    "slot": "Pick a time",
+    "reports": "Bringing old reports?",
+    "family": "Share live status with family?",
+    "review": "Review & confirm",
+    "payment": "Consultation payment",
+    "success": "Done"
+  },
+  "milestone": {
+    "identity": "Identity",
+    "aboutYou": "About you",
+    "symptoms": "Symptoms",
+    "appointment": "Appointment",
+    "confirm": "Confirm"
+  },
+  "about": {
+    "fullName": "Full name",
+    "mobile": "10-digit mobile number",
+    "age": "Age in years (1–120)",
+    "ageShort": "AGE",
+    "genderLabel": "Gender",
+    "duplicateTitle": "Possible match: {name}",
+    "duplicateSub": "Registered as {id}. Continue only if this is a different patient."
+  },
+  "gender": {
+    "Male": "Male",
+    "Female": "Female",
+    "Other": "Other"
+  },
+  "symptomsUi": {
+    "otherPlaceholder": "Describe your problem…",
+    "aiAssessment": "AI Assessment"
+  },
+  "reports": {
+    "yes": "Yes, I have old reports",
+    "yesActive": "Yes — I have old reports",
+    "optional": "Optional — you can skip and show them at the desk."
+  },
+  "family": {
+    "share": "Yes, share with family",
+    "disha": "DISHA compliant · non-clinical only",
+    "phone": "Family member's phone",
+    "optional": "Optional — tap Continue to skip."
+  },
+  "duration": {
+    "today": "< 1 day",
+    "1-3d": "1–3 days",
+    "4-7d": "4–7 days",
+    "1w+": "> 1 week",
+    "1m+": "> 1 month"
+  },
+  "durationUi": {
+    "intro": "Select how long you’ve been experiencing each symptom. This helps the AI give a more accurate assessment.",
+    "footer": "You can skip any symptom — duration is optional but improves triage accuracy."
+  },
+  "departmentUi": {
+    "aiTriage": "AI Triage",
+    "triageSub": "Based on symptoms & duration",
+    "recommended": "AI Recommended",
+    "alsoAvailable": "Also available",
+    "footer": "Tap a department to deselect it, or add one from “Also available” below.",
+    "generalAssessment": "General assessment recommended"
+  },
+  "triage": {
+    "Low": "Low",
+    "Medium": "Medium",
+    "High": "High",
+    "Critical": "Critical"
+  },
+  "voiceUi": {
+    "speaking": "Speaking…",
+    "listening": "Listening…",
+    "thinking": "One moment…",
+    "tap": "Tap the mic to answer",
+    "retry": "Didn’t catch that — tap to try again"
+  },
+  "symptom": {
+    "Fever": "Fever",
+    "Cough": "Cough",
+    "Cold": "Cold",
+    "Headache": "Headache",
+    "Chest Pain": "Chest Pain",
+    "Breathlessness": "Breathlessness",
+    "Sore Throat": "Sore Throat",
+    "Body Ache": "Body Ache",
+    "Stomach Pain": "Stomach Pain",
+    "Vomiting": "Vomiting",
+    "Diarrhea": "Diarrhea",
+    "Dizziness": "Dizziness",
+    "Back Pain": "Back Pain",
+    "Joint Pain": "Joint Pain",
+    "Fatigue": "Fatigue",
+    "Skin Rash": "Skin Rash",
+    "Vision Issue": "Vision Issue",
+    "Hearing Issue": "Hearing Issue",
+    "Swallowing Pain": "Swallowing Pain",
+    "Injury": "Injury"
+  },
+  "department": {
+    "General Medicine": "General Medicine",
+    "Cardiology": "Cardiology",
+    "Orthopedics": "Orthopedics",
+    "Neurology": "Neurology",
+    "Dermatology": "Dermatology",
+    "ENT": "ENT",
+    "Ophthalmology": "Ophthalmology",
+    "Gastroenterology": "Gastroenterology"
+  }
+}

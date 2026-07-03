@@ -378,13 +378,13 @@ export const DEPT_COLOR: Record<Department, string> = {
   Reception: '#0EA5E9',  // sky
   Emergency: '#DC2626',  // red
   Nursing:   '#10B981',  // emerald
-  Doctor:    '#0E7490',  // violet
+  Doctor:    '#7C3AED',  // violet
   Lab:       '#F59E0B',  // amber
-  Radiology: '#0E7490',  // purple
+  Radiology: '#9333EA',  // purple
   Pharmacy:  '#EC4899',  // pink
   OT:        '#1976E6',  // blue
-  IPD:       '#0891B2',  // cyan
+  IPD:       '#EE6B26',  // brand orange
   Discharge: '#059669',  // green
-  Billing:   '#F97316',  // orange
-  Insurance: '#0D9488',  // teal
+  Billing:   '#EAB308',  // yellow
+  Insurance: '#64748B',  // slate
 }

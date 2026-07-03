@@ -2,35 +2,36 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTranslations } from "next-intl"
 import { Sparkles, Mic, ArrowUp, ShieldCheck, FileText, Stethoscope, Pill, CalendarPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type Msg = { role: 'ai' | 'me'; text: string }
 
-const CANNED: { match: string[]; reply: string }[] = [
-  { match: ['report', 'result', 'lab', 'cbc', 'blood'], reply: "Your latest CBC is mostly normal — haemoglobin 13.2 g/dL is healthy. Your white-cell count is slightly raised, which usually means your body is fighting a minor infection. Nothing alarming, and your doctor has already seen it." },
-  { match: ['serious', 'worried', 'chest', 'breath'], reply: "Because you reported chest tightness with breathlessness, you've been marked high priority and fast-tracked. Please stay on the premises — if the tightness gets worse or spreads to your arm/jaw, tell any staff member immediately or press the Emergency button." },
-  { match: ['medicine', 'medication', 'tablet', 'drug', 'pill'], reply: "You're on 2 medicines right now. One controls blood sugar (take with food), one is a short course for your current symptoms. I checked — there are no harmful interactions between them. I'll remind you when each dose is due." },
-  { match: ['book', 'appointment', 'follow', 'visit'], reply: "Your earliest good slot is Thursday 4:00 PM with Dr. Priya Nair — that's the shortest wait that day. Want me to book it for you?" },
-  { match: ['diet', 'food', 'eat'], reply: "Based on your diagnosis I've prepared a diabetic-friendly plan: ~1800 kcal/day, high fibre, low simple sugars. I can show it in Hindi too. Open 'Care & Follow-up' to see the full plan." },
+const CANNED: { match: string[]; replyKey: string }[] = [
+  { match: ['report', 'result', 'lab', 'cbc', 'blood'], replyKey: 'assistant.replyReport' },
+  { match: ['serious', 'worried', 'chest', 'breath'], replyKey: 'assistant.replySerious' },
+  { match: ['medicine', 'medication', 'tablet', 'drug', 'pill'], replyKey: 'assistant.replyMedicine' },
+  { match: ['book', 'appointment', 'follow', 'visit'], replyKey: 'assistant.replyBook' },
+  { match: ['diet', 'food', 'eat'], replyKey: 'assistant.replyDiet' },
 ]
 
 const SUGGESTIONS = [
-  { icon: FileText, label: "Explain my latest report" },
-  { icon: Stethoscope, label: "Is my condition serious?" },
-  { icon: Pill, label: "What are my medicines for?" },
-  { icon: CalendarPlus, label: "Book a follow-up" },
+  { icon: FileText, key: "aiCare.sugReport" },
+  { icon: Stethoscope, key: "aiCare.sugSerious" },
+  { icon: Pill, key: "aiCare.sugMedicines" },
+  { icon: CalendarPlus, key: "aiCare.sugFollowUp" },
 ]
 
-function replyFor(q: string) {
-  const lower = q.toLowerCase()
-  return (CANNED.find(c => c.match.some(m => lower.includes(m)))?.reply)
-    ?? "I can help with your reports, medicines, symptoms, appointments and bills. Try one of the suggestions below, or ask in your own words — English or हिंदी."
-}
-
 export default function AssistantPage() {
+  const t = useTranslations('patient')
+  const replyFor = (q: string) => {
+    const lower = q.toLowerCase()
+    const hit = CANNED.find(c => c.match.some(m => lower.includes(m)))
+    return hit ? t(hit.replyKey) : t('assistant.fallback')
+  }
   const [msgs, setMsgs] = useState<Msg[]>([
-    { role: 'ai', text: "Hi Kiran 👋 I'm your AI health companion. I know your records, so I can explain your reports, your medicines, or help you book a visit — in plain language. What would you like to know?" },
+    { role: 'ai', text: t('assistant.greeting') },
   ])
   const [text, setText] = useState("")
   const endRef = useRef<HTMLDivElement>(null)
@@ -48,9 +49,9 @@ export default function AssistantPage() {
       <div className="mb-3">
         <h1 className="text-[24px] font-bold text-slate-900 tracking-tight flex items-center gap-2">
           <span className="h-8 w-8 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)] flex items-center justify-center"><Sparkles className="h-4.5 w-4.5 text-white" /></span>
-          AI Health Assistant
+          {t('assistant.title')}
         </h1>
-        <p className="text-[13px] text-slate-500 mt-1">Private to you · explains your records in plain language · English / हिंदी</p>
+        <p className="text-[13px] text-slate-500 mt-1">{t('assistant.subtitle')}</p>
       </div>
 
       <div className="flex-1 rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] flex flex-col overflow-hidden">
@@ -63,7 +64,7 @@ export default function AssistantPage() {
                   m.role === 'me' ? "bg-[var(--color-primary)] text-white rounded-br-md" : "bg-slate-100 text-slate-800 rounded-bl-md")}>
                   {m.text}
                   {m.role === 'ai' && i > 0 && (
-                    <span className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-400"><ShieldCheck className="h-3.5 w-3.5 text-[var(--color-primary)]" /> AI guidance · verify with your doctor</span>
+                    <span className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-400"><ShieldCheck className="h-3.5 w-3.5 text-[var(--color-accent)]" /> {t('common.aiGuidance')}</span>
                   )}
                 </div>
               </motion.div>
@@ -76,20 +77,21 @@ export default function AssistantPage() {
           <div className="flex flex-wrap gap-2 mb-3">
             {SUGGESTIONS.map(s => {
               const Icon = s.icon
+              const label = t(s.key)
               return (
-                <button key={s.label} onClick={() => send(s.label)}
-                  className="flex items-center gap-1.5 text-[12.5px] font-medium px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-[rgba(8,145,178,0.30)] hover:text-[var(--color-primary)] transition-colors active:scale-95">
-                  <Icon className="h-3.5 w-3.5" /> {s.label}
+                <button key={s.key} onClick={() => send(label)}
+                  className="flex items-center gap-1.5 text-[12.5px] font-medium px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-[rgba(238,107,38,0.30)] hover:text-[var(--color-accent)] transition-colors active:scale-95">
+                  <Icon className="h-3.5 w-3.5" /> {label}
                 </button>
               )
             })}
           </div>
-          <div className="flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200 px-3 h-12 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-400 transition-shadow">
+          <div className="flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200 px-3 h-12 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary/25 transition-shadow">
             <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send(text) }}
-              placeholder="Ask about your health…" aria-label="Ask the AI health assistant"
+              placeholder={t('assistant.inputPlaceholder')} aria-label={t('assistant.inputAria')}
               className="intake-input flex-1 bg-transparent border-none text-[15px] text-slate-900 placeholder:text-slate-400" />
-            <button aria-label="Speak" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[var(--color-primary)] hover:bg-[rgba(8,145,178,0.10)] transition-colors"><Mic className="h-4.5 w-4.5" /></button>
-            <button aria-label="Send" onClick={() => send(text)} className="h-8 w-8 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center active:scale-95 transition-transform"><ArrowUp className="h-4.5 w-4.5" /></button>
+            <button aria-label={t('aiCare.speak')} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[var(--color-accent)] hover:bg-[rgba(238,107,38,0.10)] transition-colors"><Mic className="h-4.5 w-4.5" /></button>
+            <button aria-label={t('aiCare.send')} onClick={() => send(text)} className="h-8 w-8 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center active:scale-95 transition-transform"><ArrowUp className="h-4.5 w-4.5" /></button>
           </div>
         </div>
       </div>

@@ -2,17 +2,19 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { QrCode, ShieldCheck } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { QrCode, ShieldCheck, LogIn } from "lucide-react"
+import { LocaleToggle } from "@/components/ui/LocaleToggle"
 import { cn } from "@/lib/utils"
 
 const NAV_HEIGHT = 64 // h-16
 
 const LINKS = [
-  { label: "Home",         href: "#home" },
-  { label: "Intelligence", href: "#intelligence" },
-  { label: "Platform",     href: "#platform" },
-  { label: "Security",     href: "#security" },
-  { label: "Outcomes",     href: "#outcomes" },
+  { key: "home",     href: "#home" },
+  { key: "platform", href: "#platform" },
+  { key: "product",  href: "#product" },
+  { key: "security", href: "#security" },
+  { key: "outcomes", href: "#outcomes" },
 ]
 
 function scrollToSection(href: string) {
@@ -39,6 +41,7 @@ function getActiveHref(): string {
 
 export function LandingNav() {
   const router = useRouter()
+  const t = useTranslations("landing")
   const [scrolled, setScrolled]     = useState(false)
   const [activeHref, setActiveHref] = useState("#home")
 
@@ -70,18 +73,18 @@ export function LandingNav() {
 
         {/* Nav links */}
         <nav className="hidden lg:flex items-center gap-1">
-          {LINKS.map(({ label, href }) => (
+          {LINKS.map(({ key, href }) => (
             <button
               key={href}
               onClick={() => handleNav(href)}
               className={cn(
                 "px-3.5 py-2 rounded-lg text-[13.5px] font-semibold transition-all duration-150 cursor-pointer select-none",
                 activeHref === href
-                  ? "text-[var(--color-primary)] bg-[var(--color-primary)]/[0.08]"
+                  ? "text-[var(--color-accent)] bg-[var(--color-primary)]/[0.08]"
                   : "text-[#475467] hover:text-[#101828] hover:bg-[#F8FAFC]",
               )}
             >
-              {label}
+              {t(`nav.${key}`)}
             </button>
           ))}
         </nav>
@@ -92,20 +95,27 @@ export function LandingNav() {
             onClick={() => router.push("/abha")}
             className="hidden md:inline-flex items-center gap-2 h-9 px-4 rounded-full text-[13px] font-semibold text-[#344054] bg-white border border-[#EAECF2] hover:border-[#D0D5DD] transition-colors cursor-pointer"
           >
-            <ShieldCheck className="h-4 w-4 text-green-600" /> ABDM Sandbox
+            <ShieldCheck className="h-4 w-4 text-green-600" /> {t("cta.abdmSandbox")}
           </button>
           <button
             onClick={() => router.push("/checkin")}
             className="hidden sm:inline-flex items-center gap-2 h-9 px-4 rounded-full text-[13px] font-semibold text-[#344054] bg-white border border-[#EAECF2] hover:border-[#D0D5DD] transition-colors cursor-pointer"
           >
-            <QrCode className="h-4 w-4 text-[var(--color-primary)]" /> Patient Check-In
+            <QrCode className="h-4 w-4 text-[var(--color-accent)]" /> {t("cta.patientCheckIn")}
+          </button>
+          <button
+            onClick={() => scrollToSection("#signin")}
+            className="hidden sm:inline-flex items-center gap-2 h-9 px-4 rounded-full text-[13px] font-semibold text-[#344054] bg-white border border-[#EAECF2] hover:border-[#D0D5DD] transition-colors cursor-pointer"
+          >
+            <LogIn className="h-4 w-4 text-[var(--color-accent)]" /> {t("cta.login")}
           </button>
           <button
             onClick={() => scrollToSection("#launcher")}
             className="inline-flex items-center h-9 px-4 rounded-full text-[13px] font-semibold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors cursor-pointer"
           >
-            Launch console
+            {t("cta.launchConsole")}
           </button>
+          <LocaleToggle />
         </div>
       </div>
     </header>

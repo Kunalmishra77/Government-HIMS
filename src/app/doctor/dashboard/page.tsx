@@ -47,9 +47,9 @@ const SPECIALTIES = ["Cardiology","Neurology","Orthopaedics","Gastroenterology",
 const BODY_PARTS = ["Chest","Abdomen","Head","Neck","Spine (Lumbar)","Spine (Cervical)","Knee","Shoulder","Hip","Pelvis","Wrist","Ankle","Whole Abdomen"]
 
 const ORDER_STYLES: Record<string, { gradient: string; glow: string; light: string; text: string }> = {
-  lab:       { gradient: 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))', glow: 'rgba(8,145,178,0.25)', light: 'rgba(8,145,178,0.07)', text: 'var(--color-primary-dark)' },
-  radiology: { gradient: 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))', glow: 'rgba(8,145,178,0.25)', light: 'rgba(8,145,178,0.06)', text: 'var(--color-primary)' },
-  referral:  { gradient: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', glow: 'rgba(8,145,178,0.25)', light: 'rgba(8,145,178,0.05)', text: 'var(--color-primary-dark)' },
+  lab:       { gradient: 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))', glow: 'rgba(238,107,38,0.25)', light: 'rgba(238,107,38,0.07)', text: 'var(--color-primary-dark)' },
+  radiology: { gradient: 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))', glow: 'rgba(238,107,38,0.25)', light: 'rgba(238,107,38,0.06)', text: 'var(--color-primary)' },
+  referral:  { gradient: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', glow: 'rgba(238,107,38,0.25)', light: 'rgba(238,107,38,0.05)', text: 'var(--color-primary-dark)' },
   admission: { gradient: 'linear-gradient(135deg,#EF4444,#DC2626)', glow: 'rgba(239,68,68,0.25)', light: '#FEF2F2', text: '#DC2626' },
 }
 
@@ -84,7 +84,7 @@ function QueueEntry({ patient, selected, onClick, delay }: { patient: Patient; s
         #{patient.token}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={cn("text-sm font-bold truncate", selected ? "text-primary" : "text-foreground")}>{patient.name}</p>
+        <p className={cn("text-sm font-bold truncate", selected ? "text-accent" : "text-foreground")}>{patient.name}</p>
         <p className="t-caption text-foreground-lighter truncate mt-0.5">{patient.age}y · {patient.symptoms[0] ?? "No symptoms"}</p>
       </div>
       <NeonBadge variant={q.variant} className="flex-shrink-0">{q.label}</NeonBadge>
@@ -108,34 +108,34 @@ function PatientProfileHeader({ patient, onOpenHistory }: { patient: Patient; on
   const vitals = patient.vitals ? Object.entries(patient.vitals) : []
 
   return (
-    <div className="sticky top-0 z-20 rounded-2xl p-5" style={{ background: 'white', boxShadow: '0 1px 4px rgba(15,23,42,0.06), 0 6px 20px rgba(15,23,42,0.06)' }}>
-      <div className="flex items-start gap-4 flex-wrap">
-        <Avatar name={patient.name} size="lg" className="h-14 w-14 flex-shrink-0" />
+    <div className="sticky top-0 z-20 rounded-2xl p-4" style={{ background: 'white', boxShadow: '0 1px 4px rgba(15,23,42,0.06), 0 6px 20px rgba(15,23,42,0.06)' }}>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Avatar name={patient.name} size="lg" className="h-11 w-11 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h2 className="text-lg font-bold text-[#0F172A]">{patient.name}</h2>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-accent-soft text-primary tabular-nums">#{patient.token}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-base font-bold text-[#0F172A]">{patient.name}</h2>
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-accent-soft text-accent tabular-nums">#{patient.token}</span>
             {acuity && <NeonBadge variant={acuity.variant}>{acuity.label} triage</NeonBadge>}
           </div>
-          <p className="text-xs font-medium" style={{ color: '#94A3B8' }}>
+          <p className="text-xs font-medium mt-0.5" style={{ color: '#94A3B8' }}>
             {patient.id} · {patient.age}y · {patient.gender} · {patient.phone}
           </p>
         </div>
         {vitals.length > 0 && (
-          <div className="flex gap-2 flex-wrap flex-shrink-0">
+          <div className="flex gap-1.5 flex-wrap flex-shrink-0">
             {vitals.map(([k, v]) => (
-              <div key={k} className="text-center px-3 py-2 rounded-xl" style={{ background: '#F8FAFC', boxShadow: '0 1px 3px rgba(15,23,42,0.05)' }}>
-                <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: '#94A3B8' }}>{k}</p>
-                <p className="text-sm font-bold text-[#0F172A]">{v}</p>
+              <div key={k} className="text-center px-2.5 py-1.5 rounded-lg" style={{ background: '#F8FAFC', boxShadow: '0 1px 3px rgba(15,23,42,0.05)' }}>
+                <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: '#94A3B8' }}>{k}</p>
+                <p className="text-[13px] font-bold text-[#0F172A]">{v}</p>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3">
         <div className="flex items-start gap-2">
-          <HeartPulse className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-[#F97316]" />
+          <HeartPulse className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-[#EE6B26]" />
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Chief complaint</p>
             <p className="text-[13px] font-semibold text-slate-800">{chief}</p>
@@ -151,7 +151,7 @@ function PatientProfileHeader({ patient, onOpenHistory }: { patient: Patient; on
       </div>
 
       {alerts.length > 0 && (
-        <div className="mt-3 flex items-start gap-2 rounded-xl px-3.5 py-2.5" style={{ background: '#FEF2F2', border: '1px solid rgba(239,68,68,0.20)' }}>
+        <div className="mt-2.5 flex items-start gap-2 rounded-xl px-3 py-2" style={{ background: '#FEF2F2', border: '1px solid rgba(239,68,68,0.20)' }}>
           <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-red-500">Critical medical alerts</p>
@@ -160,23 +160,23 @@ function PatientProfileHeader({ patient, onOpenHistory }: { patient: Patient; on
         </div>
       )}
 
-      {/* Symptoms — surfaced directly in the profile */}
-      <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(15,23,42,0.05)' }}>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Symptoms</p>
-        <div className="flex flex-wrap gap-1.5">
+      {/* Symptoms — inline label + chips, kept tight */}
+      <div className="mt-3 flex items-start gap-2 flex-wrap">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1.5">Symptoms</p>
+        <div className="flex flex-wrap gap-1.5 flex-1 min-w-0">
           {patient.symptoms.length > 0 ? patient.symptoms.map((s, i) => (
             <span key={i} className="text-[12px] font-semibold px-2.5 py-1 rounded-full" style={{ background: 'rgba(249,115,22,0.10)', color: '#C2410C' }}>{s}</span>
-          )) : <span className="text-[13px] font-medium italic text-slate-400">No symptoms recorded</span>}
+          )) : <span className="text-[13px] font-medium italic text-slate-400 mt-0.5">No symptoms recorded</span>}
         </div>
       </div>
 
       {/* History — compact preview, opens full history in a drawer */}
       <button
         onClick={onOpenHistory}
-        className="mt-3 w-full flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left transition cursor-pointer hover:brightness-[0.98]"
+        className="mt-2.5 w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left transition cursor-pointer hover:brightness-[0.98]"
         style={{ background: '#F8FAFC', border: '1px solid rgba(15,23,42,0.06)' }}
       >
-        <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 2px 6px rgba(8,145,178,0.25)' }}>
+        <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 2px 6px rgba(238,107,38,0.25)' }}>
           <FileText className="h-3.5 w-3.5 text-white" />
         </div>
         <div className="min-w-0 flex-1">
@@ -535,7 +535,7 @@ export default function DoctorDashboard() {
   const offShiftBanner = !leaveBanner && todayShift === 'Off'
 
   return (
-    <div className="flex flex-col lg:h-[calc(100vh-100px)] gap-4 px-1 py-1">
+    <div className="flex flex-col lg:h-full lg:min-h-0 gap-4 px-1 py-1">
 
       {/* M2 — On-leave banner (full width above queue + workspace) */}
       {leaveBanner && (
@@ -549,8 +549,8 @@ export default function DoctorDashboard() {
 
       {/* M4.1 — Off-shift soft banner (HR roster check) */}
       {offShiftBanner && (
-        <div className="absolute top-0 left-0 right-0 z-30 mx-4 mt-2 rounded-xl bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] px-4 py-2.5 flex items-start gap-2.5 shadow-sm">
-          <AlertCircle className="h-4 w-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
+        <div className="absolute top-0 left-0 right-0 z-30 mx-4 mt-2 rounded-xl bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] px-4 py-2.5 flex items-start gap-2.5 shadow-sm">
+          <AlertCircle className="h-4 w-4 text-[var(--color-accent)] flex-shrink-0 mt-0.5" />
           <p className="text-[12.5px] text-[var(--color-primary-dark)] leading-relaxed flex-1 min-w-0">
             <b>You're scheduled Off today per the roster.</b> You can still start a consultation if needed; it&apos;ll be logged with that context.
           </p>
@@ -581,38 +581,44 @@ export default function DoctorDashboard() {
         )}
       </AnimatePresence>
 
-      {/* ── Top Bar: In Queue + at-a-glance stats ──────── */}
-      <div className="flex-shrink-0 hms-card flex items-center gap-3 flex-wrap px-4 py-3">
-        <button
-          onClick={() => setShowQueue(true)}
-          className="h-10 px-4 rounded-full bg-primary hover:bg-primary-dark text-white font-bold text-[13px] flex items-center gap-2 shadow-sm active:scale-[0.98] transition cursor-pointer"
-        >
-          <Users className="h-4 w-4" /> In Queue
-          <span className="h-5 min-w-[20px] px-1.5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white/25 tabular-nums">{queue.length}</span>
-        </button>
-        <div className="flex items-center gap-2">
-          {[
-            { label: "Total", value: mine.length, color: 'text-foreground' },
-            { label: "Seen", value: seen, color: 'text-success' },
-            { label: "Waiting", value: queue.length, color: 'text-warning' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="flex items-baseline gap-1.5 px-3 py-1.5 rounded-xl bg-surface-sunken">
-              <span className={cn("text-sm font-bold tabular-nums", color)}>{value}</span>
-              <span className="text-[11px] font-semibold text-foreground-lighter">{label}</span>
-            </div>
-          ))}
-        </div>
+      {/* ── Top Bar: AI Brief (primary action) + Queue summary ──────── */}
+      <div className="flex-shrink-0 flex items-stretch gap-3 flex-wrap">
+        {/* AI Pre-Consultation Brief — independent primary action, set apart from the stats */}
         <button
           onClick={() => setActiveDrawer('brief')}
           disabled={!currentPatient}
-          className="h-10 px-4 rounded-full font-bold text-[13px] flex items-center gap-2 bg-accent-soft text-primary border border-primary/15 hover:bg-primary/10 active:scale-[0.98] transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-5 rounded-2xl font-bold text-[13px] text-white bg-gradient-to-br from-primary to-primary-dark shadow-[0_4px_14px_rgba(238,107,38,0.30)] hover:shadow-[0_6px_18px_rgba(238,107,38,0.40)] active:scale-[0.98] transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
         >
-          <Sparkles className="h-4 w-4" /> AI Pre-Consultation Brief
+          <Sparkles className="h-4 w-4 flex-shrink-0" />
+          <span className="text-left leading-tight">AI Pre-Consultation<br className="hidden sm:block" /> Brief</span>
         </button>
-        <div className="ml-auto flex items-center gap-2 text-xs font-medium text-foreground-lighter">
-          <Clock className="h-4 w-4 text-foreground-placeholder" />
-          Next: <span className="font-bold text-foreground">{queue[0]?.name ?? "No patients"}</span>
-          {queue[0] && <span className="text-foreground-placeholder">~{queue[0].estimatedWait}m</span>}
+
+        {/* Queue summary */}
+        <div className="hms-card flex-1 min-w-0 flex items-center gap-3 flex-wrap px-4 py-3">
+          <button
+            onClick={() => setShowQueue(true)}
+            className="h-10 px-4 rounded-full bg-primary hover:bg-primary-dark text-[#0D2032] hover:text-[#0D2032] font-bold text-[13px] flex items-center gap-2 shadow-sm active:scale-[0.98] transition cursor-pointer"
+          >
+            <Users className="h-4 w-4" /> In Queue
+            <span className="h-5 min-w-[20px] px-1.5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white/25 tabular-nums">{queue.length}</span>
+          </button>
+          <div className="flex items-center gap-2">
+            {[
+              { label: "Total", value: mine.length, color: 'text-foreground' },
+              { label: "Seen", value: seen, color: 'text-success' },
+              { label: "Waiting", value: queue.length, color: 'text-warning' },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="flex items-baseline gap-1.5 px-3 py-1.5 rounded-xl bg-surface-sunken">
+                <span className={cn("text-sm font-bold tabular-nums", color)}>{value}</span>
+                <span className="text-[11px] font-semibold text-foreground-lighter">{label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="ml-auto flex items-center gap-2 text-xs font-medium text-foreground-lighter">
+            <Clock className="h-4 w-4 text-foreground-placeholder" />
+            Next: <span className="font-bold text-foreground">{queue[0]?.name ?? "No patients"}</span>
+            {queue[0] && <span className="text-foreground-placeholder">~{queue[0].estimatedWait}m</span>}
+          </div>
         </div>
       </div>
 
@@ -630,7 +636,7 @@ export default function DoctorDashboard() {
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
 
           {/* Center — primary consultation workspace */}
-          <div className="flex-1 min-w-0 lg:overflow-y-auto space-y-4 px-2 lg:py-1">
+          <div className="flex-1 min-w-0 min-h-0 lg:overflow-y-auto lg:overscroll-contain space-y-4 px-2 lg:py-1">
 
             <PatientProfileHeader patient={currentPatient} onOpenHistory={() => setActiveDrawer('history')} />
 
@@ -641,7 +647,7 @@ export default function DoctorDashboard() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,var(--color-primary),var(--color-primary))', boxShadow: '0 2px 6px rgba(8,145,178,0.25)' }}>
+                  <div className="h-7 w-7 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,var(--color-primary),var(--color-primary))', boxShadow: '0 2px 6px rgba(238,107,38,0.25)' }}>
                     <Activity className="h-3.5 w-3.5 text-white" />
                   </div>
                   <h3 className="text-sm font-bold text-[#0F172A]">Consultation Notes</h3>
@@ -676,7 +682,7 @@ export default function DoctorDashboard() {
                     rows={9}
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
-                    onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px rgba(8,145,178,0.30)'; e.currentTarget.style.borderColor = 'var(--color-primary)' }}
+                    onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px rgba(238,107,38,0.30)'; e.currentTarget.style.borderColor = 'var(--color-primary)' }}
                     onBlur={e => { e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(15,23,42,0.04)'; e.currentTarget.style.borderColor = 'rgba(15,23,42,0.06)' }}
                   />
                 </div>
@@ -685,57 +691,17 @@ export default function DoctorDashboard() {
 
             {/* ── QUICK ORDER SETS (Track A) ── */}
             <OrderSetPicker onApply={applyOrderSet} disabled={!currentPatient} />
-
-            {/* ── Clinical Actions ── */}
-            <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: '0 1px 4px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04)' }}>
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                <h3 className="text-sm font-bold text-[#0F172A]">Clinical Actions</h3>
-                <div className="flex items-center gap-2.5">
-                  <button
-                    onClick={completeConsult}
-                    className="h-10 px-4 rounded-xl font-bold text-[13px] text-white flex items-center gap-2 active:scale-[0.98] transition cursor-pointer"
-                    style={{ background: 'linear-gradient(135deg,#16A34A,var(--color-primary-dark))', boxShadow: '0 4px 12px rgba(22,163,74,0.30)' }}
-                  >
-                    <CheckCircle2 className="h-4 w-4" /> Complete consultation <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-                {([
-                  { key: 'rx', label: 'Prescription', icon: Pill, count: prescriptions.length },
-                  { key: 'lab', label: 'Order Lab Tests', icon: FlaskConical, count: labOrders.length },
-                  { key: 'radiology', label: 'Radiology Scan', icon: ScanLine, count: radiologyOrders.length },
-                  { key: 'referral', label: 'Refer Specialist', icon: GitBranch, count: referrals.length },
-                  { key: 'admit', label: 'Admit Patient', icon: Bed, count: admissionOrder?.sent ? 1 : 0 },
-                ] as const).map(({ key, label, icon: Icon, count }) => (
-                  <button
-                    key={key}
-                    onClick={() => setActiveDrawer(key)}
-                    className="relative flex flex-col items-center justify-center gap-2 px-2 py-4 rounded-xl text-[12px] font-bold text-center leading-tight transition active:scale-[0.98] cursor-pointer"
-                    style={key === 'admit'
-                      ? { background: '#FEF2F2', color: '#DC2626', border: '1px solid rgba(239,68,68,0.18)' }
-                      : { background: 'rgba(8,145,178,0.06)', color: 'var(--color-primary-dark)', border: '1px solid rgba(8,145,178,0.14)' }}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{label}</span>
-                    {count > 0 && (
-                      <span className="absolute top-1.5 right-1.5 h-5 min-w-[20px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white" style={{ background: key === 'admit' ? '#DC2626' : 'var(--color-primary)' }}>{count}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
-          {/* Right sidebar — AI Assistant + Bed Availability (secondary) */}
-          <div className="w-full lg:w-72 flex-shrink-0 lg:overflow-y-auto space-y-4 px-1 lg:py-1">
+          {/* Right sidebar — AI Assistant + Clinical Actions + Bed Availability (secondary) */}
+          <div className="w-full lg:w-80 flex-shrink-0 min-h-0 lg:overflow-y-auto lg:overscroll-contain space-y-4 px-1 lg:py-1">
             {/* AI Assistant */}
             <div
               className="rounded-2xl p-4 flex flex-col"
-              style={{ background: 'linear-gradient(135deg, rgba(8,145,178,0.06) 0%, rgba(8,145,178,0.03) 100%)', border: '1px solid rgba(8,145,178,0.10)', boxShadow: '0 4px 16px rgba(8,145,178,0.10)' }}
+              style={{ background: 'linear-gradient(135deg, rgba(238,107,38,0.06) 0%, rgba(238,107,38,0.03) 100%)', border: '1px solid rgba(238,107,38,0.10)', boxShadow: '0 4px 16px rgba(238,107,38,0.10)' }}
             >
               <div className="flex items-center gap-2 mb-3 flex-shrink-0">
-                <div className="h-7 w-7 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 3px 8px rgba(8,145,178,0.30)' }}>
+                <div className="h-7 w-7 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 3px 8px rgba(238,107,38,0.30)' }}>
                   <Bot className="h-3.5 w-3.5 text-white" />
                 </div>
                 <span className="font-bold text-sm text-[#0F172A]">AI Assistant</span>
@@ -750,9 +716,9 @@ export default function DoctorDashboard() {
                       transition={{ delay: idx * 0.1 }}
                       onClick={() => acceptAISuggestion(s)}
                       className="w-full text-left text-xs rounded-xl p-3 flex items-center justify-between group cursor-pointer transition-all"
-                      style={{ background: 'rgba(255,255,255,0.7)', color: 'var(--color-primary-dark)', boxShadow: '0 1px 4px rgba(8,145,178,0.10)' }}
-                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(8,145,178,0.20)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 4px rgba(8,145,178,0.10)'}
+                      style={{ background: 'rgba(255,255,255,0.7)', color: 'var(--color-primary-dark)', boxShadow: '0 1px 4px rgba(238,107,38,0.10)' }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(238,107,38,0.20)'}
+                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 4px rgba(238,107,38,0.10)'}
                     >
                       <span className="font-semibold leading-tight pr-2">{s}</span>
                       <Plus className="h-3.5 w-3.5 flex-shrink-0 opacity-60 group-hover:opacity-100" />
@@ -761,20 +727,64 @@ export default function DoctorDashboard() {
                 </AnimatePresence>
                 {aiSuggestions.length === 0 && (
                   <div className="text-center py-3">
-                    <CheckCircle2 className="h-5 w-5 mx-auto mb-1" style={{ color: '#6EC9DC' }} />
+                    <CheckCircle2 className="h-5 w-5 mx-auto mb-1" style={{ color: '#F58C4E' }} />
                     <p className="text-xs font-medium" style={{ color: '#9CA3AF' }}>No new suggestions</p>
                   </div>
                 )}
               </div>
             </div>
 
+            {/* ── Clinical Actions ── */}
+            <div className="rounded-2xl p-4" style={{ background: 'white', boxShadow: '0 1px 4px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04)' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-7 w-7 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 3px 8px rgba(238,107,38,0.30)' }}>
+                  <Activity className="h-3.5 w-3.5 text-white" />
+                </div>
+                <h3 className="text-sm font-bold text-[#0F172A]">Clinical Actions</h3>
+              </div>
+              <button
+                onClick={completeConsult}
+                className="w-full h-10 px-4 mb-3 rounded-xl font-bold text-[13px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition cursor-pointer"
+                style={{ background: 'linear-gradient(135deg,#16A34A,var(--color-primary-dark))', boxShadow: '0 4px 12px rgba(22,163,74,0.30)' }}
+              >
+                <CheckCircle2 className="h-4 w-4" /> Complete consultation <ArrowRight className="h-4 w-4" />
+              </button>
+              <div className="grid grid-cols-2 gap-2.5">
+                {([
+                  { key: 'rx', label: 'Prescription', icon: Pill, count: prescriptions.length },
+                  { key: 'lab', label: 'Order Lab Tests', icon: FlaskConical, count: labOrders.length },
+                  { key: 'radiology', label: 'Radiology Scan', icon: ScanLine, count: radiologyOrders.length },
+                  { key: 'referral', label: 'Refer Specialist', icon: GitBranch, count: referrals.length },
+                  { key: 'admit', label: 'Admit Patient', icon: Bed, count: admissionOrder?.sent ? 1 : 0 },
+                ] as const).map(({ key, label, icon: Icon, count }) => (
+                  <button
+                    key={key}
+                    onClick={() => setActiveDrawer(key)}
+                    className={cn(
+                      "relative flex flex-col items-center justify-center gap-2 px-2 py-3.5 rounded-xl text-[12px] font-bold text-center leading-tight transition active:scale-[0.98] cursor-pointer",
+                      key === 'admit' && "col-span-2 flex-row"
+                    )}
+                    style={key === 'admit'
+                      ? { background: '#FEF2F2', color: '#DC2626', border: '1px solid rgba(239,68,68,0.18)' }
+                      : { background: 'rgba(238,107,38,0.06)', color: 'var(--color-primary-dark)', border: '1px solid rgba(238,107,38,0.14)' }}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{label}</span>
+                    {count > 0 && (
+                      <span className="absolute top-1.5 right-1.5 h-5 min-w-[20px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white" style={{ background: key === 'admit' ? '#DC2626' : 'var(--color-primary)' }}>{count}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Bed Availability */}
             <div
               className="rounded-2xl p-4 flex flex-col gap-3"
-              style={{ background: 'linear-gradient(135deg, rgba(8,145,178,0.06) 0%, rgba(8,145,178,0.03) 100%)', border: '1px solid rgba(8,145,178,0.10)', boxShadow: '0 4px 16px rgba(8,145,178,0.08)' }}
+              style={{ background: 'linear-gradient(135deg, rgba(238,107,38,0.06) 0%, rgba(238,107,38,0.03) 100%)', border: '1px solid rgba(238,107,38,0.10)', boxShadow: '0 4px 16px rgba(238,107,38,0.08)' }}
             >
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 3px 8px rgba(8,145,178,0.30)' }}>
+                <div className="h-7 w-7 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 3px 8px rgba(238,107,38,0.30)' }}>
                   <Bed className="h-3.5 w-3.5 text-white" />
                 </div>
                 <span className="font-bold text-sm text-[#0F172A]">Bed Availability</span>
@@ -799,7 +809,7 @@ export default function DoctorDashboard() {
                   )
                 })}
               </div>
-              <Link href="/doctor/beds" className="flex items-center gap-1 text-[11.5px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors">
+              <Link href="/doctor/beds" className="flex items-center gap-1 text-[11.5px] font-semibold text-[var(--color-accent)] hover:text-[var(--color-primary-dark)] transition-colors">
                 View full board <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
@@ -844,7 +854,7 @@ export default function DoctorDashboard() {
       >
         {currentPatient && (
           <div className="p-5 space-y-4">
-            <div className="rounded-xl p-3.5" style={{ background: 'linear-gradient(135deg,rgba(8,145,178,0.06),rgba(8,145,178,0.03))', border: '1px solid rgba(8,145,178,0.12)' }}>
+            <div className="rounded-xl p-3.5" style={{ background: 'linear-gradient(135deg,rgba(238,107,38,0.06),rgba(238,107,38,0.03))', border: '1px solid rgba(238,107,38,0.12)' }}>
               <p className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 mb-1" style={{ color: 'var(--color-primary-dark)' }}><Sparkles className="h-3 w-3" /> AI brief</p>
               <p className="text-[13px] font-medium leading-snug" style={{ color: 'var(--color-primary-dark)' }}>{historyBrief(currentPatient)}</p>
             </div>
@@ -891,7 +901,7 @@ export default function DoctorDashboard() {
               className="w-full h-11 rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 text-white transition-all cursor-pointer disabled:opacity-50"
               style={isPharmacySent
                 ? { background: 'linear-gradient(135deg,#16A34A,var(--color-primary-dark))', boxShadow: '0 4px 14px rgba(22,163,74,0.30)' }
-                : { background: 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))', boxShadow: '0 4px 14px rgba(8,145,178,0.30)' }}
+                : { background: 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))', boxShadow: '0 4px 14px rgba(238,107,38,0.30)' }}
             >
               {isPharmacySent
                 ? <><CheckCircle2 className="h-4 w-4" /> Sent to Pharmacy</>
@@ -911,7 +921,7 @@ export default function DoctorDashboard() {
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {['Paracetamol 500mg', 'Amoxicillin 500mg', 'Pantoprazole 40mg'].map(drug => (
-                  <button key={drug} onClick={() => addMed(drug)} className="text-[10.5px] font-semibold px-2.5 py-1 rounded-full cursor-pointer transition-all" style={{ background: 'rgba(8,145,178,0.12)', color: 'var(--color-primary-dark)' }}>
+                  <button key={drug} onClick={() => addMed(drug)} className="text-[10.5px] font-semibold px-2.5 py-1 rounded-full cursor-pointer transition-all" style={{ background: 'rgba(238,107,38,0.12)', color: 'var(--color-primary-dark)' }}>
                     + {drug}
                   </button>
                 ))}
@@ -1131,7 +1141,7 @@ export default function DoctorDashboard() {
                 }}
                 className={cn(
                   "absolute right-2 top-2 h-7 w-7 rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]",
-                  refListening ? "bg-[var(--color-primary)] text-white animate-pulse" : "bg-[rgba(8,145,178,0.08)] text-[var(--color-primary)] hover:bg-[rgba(8,145,178,0.18)]"
+                  refListening ? "bg-[var(--color-primary)] text-white animate-pulse" : "bg-[rgba(238,107,38,0.08)] text-[var(--color-accent)] hover:bg-[rgba(238,107,38,0.18)]"
                 )}
               >
                 <Mic className="h-3.5 w-3.5" />
@@ -1211,7 +1221,7 @@ export default function DoctorDashboard() {
                 <Bed className="h-4 w-4" />
                 {wardFree > 0 ? `${wardFree} of ${wardTotal} ${admType} bed${wardFree !== 1 ? 's' : ''} free at this branch` : `No ${admType} beds free at this branch`}
               </span>
-              <Link href="/doctor/beds" className="text-[12px] font-bold text-[var(--color-primary)] hover:text-[var(--color-primary)] flex items-center gap-1 flex-shrink-0">
+              <Link href="/doctor/beds" className="text-[12px] font-bold text-[var(--color-accent)] hover:text-[var(--color-accent)] flex items-center gap-1 flex-shrink-0">
                 {wardFree > 0 ? 'View beds' : 'Other branches'} <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>

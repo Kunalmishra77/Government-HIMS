@@ -134,17 +134,17 @@ export function DrugSafetyReasoningCard({ meds, allergies, comorbidities, onAcce
 
       {/* Suggested alternatives — only if there's something worth substituting */}
       {alternates.length > 0 ? (
-        <div className="border-t border-slate-100 px-4 py-3 bg-[rgba(8,145,178,0.07)]/30">
+        <div className="border-t border-slate-100 px-4 py-3 bg-[rgba(238,107,38,0.07)]/30">
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+            <Sparkles className="h-3.5 w-3.5 text-[var(--color-accent)]" />
             <p className="text-[12px] font-semibold text-[var(--color-primary-dark)]">AI-suggested alternatives</p>
-            <span className="ml-auto text-[10px] font-mono text-[var(--color-primary)]">82% confidence</span>
+            <span className="ml-auto text-[10px] font-mono text-[var(--color-accent)]">82% confidence</span>
           </div>
           {showAlternates ? (
             <div className="space-y-2">
               {alternates.map((alt, i) => (
-                <div key={i} className="rounded-lg bg-white ring-1 ring-blue-100/80 px-3 py-2 flex items-start gap-2">
-                  <Pill className="h-3.5 w-3.5 text-[var(--color-primary)] mt-0.5 flex-shrink-0" />
+                <div key={i} className="rounded-lg bg-white ring-1 ring-primary/20 px-3 py-2 flex items-start gap-2">
+                  <Pill className="h-3.5 w-3.5 text-[var(--color-accent)] mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-[12.5px] font-semibold text-slate-900">{alt.to}</p>
                     <p className="text-[11px] text-slate-600 mt-0.5">{alt.reason}</p>
@@ -164,7 +164,7 @@ export function DrugSafetyReasoningCard({ meds, allergies, comorbidities, onAcce
             <button
               type="button"
               onClick={() => setShowAlternates(true)}
-              className="text-[12px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
+              className="text-[12px] font-semibold text-[var(--color-accent)] hover:text-[var(--color-primary-dark)]"
             >
               Show {alternates.length} alternative{alternates.length === 1 ? '' : 's'} →
             </button>

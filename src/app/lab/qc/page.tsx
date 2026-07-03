@@ -58,14 +58,14 @@ export default function LabQC() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[#0F172A] flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-[var(--color-primary)]" /> Quality Control
+          <ShieldCheck className="h-6 w-6 text-[var(--color-accent)]" /> Quality Control
         </h1>
         <p className="text-sm text-[#64748B] mt-1">Levey-Jennings runs &middot; Westgard rules &middot; active violations block release on the affected analyzer</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Analyzers", value: stats.analyzers, icon: ShieldCheck, fg: "text-[var(--color-primary)]", bg: "bg-[rgba(8,145,178,0.07)]" },
+          { label: "Analyzers", value: stats.analyzers, icon: ShieldCheck, fg: "text-[var(--color-accent)]", bg: "bg-[rgba(238,107,38,0.07)]" },
           { label: "Active violations", value: stats.activeViolations, icon: XCircle, fg: "text-red-600", bg: "bg-red-50" },
           { label: "Overrides today", value: stats.overridesToday, icon: Unlock, fg: "text-amber-600", bg: "bg-amber-50" },
         ].map(s => (
@@ -109,7 +109,7 @@ export default function LabQC() {
                     <div className="flex items-center gap-2 flex-wrap pt-1">
                       <input value={reason} onChange={e => setReason(e.target.value)}
                         placeholder="Override reason (required)"
-                        className="flex-1 min-w-0 h-7 px-2 text-[11px] rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                        className="flex-1 min-w-0 h-7 px-2 text-[11px] rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/25" />
                       <button onClick={() => onOverride(s.id)}
                         className="text-[11px] font-bold text-white bg-red-600 hover:bg-red-700 px-2.5 py-1 rounded-lg cursor-pointer">Confirm override</button>
                       <button onClick={() => { setOverriding(null); setReason("") }}

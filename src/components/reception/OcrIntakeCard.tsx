@@ -66,7 +66,7 @@ const MOCK: Record<DocType, OcrFields> = {
 }
 
 const DOC_META: Record<DocType, { label: string; icon: React.ElementType; tint: string }> = {
-  aadhaar:    { label: "Aadhaar",         icon: IdCard,       tint: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] ring-blue-200" },
+  aadhaar:    { label: "Aadhaar",         icon: IdCard,       tint: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] ring-primary/25" },
   insurance:  { label: "Insurance card",  icon: ShieldCheck,  tint: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
   lab_paper:  { label: "Lab paper",       icon: FlaskConical, tint: "bg-amber-50 text-amber-700 ring-amber-200" },
 }
@@ -132,11 +132,11 @@ export function OcrIntakeCard({ onApply, className }: Props) {
   }
 
   return (
-    <div className={`rounded-xl bg-gradient-to-br from-[rgba(8,145,178,0.07)] to-[rgba(8,145,178,0.04)] ring-1 ring-[rgba(8,145,178,0.20)] overflow-hidden ${className ?? ''}`}>
-      <header className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(8,145,178,0.15)]/60">
-        <ScanLine className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+    <div className={`rounded-xl bg-surface-sunken ring-1 ring-[rgba(238,107,38,0.20)] overflow-hidden ${className ?? ''}`}>
+      <header className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(238,107,38,0.15)]/60">
+        <ScanLine className="h-3.5 w-3.5 text-[var(--color-accent)]" />
         <h3 className="text-[12.5px] font-semibold text-[var(--color-primary-dark)]">AI Scan & Fill</h3>
-        <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-primary)]">
+        <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-accent)]">
           <Sparkles className="h-3 w-3" /> Mock OCR — instant intake
         </span>
       </header>
@@ -166,9 +166,9 @@ export function OcrIntakeCard({ onApply, className }: Props) {
             tabIndex={0}
             onClick={pickFile}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') pickFile() }}
-            className="rounded-xl border-2 border-dashed border-[rgba(8,145,178,0.20)] bg-white hover:bg-[rgba(8,145,178,0.10)]/40 transition px-3 py-4 flex items-center gap-3 cursor-pointer"
+            className="rounded-xl border-2 border-dashed border-[rgba(238,107,38,0.20)] bg-white hover:bg-[rgba(238,107,38,0.10)]/40 transition px-3 py-4 flex items-center gap-3 cursor-pointer"
           >
-            <span className="h-9 w-9 rounded-full bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] flex items-center justify-center"><ImageIcon className="h-4 w-4" /></span>
+            <span className="h-9 w-9 rounded-full bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] flex items-center justify-center"><ImageIcon className="h-4 w-4" /></span>
             <div className="flex-1 min-w-0">
               <p className="text-[12.5px] font-semibold text-slate-800">Drop or pick a {DOC_META[docType].label}</p>
               <p className="text-[11px] text-slate-500">800 ms simulated scan · every field is editable after.</p>
@@ -196,20 +196,20 @@ export function OcrIntakeCard({ onApply, className }: Props) {
 
       {scanning ? (
         <div className="px-3 pb-3">
-          <div className="rounded-xl bg-white px-3 py-3 ring-1 ring-blue-200/70 flex items-center gap-3">
-            <Loader2 className="h-4 w-4 text-[var(--color-primary)] animate-spin" />
+          <div className="rounded-xl bg-white px-3 py-3 ring-1 ring-primary/25 flex items-center gap-3">
+            <Loader2 className="h-4 w-4 text-[var(--color-accent)] animate-spin" />
             <p className="text-[12.5px] text-slate-700">Scanning {DOC_META[docType].label.toLowerCase()}{fileName ? ' — ' + fileName : ''}…</p>
-            <span className="ml-auto text-[10.5px] font-mono text-[var(--color-primary)]">~800 ms</span>
+            <span className="ml-auto text-[10.5px] font-mono text-[var(--color-accent)]">~800 ms</span>
           </div>
         </div>
       ) : null}
 
       {fields ? (
         <div className="px-3 pb-3">
-          <div className="rounded-xl bg-white p-3 ring-1 ring-blue-200/70 space-y-2">
+          <div className="rounded-xl bg-white p-3 ring-1 ring-primary/25 space-y-2">
             <div className="flex items-center gap-1.5">
-              <ScanLine className="h-3 w-3 text-[var(--color-primary)]" />
-              <p className="text-[10.5px] font-semibold text-[var(--color-primary)] uppercase tracking-wide">OCR draft — review before applying</p>
+              <ScanLine className="h-3 w-3 text-[var(--color-accent)]" />
+              <p className="text-[10.5px] font-semibold text-[var(--color-accent)] uppercase tracking-wide">OCR draft — review before applying</p>
               {fileName ? <span className="text-[10.5px] text-slate-400">· {fileName}</span> : null}
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">

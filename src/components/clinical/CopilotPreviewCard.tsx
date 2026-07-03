@@ -52,11 +52,11 @@ export function CopilotPreviewCard({ intent, onAccept, onReject }: Props) {
   }
 
   return (
-    <div className="mx-3 my-2 rounded-xl bg-gradient-to-br from-[rgba(8,145,178,0.08)] to-[rgba(8,145,178,0.06)] ring-1 ring-[rgba(8,145,178,0.20)] overflow-hidden">
-      <header className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(8,145,178,0.15)]/60">
-        <Wand2 className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+    <div className="mx-3 my-2 rounded-xl bg-surface-sunken ring-1 ring-[rgba(238,107,38,0.20)] overflow-hidden">
+      <header className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(238,107,38,0.15)]/60">
+        <Wand2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
         <h3 className="text-[12.5px] font-semibold text-[var(--color-primary-dark)]">AI Copilot — confirm before running</h3>
-        <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-primary)]">
+        <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-accent)]">
           <Sparkles className="h-3 w-3" /> {confPct}% confidence
         </span>
       </header>
@@ -79,13 +79,13 @@ export function CopilotPreviewCard({ intent, onAccept, onReject }: Props) {
 
         {intent.destination ? (
           <p className="text-[11.5px] text-slate-700 inline-flex items-center gap-1">
-            <ArrowRight className="h-3 w-3 text-[var(--color-primary)]" /> {intent.destination.label}
+            <ArrowRight className="h-3 w-3 text-[var(--color-accent)]" /> {intent.destination.label}
             <span className="font-mono text-[10.5px] text-slate-400">({intent.destination.route})</span>
           </p>
         ) : null}
       </div>
 
-      <footer className="flex items-center gap-2 border-t border-[rgba(8,145,178,0.15)]/60 px-3 py-2 bg-white/60">
+      <footer className="flex items-center gap-2 border-t border-[rgba(238,107,38,0.15)]/60 px-3 py-2 bg-white/60">
         <span className="text-[10.5px] text-slate-500 mr-auto">HITL — accept / reject. Decision audited.</span>
         <button
           type="button"

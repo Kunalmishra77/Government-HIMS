@@ -5,7 +5,7 @@ export type TriageSeverity = 'Red' | 'Yellow' | 'Green'
 export function getTriageColor(level: TriageLevel): string {
   switch (level) {
     case 'Critical': return 'bg-red-50 text-red-600 border-red-200'
-    case 'High':     return 'bg-orange-50 text-orange-600 border-orange-200'
+    case 'High':     return 'bg-primary-soft text-accent border-primary/20'
     case 'Medium':   return 'bg-yellow-50 text-yellow-600 border-yellow-200'
     case 'Low':      return 'bg-green-50 text-green-600 border-green-200'
   }

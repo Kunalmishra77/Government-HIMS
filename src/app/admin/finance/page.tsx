@@ -14,6 +14,7 @@ import { useInsuranceStore } from "@/store/useInsuranceStore"
 import { hoursWorked } from "@/lib/shiftConflicts"
 import { cn } from "@/lib/utils"
 import { RevenueCycleGrowthCockpit } from "@/components/admin/RevenueCycleGrowthCockpit"
+import { useTranslations } from "next-intl"
 
 const fmtINR = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
 const fmtINRk = (n: number) => {
@@ -42,6 +43,7 @@ function ageBucket(days: number): AgingBucket {
 }
 
 export default function FinanceDashboard() {
+  const t = useTranslations('admin')
   const bills = useBillingStore(s => s.bills)
   const lineItems = useBillingStore(s => s.lineItems)
   const claims = useInsuranceStore(s => s.claims)
@@ -123,12 +125,12 @@ export default function FinanceDashboard() {
       '61-90': { count: 0, amount: 0 },
       '90+':   { count: 0, amount: 0 },
     }
-    const t = today()
+    const todayStr = today()
     for (const c of claims) {
       if (c.status === 'Approved' || c.status === 'Rejected') continue
       const submittedAt = c.submittedAt ?? c.timeline?.[0]?.at
       if (!submittedAt) continue
-      const days = Math.round((new Date(t).getTime() - new Date(submittedAt).getTime()) / 86400000)
+      const days = Math.round((new Date(todayStr).getTime() - new Date(submittedAt).getTime()) / 86400000)
       const bucket = ageBucket(days)
       buckets[bucket].count++
       buckets[bucket].amount += c.amount
@@ -159,24 +161,24 @@ export default function FinanceDashboard() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <IndianRupee className="h-6 w-6 text-emerald-600" />Hospital P&amp;L
+            <IndianRupee className="h-6 w-6 text-emerald-600" />{t('finance.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Revenue · expenses · payer reconciliation · claim aging · DEMO calculation from live stores
+            {t('finance.subtitle')}
           </p>
         </div>
         <div className="flex gap-2 items-center">
           <input type="month" value={month}
             onChange={(e) => setMonth(e.target.value)}
             className="text-sm font-bold border border-slate-300 rounded-xl px-3 py-2 bg-white" />
-          <Link href="/admin/payroll" className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)] hover:underline">
-            Payroll →
+          <Link href="/admin/payroll" className="flex items-center gap-1 text-xs font-bold text-[var(--color-accent)] hover:underline">
+            {t('finance.payrollLink')}
           </Link>
-          <Link href="/admin/vendors" className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)] hover:underline">
-            Vendors →
+          <Link href="/admin/vendors" className="flex items-center gap-1 text-xs font-bold text-[var(--color-accent)] hover:underline">
+            {t('finance.vendorsLink')}
           </Link>
-          <Link href="/admin/disputes" className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)] hover:underline">
-            Disputes →
+          <Link href="/admin/disputes" className="flex items-center gap-1 text-xs font-bold text-[var(--color-accent)] hover:underline">
+            {t('finance.disputesLink')}
           </Link>
         </div>
       </div>
@@ -187,23 +189,23 @@ export default function FinanceDashboard() {
 
       {/* Top-line KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <KPI label="Revenue" value={fmtINRk(revenueMetrics.totalRevenue)} sub={`${bills.length} bills`} tint="bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]" />
-        <KPI label="Collected" value={fmtINRk(revenueMetrics.collected)} sub={`${Math.round((revenueMetrics.collected / Math.max(1, revenueMetrics.totalRevenue)) * 100)}% of revenue`} tint="bg-emerald-50 border-emerald-200 text-emerald-700" />
-        <KPI label="Outstanding" value={fmtINRk(revenueMetrics.outstanding)} sub="A/R" tint="bg-amber-50 border-amber-200 text-amber-700" />
-        <KPI label="Expenses" value={fmtINRk(expenseMetrics.totalExpenses)} sub="Salary + OT + Vendor" tint="bg-red-50 border-red-200 text-red-700" />
-        <KPI label="Net P&L" value={fmtINRk(netPL)} sub={netPL >= 0 ? 'Profit' : 'Loss'} tint={netPL >= 0 ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"} />
+        <KPI label={t('finance.kpiRevenue')} value={fmtINRk(revenueMetrics.totalRevenue)} sub={t('finance.billsCount', { count: bills.length })} tint="bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]" />
+        <KPI label={t('finance.kpiCollected')} value={fmtINRk(revenueMetrics.collected)} sub={t('finance.pctOfRevenue', { pct: Math.round((revenueMetrics.collected / Math.max(1, revenueMetrics.totalRevenue)) * 100) })} tint="bg-emerald-50 border-emerald-200 text-emerald-700" />
+        <KPI label={t('finance.kpiOutstanding')} value={fmtINRk(revenueMetrics.outstanding)} sub={t('finance.ar')} tint="bg-amber-50 border-amber-200 text-amber-700" />
+        <KPI label={t('finance.kpiExpenses')} value={fmtINRk(expenseMetrics.totalExpenses)} sub={t('finance.salaryOtVendor')} tint="bg-red-50 border-red-200 text-red-700" />
+        <KPI label={t('finance.kpiNetPL')} value={fmtINRk(netPL)} sub={netPL >= 0 ? t('finance.profit') : t('finance.loss')} tint={netPL >= 0 ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Per-dept revenue */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-[var(--color-primary)]" />Revenue by source · {new Date(month + '-01').toLocaleDateString('en-IN', { month: 'long' })}
+            <BarChart3 className="h-4 w-4 text-[var(--color-accent)]" />{t('finance.revenueBySource', { month: new Date(month + '-01').toLocaleDateString('en-IN', { month: 'long' }) })}
           </h3>
           {(() => {
             const sorted = Array.from(revenueMetrics.byDept.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8)
             const max = sorted[0]?.[1] ?? 1
-            if (sorted.length === 0) return <p className="text-xs text-slate-400 italic py-3 text-center">No line items.</p>
+            if (sorted.length === 0) return <p className="text-xs text-slate-400 italic py-3 text-center">{t('finance.noLineItems')}</p>
             return (
               <div className="space-y-2">
                 {sorted.map(([dept, amt]) => (
@@ -213,7 +215,7 @@ export default function FinanceDashboard() {
                       <b className="tabular-nums">{fmtINR(amt)}</b>
                     </p>
                     <div className="h-1.5 mt-0.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-[rgba(8,145,178,0.07)]0" style={{ width: `${(amt / max) * 100}%` }} />
+                      <div className="h-full bg-[rgba(238,107,38,0.07)]0" style={{ width: `${(amt / max) * 100}%` }} />
                     </div>
                   </div>
                 ))}
@@ -225,12 +227,12 @@ export default function FinanceDashboard() {
         {/* Payer mix */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-            <CreditCard className="h-4 w-4 text-[var(--color-primary)]" />Payer mix
+            <CreditCard className="h-4 w-4 text-[var(--color-accent)]" />{t('finance.payerMix')}
           </h3>
           {(() => {
             const sorted = Array.from(revenueMetrics.payerMix.entries()).sort((a, b) => b[1] - a[1])
             const total = sorted.reduce((s, [, v]) => s + v, 0)
-            if (sorted.length === 0) return <p className="text-xs text-slate-400 italic py-3 text-center">No bills.</p>
+            if (sorted.length === 0) return <p className="text-xs text-slate-400 italic py-3 text-center">{t('finance.noBills')}</p>
             return (
               <div className="space-y-2">
                 {sorted.map(([payer, amt]) => {
@@ -242,7 +244,7 @@ export default function FinanceDashboard() {
                         <b className="tabular-nums">{fmtINR(amt)} <span className="text-slate-400 text-[10px] ml-1">{pct.toFixed(0)}%</span></b>
                       </p>
                       <div className="h-1.5 mt-0.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[rgba(8,145,178,0.07)]0" style={{ width: `${pct}%` }} />
+                        <div className="h-full bg-[rgba(238,107,38,0.07)]0" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   )
@@ -255,7 +257,7 @@ export default function FinanceDashboard() {
         {/* Insurance aging */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-amber-600" />Insurance claim aging
+            <Receipt className="h-4 w-4 text-amber-600" />{t('finance.claimAging')}
           </h3>
           <div className="grid grid-cols-4 gap-2">
             {(['0-30', '31-60', '61-90', '90+'] as AgingBucket[]).map(b => {
@@ -278,28 +280,28 @@ export default function FinanceDashboard() {
         {/* Expense breakdown */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-red-600" />Expenses · {new Date(month + '-01').toLocaleDateString('en-IN', { month: 'long' })}
+            <Wallet className="h-4 w-4 text-red-600" />{t('finance.expensesMonth', { month: new Date(month + '-01').toLocaleDateString('en-IN', { month: 'long' }) })}
           </h3>
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-slate-700">Salary (base)</span>
+              <span className="text-slate-700">{t('finance.salaryBase')}</span>
               <b className="tabular-nums">{fmtINR(expenseMetrics.totalSalary)}</b>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-700">Overtime pay</span>
-              <b className="tabular-nums text-[var(--color-primary)]">{fmtINR(expenseMetrics.totalOT)}</b>
+              <span className="text-slate-700">{t('finance.overtimePay')}</span>
+              <b className="tabular-nums text-[var(--color-accent)]">{fmtINR(expenseMetrics.totalOT)}</b>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-700">Vendor paid this month</span>
+              <span className="text-slate-700">{t('finance.vendorPaidMonth')}</span>
               <b className="tabular-nums">{fmtINR(expenseMetrics.vendorSpend)}</b>
             </div>
             <div className="h-px bg-slate-200" />
             <div className="flex items-center justify-between">
-              <span className="text-slate-800 font-bold">Total expenses</span>
+              <span className="text-slate-800 font-bold">{t('finance.totalExpenses')}</span>
               <b className="tabular-nums text-red-700">{fmtINR(expenseMetrics.totalExpenses)}</b>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-amber-700">Vendor payable (outstanding)</span>
+              <span className="text-amber-700">{t('finance.vendorPayable')}</span>
               <b className="tabular-nums text-amber-700">{fmtINR(expenseMetrics.vendorPayable)}</b>
             </div>
           </div>
@@ -307,10 +309,10 @@ export default function FinanceDashboard() {
       </div>
 
       {/* Reconciliation strip */}
-      <div className="rounded-xl border border-[rgba(8,145,178,0.20)] bg-gradient-to-br from-[rgba(8,145,178,0.05)] to-[rgba(8,145,178,0.03)] p-4">
+      <div className="rounded-xl border border-[rgba(238,107,38,0.20)] bg-surface-sunken p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
-          <h3 className="text-sm font-bold text-[var(--color-primary-dark)]">Daily reconciliation · last 7 days</h3>
+          <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
+          <h3 className="text-sm font-bold text-[var(--color-primary-dark)]">{t('finance.dailyReconciliation')}</h3>
         </div>
         <div className="grid grid-cols-7 gap-2">
           {dailyTrend.map(d => {
@@ -335,14 +337,14 @@ export default function FinanceDashboard() {
           })}
         </div>
         <div className="flex items-center justify-center gap-4 mt-3 text-[11px]">
-          <span className="flex items-center gap-1"><span className="h-2 w-3 bg-emerald-500 rounded" />Collected</span>
-          <span className="flex items-center gap-1"><span className="h-2 w-3 bg-amber-400/40 rounded" />Outstanding</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-3 bg-emerald-500 rounded" />{t('finance.collected')}</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-3 bg-amber-400/40 rounded" />{t('finance.outstanding')}</span>
         </div>
       </div>
 
       <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
         <AlertTriangle className="h-3 w-3" />
-        DEMO calculations from live stores · real GL accounting (Tally/Zoho/SAP integration) is out of scope.
+        {t('finance.demoNote')}
       </p>
     </div>
   )

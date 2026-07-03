@@ -2,8 +2,8 @@
 
 import { Select } from "@/components/ui/Select"
 import { Activity, AlertTriangle } from "lucide-react"
-import { O2_OPTIONS, AVPU_OPTIONS, type VitalsDraftApi } from "./useVitalsDraft"
-import type { O2Delivery, Consciousness, News2, Anomaly } from "@/lib/vitals"
+import { AVPU_OPTIONS, type VitalsDraftApi } from "./useVitalsDraft"
+import type { Consciousness, News2, Anomaly } from "@/lib/vitals"
 
 function Field({ id, label, unit, value, onChange, placeholder, step }: {
   id: string; label: string; unit?: string; value: string; onChange: (v: string) => void; placeholder?: string; step?: string
@@ -23,9 +23,9 @@ function Field({ id, label, unit, value, onChange, placeholder, step }: {
 }
 
 // The grouped vitals inputs. `hideAnthropometrics` drops weight/height/BMI for the
-// wizard (captured once in its measurements step) — keeps cap-refill + urine.
+// wizard (captured once in its measurements step).
 export function VitalsFields({ api, hideAnthropometrics = false }: { api: VitalsDraftApi; hideAnthropometrics?: boolean }) {
-  const { f, set, o2, setO2, avpu, setAvpu, liveBmi } = api
+  const { f, set, avpu, setAvpu, liveBmi } = api
   return (
     <div className="space-y-5">
       <section>
@@ -36,14 +36,6 @@ export function VitalsFields({ api, hideAnthropometrics = false }: { api: Vitals
           <Field id="vital-dia" label="Diastolic BP" unit="mmHg" value={f.dia} onChange={set("dia")} placeholder="80" />
           <Field id="vital-rr" label="Resp. rate" unit="/min" value={f.rr} onChange={set("rr")} placeholder="16" />
           <Field id="vital-spo2" label="SpO₂" unit="%" value={f.spo2} onChange={set("spo2")} placeholder="98" />
-          <div>
-            <label htmlFor="vital-o2" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">O₂ delivery</label>
-            <Select id="vital-o2" value={o2} onChange={e => setO2(e.target.value as O2Delivery)}
-              className="w-full h-10 px-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-500 bg-slate-50">
-              {O2_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-            </Select>
-          </div>
-          {o2 !== "Room air" && <Field id="vital-o2flow" label="O₂ flow" unit="L/min" value={f.o2flow} onChange={set("o2flow")} placeholder="4" />}
         </div>
       </section>
 
@@ -66,29 +58,24 @@ export function VitalsFields({ api, hideAnthropometrics = false }: { api: Vitals
               {AVPU_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
             </Select>
           </div>
-          <Field id="vital-gcs" label="GCS" unit="3–15" value={f.gcs} onChange={set("gcs")} placeholder="15" />
         </div>
       </section>
 
-      <section>
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">{hideAnthropometrics ? "Perfusion" : "Anthropometric & perfusion"}</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {!hideAnthropometrics && (
-            <>
-              <Field id="vital-weight" label="Weight" unit="kg" value={f.weight} onChange={set("weight")} placeholder="70" step="0.1" />
-              <Field id="vital-height" label="Height" unit="cm" value={f.height} onChange={set("height")} placeholder="170" />
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">BMI</label>
-                <div className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-100 text-sm font-bold text-slate-700 flex items-center">
-                  {liveBmi != null ? `${liveBmi} kg/m²` : "—"}
-                </div>
+      {!hideAnthropometrics && (
+        <section>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Anthropometric</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <Field id="vital-weight" label="Weight" unit="kg" value={f.weight} onChange={set("weight")} placeholder="70" step="0.1" />
+            <Field id="vital-height" label="Height" unit="cm" value={f.height} onChange={set("height")} placeholder="170" />
+            <div>
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">BMI</label>
+              <div className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-100 text-sm font-bold text-slate-700 flex items-center">
+                {liveBmi != null ? `${liveBmi} kg/m²` : "—"}
               </div>
-            </>
-          )}
-          <Field id="vital-crt" label="Cap. refill" unit="sec" value={f.crt} onChange={set("crt")} placeholder="2" />
-          <Field id="vital-urine" label="Urine output" unit="mL/hr" value={f.urine} onChange={set("urine")} placeholder="50" />
-        </div>
-      </section>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section>
         <label htmlFor="vital-note" className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Note (optional)</label>
@@ -109,7 +96,7 @@ export function VitalsAiPanel({ news, anomalies }: { news: News2; anomalies: Ano
   return (
     <section className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Activity className="h-4 w-4 text-[var(--color-primary)]" />
+        <Activity className="h-4 w-4 text-[var(--color-accent)]" />
         <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">AI early-warning</span>
         <span className={`ml-auto text-xs font-bold px-2.5 py-1 rounded-full border ${bandStyle(news.band)}`}>
           NEWS {news.score} · {news.band.toUpperCase()}{news.partial ? " (partial)" : ""}

@@ -12,7 +12,7 @@ export function ComingSoon({ title, note, Icon }: { title: string; note: string;
         </div>
         <p className="text-[17px] font-bold text-slate-900">{title}</p>
         <p className="text-[14px] text-slate-500 mt-1 max-w-sm mx-auto">{note}</p>
-        <span className="inline-flex items-center gap-1.5 mt-4 text-[12px] font-semibold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] px-3 py-1.5 rounded-full">
+        <span className="inline-flex items-center gap-1.5 mt-4 text-[12px] font-semibold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] px-3 py-1.5 rounded-full">
           <Sparkles className="h-3.5 w-3.5" /> Being built next
         </span>
       </div>

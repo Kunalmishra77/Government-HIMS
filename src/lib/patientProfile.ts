@@ -21,9 +21,6 @@ export const LANGUAGES = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Ben
 export function missingMandatory(p: PatientProfile, v: VitalsDraft): string[] {
   const m: string[] = []
   if (!p.bloodGroup) m.push("Blood group")
-  if (!p.address?.trim()) m.push("Address")
-  if (!p.emergencyName?.trim()) m.push("Emergency contact name")
-  if (!p.emergencyPhone?.trim()) m.push("Emergency contact phone")
   if (p.allergies.length === 0 && !p.noKnownAllergies) m.push("Allergies (add, or mark “no known allergies”)")
   const coreVitals = [v.hr, v.systolicBP, v.diastolicBP, v.rr, v.spo2, v.temp]
   if (coreVitals.some(x => x == null)) m.push("Core vitals (HR, BP, RR, SpO₂, temp)")

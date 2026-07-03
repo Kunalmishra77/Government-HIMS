@@ -1,0 +1,13 @@
+{
+  "title": "बिलिंग",
+  "invoice": "बिल",
+  "totalAmount": "कुल रकम",
+  "paid": "चुकाया गया",
+  "outstanding": "बकाया",
+  "discount": "छूट",
+  "netPayable": "कुल देय",
+  "generateBill": "बिल बनाएँ",
+  "packages": "पैकेज",
+  "refunds": "रिफ़ंड",
+  "discounts": "छूट"
+}

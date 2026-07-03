@@ -98,8 +98,8 @@ export default function AiAssistantPage() {
             <p className="text-[12px] text-slate-400 text-center px-3 py-6">Your conversations are saved here.</p>
           ) : threads.map(t => (
             <button key={t.id} onClick={() => selectThread(t.id)}
-              className={cn("group w-full text-left px-3 py-2.5 rounded-xl flex items-start gap-2.5 transition", t.id === activeId ? "bg-[rgba(8,145,178,0.07)]" : "hover:bg-slate-50")}>
-              <MessageSquare className={cn("h-4 w-4 mt-0.5 flex-shrink-0", t.id === activeId ? "text-[var(--color-primary)]" : "text-slate-400")} />
+              className={cn("group w-full text-left px-3 py-2.5 rounded-xl flex items-start gap-2.5 transition", t.id === activeId ? "bg-[rgba(238,107,38,0.07)]" : "hover:bg-slate-50")}>
+              <MessageSquare className={cn("h-4 w-4 mt-0.5 flex-shrink-0", t.id === activeId ? "text-[var(--color-accent)]" : "text-slate-400")} />
               <span className="flex-1 min-w-0">
                 <span className={cn("block text-[13px] font-semibold truncate", t.id === activeId ? "text-[var(--color-primary-dark)]" : "text-slate-700")}>{t.title}</span>
                 <span className="block text-[10.5px] text-slate-400">{new Date(t.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · {t.messages.length} msg</span>
@@ -133,7 +133,7 @@ export default function AiAssistantPage() {
             <div className="relative">
               <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               <Select value={focusId ?? ''} onChange={e => setFocusId(e.target.value || null)}
-                className="h-9 pl-8 pr-7 rounded-xl bg-slate-50 border border-slate-200 text-[12.5px] font-medium text-slate-700 outline-none focus:border-[rgba(8,145,178,0.30)] focus:ring-2 focus:ring-blue-100 appearance-none cursor-pointer max-w-[200px]">
+                className="h-9 pl-8 pr-7 rounded-xl bg-slate-50 border border-slate-200 text-[12.5px] font-medium text-slate-700 outline-none focus:border-[rgba(238,107,38,0.30)] focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer max-w-[200px]">
                 <option value="">No patient pinned</option>
                 {pinnable.map(p => <option key={p.id} value={p.id}>{p.name} — {p.tag}</option>)}
               </Select>
@@ -166,7 +166,7 @@ export default function AiAssistantPage() {
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input) } }}
                   rows={1}
                   placeholder={focusName ? `Ask about ${focusName}, or "draft a round note"…` : 'Ask about a patient, a cohort, or request a draft…'}
-                  className="w-full resize-none max-h-32 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-[rgba(8,145,178,0.30)] focus:ring-2 focus:ring-blue-100"
+                  className="w-full resize-none max-h-32 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-[rgba(238,107,38,0.30)] focus:ring-2 focus:ring-primary/20"
                 />
               </div>
               <button onClick={() => send(input)} disabled={!input.trim() || thinking} aria-label="Send"
@@ -194,11 +194,11 @@ function EmptyHero({ focusName, onPick }: { focusName?: string; onPick: (q: stri
       <p className="text-[13.5px] text-slate-500 mt-1.5 leading-relaxed">
         Ask about any of your patients, run cohort questions, or have me draft a note, prescription, or discharge summary — all grounded in your records.
       </p>
-      {focusName && <p className="text-[12px] font-semibold text-[var(--color-primary)] mt-3 bg-[rgba(8,145,178,0.07)] px-3 py-1 rounded-full">Pinned: {focusName}</p>}
+      {focusName && <p className="text-[12px] font-semibold text-[var(--color-accent)] mt-3 bg-[rgba(238,107,38,0.07)] px-3 py-1 rounded-full">Pinned: {focusName}</p>}
       <div className="mt-6 flex flex-wrap gap-2 justify-center">
         {QUICK_PROMPTS.map(p => (
           <button key={p} onClick={() => onPick(p)}
-            className="text-[12.5px] font-medium text-slate-600 bg-white border border-slate-200 rounded-full px-3.5 py-2 hover:border-[rgba(8,145,178,0.30)] hover:text-[var(--color-primary)] hover:bg-[rgba(8,145,178,0.10)] transition">
+            className="text-[12.5px] font-medium text-slate-600 bg-white border border-slate-200 rounded-full px-3.5 py-2 hover:border-[rgba(238,107,38,0.30)] hover:text-[var(--color-accent)] hover:bg-[rgba(238,107,38,0.10)] transition">
             {p}
           </button>
         ))}
@@ -261,15 +261,15 @@ function DraftCard({ draft }: { draft: AssistantDraft }) {
   }
 
   return (
-    <div className="w-full rounded-2xl border border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]/40 overflow-hidden shadow-sm">
-      <div className="flex items-center justify-between px-3.5 py-2 bg-white/70 border-b border-[rgba(8,145,178,0.15)]">
+    <div className="w-full rounded-2xl border border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]/40 overflow-hidden shadow-sm">
+      <div className="flex items-center justify-between px-3.5 py-2 bg-white/70 border-b border-[rgba(238,107,38,0.15)]">
         <span className="flex items-center gap-2 text-[12px] font-bold text-[var(--color-primary-dark)]">
           <Icon className="h-3.5 w-3.5" /> {draft.title}
         </span>
         <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary-light)]">AI draft</span>
       </div>
       <pre className="px-4 py-3 text-[12px] leading-relaxed text-slate-700 whitespace-pre-wrap font-mono max-h-72 overflow-y-auto">{draft.content}</pre>
-      <div className="flex items-center gap-2 px-3.5 py-2.5 border-t border-[rgba(8,145,178,0.15)] bg-white/50">
+      <div className="flex items-center gap-2 px-3.5 py-2.5 border-t border-[rgba(238,107,38,0.15)] bg-white/50">
         <button onClick={copy} className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition">
           {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />} {copied ? "Copied" : "Copy"}
         </button>

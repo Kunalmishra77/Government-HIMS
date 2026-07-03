@@ -43,7 +43,7 @@ export function DoctorStockAlerts({ doctorName }: { doctorName?: string }) {
             {a.supply === "advised_outside" ? (
               <span className="text-[11px] font-bold text-amber-700 flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" />Advised — buy outside</span>
             ) : a.supply === "order_raised" ? (
-              <span className="text-[11px] font-bold text-[var(--color-primary)] flex items-center gap-1"><ShoppingCart className="h-3.5 w-3.5" />Pharmacy is procuring</span>
+              <span className="text-[11px] font-bold text-[var(--color-accent)] flex items-center gap-1"><ShoppingCart className="h-3.5 w-3.5" />Pharmacy is procuring</span>
             ) : (
               <button onClick={() => { setMedicineSupply(a.rxId, a.med, "advised_outside"); toast.success(`Advised ${a.patient} to buy ${a.med} outside — recorded`) }}
                 className="flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg cursor-pointer"><ExternalLink className="h-3 w-3" />Advise buy outside</button>

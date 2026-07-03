@@ -10,6 +10,7 @@ export type SmokingStatus = 'Never' | 'Former' | 'Current'
 export type AlcoholStatus = 'Never' | 'Occasional' | 'Regular'
 export type PregnancyStatus = 'N/A' | 'Not pregnant' | 'Pregnant' | 'Unsure'
 export type PayerType = 'Self-pay' | 'Insurance' | 'Govt scheme' | 'Corporate'
+export type AyushmanStatus = 'Active' | 'Pending' | 'Not enrolled'
 
 export type PatientProfile = {
   // identity & contact
@@ -43,6 +44,10 @@ export type PatientProfile = {
   payerType?: PayerType
   insurer?: string
   policyNo?: string
+  ayushmanCardStatus?: AyushmanStatus
+  ayushmanLinked?: boolean
+  // care setting — the patient's home facility for this record
+  primaryHospital?: string
   // consents
   consentRecords?: boolean
   consentFamily?: boolean
@@ -68,6 +73,7 @@ const SEED: Record<string, PatientProfile> = {
     pastSurgeries: ['Appendectomy (2009)'], familyHistory: ['Father — ischaemic heart disease'],
     smoking: 'Former', alcohol: 'Occasional', pregnancy: 'N/A', heightCm: 172, weightKg: 78,
     payerType: 'Insurance', insurer: 'Star Health Insurance', policyNo: 'STAR-99x',
+    ayushmanCardStatus: 'Active', ayushmanLinked: true, primaryHospital: 'Kamla Nehru Memorial Hospital',
     consentRecords: true, consentFamily: true, consentResearch: false,
     completedAt: new Date(Date.now() - 9 * 3600000).toISOString(), completedBy: 'N. Anjali Desai',
   },
@@ -90,6 +96,19 @@ export const usePatientProfileStore = create<ProfileState>()(
       })),
       isComplete: (id) => !!get().profiles[id]?.completedAt,
     }),
-    { name: 'agentix-patient-profiles', version: 1, storage: createJSONStorage(() => localStorage), skipHydration: true },
+    {
+      name: 'agentix-patient-profiles', version: 2, storage: createJSONStorage(() => localStorage), skipHydration: true,
+      // v2 added Ayushman + primary-hospital fields. Merge the fresh seed under any
+      // persisted edits so the demo profile gains the new fields without losing
+      // values the patient may have changed.
+      migrate: (persisted, version) => {
+        const state = persisted as ProfileState
+        if (version < 2) {
+          const prior = state.profiles?.['PT-20394']
+          return { ...state, profiles: { ...state.profiles, 'PT-20394': { ...SEED['PT-20394'], ...prior } } }
+        }
+        return state
+      },
+    },
   ),
 )

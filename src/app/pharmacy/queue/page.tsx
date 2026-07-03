@@ -22,22 +22,27 @@ import { useAuthStore } from "@/store/useAuthStore"
 import { checkRx } from "@/lib/drugSafety"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 const SOURCE_STYLE: Record<RxSource, string> = {
-  OPD: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] ring-blue-200",
-  IPD: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] ring-cyan-200",
+  OPD: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] ring-primary/25",
+  IPD: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] ring-primary/25",
   ICU: "bg-red-50 text-red-700 ring-red-200",
-  OT: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] ring-blue-200",
-  "Home Rx": "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] ring-blue-200",
+  OT: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] ring-primary/25",
+  "Home Rx": "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] ring-primary/25",
   Discharge: "bg-amber-50 text-amber-700 ring-amber-200",
 }
 const STATUS_STYLE: Record<PrepStatus, string> = {
   queued: "bg-amber-100 text-amber-700",
-  preparing: "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]",
+  preparing: "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]",
   ready: "bg-green-100 text-green-700",
   collected: "bg-slate-100 text-slate-500",
 }
 const REASONS: ModificationReason[] = ["Partial fill", "Out of stock", "Has at home", "Unable to afford", "Travelling today"]
+const REASON_KEY: Record<ModificationReason, string> = {
+  "Partial fill": "partialFill", "Out of stock": "outOfStock", "Has at home": "hasAtHome",
+  "Unable to afford": "unableToAfford", "Travelling today": "travellingToday",
+}
 
 const srcOf = (p: PharmacyPrescription): RxSource => p.source ?? "OPD"
 const qtyOf = (rx: PharmacyPrescription, m: PharmacyMedicine) =>
@@ -57,6 +62,7 @@ const timeAgo = (iso?: string) => {
 }
 
 export default function PharmacyQueue() {
+  const t = useTranslations("pharmacy")
   const prescriptions = usePharmacyStore(s => s.prescriptions)
   const claim = usePharmacyStore(s => s.claim)
   const release = usePharmacyStore(s => s.release)
@@ -115,19 +121,19 @@ export default function PharmacyQueue() {
       patientName: rx.patientName,
       audit: { action: 'drug_dispense', resource: 'prescription', resourceId: rx.id, detail: `Rx for ${rx.patientName} marked ready (${isWard ? 'ward' : 'patient'}-side notification)`, userName: me.name },
     })
-    toast.success(`${rx.patientName} — meds ready · ${isWard ? "ward" : "patient"} notified`)
+    toast.success(t("queue.toast.medsReady", { name: rx.patientName, audience: isWard ? t("queue.toast.audienceWard") : t("queue.toast.audiencePatient") }))
   }
 
   const openCollect = (rx: PharmacyPrescription) => {
     setCollectingId(rx.id)
-    setCollector(srcOf(rx) === "OPD" || srcOf(rx) === "Home Rx" ? "Self (patient)" : "Ward nurse")
+    setCollector(srcOf(rx) === "OPD" || srcOf(rx) === "Home Rx" ? t("queue.collectorSelf") : t("queue.collectorNurse"))
     setExpandedId(rx.id)
   }
 
   // Final dispense: record collector, decrement stock for lines we actually
   // supply, auto-log controlled drugs, and clear the discharge pharmacy pillar.
   const confirmCollect = (rx: PharmacyPrescription) => {
-    const who = collector.trim() || "Self (patient)"
+    const who = collector.trim() || t("queue.collectorSelf")
     markCollected(rx.id, who)
     const now = new Date()
     rx.medicines.forEach(m => {
@@ -162,7 +168,7 @@ export default function PharmacyQueue() {
       })
     }
     setCollectingId(null)
-    toast.success(`${rx.patientName} — dispensed to ${who} · stock updated`)
+    toast.success(t("queue.toast.dispensed", { name: rx.patientName, who }))
   }
 
   const step = (rx: PharmacyPrescription, m: PharmacyMedicine, delta: number) => {
@@ -173,7 +179,7 @@ export default function PharmacyQueue() {
   const orderFromInventory = (rx: PharmacyPrescription, m: PharmacyMedicine) => {
     raisePurchaseOrder({ drug: m.name, qty: Math.max(qtyOf(rx, m), 50), kind: 'patient', forPatient: rx.patientName, raisedBy: me.name })
     setMedicineSupply(rx.id, m.name, "order_raised")
-    toast.success(`Purchase order raised to inventory manager — ${m.name}`)
+    toast.success(t("queue.toast.poRaised", { name: m.name }))
   }
   const adviseOutside = (rx: PharmacyPrescription, m: PharmacyMedicine) => {
     setMedicineSupply(rx.id, m.name, "advised_outside")
@@ -191,17 +197,17 @@ export default function PharmacyQueue() {
       patientName: rx.patientName,
       audit: { action: 'pharmacy_substituted', resource: 'prescription', resourceId: rx.id, detail: `${m.name} advised-outside`, userName: me.name },
     })
-    toast(`${m.name} advised-outside — doctor + patient notified`)
+    toast(t("queue.toast.advisedOutside", { name: m.name }))
   }
   const substitute = (rx: PharmacyPrescription, originalName: string, newName: string) => {
     // M9-E — NABH MOM traceability. Capture the substitution reason before
     // committing, and notify the prescribing doctor so a second-pair-of-eyes
     // sees the change.
     const reason = typeof window !== 'undefined'
-      ? window.prompt(`Substitution reason for ${originalName} → ${newName}\n(e.g. "Out of stock", "Same-API generic")`)
+      ? window.prompt(t("queue.prompt.substitution", { from: originalName, to: newName }))
       : null
     if (!reason || reason.trim().length < 3) {
-      toast.error('Substitution reason required (≥ 3 chars)')
+      toast.error(t("queue.toast.subReasonRequired"))
       return
     }
     substituteMedicine(rx.id, originalName, newName, me.name)
@@ -213,34 +219,34 @@ export default function PharmacyQueue() {
       patientName: rx.patientName,
       audit: { action: 'pharmacy_substituted', resource: 'prescription', resourceId: rx.id, detail: `${originalName} → ${newName} · ${reason.trim()}`, userName: me.name },
     })
-    toast.success(`Substituted ${originalName} → ${newName} · Doctor notified`)
+    toast.success(t("queue.toast.substituted", { from: originalName, to: newName }))
   }
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-[#0F172A]">Prescription Queue</h1>
-        <p className="text-sm text-[#64748B] mt-1">One row per patient · every order tagged by source · accept → ready → collected</p>
+        <h1 className="text-2xl font-bold text-[#0F172A]">{t("queue.title")}</h1>
+        <p className="text-sm text-[#64748B] mt-1">{t("queue.subtitle")}</p>
       </div>
 
       {/* Tabs + filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex gap-1 p-1 rounded-xl bg-slate-100">
-          {([["queue", `Queue (${active.length})`], ["collected", `Collected (${collected.length})`]] as const).map(([k, label]) => (
+          {([["queue", t("queue.tabQueue", { count: active.length })], ["collected", t("queue.tabCollected", { count: collected.length })]] as const).map(([k, label]) => (
             <button key={k} onClick={() => setTab(k)}
               className={cn("px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition", tab === k ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>{label}</button>
           ))}
         </div>
         <div className="flex gap-1 p-1 rounded-xl bg-slate-100">
-          {([["all", "All"], ["mine", "My counter"]] as const).map(([k, label]) => (
+          {([["all", t("queue.scopeAll")], ["mine", t("queue.scopeMine")]] as const).map(([k, label]) => (
             <button key={k} onClick={() => setScope(k)}
               className={cn("px-3 py-2 rounded-lg text-sm font-semibold cursor-pointer transition", scope === k ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>{label}</button>
           ))}
         </div>
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search patient, doctor, drug, source…"
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200" />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={t("queue.searchPlaceholder")}
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/25" />
         </div>
       </div>
 
@@ -249,7 +255,7 @@ export default function PharmacyQueue() {
         {rows.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <Pill className="h-9 w-9 mb-2 opacity-40" />
-            <p className="text-sm font-semibold">{tab === "queue" ? "Queue is clear" : "No collected records yet"}</p>
+            <p className="text-sm font-semibold">{tab === "queue" ? t("queue.queueClear") : t("queue.noCollected")}</p>
           </div>
         )}
         {rows.map(rx => (
@@ -262,14 +268,14 @@ export default function PharmacyQueue() {
             setReason={(r) => setReasonById(s => ({ ...s, [rx.id]: r }))}
             allergies={profiles[rx.patientId]?.allergies ?? []}
             onToggle={() => setExpandedId(id => (id === rx.id ? null : rx.id))}
-            onClaim={() => { claim(rx.id, me); toast.success(`Accepted ${rx.patientName} onto your counter`) }}
-            onRelease={() => { release(rx.id); toast(`Released ${rx.patientName} back to the queue`) }}
+            onClaim={() => { claim(rx.id, me); toast.success(t("queue.toast.accepted", { name: rx.patientName })) }}
+            onRelease={() => { release(rx.id); toast(t("queue.toast.released", { name: rx.patientName })) }}
             onReady={() => advanceToReady(rx)}
             onOpenCollect={() => openCollect(rx)}
             onConfirmCollect={() => confirmCollect(rx)}
             onCancelCollect={() => setCollectingId(null)}
             onStep={(m, d) => step(rx, m, d)}
-            onApproveOverride={(m) => { approveSupervisorOverride(rx.id, m.name, me.name); toast.success("Supervisor override approved") }}
+            onApproveOverride={(m) => { approveSupervisorOverride(rx.id, m.name, me.name); toast.success(t("queue.toast.overrideApproved")) }}
             onOrder={(m) => orderFromInventory(rx, m)}
             onAdviseOutside={(m) => adviseOutside(rx, m)}
             substitutingMed={substitutingKey?.startsWith(`${rx.id}::`) ? substitutingKey.slice(rx.id.length + 2) : null}
@@ -300,6 +306,7 @@ function QueueRow(props: {
   getSubstitutes: (name: string) => string[]
   onSubstitute: (originalName: string, newName: string) => void
 }) {
+  const t = useTranslations("pharmacy")
   const { rx, me, expanded, collecting, allergies } = props
   const src = srcOf(rx)
   const oos = outOfStockCount(rx)
@@ -320,37 +327,37 @@ function QueueRow(props: {
             {rx.tokenNumber > 0 && <span className="text-[11px] font-bold text-slate-400">#{rx.tokenNumber}</span>}
             {rx.wardBed && <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-0.5"><Bed className="h-3 w-3" />{rx.wardBed}</span>}
             <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full capitalize", STATUS_STYLE[rx.status])}>{rx.status}</span>
-            {oos > 0 && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 flex items-center gap-0.5"><PackageX className="h-3 w-3" />{oos} not in stock</span>}
-            {blocking && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 flex items-center gap-0.5"><ShieldAlert className="h-3 w-3" />safety</span>}
+            {oos > 0 && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 flex items-center gap-0.5"><PackageX className="h-3 w-3" />{t("queue.notInStockBadge", { count: oos })}</span>}
+            {blocking && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 flex items-center gap-0.5"><ShieldAlert className="h-3 w-3" />{t("queue.safety")}</span>}
           </div>
           <p className="text-xs text-slate-500 mt-0.5 truncate">
-            <Stethoscope className="h-3 w-3 inline -mt-0.5 mr-0.5" />{rx.doctorName} · {rx.department} · {rx.medicines.length} item{rx.medicines.length > 1 ? "s" : ""}
-            {rx.assignedTo && <span className="text-slate-400"> · {mine ? "your counter" : `on ${rx.assignedTo.name}`}</span>}
+            <Stethoscope className="h-3 w-3 inline -mt-0.5 mr-0.5" />{rx.doctorName} · {rx.department} · {t("queue.items", { count: rx.medicines.length })}
+            {rx.assignedTo && <span className="text-slate-400"> · {mine ? t("queue.yourCounter") : t("queue.onCounter", { name: rx.assignedTo.name })}</span>}
           </p>
         </button>
 
         <div className="hidden md:flex flex-col items-end flex-shrink-0 w-24">
           <span className="text-sm font-bold text-slate-800 flex items-center"><IndianRupee className="h-3.5 w-3.5" />{billOf(rx)}</span>
-          <span className="text-[11px] font-semibold text-slate-400">{rx.paymentMode ?? "Cash"}</span>
+          <span className="text-[11px] font-semibold text-slate-400">{rx.paymentMode ?? t("queue.paymentCash")}</span>
         </div>
 
         {/* Status-driven primary action (hidden while collecting) */}
         {!collecting && (
           <div className="flex-shrink-0 flex items-center gap-2">
             {rx.status === "queued" && !rx.assignedTo && (
-              <ActionBtn onClick={props.onClaim} tone="brand" icon={Hand}>Accept</ActionBtn>
+              <ActionBtn onClick={props.onClaim} tone="brand" icon={Hand}>{t("queue.accept")}</ActionBtn>
             )}
             {rx.status === "queued" && rx.assignedTo && !mine && (
-              <ActionBtn onClick={props.onClaim} tone="ghost" icon={UserCheck}>Take over</ActionBtn>
+              <ActionBtn onClick={props.onClaim} tone="ghost" icon={UserCheck}>{t("queue.takeOver")}</ActionBtn>
             )}
             {rx.status === "preparing" && (
-              <ActionBtn onClick={props.onReady} tone="brand" icon={Package}>Mark ready</ActionBtn>
+              <ActionBtn onClick={props.onReady} tone="brand" icon={Package}>{t("queue.markReady")}</ActionBtn>
             )}
             {rx.status === "ready" && (
-              <ActionBtn onClick={props.onOpenCollect} tone="brand" icon={CheckCircle}>Mark collected</ActionBtn>
+              <ActionBtn onClick={props.onOpenCollect} tone="brand" icon={CheckCircle}>{t("queue.markCollected")}</ActionBtn>
             )}
             {rx.status === "collected" && (
-              <span className="text-xs font-bold text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" />Collected</span>
+              <span className="text-xs font-bold text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" />{t("queue.collected")}</span>
             )}
             <button onClick={props.onToggle} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer text-slate-400">
               {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -361,15 +368,15 @@ function QueueRow(props: {
         {/* Inline collector picker */}
         {collecting && (
           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap justify-end">
-            <span className="text-xs font-semibold text-slate-500">Collected by:</span>
-            {["Self (patient)", "Relative", "Ward nurse"].map(c => (
+            <span className="text-xs font-semibold text-slate-500">{t("queue.collectedBy")}</span>
+            {[t("queue.collectorSelf"), t("queue.collectorRelative"), t("queue.collectorNurse")].map(c => (
               <button key={c} onClick={() => props.setCollector(c)}
-                className={cn("text-[11px] font-semibold px-2 py-1 rounded-lg cursor-pointer", props.collector === c ? "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}>{c}</button>
+                className={cn("text-[11px] font-semibold px-2 py-1 rounded-lg cursor-pointer", props.collector === c ? "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}>{c}</button>
             ))}
             <input value={props.collector} onChange={e => props.setCollector(e.target.value)}
-              className="w-32 px-2 py-1 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-200" />
-            <ActionBtn onClick={props.onConfirmCollect} tone="brand" icon={CheckCircle}>Confirm</ActionBtn>
-            <button onClick={props.onCancelCollect} className="text-xs font-semibold text-slate-400 px-2 py-1.5 hover:text-slate-600 cursor-pointer">Cancel</button>
+              className="w-32 px-2 py-1 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/25" />
+            <ActionBtn onClick={props.onConfirmCollect} tone="brand" icon={CheckCircle}>{t("queue.confirm")}</ActionBtn>
+            <button onClick={props.onCancelCollect} className="text-xs font-semibold text-slate-400 px-2 py-1.5 hover:text-slate-600 cursor-pointer">{t("queue.cancel")}</button>
           </div>
         )}
       </div>
@@ -380,10 +387,10 @@ function QueueRow(props: {
           {/* Collected audit */}
           {rx.status === "collected" && (
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-600">
-              <span><span className="text-slate-400">Dispensed by</span> <b>{rx.dispensedBy?.name ?? "—"}</b></span>
-              <span><span className="text-slate-400">Collected by</span> <b>{rx.collectedBy ?? "—"}</b></span>
-              <span><span className="text-slate-400">When</span> <b>{timeAgo(rx.collectedAt)}</b></span>
-              <span><span className="text-slate-400">Payment</span> <b>{rx.paymentMode ?? "Cash"}</b></span>
+              <span><span className="text-slate-400">{t("queue.auditDispensedBy")}</span> <b>{rx.dispensedBy?.name ?? "—"}</b></span>
+              <span><span className="text-slate-400">{t("queue.auditCollectedBy")}</span> <b>{rx.collectedBy ?? "—"}</b></span>
+              <span><span className="text-slate-400">{t("queue.auditWhen")}</span> <b>{timeAgo(rx.collectedAt)}</b></span>
+              <span><span className="text-slate-400">{t("queue.auditPayment")}</span> <b>{rx.paymentMode ?? t("queue.paymentCash")}</b></span>
             </div>
           )}
 
@@ -391,10 +398,10 @@ function QueueRow(props: {
           {rx.status !== "collected" && (
             <div className="flex items-center gap-2 text-xs">
               <Clock className="h-3.5 w-3.5 text-slate-400" />
-              <span className="text-slate-500 font-semibold">Reason for quantity changes:</span>
+              <span className="text-slate-500 font-semibold">{t("queue.reasonLabel")}</span>
               <Select value={props.reason} onChange={e => props.setReason(e.target.value as ModificationReason)}
                 className="text-xs font-semibold rounded-lg border border-slate-200 bg-white px-2 py-1 cursor-pointer">
-                {REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+                {REASONS.map(r => <option key={r} value={r}>{t(`queue.reasons.${REASON_KEY[r]}`)}</option>)}
               </Select>
             </div>
           )}
@@ -411,13 +418,13 @@ function QueueRow(props: {
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                        <Pill className="h-3.5 w-3.5 text-[var(--color-primary)]" />{m.name}
-                        {m.inStock === false && m.supply === "pharmacy" && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">OUT OF STOCK</span>}
-                        {m.supply === "order_raised" && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]">PO RAISED</span>}
-                        {m.supply === "advised_outside" && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">BUY OUTSIDE</span>}
-                        {m.substitutedFrom && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] flex items-center gap-0.5"><Repeat className="h-2.5 w-2.5" />substituted ← {m.substitutedFrom}</span>}
+                        <Pill className="h-3.5 w-3.5 text-[var(--color-accent)]" />{m.name}
+                        {m.inStock === false && m.supply === "pharmacy" && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">{t("queue.outOfStock")}</span>}
+                        {m.supply === "order_raised" && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]">{t("queue.poRaised")}</span>}
+                        {m.supply === "advised_outside" && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{t("queue.buyOutside")}</span>}
+                        {m.substitutedFrom && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] flex items-center gap-0.5"><Repeat className="h-2.5 w-2.5" />{t("queue.substitutedFrom", { name: m.substitutedFrom })}</span>}
                       </p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{m.dosage} · {m.frequency} · {m.duration} · ₹{UNIT_PRICES[m.name] ?? 0}/unit</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{t("queue.perUnit", { dosage: m.dosage, frequency: m.frequency, duration: m.duration, price: UNIT_PRICES[m.name] ?? 0 })}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       {editable ? (
@@ -436,11 +443,11 @@ function QueueRow(props: {
                   </div>
 
                   {mod && mod.adjustedQty !== mod.originalQty && (
-                    <p className="text-[11px] text-slate-400 mt-1">Adjusted from {mod.originalQty} · {mod.reason}
+                    <p className="text-[11px] text-slate-400 mt-1">{t("queue.adjustedFrom", { qty: mod.originalQty, reason: REASON_KEY[mod.reason as ModificationReason] ? t(`queue.reasons.${REASON_KEY[mod.reason as ModificationReason]}`) : mod.reason })}
                       {mod.requiresSupervisorOverride && !mod.supervisorApprovedBy && (
-                        <button onClick={() => props.onApproveOverride(m)} className="ml-2 text-[11px] font-bold text-red-600 underline cursor-pointer">needs supervisor override — approve</button>
+                        <button onClick={() => props.onApproveOverride(m)} className="ml-2 text-[11px] font-bold text-red-600 underline cursor-pointer">{t("queue.needsOverride")}</button>
                       )}
-                      {mod.supervisorApprovedBy && <span className="ml-2 text-green-600 font-semibold">override approved</span>}
+                      {mod.supervisorApprovedBy && <span className="ml-2 text-green-600 font-semibold">{t("queue.overrideApproved")}</span>}
                     </p>
                   )}
 
@@ -450,14 +457,14 @@ function QueueRow(props: {
                     const picking = props.substitutingMed === m.name
                     if (picking) {
                       return (
-                        <div className="mt-2 rounded-lg bg-[rgba(8,145,178,0.07)] ring-1 ring-blue-200 p-2">
-                          <p className="text-[11px] font-bold text-[var(--color-primary)] flex items-center gap-1 mb-1.5"><Repeat className="h-3 w-3" />Substitute with an in-stock alternative:</p>
+                        <div className="mt-2 rounded-lg bg-[rgba(238,107,38,0.07)] ring-1 ring-primary/25 p-2">
+                          <p className="text-[11px] font-bold text-[var(--color-accent)] flex items-center gap-1 mb-1.5"><Repeat className="h-3 w-3" />{t("queue.substitutePrompt")}</p>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {alts.map(a => (
                               <button key={a} onClick={() => props.onSubstitute(m.name, a)}
-                                className="text-[11px] font-bold text-[var(--color-primary)] bg-white hover:bg-[rgba(8,145,178,0.14)] ring-1 ring-blue-200 px-2.5 py-1 rounded-lg cursor-pointer">{a}</button>
+                                className="text-[11px] font-bold text-[var(--color-accent)] bg-white hover:bg-[rgba(238,107,38,0.14)] ring-1 ring-primary/25 px-2.5 py-1 rounded-lg cursor-pointer">{a}</button>
                             ))}
-                            <button onClick={props.onCancelSubstitute} className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 px-1.5 py-1 cursor-pointer flex items-center gap-0.5"><X className="h-3 w-3" />Cancel</button>
+                            <button onClick={props.onCancelSubstitute} className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 px-1.5 py-1 cursor-pointer flex items-center gap-0.5"><X className="h-3 w-3" />{t("queue.cancel")}</button>
                           </div>
                         </div>
                       )
@@ -465,10 +472,10 @@ function QueueRow(props: {
                     return (
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         {alts.length > 0 && (
-                          <button onClick={() => props.onStartSubstitute(m)} className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.14)] px-2.5 py-1 rounded-lg cursor-pointer"><Repeat className="h-3 w-3" />Substitute ({alts.length})</button>
+                          <button onClick={() => props.onStartSubstitute(m)} className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.14)] px-2.5 py-1 rounded-lg cursor-pointer"><Repeat className="h-3 w-3" />Substitute ({alts.length})</button>
                         )}
                         {m.supply !== "order_raised" && (
-                          <button onClick={() => props.onOrder(m)} className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.14)] px-2.5 py-1 rounded-lg cursor-pointer"><ShoppingCart className="h-3 w-3" />Order from inventory manager</button>
+                          <button onClick={() => props.onOrder(m)} className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.14)] px-2.5 py-1 rounded-lg cursor-pointer"><ShoppingCart className="h-3 w-3" />Order from inventory manager</button>
                         )}
                         <button onClick={() => props.onAdviseOutside(m)} className="flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg cursor-pointer"><ExternalLink className="h-3 w-3" />Advise buy outside</button>
                       </div>
@@ -507,7 +514,7 @@ function ActionBtn({ onClick, children, icon: Icon, tone }: { onClick: () => voi
     <button onClick={onClick}
       className={cn("flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-nowrap",
         tone === "ghost" && "text-slate-600 bg-slate-100 hover:bg-slate-200")}
-      style={tone === "brand" ? { background: "linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))", color: "#fff", boxShadow: "0 2px 8px rgba(8,145,178,0.25)" } : undefined}>
+      style={tone === "brand" ? { background: "linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))", color: "#fff", boxShadow: "0 2px 8px rgba(238,107,38,0.25)" } : undefined}>
       <Icon className="h-3.5 w-3.5" />{children}
     </button>
   )

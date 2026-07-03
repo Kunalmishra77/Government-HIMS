@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import { motion } from "framer-motion"
 import { FileText, Download, ShieldCheck, AlertTriangle } from "lucide-react"
 import { useBMWStore, CATEGORY_INFO, type WasteCategory } from "@/store/useBMWStore"
@@ -10,6 +11,7 @@ import { toast } from "sonner"
 const CATS: WasteCategory[] = ['Yellow', 'Red', 'Blue', 'Black', 'White', 'Cytotoxic']
 
 export default function BMWReportsPage() {
+  const t = useTranslations('bmw')
   const wasteLogs = useBMWStore(s => s.wasteLogs)
   const generateMonthlyReport = useBMWStore(s => s.generateMonthlyReport)
   const reports = useBMWStore(s => s.reports)
@@ -33,7 +35,7 @@ export default function BMWReportsPage() {
 
   const onGenerate = () => {
     generateMonthlyReport(month)
-    toast.success(`CPCB report for ${month} generated`)
+    toast.success(t('toast.reportGenerated', { month }))
   }
 
   const onExport = () => {
@@ -53,7 +55,7 @@ export default function BMWReportsPage() {
       a.click()
       URL.revokeObjectURL(url)
     }
-    toast.success(`Exported ${liveSummary.count} log entries for ${month}`)
+    toast.success(t('toast.exported', { count: liveSummary.count, month }))
   }
 
   return (
@@ -61,20 +63,20 @@ export default function BMWReportsPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <FileText className="h-6 w-6 text-amber-700" />CPCB Monthly Reports
+            <FileText className="h-6 w-6 text-amber-700" />{t('reports.title')}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Live summary of biomedical waste by category · CPCB 2016 compliant</p>
+          <p className="text-sm text-slate-500 mt-1">{t('reports.subtitle')}</p>
         </div>
         <div className="flex gap-2 items-center">
           <input type="month" value={month} onChange={(e) => setMonth(e.target.value)}
             className="text-xs font-bold border border-slate-300 rounded-lg px-2 py-2" />
           <button onClick={onGenerate}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer">
-            <ShieldCheck className="h-3.5 w-3.5" />Generate report
+            <ShieldCheck className="h-3.5 w-3.5" />{t('reports.generateReport')}
           </button>
           <button onClick={onExport}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] cursor-pointer">
-            <Download className="h-3.5 w-3.5" />Export JSON
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] cursor-pointer">
+            <Download className="h-3.5 w-3.5" />{t('reports.exportJson')}
           </button>
         </div>
       </div>
@@ -82,21 +84,21 @@ export default function BMWReportsPage() {
       {/* Summary KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-xl bg-white border border-slate-200 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Total waste</p>
-          <p className="text-2xl font-black text-slate-900 mt-1">{liveSummary.totalKg}<span className="text-base font-bold text-slate-500"> kg</span></p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('reports.totalWaste')}</p>
+          <p className="text-2xl font-black text-slate-900 mt-1">{liveSummary.totalKg}<span className="text-base font-bold text-slate-500"> {t('reports.kg')}</span></p>
         </div>
         <div className="rounded-xl bg-white border border-slate-200 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Bags</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('reports.bags')}</p>
           <p className="text-2xl font-black text-slate-900 mt-1">{liveSummary.bags}</p>
         </div>
         <div className="rounded-xl bg-white border border-slate-200 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Compliance</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('reports.compliance')}</p>
           <p className={cn("text-2xl font-black mt-1", liveSummary.compliance >= 90 ? "text-emerald-700" : liveSummary.compliance >= 75 ? "text-amber-600" : "text-red-600")}>
             {liveSummary.compliance}%
           </p>
         </div>
         <div className="rounded-xl bg-white border border-slate-200 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Non-compliant</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('reports.nonCompliant')}</p>
           <p className={cn("text-2xl font-black mt-1", liveSummary.nonCompliant === 0 ? "text-slate-900" : "text-red-600")}>
             {liveSummary.nonCompliant}
           </p>
@@ -105,7 +107,7 @@ export default function BMWReportsPage() {
 
       {/* By category */}
       <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <p className="text-sm font-bold text-slate-800 mb-3">Breakdown by colour code</p>
+        <p className="text-sm font-bold text-slate-800 mb-3">{t('reports.breakdownByColourCode')}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {CATS.map(c => {
             const kg = liveSummary.byCategory[c]
@@ -116,7 +118,7 @@ export default function BMWReportsPage() {
                 className="rounded-lg border border-slate-200 p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded ring-1", info.tint)}>{c}</span>
-                  <span className="text-xs font-bold text-slate-900">{kg} kg · {pct}%</span>
+                  <span className="text-xs font-bold text-slate-900">{kg} {t('reports.kg')} · {pct}%</span>
                 </div>
                 <p className="text-[10px] text-slate-500">{info.types}</p>
               </motion.div>
@@ -129,14 +131,14 @@ export default function BMWReportsPage() {
         <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
           <div className="flex-1 text-xs text-emerald-800">
-            <b>Report saved as draft</b> · {existing.id} · total {existing.totalWeightKg} kg · compliance {existing.complianceScore}%
+            <b>{t('reports.reportSavedDraft')}</b> · {t('reports.reportSavedDetail', { id: existing.id, total: existing.totalWeightKg, compliance: existing.complianceScore })}
           </div>
         </div>
       )}
 
       {liveSummary.count === 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-center gap-2 text-xs text-amber-800">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />No waste collection logged for {month}.
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />{t('reports.noWasteLogged', { month })}
         </div>
       )}
     </div>

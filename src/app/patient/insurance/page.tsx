@@ -12,18 +12,18 @@ import { toast } from "sonner"
 
 const STATUS_TINT: Record<InsuranceClaim['status'], string> = {
   'Pending Pre-Auth': 'bg-amber-50 text-amber-700',
-  'In Process': 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
+  'In Process': 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
   'Approved': 'bg-emerald-50 text-emerald-700',
   'Rejected': 'bg-red-50 text-red-700',
 }
 
 const EVENT_ICONS: Record<ClaimEvent['kind'], { icon: React.ComponentType<{ className?: string }>; tone: string }> = {
   submitted: { icon: Hourglass, tone: 'text-amber-600' },
-  queried: { icon: MessageSquare, tone: 'text-orange-600' },
+  queried: { icon: MessageSquare, tone: 'text-accent' },
   approved: { icon: CheckCircle, tone: 'text-emerald-600' },
   partially_approved: { icon: AlertTriangle, tone: 'text-amber-600' },
   rejected: { icon: AlertTriangle, tone: 'text-red-600' },
-  document: { icon: Upload, tone: 'text-[var(--color-primary)]' },
+  document: { icon: Upload, tone: 'text-[var(--color-accent)]' },
   note: { icon: MessageSquare, tone: 'text-slate-500' },
 }
 
@@ -107,7 +107,7 @@ export default function PatientInsurance() {
       </div>
 
       {/* Policy card */}
-      <div className="rounded-3xl p-5 text-white bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] shadow-[0_10px_30px_rgba(8,145,178,0.25)]">
+      <div className="rounded-3xl p-5 text-white bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] shadow-[0_10px_30px_rgba(238,107,38,0.25)]">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /><span className="text-[13px] font-bold uppercase tracking-wider text-white/80">Cashless · Active</span></div>
           <span className="text-[13px] font-semibold text-white/90">{mine.provider}</span>
@@ -136,7 +136,7 @@ export default function PatientInsurance() {
           <div className="flex items-center gap-2 flex-wrap">
             <span className={cn('text-[11px] font-bold px-2.5 py-1 rounded-full', STATUS_TINT[mine.status])}>{mine.status}</span>
             {mine.aiProbability !== undefined && (
-              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] flex items-center gap-1">
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] flex items-center gap-1">
                 <Sparkles className="h-3 w-3" />AI approval likelihood {mine.aiProbability}%
               </span>
             )}
@@ -150,7 +150,7 @@ export default function PatientInsurance() {
                   i <= currentStageIdx ? 'bg-[var(--color-primary)] text-white' : 'bg-slate-100 text-slate-400')}>
                   {i < currentStageIdx ? <CheckCircle className="h-4.5 w-4.5" /> : i === currentStageIdx ? <Clock className="h-4 w-4" /> : <span className="text-[12px] font-bold">{i + 1}</span>}
                 </div>
-                <span className={cn('text-[11px] font-semibold', i <= currentStageIdx ? 'text-[var(--color-primary)]' : 'text-slate-400')}>{s.label}</span>
+                <span className={cn('text-[11px] font-semibold', i <= currentStageIdx ? 'text-[var(--color-accent)]' : 'text-slate-400')}>{s.label}</span>
               </div>
               {i < STAGES.length - 1 && <div className={cn('flex-1 h-0.5 mx-1 -mt-4 rounded', i < currentStageIdx ? 'bg-[var(--color-primary)]' : 'bg-slate-200')} />}
             </div>
@@ -164,7 +164,7 @@ export default function PatientInsurance() {
               <Sparkles className="h-3 w-3" />AI denial risk
             </p>
             <button onClick={onRunDenialAnalysis}
-              className="text-[10px] font-bold text-[var(--color-primary)] bg-white hover:bg-[rgba(8,145,178,0.10)] ring-1 ring-blue-200 px-2 py-0.5 rounded cursor-pointer">
+              className="text-[10px] font-bold text-[var(--color-accent)] bg-white hover:bg-[rgba(238,107,38,0.10)] ring-1 ring-primary/25 px-2 py-0.5 rounded cursor-pointer">
               {denialRisk ? 'Refresh' : 'Run AI analysis'}
             </button>
           </div>
@@ -209,7 +209,7 @@ export default function PatientInsurance() {
           </span>
         </div>
         <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-3">
-          <div className="h-full bg-[rgba(8,145,178,0.07)]0" style={{ width: `${docsCompleteness}%` }} />
+          <div className="h-full bg-[rgba(238,107,38,0.07)]0" style={{ width: `${docsCompleteness}%` }} />
         </div>
         <div className="space-y-2">
           {docs.map(d => (
@@ -225,7 +225,7 @@ export default function PatientInsurance() {
                 ? <span className="text-[12px] font-semibold text-green-600">Verified · {dateOf(d.uploadedAt).split(' ').slice(0, 2).join(' ')}</span>
                 : (
                   <button onClick={() => onUpload(d.id, d.name)}
-                    className="text-[12.5px] font-semibold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.14)] px-2.5 py-1 rounded-lg cursor-pointer flex items-center gap-1">
+                    className="text-[12.5px] font-semibold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.14)] px-2.5 py-1 rounded-lg cursor-pointer flex items-center gap-1">
                     <Upload className="h-3 w-3" />Upload
                   </button>
                 )}

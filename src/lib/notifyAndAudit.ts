@@ -26,6 +26,21 @@
  * Phase-1 scope: routes to the in-app NotificationStore + AuditStore only.
  * Phase-2 fans out to WhatsApp / SMS / push via the existing channelConfig
  * + notification-dispatcher (already shipping templates per type).
+ *
+ * i18n: This helper is a plain (non-hook) util — the human-readable `title`
+ * and `body` it stores are built by the CALLER, so localization happens at the
+ * call site, not here. Localized message TEMPLATES (with ICU params like
+ * {patientName}, {bed}, {test}) are provided per NotificationType in the
+ * `notify` namespace, so callers can build title/body in the active locale:
+ *   const t = useTranslations('notify')
+ *   notifyAndAudit({
+ *     to: 'nurse', type: 'bed_allocated', priority: 'high',
+ *     title: t('bed_allocated.title', { bed }),
+ *     body:  t('bed_allocated.body', { patientName, bed }),
+ *     ...
+ *   })
+ * The `audit.detail` string is an internal trail (staff-facing log) and is
+ * left in English. See messages/{en,hi}/notify.json.
  */
 
 import { useNotificationStore, type NotificationType, type NotificationPriority, type NotificationChannel } from "@/store/useNotificationStore"

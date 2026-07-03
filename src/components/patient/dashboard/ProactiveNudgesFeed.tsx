@@ -28,7 +28,7 @@ const ICONS: Record<PatientNudge["kind"], React.ElementType> = {
 }
 const TONE_STYLES = {
   ok:   { ring: "ring-emerald-200/70", bg: "bg-emerald-50/50",  iconWrap: "bg-emerald-100 text-emerald-700", chipBg: "bg-emerald-100 text-emerald-700" },
-  info: { ring: "ring-blue-200/70",  bg: "bg-[rgba(8,145,178,0.07)]/50",    iconWrap: "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]",   chipBg: "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]" },
+  info: { ring: "ring-primary/25",  bg: "bg-[rgba(238,107,38,0.07)]/50",    iconWrap: "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]",   chipBg: "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]" },
   warn: { ring: "ring-amber-200/70",   bg: "bg-amber-50/50",     iconWrap: "bg-amber-100 text-amber-700",      chipBg: "bg-amber-100 text-amber-800" },
 } as const
 
@@ -89,13 +89,13 @@ export function ProactiveNudgesFeed({ className }: { className?: string }) {
 
   return (
     <section className={`rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] overflow-hidden ${className ?? ''}`}>
-      <header className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-gradient-to-r from-[rgba(8,145,178,0.06)] to-[rgba(8,145,178,0.04)]">
-        <span className="h-8 w-8 rounded-xl bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] flex items-center justify-center"><Sparkles className="h-4 w-4" /></span>
+      <header className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-surface-sunken">
+        <span className="h-8 w-8 rounded-xl bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] flex items-center justify-center"><Sparkles className="h-4 w-4" /></span>
         <div>
           <h3 className="text-[14px] font-bold text-slate-900 leading-tight">For you — proactive nudges</h3>
           <p className="text-[11px] text-slate-500">AI watches your record · acts before you have to ask</p>
         </div>
-        <span className="ml-auto inline-flex items-center gap-1 text-[10.5px] font-mono font-semibold text-[var(--color-primary)]">
+        <span className="ml-auto inline-flex items-center gap-1 text-[10.5px] font-mono font-semibold text-[var(--color-accent)]">
           <Bell className="h-3 w-3" /> {visible.length} live
         </span>
       </header>

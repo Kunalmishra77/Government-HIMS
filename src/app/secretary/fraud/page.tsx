@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ShieldAlert, AlertTriangle, CheckCircle, X, Eye } from 'lucide-react'
 
 const FRAUD_CASES = [
@@ -13,12 +14,13 @@ const FRAUD_CASES = [
 
 const STATUS_STYLES = {
   'under-review': 'bg-amber-100 text-amber-700',
-  escalated: 'bg-orange-100 text-orange-700',
+  escalated: 'bg-accent-soft text-accent',
   confirmed: 'bg-rose-100 text-rose-700',
   resolved: 'bg-emerald-100 text-emerald-700',
 }
 
 export default function FraudPage() {
+  const t = useTranslations('secretary')
   const [selected, setSelected] = useState<string | null>(null)
   const detail = FRAUD_CASES.find(f => f.id === selected)
 
@@ -29,15 +31,15 @@ export default function FraudPage() {
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">Fraud Command</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">धोखाधड़ी नियंत्रण · AI-flagged PM-JAY anomalies + NHA audit findings</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('fraud.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('fraud.subtitle')}</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total flagged amount', value: `₹${totalAmount.toFixed(1)} Cr`, warn: true },
-          { label: 'Pending review', value: String(pending), warn: pending > 2 },
-          { label: 'Confirmed fraud', value: String(confirmed), warn: confirmed > 0 },
-          { label: 'Recovered (FY24)', value: '₹1.2 Cr', warn: false },
+          { label: t('fraud.kpiFlaggedAmount'), value: `₹${totalAmount.toFixed(1)} Cr`, warn: true },
+          { label: t('fraud.kpiPendingReview'), value: String(pending), warn: pending > 2 },
+          { label: t('fraud.kpiConfirmedFraud'), value: String(confirmed), warn: confirmed > 0 },
+          { label: t('fraud.kpiRecovered'), value: '₹1.2 Cr', warn: false },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -59,21 +61,21 @@ export default function FraudPage() {
                   </div>
                   <p className="text-sm font-semibold text-[var(--color-foreground)]">{f.type} — {f.hospital}</p>
                   <p className="text-xs text-[var(--color-foreground-muted)]">{f.district} · {f.flaggedBy}</p>
-                  <p className="text-xs text-rose-600 font-bold mt-0.5">₹{f.amount.toFixed(1)} Cr at risk</p>
+                  <p className="text-xs text-rose-600 font-bold mt-0.5">{t('fraud.atRisk', { amount: f.amount.toFixed(1) })}</p>
                 </div>
               </div>
               <button onClick={() => setSelected(selected === f.id ? null : f.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-teal-200 rounded-lg hover:bg-teal-50 flex-shrink-0">
-                <Eye className="h-3 w-3" /> Details
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-accent)] border border-primary/20 rounded-lg hover:bg-primary-soft flex-shrink-0">
+                <Eye className="h-3 w-3" /> {t('common.details')}
               </button>
             </div>
             {selected === f.id && (
               <div className="mt-3 pt-3 border-t border-[var(--color-border)] space-y-3">
                 <p className="text-sm text-[var(--color-foreground)]">{f.detail}</p>
                 <div className="flex gap-2">
-                  <button className="px-3 py-1.5 bg-rose-600 text-white text-xs font-medium rounded-lg">Escalate to NHA</button>
-                  <button className="px-3 py-1.5 border border-[var(--color-border)] text-xs font-medium rounded-lg">Mark false positive</button>
-                  <button className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg">Dempanel hospital</button>
+                  <button className="px-3 py-1.5 bg-rose-600 text-white text-xs font-medium rounded-lg">{t('fraud.escalateNha')}</button>
+                  <button className="px-3 py-1.5 border border-[var(--color-border)] text-xs font-medium rounded-lg">{t('fraud.markFalsePositive')}</button>
+                  <button className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg">{t('fraud.dempanel')}</button>
                 </div>
               </div>
             )}

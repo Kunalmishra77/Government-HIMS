@@ -70,7 +70,7 @@ export function QueueListItem({
     >
       {leading && <div className="flex-shrink-0">{leading}</div>}
       <div className="min-w-0 flex-1">
-        <p className={cn("truncate text-sm font-bold", selected ? "text-primary" : "text-foreground")}>{title}</p>
+        <p className={cn("truncate text-sm font-bold", selected ? "text-accent" : "text-foreground")}>{title}</p>
         {subtitle && <p className="t-caption text-foreground-lighter truncate mt-0.5">{subtitle}</p>}
       </div>
       {meta && <div className="flex-shrink-0 text-foreground-lighter">{meta}</div>}

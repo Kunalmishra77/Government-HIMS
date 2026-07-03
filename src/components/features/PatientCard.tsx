@@ -5,10 +5,10 @@ import { Avatar } from "@/components/ui/avatar"
 import type { Patient, QueueStatus } from "@/store/usePatientStore"
 
 const statusConfig: Record<QueueStatus, { label: string; color: string; bg: string; border: string }> = {
-  waiting:    { label: 'Waiting',    color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' },
-  vitals:     { label: 'Vitals',     color: 'text-[var(--color-primary)]', bg: 'bg-[rgba(8,145,178,0.07)]', border: 'border-[rgba(8,145,178,0.20)]' },
-  consulting: { label: 'Consulting', color: 'text-[var(--color-primary)]', bg: 'bg-[rgba(8,145,178,0.07)]', border: 'border-[rgba(8,145,178,0.20)]' },
-  pharmacy:   { label: 'Pharmacy',   color: 'text-[var(--color-primary)]', bg: 'bg-[rgba(8,145,178,0.07)]', border: 'border-[rgba(8,145,178,0.20)]' },
+  waiting:    { label: 'Waiting',    color: 'text-accent', bg: 'bg-primary-soft', border: 'border-primary/20' },
+  vitals:     { label: 'Vitals',     color: 'text-[var(--color-accent)]', bg: 'bg-[rgba(238,107,38,0.07)]', border: 'border-[rgba(238,107,38,0.20)]' },
+  consulting: { label: 'Consulting', color: 'text-[var(--color-accent)]', bg: 'bg-[rgba(238,107,38,0.07)]', border: 'border-[rgba(238,107,38,0.20)]' },
+  pharmacy:   { label: 'Pharmacy',   color: 'text-[var(--color-accent)]', bg: 'bg-[rgba(238,107,38,0.07)]', border: 'border-[rgba(238,107,38,0.20)]' },
   billing:    { label: 'Billing',    color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
   done:       { label: 'Done',       color: 'text-slate-500', bg: 'bg-slate-100', border: 'border-slate-200' },
 }
@@ -28,14 +28,14 @@ export function PatientCard({ patient, onClick, selected, compact = false, delay
       className={cn(
         "bg-white rounded-xl border p-4 cursor-pointer transition-all duration-200 group relative overflow-hidden",
         compact && "p-3",
-        selected ? "border-[var(--color-primary)] shadow-md ring-1 ring-blue-500/20" : "border-slate-200 hover:border-slate-300 hover:shadow-md"
+        selected ? "border-[var(--color-primary)] shadow-md ring-1 ring-primary/25" : "border-slate-200 hover:border-slate-300 hover:shadow-md"
       )}
     >
-      {selected && <div className="absolute top-0 bottom-0 left-0 w-1 bg-[rgba(8,145,178,0.07)]0" />}
+      {selected && <div className="absolute top-0 bottom-0 left-0 w-1 bg-[rgba(238,107,38,0.07)]0" />}
       
       <div className="flex items-start gap-4">
         <div className="relative flex-shrink-0">
-          <Avatar name={patient.name} size={compact ? "sm" : "md"} className={cn(selected && "ring-2 ring-offset-2 ring-blue-500")} />
+          <Avatar name={patient.name} size={compact ? "sm" : "md"} className={cn(selected && "ring-2 ring-offset-2 ring-primary/25")} />
           <span className="absolute -bottom-1 -right-1 text-[9px] font-bold rounded-md px-1.5 py-0.5 bg-slate-900 text-white shadow-sm border border-white">
             #{patient.token}
           </span>
@@ -75,7 +75,7 @@ export function PatientCard({ patient, onClick, selected, compact = false, delay
               In: {patient.registeredAt}
             </span>
             {patient.estimatedWait > 0 && (
-              <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-accent bg-primary-soft px-2 py-0.5 rounded uppercase tracking-wider">
                 ~{patient.estimatedWait}m wait
               </span>
             )}

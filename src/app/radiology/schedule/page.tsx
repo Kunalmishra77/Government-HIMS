@@ -149,10 +149,10 @@ export default function RadiologySchedulePage() {
                         <span className="text-[11px] font-bold text-foreground-placeholder">{s.patientId}</span>
                         <NeonBadge variant={sourceVariant(s.source)}>{s.source}</NeonBadge>
                         {s.wardBed && <span className="text-[11px] text-foreground-lighter">· {s.wardBed}</span>}
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-accent-soft text-primary">{s.modality}</span>
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-accent-soft text-accent">{s.modality}</span>
                         <StatusPill status={priorityStatus(s.priority)} label={s.priority} dense />
                         {(() => { const ns = Math.round(predictNoShow(s).data.risk * 100); return ns >= 35 ? <NeonBadge variant="warning">No-show {ns}%</NeonBadge> : null })()}
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-primary border border-primary/20">AI ~{predictScanDuration(s)}m</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-accent border border-primary/20">AI ~{predictScanDuration(s)}m</span>
                       </div>
                       <p className="text-sm font-semibold text-foreground-muted mt-1">{s.name}</p>
                       <p className="text-xs text-foreground-lighter mt-0.5">
@@ -168,14 +168,14 @@ export default function RadiologySchedulePage() {
                           </span>
                         )}
                         {c?.preparation && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-primary">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-accent">
                             Prep: {c.preparation.length > 40 ? c.preparation.slice(0, 40) + '…' : c.preparation}
                           </span>
                         )}
                       </div>
                     </div>
                     <button onClick={() => openBooking(s)}
-                      className="u-press flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-dark shadow-xs cursor-pointer transition-colors">
+                      className="u-press flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-[#0D2032] hover:text-[#0D2032] bg-primary hover:bg-primary-dark shadow-xs cursor-pointer transition-colors">
                       <Calendar className="h-3.5 w-3.5" />Book slot
                     </button>
                   </div>
@@ -190,7 +190,7 @@ export default function RadiologySchedulePage() {
         <p className="text-xs font-bold text-primary-dark flex items-center gap-1.5">
           <ChevronRight className="h-3 w-3" />After scheduling
         </p>
-        <p className="text-[11px] text-primary mt-1">
+        <p className="text-[11px] text-accent mt-1">
           The patient is notified with the slot + prep. At the slot time, the arrival desk (`/radiology/arrival`)
           marks them checked-in, then the tech claims the study on the bench.
         </p>
@@ -224,7 +224,7 @@ export default function RadiologySchedulePage() {
                     {slots.map(s => (
                       <button key={s.iso} type="button" onClick={() => setSlotIso(s.iso)}
                         className={cn("u-press py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer border",
-                          slotIso === s.iso ? 'bg-primary text-white border-primary' : 'bg-surface border-border text-foreground-muted hover:bg-surface-sunken')}>
+                          slotIso === s.iso ? 'bg-primary text-[#0D2032] border-primary' : 'bg-surface border-border text-foreground-muted hover:bg-surface-sunken')}>
                         {s.label}
                       </button>
                     ))}
@@ -233,14 +233,14 @@ export default function RadiologySchedulePage() {
 
                 {prepText && (
                   <div className="rounded-lg border border-primary/20 bg-accent-soft p-3">
-                    <p className="text-[11px] font-bold text-primary mb-1.5 flex items-center gap-1">
+                    <p className="text-[11px] font-bold text-accent mb-1.5 flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />Preparation instructions
                     </p>
                     <p className="text-xs text-foreground-muted">{prepText}</p>
                     <label className="flex items-center gap-2 mt-2 cursor-pointer">
                       <input type="checkbox" checked={prepConfirmed} onChange={e => setPrepConfirmed(e.target.checked)}
-                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer" />
-                      <span className="text-[11px] font-bold text-primary">Prep counselled to patient</span>
+                        className="h-4 w-4 rounded border-border text-accent focus:ring-primary cursor-pointer" />
+                      <span className="text-[11px] font-bold text-accent">Prep counselled to patient</span>
                     </label>
                   </div>
                 )}
@@ -268,7 +268,7 @@ export default function RadiologySchedulePage() {
                   Cancel
                 </button>
                 <button onClick={confirm} disabled={!canBook}
-                  className="u-press flex-1 h-10 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-bold cursor-pointer disabled:opacity-50 transition-colors">
+                  className="u-press flex-1 h-10 rounded-xl bg-primary hover:bg-primary-dark text-[#0D2032] hover:text-[#0D2032] text-sm font-bold cursor-pointer disabled:opacity-50 transition-colors">
                   Confirm booking
                 </button>
               </div>

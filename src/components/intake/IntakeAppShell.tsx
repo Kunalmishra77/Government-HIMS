@@ -2,6 +2,8 @@
 
 import { ChevronLeft } from "lucide-react"
 import { motion, useReducedMotion } from "framer-motion"
+import { useTranslations } from "next-intl"
+import { LocaleToggle } from "@/components/ui/LocaleToggle"
 
 export interface IntakeAppShellProps {
   stepNumber?: number
@@ -17,6 +19,7 @@ export interface IntakeAppShellProps {
  */
 export function IntakeAppShell({ stepNumber, totalSteps, onBack, headerTitle, children }: IntakeAppShellProps) {
   const reduce = useReducedMotion()
+  const t = useTranslations("intake.shell")
   const pct = stepNumber && totalSteps ? Math.round((stepNumber / totalSteps) * 100) : 0
 
   return (
@@ -30,27 +33,28 @@ export function IntakeAppShell({ stepNumber, totalSteps, onBack, headerTitle, ch
               {onBack && (
                 <button 
                   onClick={onBack}
-                  aria-label="Go back"
-                  className="inline-flex items-center gap-0.5 text-[17px] font-medium text-primary hover:opacity-80 active:opacity-50 transition-opacity focus:outline-none rounded-lg -ml-2 px-2 py-1 cursor-pointer"
+                  aria-label={t("back")}
+                  className="inline-flex items-center gap-0.5 text-[17px] font-medium text-accent hover:opacity-80 active:opacity-50 transition-opacity focus:outline-none rounded-lg -ml-2 px-2 py-1 cursor-pointer"
                 >
                   <ChevronLeft className="h-[24px] w-[24px] -ml-1 stroke-[2.5]" />
-                  <span>Back</span>
+                  <span>{t("back")}</span>
                 </button>
               )}
             </div>
             
             <div className="flex-1 flex justify-center">
               <span className="text-[17px] font-semibold text-foreground tracking-tight">
-                {headerTitle || "Check-in"}
+                {headerTitle || t("headerCheckin")}
               </span>
             </div>
 
-            <div className="w-24 flex justify-end">
+            <div className="flex justify-end items-center gap-2">
               {stepNumber && totalSteps && (
-                <span className="text-[15px] font-semibold text-foreground-placeholder tracking-tight">
-                  {stepNumber} of {totalSteps}
+                <span className="text-[13px] font-semibold text-foreground-placeholder tracking-tight tabular-nums">
+                  {t("stepOf", { current: stepNumber, total: totalSteps })}
                 </span>
               )}
+              <LocaleToggle />
             </div>
           </div>
 

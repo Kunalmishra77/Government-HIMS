@@ -1,5 +1,6 @@
 "use client"
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { CmoPageHeader } from '@/components/cmo/layout/CmoPageHeader'
 import { MetricTile } from '@/components/shared/MetricTile'
 import { cn } from '@/lib/utils'
@@ -16,24 +17,25 @@ const EQUIPMENT = [
 ]
 
 export default function CmoEquipmentPage() {
+  const t = useTranslations('cmo')
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      <CmoPageHeader title="Equipment & AMC · उपकरण और AMC" />
+      <CmoPageHeader title={t('equipment.title')} />
       <div className="grid grid-cols-4 gap-3">
-        <MetricTile label="Total major equipment" value="247" />
-        <MetricTile label="Operational" value="231 (93%)" variant="success" />
-        <MetricTile label="Down" value="16" variant="critical" />
-        <MetricTile label="AMC expiring (30d)" value="12" variant="warning" />
+        <MetricTile label={t('equipment.totalEquipment')} value="247" />
+        <MetricTile label={t('equipment.operational')} value="231 (93%)" variant="success" />
+        <MetricTile label={t('equipment.down')} value="16" variant="critical" />
+        <MetricTile label={t('equipment.amcExpiring')} value="12" variant="warning" />
       </div>
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <table className="w-full text-[12px]">
           <thead><tr className="bg-slate-50 border-b border-slate-100 text-slate-500">
-            <th className="px-4 py-2.5 text-left font-medium">Equipment</th>
-            <th className="px-3 py-2.5 text-left font-medium">Facility</th>
-            <th className="px-3 py-2.5 text-center font-medium">Status</th>
-            <th className="px-3 py-2.5 text-left font-medium hidden lg:table-cell">AMC Vendor</th>
-            <th className="px-3 py-2.5 text-left font-medium hidden lg:table-cell">AMC Expiry</th>
-            <th className="px-3 py-2.5 text-right font-medium hidden md:table-cell">Downtime (h)</th>
+            <th className="px-4 py-2.5 text-left font-medium">{t('equipment.colEquipment')}</th>
+            <th className="px-3 py-2.5 text-left font-medium">{t('equipment.colFacility')}</th>
+            <th className="px-3 py-2.5 text-center font-medium">{t('equipment.colStatus')}</th>
+            <th className="px-3 py-2.5 text-left font-medium hidden lg:table-cell">{t('equipment.colVendor')}</th>
+            <th className="px-3 py-2.5 text-left font-medium hidden lg:table-cell">{t('equipment.colExpiry')}</th>
+            <th className="px-3 py-2.5 text-right font-medium hidden md:table-cell">{t('equipment.colDowntime')}</th>
             <th className="px-3 py-2.5"></th>
           </tr></thead>
           <tbody>
@@ -46,7 +48,7 @@ export default function CmoEquipmentPage() {
                   <td className="px-3 py-2.5 text-center">
                     <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full',
                       eq.status === 'Down' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700')}>
-                      {eq.status}
+                      {eq.status === 'Down' ? t('equipment.statusDown') : t('equipment.statusOperational')}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-slate-600 hidden lg:table-cell">{eq.vendor}</td>
@@ -57,9 +59,9 @@ export default function CmoEquipmentPage() {
                     <span className={eq.downtimeHrs > 0 ? 'text-red-600 font-semibold' : 'text-slate-400'}>{eq.downtimeHrs || '—'}</span>
                   </td>
                   <td className="px-3 py-2.5">
-                    <button onClick={() => toast.success(`Escalation raised for ${eq.name}`)}
+                    <button onClick={() => toast.success(t('equipment.escalationRaised', { name: eq.name }))}
                       className="text-[10px] font-semibold px-2 py-1 border border-slate-300 rounded hover:bg-slate-50">
-                      Escalate
+                      {t('equipment.escalate')}
                     </button>
                   </td>
                 </tr>

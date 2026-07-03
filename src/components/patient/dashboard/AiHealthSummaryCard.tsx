@@ -132,16 +132,16 @@ export function AiHealthSummaryCard({ className }: { className?: string }) {
   if (hidden) return null
 
   return (
-    <section className={`rounded-3xl bg-gradient-to-br from-[rgba(8,145,178,0.08)] via-white to-[rgba(8,145,178,0.04)] ring-1 ring-[rgba(8,145,178,0.20)] shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5 ${className ?? ''}`}>
+    <section className={`rounded-3xl bg-surface border border-border shadow-[0_1px_4px_rgba(13,32,50,0.06),0_8px_28px_rgba(13,32,50,0.05)] p-5 ${className ?? ''}`}>
       <header className="flex items-center gap-2 mb-3">
-        <span className="h-8 w-8 rounded-xl bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] flex items-center justify-center">
+        <span className="h-8 w-8 rounded-xl bg-accent-soft text-[var(--color-accent)] flex items-center justify-center">
           <Sparkles className="h-4 w-4" />
         </span>
         <div>
-          <h3 className="text-[14px] font-bold text-slate-900">Your health, in a glance</h3>
-          <p className="text-[11px] text-slate-500">AI-written from your record · in plain language</p>
+          <h3 className="text-[14px] font-bold text-foreground">Your health, in a glance</h3>
+          <p className="text-[11px] text-foreground-lighter">AI-written from your record · in plain language</p>
         </div>
-        <span className="ml-auto text-[10.5px] font-mono font-semibold text-[var(--color-primary)]">87% confidence</span>
+        <span className="ml-auto text-[10.5px] font-mono font-semibold text-[var(--color-accent)]">87% confidence</span>
       </header>
 
       <p className="text-[14.5px] text-slate-800 leading-relaxed mb-3">{summary}</p>

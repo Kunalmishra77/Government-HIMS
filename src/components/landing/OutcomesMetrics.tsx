@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { TrendingDown, TrendingUp, Gauge, Clock } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useCountUp } from "./useCountUp"
 import { Reveal } from "./Reveal"
 
@@ -26,14 +27,15 @@ function Kpi({ kpi, active }: { kpi: typeof KPIS[number]; active: boolean }) {
 }
 
 export function OutcomesMetrics() {
+  const t = useTranslations("landing.outcomes")
   const [active, setActive] = useState(false)
   return (
     <section id="outcomes" className="scroll-mt-20 py-20 lg:py-24" style={{ background: "linear-gradient(150deg,#002A66 0%,#003B8E 55%,#052A33 100%)" }}>
       <div className="max-w-7xl mx-auto px-5 lg:px-10">
         <Reveal className="text-center max-w-2xl mx-auto">
-          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#FFB733]">Outcomes that matter</p>
-          <h2 className="text-[30px] lg:text-[38px] font-bold tracking-tight mt-2" style={{ color: "#FFFFFF" }}>Run on intelligence. Measure the difference.</h2>
-          <p className="text-[14.5px] text-white/55 mt-3">Illustrative targets for a connected, AI-native hospital — the metrics leadership is judged on.</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#F58C4E]">{t("eyebrow")}</p>
+          <h2 className="text-[30px] lg:text-[38px] font-bold tracking-tight mt-2" style={{ color: "#FFFFFF" }}>{t("title")}</h2>
+          <p className="text-[14.5px] text-white/55 mt-3">{t("subtitle")}</p>
         </Reveal>
         <motion.div
           onViewportEnter={() => setActive(true)}

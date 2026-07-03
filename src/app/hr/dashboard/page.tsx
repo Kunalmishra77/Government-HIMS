@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Users, CalendarDays, Clock, Workflow, Award, UserPlus, ArrowRight, AlertTriangle } from "lucide-react"
 import { useHRStore } from "@/store/useHRStore"
 import { useHrmsStore } from "@/store/useHrmsStore"
@@ -9,6 +10,7 @@ import { cn } from "@/lib/utils"
 const todayISO = () => new Date().toISOString().slice(0, 10)
 
 export default function HrDashboard() {
+  const t = useTranslations('hr')
   const staff = useHRStore(s => s.staff)
   const leaveRequests = useHRStore(s => s.leaveRequests)
   const { attendance, openings, applicants, onboarding, reviews } = useHrmsStore()
@@ -25,19 +27,19 @@ export default function HrDashboard() {
   const reviewsPending = reviews.filter(r => r.status !== 'acknowledged').length
 
   const kpis = [
-    { label: 'Employees', value: activeStaff.length, sub: `${staff.length} on record`, icon: Users, fg: 'text-[var(--color-primary)]', chip: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]', href: '/hr/employees' },
-    { label: 'Pending leave', value: pendingLeave.length, sub: 'Awaiting decision', icon: CalendarDays, fg: 'text-amber-700', chip: 'bg-amber-100 text-amber-600', href: '/hr/leave' },
-    { label: 'Attendance today', value: `${attendancePct}%`, sub: `${presentToday}/${activeStaff.length} present · ${onLeaveToday} on leave`, icon: Clock, fg: 'text-emerald-700', chip: 'bg-emerald-100 text-emerald-600', href: '/hr/attendance' },
-    { label: 'Open positions', value: openPositions, sub: `${inPipeline} in pipeline`, icon: Workflow, fg: 'text-[var(--color-primary)]', chip: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]', href: '/hr/recruitment' },
-    { label: 'Onboarding', value: onboardingActive, sub: 'In progress', icon: UserPlus, fg: 'text-cyan-700', chip: 'bg-cyan-100 text-cyan-600', href: '/hr/onboarding' },
-    { label: 'Appraisals', value: reviewsPending, sub: 'Open reviews', icon: Award, fg: 'text-rose-700', chip: 'bg-rose-100 text-rose-600', href: '/hr/appraisals' },
+    { label: t('dashboard.kpiEmployees'), value: activeStaff.length, sub: t('dashboard.kpiEmployeesSub', { count: staff.length }), icon: Users, fg: 'text-[var(--color-accent)]', chip: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]', href: '/hr/employees' },
+    { label: t('dashboard.kpiPendingLeave'), value: pendingLeave.length, sub: t('dashboard.kpiPendingLeaveSub'), icon: CalendarDays, fg: 'text-amber-700', chip: 'bg-amber-100 text-amber-600', href: '/hr/leave' },
+    { label: t('dashboard.kpiAttendanceToday'), value: `${attendancePct}%`, sub: t('dashboard.kpiAttendanceTodaySub', { present: presentToday, total: activeStaff.length, onLeave: onLeaveToday }), icon: Clock, fg: 'text-emerald-700', chip: 'bg-emerald-100 text-emerald-600', href: '/hr/attendance' },
+    { label: t('dashboard.kpiOpenPositions'), value: openPositions, sub: t('dashboard.kpiOpenPositionsSub', { count: inPipeline }), icon: Workflow, fg: 'text-[var(--color-accent)]', chip: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]', href: '/hr/recruitment' },
+    { label: t('dashboard.kpiOnboarding'), value: onboardingActive, sub: t('dashboard.kpiOnboardingSub'), icon: UserPlus, fg: 'text-accent', chip: 'bg-accent-soft text-accent', href: '/hr/onboarding' },
+    { label: t('dashboard.kpiAppraisals'), value: reviewsPending, sub: t('dashboard.kpiAppraisalsSub'), icon: Award, fg: 'text-rose-700', chip: 'bg-rose-100 text-rose-600', href: '/hr/appraisals' },
   ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">HR Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-1">People operations across {new Set(staff.map(s => s.department)).size} departments · {staff.length} staff on record.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('dashboard.title')}</h1>
+        <p className="text-sm text-slate-500 mt-1">{t('dashboard.subtitle', { depts: new Set(staff.map(s => s.department)).size, count: staff.length })}</p>
       </div>
 
       {/* KPI tiles */}
@@ -61,18 +63,18 @@ export default function HrDashboard() {
         {/* Pending leave approvals */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-amber-600" /> Pending leave approvals</h2>
-            <Link href="/hr/leave" className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]">Open</Link>
+            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-amber-600" /> {t('dashboard.pendingLeaveApprovals')}</h2>
+            <Link href="/hr/leave" className="text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-primary-dark)]">{t('common.open')}</Link>
           </div>
           <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-            {pendingLeave.length === 0 && <p className="p-6 text-center text-sm text-slate-400">No pending leave requests</p>}
+            {pendingLeave.length === 0 && <p className="p-6 text-center text-sm text-slate-400">{t('dashboard.noPendingLeave')}</p>}
             {pendingLeave.slice(0, 6).map(l => (
               <div key={l.id} className="px-5 py-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-800 truncate">{l.staffName}</p>
                   <p className="text-[11px] text-slate-500 truncate">{l.department} · {l.fromDate} → {l.toDate} · {l.reason}</p>
                 </div>
-                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border bg-amber-50 border-amber-200 text-amber-700 whitespace-nowrap">Pending</span>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border bg-amber-50 border-amber-200 text-amber-700 whitespace-nowrap">{t('leaveStatus.Pending')}</span>
               </div>
             ))}
           </div>
@@ -81,14 +83,14 @@ export default function HrDashboard() {
         {/* Recruitment pipeline */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2"><Workflow className="h-4 w-4 text-[var(--color-primary)]" /> Recruitment pipeline</h2>
-            <Link href="/hr/recruitment" className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]">Open</Link>
+            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2"><Workflow className="h-4 w-4 text-[var(--color-accent)]" /> {t('dashboard.recruitmentPipeline')}</h2>
+            <Link href="/hr/recruitment" className="text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-primary-dark)]">{t('common.open')}</Link>
           </div>
           <div className="p-5 grid grid-cols-3 gap-2">
             {(['Applied', 'Screening', 'Interview', 'Offer', 'Hired', 'Rejected'] as const).map(stage => (
               <div key={stage} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center">
                 <p className="text-2xl font-bold tabular-nums text-slate-800">{applicants.filter(a => a.stage === stage).length}</p>
-                <p className="text-[10.5px] font-semibold text-slate-500 mt-0.5">{stage}</p>
+                <p className="text-[10.5px] font-semibold text-slate-500 mt-0.5">{t(`stage.${stage}`)}</p>
               </div>
             ))}
           </div>
@@ -102,13 +104,14 @@ export default function HrDashboard() {
 }
 
 function ExpiringCredentials() {
+  const t = useTranslations('hr')
   const getExpiringCredentials = useHRStore(s => s.getExpiringCredentials)
   const expiring = getExpiringCredentials(60)
   if (expiring.length === 0) return null
   return (
     <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5">
       <h2 className="text-sm font-bold text-amber-800 flex items-center gap-2 mb-2">
-        <AlertTriangle className="h-4 w-4" /> Credentials expiring within 60 days ({expiring.length})
+        <AlertTriangle className="h-4 w-4" /> {t('dashboard.credentialsExpiring', { count: expiring.length })}
       </h2>
       <div className="flex flex-wrap gap-2">
         {expiring.slice(0, 8).map(({ staff, credential, daysUntilExpiry }, i) => (

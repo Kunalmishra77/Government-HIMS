@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Search, MapPin, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
 import { useSecretaryDistrictsStore } from '@/store/useSecretaryDistrictsStore'
@@ -15,6 +16,7 @@ function scoreColor(s: number) {
 }
 
 export default function DistrictsPage() {
+  const t = useTranslations('secretary')
   const router = useRouter()
   const { districts } = useSecretaryDistrictsStore()
   const [query, setQuery] = useState('')
@@ -33,28 +35,28 @@ export default function DistrictsPage() {
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">52 District Cockpits</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">52 जिला कॉकपिट · Drill into any district</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('districts.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('districts.subtitle')}</p>
       </div>
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-foreground-lighter)]" />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search district..." className="pl-9 pr-4 py-2 border border-[var(--color-border)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] w-48" />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('districts.searchPlaceholder')} className="pl-9 pr-4 py-2 border border-[var(--color-border)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] w-48" />
         </div>
         <div className="flex gap-1 flex-wrap">
           {REGIONS.map(r => (
             <button key={r} onClick={() => setRegion(r)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${region === r ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'border-[var(--color-border)] text-[var(--color-foreground-muted)]'}`}>
-              {r === 'all' ? 'All regions' : r}
+              {r === 'all' ? t('districts.allRegions') : r}
             </button>
           ))}
         </div>
         <label className="flex items-center gap-2 text-xs text-[var(--color-foreground-muted)] cursor-pointer">
           <input type="checkbox" checked={tribalOnly} onChange={e => setTribalOnly(e.target.checked)} className="rounded" />
-          Tribal districts only
+          {t('districts.tribalOnly')}
         </label>
-        <span className="ml-auto text-xs text-[var(--color-foreground-muted)]">{sorted.length} districts</span>
+        <span className="ml-auto text-xs text-[var(--color-foreground-muted)]">{t('districts.count', { count: sorted.length })}</span>
       </div>
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -67,7 +69,7 @@ export default function DistrictsPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold px-2 py-0.5 rounded-lg" style={{ background: sc.bg, color: sc.text }}>#{d.rank}</span>
-                    {d.isTribal && <span className="text-[9px] bg-orange-100 text-orange-700 px-1.5 rounded-full">Tribal</span>}
+                    {d.isTribal && <span className="text-[9px] bg-accent-soft text-accent px-1.5 rounded-full">{t('districts.tribal')}</span>}
                   </div>
                   <p className="text-sm font-bold text-[var(--color-foreground)] mt-1">{d.name}</p>
                   <p className="text-[10px] text-[var(--color-foreground-lighter)]" style={{ fontFamily: 'Noto Sans Devanagari' }}>{d.nameHindi}</p>
@@ -82,19 +84,19 @@ export default function DistrictsPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-1 text-[10px] text-[var(--color-foreground-muted)] mb-3">
-                <span>CMO: {d.cmoName.split(' ').slice(0, 2).join(' ')}</span>
-                <span className="text-right">{d.population}L pop</span>
+                <span>{t('districts.cmo', { name: d.cmoName.split(' ').slice(0, 2).join(' ') })}</span>
+                <span className="text-right">{t('districts.population', { count: d.population })}</span>
                 <span><MapPin className="h-2.5 w-2.5 inline mr-0.5" />{d.region}</span>
-                <span className="text-right">{d.facilitiesCount} facilities</span>
+                <span className="text-right">{t('districts.facilities', { count: d.facilitiesCount })}</span>
               </div>
               {d.topAlerts > 0 && (
-                <p className="text-[10px] text-rose-600 font-medium mb-2">{d.topAlerts} active alert{d.topAlerts > 1 ? 's' : ''}</p>
+                <p className="text-[10px] text-rose-600 font-medium mb-2">{d.topAlerts > 1 ? t('districts.activeAlerts', { count: d.topAlerts }) : t('districts.activeAlert', { count: d.topAlerts })}</p>
               )}
               <button
                 onClick={() => router.push(`/secretary/districts/${d.id}`)}
-                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-[var(--color-primary)] border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-[var(--color-accent)] border border-primary/20 rounded-lg hover:bg-primary-soft transition-colors cursor-pointer"
               >
-                Open cockpit <ArrowRight className="h-3 w-3" />
+                {t('districts.openCockpit')} <ArrowRight className="h-3 w-3" />
               </button>
             </div>
           )

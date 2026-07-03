@@ -1,4 +1,7 @@
+"use client"
+
 import * as React from "react"
+import { useTranslations } from "next-intl"
 import {
   AlertOctagon, AlertTriangle, CheckCircle2, Clock, Info, Activity, MinusCircle, type LucideIcon,
 } from "lucide-react"
@@ -31,7 +34,7 @@ const STATUS: Record<Status, StatusMeta> = {
   urgent:   { label: "Urgent",   icon: AlertTriangle, cls: "bg-urgent-bg text-urgent",            dot: "bg-urgent" },
   caution:  { label: "Caution",  icon: AlertTriangle, cls: "bg-warning-bg text-warning",          dot: "bg-warning" },
   stable:   { label: "Stable",   icon: Activity,      cls: "bg-success-bg text-success",          dot: "bg-success" },
-  info:     { label: "Info",     icon: Info,          cls: "bg-accent-soft text-primary",         dot: "bg-accent" },
+  info:     { label: "Info",     icon: Info,          cls: "bg-accent-soft text-accent",         dot: "bg-accent" },
   pending:  { label: "Pending",  icon: Clock,         cls: "bg-surface-sunken text-foreground-muted", dot: "bg-foreground-placeholder" },
   done:     { label: "Done",     icon: CheckCircle2,  cls: "bg-success-bg text-success",          dot: "bg-success" },
   neutral:  { label: "—",        icon: MinusCircle,   cls: "bg-surface-sunken text-foreground-muted", dot: "bg-foreground-placeholder" },
@@ -47,8 +50,10 @@ export interface StatusPillProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export function StatusPill({ status, label, size = "sm", dense, className, ...props }: StatusPillProps) {
+  const t = useTranslations("ui")
   const meta = STATUS[status]
-  const text = label ?? meta.label
+  const defaultLabel = t.has(`status.${status}`) ? t(`status.${status}`) : meta.label
+  const text = label ?? defaultLabel
   const Icon = meta.icon
   return (
     <span

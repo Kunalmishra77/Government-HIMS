@@ -173,7 +173,7 @@ export default function ProfilePage() {
               {editing && draft ? (
                 <ChipList values={draft.currentMedications} onChange={(v) => setDraft({ ...draft, currentMedications: v })} placeholder="e.g. Metformin 500mg" />
               ) : profile.currentMedications.length ? (
-                <div className="flex flex-wrap gap-1.5">{profile.currentMedications.map(m => <span key={m} className="text-[12px] font-semibold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] px-2 py-0.5 rounded-full">{m}</span>)}</div>
+                <div className="flex flex-wrap gap-1.5">{profile.currentMedications.map(m => <span key={m} className="text-[12px] font-semibold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] px-2 py-0.5 rounded-full">{m}</span>)}</div>
               ) : <p className="text-[13px] text-slate-400">None recorded</p>}
             </Card>
             <Card title="Emergency contact" icon={Phone}>
@@ -214,7 +214,7 @@ export default function ProfilePage() {
 
           {/* Consent */}
           <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-5">
-            <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><ShieldCheck className="h-4.5 w-4.5 text-[var(--color-primary)]" /> Data &amp; AI consent <span className="text-[11px] font-semibold text-slate-400">· DISHA</span></h3>
+            <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><ShieldCheck className="h-4.5 w-4.5 text-[var(--color-accent)]" /> Data &amp; AI consent <span className="text-[11px] font-semibold text-slate-400">· DISHA</span></h3>
             <div className="space-y-2">
               {([
                 ["consentRecords", "AI may read my records"],
@@ -239,9 +239,9 @@ export default function ProfilePage() {
 
           {/* My documents */}
           <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-5">
-            <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><FileText className="h-4.5 w-4.5 text-[var(--color-primary)]" /> My documents</h3>
+            <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><FileText className="h-4.5 w-4.5 text-[var(--color-accent)]" /> My documents</h3>
             <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-slate-200 hover:bg-slate-50 cursor-pointer">
-              <span className="h-9 w-9 rounded-full bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] flex items-center justify-center"><Upload className="h-4 w-4" /></span>
+              <span className="h-9 w-9 rounded-full bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] flex items-center justify-center"><Upload className="h-4 w-4" /></span>
               <span className="flex-1">
                 <span className="block text-[13px] font-semibold text-slate-800">Upload insurance card, ID proof, lab report…</span>
                 <span className="block text-[11px] text-slate-500">PDF or image, max 5 MB. Available to your care team.</span>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
               <div className="mt-3 space-y-1.5">
                 {uploads.map((u) => (
                   <a key={u.id} href={u.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 hover:bg-slate-100">
-                    <FileText className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <FileText className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                     <span className="flex-1 text-[12.5px] font-semibold text-slate-800 truncate">{u.filename}</span>
                     <span className="text-[10.5px] text-slate-400">{Math.round(u.size / 1024)} KB · {new Date(u.uploadedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
                   </a>

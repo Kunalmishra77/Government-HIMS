@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils"
 
 const CONDITION_TINT: Record<string, string> = {
   Critical:           'bg-red-50 text-red-700 border-red-200',
-  Serious:            'bg-orange-50 text-orange-700 border-orange-200',
+  Serious:            'bg-primary-soft text-accent border-primary/20',
   Stable:             'bg-emerald-50 text-emerald-700 border-emerald-200',
-  Improving:          'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] border-[rgba(8,145,178,0.20)]',
-  'Discharge-ready':  'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] border-[rgba(8,145,178,0.20)]',
+  Improving:          'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] border-[rgba(238,107,38,0.20)]',
+  'Discharge-ready':  'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] border-[rgba(238,107,38,0.20)]',
 }
 
 const STAGE_LABEL: Record<string, string> = {
@@ -177,7 +177,7 @@ export function BedHoverCard({ bed, side = 'right' }: Props) {
             {data.orders.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {data.orders.map((o, i) => (
-                  <span key={i} className="text-[9.5px] font-medium px-1.5 py-0.5 rounded bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]">{o}</span>
+                  <span key={i} className="text-[9.5px] font-medium px-1.5 py-0.5 rounded bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]">{o}</span>
                 ))}
               </div>
             )}

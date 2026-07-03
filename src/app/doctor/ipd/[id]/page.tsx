@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { ArrowLeft, Droplet, AlertTriangle, ShieldAlert, BedDouble, CalendarClock } from "lucide-react"
 import { useInpatientStore } from "@/store/useInpatientStore"
 import { CONDITION_TINT, STAGE_LABEL, fmtDay } from "@/lib/ipdFormat"
@@ -14,9 +15,14 @@ import { cn } from "@/lib/utils"
 
 const TABS = ['Overview', 'Timeline', 'Rounds', 'Medications', 'Orders & Results', 'Procedure', 'Referrals', 'Discharge'] as const
 type Tab = typeof TABS[number]
+const TAB_LABEL_KEY: Record<Tab, string> = {
+  'Overview': 'tabOverview', 'Timeline': 'tabTimeline', 'Rounds': 'tabRounds', 'Medications': 'tabMedications',
+  'Orders & Results': 'tabOrders', 'Procedure': 'tabProcedure', 'Referrals': 'tabReferrals', 'Discharge': 'tabDischarge',
+}
 const initials = (n: string) => n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
 export default function InpatientChart() {
+  const t = useTranslations('doctor')
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const ip = useInpatientStore(s => s.inpatients.find(p => p.patientId === id))
@@ -28,13 +34,13 @@ export default function InpatientChart() {
   useEffect(() => { setMounted(true) }, [])
   if (!mounted) return (
     <div className="h-full flex items-center justify-center">
-      <div className="h-8 w-8 rounded-full border-4 border-[rgba(8,145,178,0.20)] border-t-blue-600 animate-spin" role="status" aria-label="Loading chart" />
+      <div className="h-8 w-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" role="status" aria-label={t('ipdChart.loadingChart')} />
     </div>
   )
 
   if (!ip) return (
     <div className="p-8 text-slate-500">
-      Patient not found. <button onClick={() => router.push('/doctor/ipd')} className="text-[var(--color-primary)] font-semibold">Back to IPD</button>
+      {t('ipdChart.patientNotFound')} <button onClick={() => router.push('/doctor/ipd')} className="text-[var(--color-accent)] font-semibold">{t('ipdChart.backToIpd')}</button>
     </div>
   )
 
@@ -45,7 +51,7 @@ export default function InpatientChart() {
     <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0">
       {/* Summary rail */}
       <aside className="lg:w-72 flex-shrink-0 rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-5 overflow-y-auto">
-        <button onClick={() => router.push('/doctor/ipd')} className="text-[12.5px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 mb-4"><ArrowLeft className="h-4 w-4" /> All inpatients</button>
+        <button onClick={() => router.push('/doctor/ipd')} className="text-[12.5px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 mb-4"><ArrowLeft className="h-4 w-4" /> {t('ipdChart.allInpatients')}</button>
         <div className="flex items-center gap-3 mb-4">
           <span className={cn("h-12 w-12 rounded-2xl text-white flex items-center justify-center font-bold text-[16px]", ip.condition === 'Critical' ? 'bg-gradient-to-br from-red-500 to-rose-600' : 'bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)]')}>{initials(ip.name)}</span>
           <div className="min-w-0">
@@ -56,24 +62,24 @@ export default function InpatientChart() {
         <div className="flex items-center gap-2 flex-wrap mb-4">
           <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-full", CONDITION_TINT[ip.condition])}>{ip.condition}</span>
           <span className="text-[11px] font-semibold text-slate-500">{STAGE_LABEL[ip.stage]}</span>
-          <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-full", ins.risk === 'high' ? 'bg-red-100 text-red-700' : ins.risk === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')} title="Early-warning score (partial — RR/consciousness not captured)">NEWS {ins.news.score}{ins.news.partial ? '*' : ''}</span>
+          <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-full", ins.risk === 'high' ? 'bg-red-100 text-red-700' : ins.risk === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')} title={t('ipdChart.newsTitle')}>NEWS {ins.news.score}{ins.news.partial ? '*' : ''}</span>
         </div>
 
-        <Field icon={BedDouble} label="Location" value={`${ip.ward} · Bed ${ip.bed}`} />
-        <Field icon={CalendarClock} label="Admitted" value={`${fmtDay(ip.admittedAt)}${ip.expectedDischarge ? ` · exp. discharge ${ip.expectedDischarge}` : ''}`} />
-        <Field icon={ShieldAlert} label="Code status" value={ip.codeStatus ?? 'Full code'} />
+        <Field icon={BedDouble} label={t('ipdChart.location')} value={`${ip.ward} · Bed ${ip.bed}`} />
+        <Field icon={CalendarClock} label={t('ipdChart.admitted')} value={`${fmtDay(ip.admittedAt)}${ip.expectedDischarge ? t('ipdChart.expDischarge', { date: ip.expectedDischarge }) : ''}`} />
+        <Field icon={ShieldAlert} label={t('ipdChart.codeStatus')} value={ip.codeStatus ?? t('ipdChart.fullCode')} />
 
         <div className="mt-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-rose-400 mb-1.5 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Allergies</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-rose-400 mb-1.5 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> {t('ipdChart.allergies')}</p>
           <div className="flex flex-wrap gap-1.5">
-            {(ip.allergies ?? ['No known drug allergies']).map(a => <span key={a} className="text-[12px] font-medium bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full">{a}</span>)}
+            {(ip.allergies ?? [t('ipdChart.noKnownDrugAllergies')]).map(a => <span key={a} className="text-[12px] font-medium bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full">{a}</span>)}
           </div>
         </div>
         <div className="mt-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1"><Droplet className="h-3 w-3 text-red-400" /> Comorbidities</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1"><Droplet className="h-3 w-3 text-red-400" /> {t('ipdChart.comorbidities')}</p>
           <div className="flex flex-wrap gap-1.5">
             {(ip.comorbidities ?? []).map(c => <span key={c} className="text-[12px] font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">{c}</span>)}
-            {!ip.comorbidities?.length && <span className="text-[12px] text-slate-400">None</span>}
+            {!ip.comorbidities?.length && <span className="text-[12px] text-slate-400">{t('ipdChart.none')}</span>}
           </div>
         </div>
         <div className="mt-4"><DietBadge ip={ip} /></div>
@@ -88,8 +94,8 @@ export default function InpatientChart() {
       {/* Tabbed chart */}
       <section className="flex-1 min-w-0 flex flex-col rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] overflow-hidden">
         <div className="px-3 py-2.5 border-b border-slate-100 flex items-center gap-1 overflow-x-auto">
-          {TABS.map(t => (
-            <button key={t} onClick={() => setTab(t)} className={cn("px-3 py-1.5 rounded-lg text-[13px] font-semibold whitespace-nowrap transition", t === tab ? "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]" : "text-slate-500 hover:text-slate-700")}>{t}</button>
+          {TABS.map(tabKey => (
+            <button key={tabKey} onClick={() => setTab(tabKey)} className={cn("px-3 py-1.5 rounded-lg text-[13px] font-semibold whitespace-nowrap transition", tabKey === tab ? "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]" : "text-slate-500 hover:text-slate-700")}>{t(`ipdChart.${TAB_LABEL_KEY[tabKey]}`)}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto p-5">

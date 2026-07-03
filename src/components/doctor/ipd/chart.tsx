@@ -24,8 +24,8 @@ export function OverviewTab({ ip, insight }: { ip: Inpatient; insight?: string |
   return (
     <div className="space-y-4">
       {insight && (
-        <div className="rounded-2xl border border-[rgba(8,145,178,0.20)] bg-gradient-to-br from-[rgba(8,145,178,0.06)] to-white p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)] mb-1">AI insight</p>
+        <div className="rounded-2xl border border-[rgba(238,107,38,0.20)] bg-surface p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-accent)] mb-1">AI insight</p>
           <p className="text-[13.5px] text-[var(--color-primary-dark)] leading-relaxed">{insight}</p>
         </div>
       )}
@@ -186,7 +186,7 @@ export function OrdersTab({ ip }: { ip: Inpatient }) {
             </div>
             {t.result && <p className="text-[12px] text-slate-600 mt-1">Result: {t.result}</p>}
             {t.status === 'Ready' && (
-              <button onClick={() => acknowledgeTest(ip.patientId, t.id)} className="mt-2 text-[11.5px] font-bold text-[var(--color-primary)] flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Acknowledge / sign-off</button>
+              <button onClick={() => acknowledgeTest(ip.patientId, t.id)} className="mt-2 text-[11.5px] font-bold text-[var(--color-accent)] flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Acknowledge / sign-off</button>
             )}
           </div>
         ))}
@@ -203,7 +203,7 @@ export function ProcedureTab({ ip }: { ip: Inpatient }) {
     <div className="space-y-4">
       <Section icon={Scissors} title="Surgery / Procedure"><SurgeryPanel ip={ip} /></Section>
       {ip.otBooking && (
-        <div className="rounded-xl bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.15)] p-3 text-[12.5px] text-[var(--color-primary-dark)]">
+        <div className="rounded-xl bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.15)] p-3 text-[12.5px] text-[var(--color-primary-dark)]">
           OT booked — {ip.otBooking.procedure} · {ip.otBooking.surgeon} · {ip.otBooking.ot} · {new Date(ip.otBooking.scheduledAt).toLocaleString('en-IN')} ({ip.otBooking.status})
         </div>
       )}

@@ -53,18 +53,18 @@ const SEED: Consult[] = [
 // ── Small helpers ────────────────────────────────────────────────────
 const STATUS_PILL: Record<Status, string> = {
   Confirmed: "bg-green-50 text-green-700",
-  Upcoming: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]",
+  Upcoming: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]",
   Completed: "bg-slate-100 text-slate-500",
   Cancelled: "bg-red-50 text-red-600",
 }
 
 function ModeBadge({ mode }: { mode: Mode }) {
   return mode === "in_person" ? (
-    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] flex items-center gap-1">
+    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] flex items-center gap-1">
       <Building2 className="h-3 w-3" /> In-person
     </span>
   ) : (
-    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] flex items-center gap-1">
+    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] flex items-center gap-1">
       <Video className="h-3 w-3" /> Video
     </span>
   )
@@ -80,7 +80,7 @@ function ConsultCard({
   onReschedule: (id: string) => void
   onCancel: (id: string) => void
 }) {
-  const tint = c.mode === "in_person" ? "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]" : "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]"
+  const tint = c.mode === "in_person" ? "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]" : "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]"
   const Icon = c.mode === "in_person" ? Building2 : Video
   const cancelled = c.status === "Cancelled"
 
@@ -170,7 +170,7 @@ function BookingPanel({
   }
 
   return (
-    <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5 ring-1 ring-blue-100">
+    <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5 ring-1 ring-primary/20">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[15px] font-bold text-slate-900">{isReschedule ? "Reschedule consultation" : "Book a new consultation"}</h3>
         <button onClick={onClose} aria-label="Close booking" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
@@ -195,8 +195,8 @@ function BookingPanel({
         {DOCTORS.map((d, i) => (
           <button key={d.name} onClick={() => setDocIdx(i)}
             className={cn("w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all active:scale-[0.99]",
-              docIdx === i ? "bg-[rgba(8,145,178,0.07)]/60 ring-1 ring-blue-200" : "bg-slate-50")}>
-            <span className="h-10 w-10 rounded-2xl bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] flex items-center justify-center flex-shrink-0"><Stethoscope className="h-5 w-5" /></span>
+              docIdx === i ? "bg-[rgba(238,107,38,0.07)]/60 ring-1 ring-primary/25" : "bg-slate-50")}>
+            <span className="h-10 w-10 rounded-2xl bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] flex items-center justify-center flex-shrink-0"><Stethoscope className="h-5 w-5" /></span>
             <span className="flex-1 min-w-0">
               <span className="block text-[14px] font-semibold text-slate-900">{d.name}</span>
               <span className="block text-[12.5px] text-slate-500">{d.specialty}</span>

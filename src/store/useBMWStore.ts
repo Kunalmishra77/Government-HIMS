@@ -9,10 +9,10 @@ export type DisposalStatus = 'pending' | 'collected' | 'treated' | 'disposed' | 
 export const CATEGORY_INFO: Record<WasteCategory, { types: string; treatment: string; tint: string }> = {
   Yellow:    { types: 'Human anatomical, soiled, expired meds',       treatment: 'Incineration / plasma pyrolysis',  tint: 'bg-amber-100 text-amber-800 ring-amber-200' },
   Red:       { types: 'Contaminated recyclable plastics, tubing',     treatment: 'Autoclave / microwave + shredding', tint: 'bg-red-100 text-red-700 ring-red-200' },
-  Blue:      { types: 'Glassware, metallic implants',                 treatment: 'Disinfection + recycling',         tint: 'bg-blue-100 text-blue-700 ring-blue-200' },
+  Blue:      { types: 'Glassware, metallic implants',                 treatment: 'Disinfection + recycling',         tint: 'bg-surface-sunken text-accent ring-primary/25' },
   Black:     { types: 'General waste (non-hazardous)',                treatment: 'Municipal disposal',               tint: 'bg-slate-200 text-slate-700 ring-slate-300' },
   White:     { types: 'Sharps (needles, blades)',                     treatment: 'Encapsulation / autoclave',        tint: 'bg-slate-100 text-slate-700 ring-slate-300' },
-  Cytotoxic: { types: 'Cytotoxic drugs and waste',                    treatment: 'Incineration ≥1200 °C',            tint: 'bg-cyan-100 text-cyan-700 ring-cyan-200' },
+  Cytotoxic: { types: 'Cytotoxic drugs and waste',                    treatment: 'Incineration ≥1200 °C',            tint: 'bg-accent-soft text-accent ring-primary/25' },
 }
 
 export interface WasteLog {

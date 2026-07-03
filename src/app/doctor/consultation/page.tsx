@@ -16,7 +16,12 @@ import { useAuthStore } from "@/store/useAuthStore"
 import { usePatientStore } from "@/store/usePatientStore"
 import { useLabOrdersStore } from "@/store/useLabOrdersStore"
 import { usePharmacyStore } from "@/store/usePharmacyStore"
+import { useRadiologyStudiesStore } from "@/store/useRadiologyStudiesStore"
+import { useConsultationStore } from "@/store/useConsultationStore"
+import { useAdmissionStore } from "@/store/useAdmissionStore"
+import { useJourneyStore } from "@/store/useJourneyStore"
 import { LAB_CATALOG } from "@/lib/labCatalog"
+import { RADIOLOGY_CATALOG } from "@/lib/radiologyCatalog"
 import { Select } from "@/components/ui/Select"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
@@ -30,6 +35,9 @@ const EMPTY_MED: RxMed = { name: '', dosage: '', frequency: '', duration: '', qu
 const escapeHtml = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!))
 
 const LAB_OPTIONS = Object.values(LAB_CATALOG).map(e => ({ code: e.code, name: e.name }))
+const IMAGING_OPTIONS = Object.values(RADIOLOGY_CATALOG).map(e => ({ code: e.code, name: e.name }))
+const REFERRAL_SPECIALTIES = ["Cardiology", "Orthopaedics", "Neurology", "Gastroenterology", "Nephrology", "Pulmonology", "Dermatology", "ENT", "Ophthalmology", "Psychiatry", "General Surgery", "Oncology"]
+const ADMIT_WARDS = ["General Ward", "ICU", "Private Room", "Semi-Private", "Day Care"]
 
 interface SoapDraft { subjective: string; objective: string; assessment: string; plan: string }
 const EMPTY: SoapDraft = { subjective: '', objective: '', assessment: '', plan: '' }
@@ -56,12 +64,25 @@ export default function DoctorConsultation() {
 
   const addLabOrder = useLabOrdersStore(s => s.addOrder)
   const addPrescription = usePharmacyStore(s => s.addPrescription)
+  const updateStatus = usePatientStore(s => s.updateStatus)
+  const addImagingOrder = useRadiologyStudiesStore(s => s.addOrder)
+  const addReferral = useConsultationStore(s => s.addReferral)
+  const requestAdmission = useAdmissionStore(s => s.requestAdmission)
+  const journeyTransition = useJourneyStore(s => s.transition)
 
   const [soap, setSoap] = useState<SoapDraft>(EMPTY)
   const [hydrated, setHydrated] = useState(false)
   // Lab tests selected for the current encounter (catalog codes).
   const [labTests, setLabTests] = useState<string[]>([])
   const [labPick, setLabPick] = useState("")
+  // Imaging studies selected for the current encounter (radiology catalog codes).
+  const [imagingStudies, setImagingStudies] = useState<string[]>([])
+  const [imagingPick, setImagingPick] = useState("")
+  // Referral + admission drafts.
+  const [referSpecialty, setReferSpecialty] = useState("")
+  const [admitWard, setAdmitWard] = useState("General Ward")
+  // Track whether an Rx was dispatched so "Complete consultation" routes to pharmacy vs billing.
+  const [sentRx, setSentRx] = useState(false)
   // Prescription — medicines + diet/follow-up/imaging advice for the printout.
   const [meds, setMeds] = useState<RxMed[]>([])
   const [medDraft, setMedDraft] = useState<RxMed>(EMPTY_MED)
@@ -72,6 +93,7 @@ export default function DoctorConsultation() {
   useEffect(() => {
     if (active) { setSoap(loadSoap(active.id)); setHydrated(true) }
     setLabTests([]); setLabPick("")
+    setImagingStudies([]); setImagingPick(""); setReferSpecialty(""); setAdmitWard("General Ward"); setSentRx(false)
     setMeds([]); setMedDraft(EMPTY_MED); setDiet(""); setFollowUp(""); setImagingAdvice("")
   }, [active?.id])
 
@@ -81,7 +103,7 @@ export default function DoctorConsultation() {
         <Stethoscope className="h-10 w-10 text-slate-300 mx-auto mb-3" />
         <p className="text-[15px] font-semibold text-slate-700">No active patient.</p>
         <p className="text-[12.5px] text-slate-500 mt-1">Pick a patient from the queue to start a consultation.</p>
-        <button onClick={() => router.push('/doctor/dashboard')} className="mt-4 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0E7490] hover:bg-[#155E75] text-white text-[12.5px] font-semibold cursor-pointer">
+        <button onClick={() => router.push('/doctor/dashboard')} className="mt-4 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#C2481A] hover:bg-[#9A3A14] text-white text-[12.5px] font-semibold cursor-pointer">
           <ArrowLeft className="h-3.5 w-3.5" /> Back to dashboard
         </button>
       </div>
@@ -144,6 +166,7 @@ export default function DoctorConsultation() {
       patientName: active.name,
       audit: { action: 'prescription_create', resource: 'consultation', resourceId: active.id, detail: `Rx (${meds.length} item(s)) ordered for ${active.name}`, userName: currentUser?.name ?? 'Doctor' },
     })
+    setSentRx(true)
     toast.success(`Rx sent · pharmacy notified`, { description: `${meds.length} medicine(s)` })
   }
 
@@ -208,28 +231,104 @@ export default function DoctorConsultation() {
       patientName: active.name,
       audit: { action: 'lab_order', resource: 'consultation', resourceId: active.id, detail: `Lab ordered for ${active.name}`, userName: currentUser?.name ?? 'Doctor' },
     })
+    journeyTransition(active.id, 'LAB_ORDERED', currentUser?.id ?? 'doctor', currentUser?.name ?? 'Doctor')
     toast.success(`${labTests.length} lab test(s) sent to Laboratory`)
     setLabTests([])
   }
+
+  const addImagingStudy = () => {
+    if (!imagingPick || imagingStudies.includes(imagingPick)) return
+    setImagingStudies(s => [...s, imagingPick])
+    setImagingPick("")
+  }
+  const removeImagingStudy = (code: string) => setImagingStudies(s => s.filter(c => c !== code))
+
   function orderImaging() {
+    if (!active) return
+    if (imagingStudies.length === 0) { toast.error('Select at least one imaging study to order'); return }
+    // Persist real radiology studies so they land in the Radiology queue (status 'ordered').
+    for (const code of imagingStudies) {
+      addImagingOrder({
+        patientId: active.id,
+        patientName: active.name,
+        source: 'OPD',
+        doctorName: currentUser?.name ?? active.doctor ?? 'Doctor',
+        paymentMode: 'Cash',
+        code,
+        clinicalQuestion: soap.assessment || soap.plan || undefined,
+        priority: active.triageLevel === 'Critical' ? 'STAT' : active.triageLevel === 'High' ? 'Urgent' : 'Routine',
+      })
+    }
     notifyAndAudit({
       to: 'radiology', type: 'system', priority: 'medium',
       title: `Imaging order · ${active.name}`,
-      body: `Doctor ordered imaging for ${active.name}.`,
+      body: `Doctor ordered ${imagingStudies.length} study(ies) for ${active.name}: ${imagingStudies.map(c => RADIOLOGY_CATALOG[c]?.name ?? c).join(', ')}. ${soap.assessment ? `Clinical question: ${soap.assessment}.` : ''}`,
       patientName: active.name,
       audit: { action: 'radiology_order', resource: 'consultation', resourceId: active.id, detail: `Imaging ordered for ${active.name}`, userName: currentUser?.name ?? 'Doctor' },
     })
-    toast.success(`Imaging ordered · radiology notified`)
+    journeyTransition(active.id, 'RADIOLOGY_ORDERED', currentUser?.id ?? 'doctor', currentUser?.name ?? 'Doctor')
+    toast.success(`${imagingStudies.length} imaging study(ies) sent to Radiology`)
+    setImagingStudies([])
   }
+
   function refer() {
+    if (!active) return
+    if (!referSpecialty) { toast.error('Choose a specialty to refer to'); return }
+    // Persist a real referral so it lands in the specialist referral inbox.
+    addReferral({
+      patientId: active.id,
+      patientName: active.name,
+      fromDepartment: active.department,
+      specialty: referSpecialty,
+      notes: soap.assessment || soap.plan || '',
+      urgent: active.triageLevel === 'Critical' || active.triageLevel === 'High',
+    })
     notifyAndAudit({
       to: 'reception', type: 'appointment', priority: 'medium',
       title: `Referral · ${active.name}`,
-      body: `Doctor referred ${active.name} for specialist consultation. Please book a follow-up appointment.`,
+      body: `Doctor referred ${active.name} to ${referSpecialty}. Awaiting acceptance in the referral inbox.`,
       patientName: active.name,
-      audit: { action: 'reception_registered', resource: 'referral', resourceId: active.id, detail: `Referral for ${active.name}`, userName: currentUser?.name ?? 'Doctor' },
+      audit: { action: 'reception_registered', resource: 'referral', resourceId: active.id, detail: `Referral for ${active.name} → ${referSpecialty}`, userName: currentUser?.name ?? 'Doctor' },
     })
-    toast.success(`Referral logged · reception notified`)
+    toast.success(`Referral to ${referSpecialty} logged`)
+    setReferSpecialty("")
+  }
+
+  function admit() {
+    if (!active) return
+    // Create a real admission request so it lands in the bed-manager admission queue.
+    requestAdmission({
+      patientId: active.id,
+      patientName: active.name,
+      patientAge: active.age,
+      patientGender: active.gender,
+      diagnosis: soap.assessment || soap.plan || 'See consultation note',
+      admissionType: admitWard,
+      bedTypePreference: admitWard,
+      reason: soap.plan || soap.assessment || 'Admission advised at consultation',
+      requestedBy: currentUser?.name ?? active.doctor ?? 'Doctor',
+      department: active.department,
+      triageLevel: active.triageLevel,
+      payerType: active.insurer ? 'Insurance' : 'Cash',
+    })
+    notifyAndAudit({
+      to: 'bed_manager', type: 'system', priority: active.triageLevel === 'Critical' ? 'critical' : 'high',
+      title: `Admission request · ${active.name}`,
+      body: `Doctor requested ${admitWard} admission for ${active.name} (${active.department}). Assign a bed.`,
+      patientName: active.name,
+      audit: { action: 'reception_registered', resource: 'admission_request', resourceId: active.id, detail: `Admission requested for ${active.name} · ${admitWard}`, userName: currentUser?.name ?? 'Doctor' },
+    })
+    // Leave the OPD queue and enter the IPD journey (override the COMPLETED sync from 'done').
+    updateStatus(active.id, 'done')
+    journeyTransition(active.id, 'ADMITTED_IPD', currentUser?.id ?? 'doctor', currentUser?.name ?? 'Doctor')
+    toast.success(`Admission requested · ${admitWard} · bed manager notified`)
+  }
+
+  function completeConsultation() {
+    if (!active) return
+    const next = sentRx ? 'pharmacy' : 'billing'
+    updateStatus(active.id, next)
+    toast.success(`Consultation complete · ${active.name} sent to ${next === 'pharmacy' ? 'Pharmacy' : 'Billing'}`)
   }
 
   if (!hydrated) return null
@@ -268,7 +367,7 @@ export default function DoctorConsultation() {
         <button onClick={() => router.push('/doctor/dashboard')} aria-label="Back" className="h-8 w-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
           <ArrowLeft className="h-4 w-4 text-slate-500" />
         </button>
-        <span className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#0E7490] to-[#0891B2] flex items-center justify-center text-white text-[15px] font-bold">
+        <span className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#C2481A] to-[#EE6B26] flex items-center justify-center text-white text-[15px] font-bold">
           {active.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
         </span>
         <div className="flex-1 min-w-0">
@@ -276,7 +375,7 @@ export default function DoctorConsultation() {
           <p className="text-[12px] text-slate-500">{active.id} · {active.age}y · {active.gender} · {active.department}</p>
           {active.symptoms?.length ? <p className="text-[11.5px] text-slate-600 mt-0.5">Chief complaint: <b>{active.symptoms.join(', ')}</b></p> : null}
         </div>
-        <span className="text-[10.5px] font-semibold text-[#0E7490] bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.15)] rounded-full px-2 py-0.5 inline-flex items-center gap-1">
+        <span className="text-[10.5px] font-semibold text-[#B84A16] bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.15)] rounded-full px-2 py-0.5 inline-flex items-center gap-1">
           <Sparkles className="h-3 w-3" /> AI scribe ready
         </span>
       </div>
@@ -285,7 +384,7 @@ export default function DoctorConsultation() {
       <div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-4">
         <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
           <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-[#0E7490]" />
+            <Activity className="h-4 w-4 text-[#B84A16]" />
             <h3 className="text-[14px] font-semibold text-slate-900">Patient Vitals</h3>
             {opdV?.at && (
               <span className="text-[10.5px] text-slate-400">
@@ -298,7 +397,7 @@ export default function DoctorConsultation() {
               <span className={cn(
                 "text-[10.5px] font-bold px-2 py-0.5 rounded-full border",
                 active.triageLevel === 'Critical' ? 'bg-red-50 text-red-700 border-red-200' :
-                active.triageLevel === 'High'     ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                active.triageLevel === 'High'     ? 'bg-primary-soft text-accent border-primary/20' :
                 active.triageLevel === 'Medium'   ? 'bg-amber-50 text-amber-700 border-amber-200' :
                                                     'bg-emerald-50 text-emerald-700 border-emerald-200'
               )}>
@@ -385,7 +484,7 @@ export default function DoctorConsultation() {
         {/* SOAP note */}
         <div className="lg:col-span-2 rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-4 space-y-2.5">
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-[#0E7490]" />
+            <FileText className="h-4 w-4 text-[#B84A16]" />
             <h3 className="text-[14px] font-semibold text-slate-900">SOAP note</h3>
             <span className="ml-auto text-[10.5px] text-slate-400">auto-saves as you type</span>
           </div>
@@ -395,10 +494,10 @@ export default function DoctorConsultation() {
               <textarea value={soap[k]} onChange={(e) => persist({ ...soap, [k]: e.target.value })}
                 rows={k === 'plan' ? 3 : 2}
                 placeholder={k === 'subjective' ? 'Patient reports…' : k === 'objective' ? 'On examination…' : k === 'assessment' ? 'Most likely…' : 'Plan: Rx, labs, follow-up, red-flag advice…'}
-                className="w-full px-3 py-2 rounded-lg ring-1 ring-slate-200 bg-white text-[13px] focus:outline-none focus:ring-[#0891B2] resize-none" />
+                className="w-full px-3 py-2 rounded-lg ring-1 ring-slate-200 bg-white text-[13px] focus:outline-none focus:ring-[#EE6B26] resize-none" />
             </div>
           ))}
-          <button onClick={signNote} className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0E7490] hover:bg-[#155E75] text-white text-[13.5px] font-semibold cursor-pointer">
+          <button onClick={signNote} className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#C2481A] hover:bg-[#9A3A14] text-white text-[13.5px] font-semibold cursor-pointer">
             <Save className="h-4 w-4" /> Sign &amp; save SOAP
           </button>
         </div>
@@ -406,7 +505,7 @@ export default function DoctorConsultation() {
         {/* Quick-orders rail */}
         <div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-4 space-y-2">
           <h3 className="text-[14px] font-semibold text-slate-900 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#0E7490]" /> Quick orders
+            <Sparkles className="h-4 w-4 text-[#B84A16]" /> Quick orders
           </h3>
           <div className="rounded-lg bg-rose-50 p-2.5 space-y-2">
             <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-rose-800">
@@ -435,23 +534,80 @@ export default function DoctorConsultation() {
               <Send className="h-3.5 w-3.5" /> Send {labTests.length > 0 ? `${labTests.length} ` : ''}to Laboratory
             </button>
           </div>
-          <button onClick={orderImaging} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.12)] text-[#155E75] text-[12.5px] font-semibold cursor-pointer">
-            <ScanLine className="h-4 w-4" /> Order imaging
+          {/* Order imaging */}
+          <div className="rounded-lg bg-[rgba(238,107,38,0.06)] p-2.5 space-y-2">
+            <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-[#B84A16]">
+              <ScanLine className="h-4 w-4" /> Order imaging
+            </div>
+            <div className="flex gap-1.5">
+              <Select value={imagingPick} onChange={e => setImagingPick(e.target.value)} className="flex-1 h-8 rounded-lg border border-[rgba(238,107,38,0.25)] bg-white text-[12px] px-2 text-slate-700">
+                <option value="">Select study…</option>
+                {IMAGING_OPTIONS.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}
+              </Select>
+              <button onClick={addImagingStudy} aria-label="Add study" className="h-8 w-8 flex-shrink-0 rounded-lg bg-[rgba(238,107,38,0.14)] hover:bg-[rgba(238,107,38,0.22)] text-[#B84A16] flex items-center justify-center cursor-pointer">
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+            {imagingStudies.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {imagingStudies.map(code => (
+                  <span key={code} className="inline-flex items-center gap-1 text-[11px] font-medium text-[#B84A16] bg-white border border-[rgba(238,107,38,0.25)] rounded-full pl-2.5 pr-1.5 py-0.5">
+                    {RADIOLOGY_CATALOG[code]?.name ?? code}
+                    <button onClick={() => removeImagingStudy(code)} aria-label={`Remove ${code}`} className="hover:text-[#9A3A14] cursor-pointer"><X className="h-3 w-3" /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <button onClick={orderImaging} disabled={imagingStudies.length === 0} className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#C2481A] hover:bg-[#9A3A14] disabled:opacity-50 text-white text-[12.5px] font-semibold cursor-pointer">
+              <Send className="h-3.5 w-3.5" /> Send {imagingStudies.length > 0 ? `${imagingStudies.length} ` : ''}to Radiology
+            </button>
+          </div>
+
+          {/* Refer to specialist */}
+          <div className="rounded-lg bg-amber-50 p-2.5 space-y-2">
+            <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-amber-800">
+              <Send className="h-4 w-4" /> Refer to specialist
+            </div>
+            <div className="flex gap-1.5">
+              <Select value={referSpecialty} onChange={e => setReferSpecialty(e.target.value)} className="flex-1 h-8 rounded-lg border border-amber-200 bg-white text-[12px] px-2 text-slate-700">
+                <option value="">Select specialty…</option>
+                {REFERRAL_SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
+              </Select>
+              <button onClick={refer} disabled={!referSpecialty} aria-label="Send referral" className="h-8 px-2.5 flex-shrink-0 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white flex items-center justify-center cursor-pointer">
+                <Send className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Admit */}
+          <div className="rounded-lg bg-slate-50 p-2.5 space-y-2">
+            <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-slate-700">
+              <Bed className="h-4 w-4" /> Admit patient
+            </div>
+            <div className="flex gap-1.5">
+              <Select value={admitWard} onChange={e => setAdmitWard(e.target.value)} className="flex-1 h-8 rounded-lg border border-slate-200 bg-white text-[12px] px-2 text-slate-700">
+                {ADMIT_WARDS.map(w => <option key={w} value={w}>{w}</option>)}
+              </Select>
+              <button onClick={admit} aria-label="Request admission" className="h-8 px-2.5 flex-shrink-0 rounded-lg bg-slate-700 hover:bg-slate-800 text-white flex items-center justify-center cursor-pointer">
+                <Send className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <button onClick={() => router.push('/doctor/beds')} className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 text-[11.5px] font-semibold cursor-pointer">
+              Check bed availability
+            </button>
+          </div>
+
+          <button onClick={completeConsultation} className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-semibold cursor-pointer mt-1">
+            <Send className="h-4 w-4" /> Complete consultation
           </button>
-          <button onClick={refer} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[12.5px] font-semibold cursor-pointer">
-            <Send className="h-4 w-4" /> Refer for specialist consult
-          </button>
-          <button onClick={() => router.push('/doctor/beds')} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.14)] text-[#155E75] text-[12.5px] font-semibold cursor-pointer">
-            <Bed className="h-4 w-4" /> Bed availability
-          </button>
-          <p className="text-[10.5px] text-slate-400 mt-2">Each action audited; the right role is notified.</p>
+          <p className="text-[10.5px] text-slate-400 mt-1.5">Each action is audited and routes the patient onward; the right role is notified.</p>
         </div>
       </div>
 
       {/* Prescription — medicines + diet/follow-up/imaging, with print + dispatch. */}
       <div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <Pill className="h-4 w-4 text-[#0E7490]" />
+          <Pill className="h-4 w-4 text-[#B84A16]" />
           <h3 className="text-[14px] font-semibold text-slate-900">Prescription</h3>
           <span className="ml-auto text-[10.5px] text-slate-400">{meds.length} medicine{meds.length === 1 ? '' : 's'}</span>
         </div>
@@ -463,7 +619,7 @@ export default function DoctorConsultation() {
           <Input value={medDraft.frequency} onChange={e => setMedDraft(d => ({ ...d, frequency: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addMed() }} placeholder="Frequency" className="col-span-2 h-9 rounded-lg text-[12.5px]" />
           <Input value={medDraft.duration} onChange={e => setMedDraft(d => ({ ...d, duration: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addMed() }} placeholder="Duration" className="col-span-2 h-9 rounded-lg text-[12.5px]" />
           <Input value={medDraft.quantity} onChange={e => setMedDraft(d => ({ ...d, quantity: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addMed() }} placeholder="Qty" inputMode="numeric" className="col-span-1 h-9 rounded-lg text-[12.5px]" />
-          <button onClick={addMed} aria-label="Add medicine" className="col-span-1 h-9 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white flex items-center justify-center cursor-pointer"><Plus className="h-4 w-4" /></button>
+          <button onClick={addMed} aria-label="Add medicine" className="col-span-1 h-9 rounded-lg bg-[#C2481A] hover:bg-[#9A3A14] text-white flex items-center justify-center cursor-pointer"><Plus className="h-4 w-4" /></button>
         </div>
 
         {meds.length > 0 && (
@@ -482,11 +638,11 @@ export default function DoctorConsultation() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wide text-slate-500 mb-1"><Utensils className="h-3 w-3" /> Food / diet advice</label>
-            <textarea value={diet} onChange={e => setDiet(e.target.value)} rows={2} placeholder="e.g. Low salt, avoid oily food, plenty of fluids" className="w-full px-3 py-2 rounded-lg ring-1 ring-slate-200 bg-white text-[12.5px] focus:outline-none focus:ring-[#0891B2] resize-none" />
+            <textarea value={diet} onChange={e => setDiet(e.target.value)} rows={2} placeholder="e.g. Low salt, avoid oily food, plenty of fluids" className="w-full px-3 py-2 rounded-lg ring-1 ring-slate-200 bg-white text-[12.5px] focus:outline-none focus:ring-[#EE6B26] resize-none" />
           </div>
           <div>
             <label className="flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wide text-slate-500 mb-1"><ScanLine className="h-3 w-3" /> Radiology / imaging advice</label>
-            <textarea value={imagingAdvice} onChange={e => setImagingAdvice(e.target.value)} rows={2} placeholder="e.g. CT Brain plain, USG whole abdomen" className="w-full px-3 py-2 rounded-lg ring-1 ring-slate-200 bg-white text-[12.5px] focus:outline-none focus:ring-[#0891B2] resize-none" />
+            <textarea value={imagingAdvice} onChange={e => setImagingAdvice(e.target.value)} rows={2} placeholder="e.g. CT Brain plain, USG whole abdomen" className="w-full px-3 py-2 rounded-lg ring-1 ring-slate-200 bg-white text-[12.5px] focus:outline-none focus:ring-[#EE6B26] resize-none" />
           </div>
           <div>
             <label className="flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wide text-slate-500 mb-1"><CalendarClock className="h-3 w-3" /> Follow-up</label>
@@ -495,7 +651,7 @@ export default function DoctorConsultation() {
         </div>
 
         <div className="flex gap-2 pt-1">
-          <button onClick={orderRx} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0E7490] hover:bg-[#155E75] text-white text-[13px] font-semibold cursor-pointer">
+          <button onClick={orderRx} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#C2481A] hover:bg-[#9A3A14] text-white text-[13px] font-semibold cursor-pointer">
             <Send className="h-4 w-4" /> Send Rx to pharmacy
           </button>
           <button onClick={printRx} className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[13px] font-semibold cursor-pointer">

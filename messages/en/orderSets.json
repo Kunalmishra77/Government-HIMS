@@ -1,0 +1,59 @@
+{
+  "acs": {
+    "label": "Chest pain — suspected ACS",
+    "presentation": "Acute chest pain, suspected acute coronary syndrome",
+    "diagnosis": "Acute coronary syndrome — to evaluate",
+    "admissionReason": "Suspected ACS — cardiac monitoring",
+    "med": {
+      "aspirin": "Loading dose, chew",
+      "atorvastatin": "High-intensity statin",
+      "clopidogrel": "Loading dose"
+    }
+  },
+  "sepsis": {
+    "label": "Fever — suspected sepsis",
+    "presentation": "Fever with hypotension / suspected sepsis (Sepsis-6)",
+    "diagnosis": "Sepsis — source to be identified",
+    "admissionReason": "Sepsis — resuscitation & monitoring",
+    "med": {
+      "ceftriaxone": "After blood cultures",
+      "paracetamol": "For fever",
+      "fluids": "Per Sepsis-6"
+    }
+  },
+  "cap": {
+    "label": "Pneumonia — admit",
+    "presentation": "Community-acquired pneumonia requiring admission",
+    "diagnosis": "Community-acquired pneumonia",
+    "admissionReason": "Pneumonia — IV antibiotics & oxygen",
+    "med": {
+      "azithromycin": "Atypical cover",
+      "paracetamol": "For fever"
+    }
+  },
+  "stroke": {
+    "label": "Suspected acute stroke",
+    "presentation": "Acute focal neuro deficit — stroke pathway",
+    "diagnosis": "Acute cerebrovascular event — to evaluate",
+    "admissionReason": "Acute stroke — thrombolysis window assessment",
+    "med": {
+      "fluids": "Avoid dextrose"
+    }
+  },
+  "acute_abdomen": {
+    "label": "Acute abdominal pain",
+    "presentation": "Undifferentiated acute abdomen",
+    "diagnosis": "Acute abdomen — to evaluate",
+    "med": {
+      "paracetamol": "Analgesia"
+    }
+  },
+  "dm_followup": {
+    "label": "Type-2 diabetes — follow-up",
+    "presentation": "Routine OPD diabetes review",
+    "diagnosis": "Type-2 diabetes mellitus — follow-up",
+    "med": {
+      "metformin": "After meals"
+    }
+  }
+}

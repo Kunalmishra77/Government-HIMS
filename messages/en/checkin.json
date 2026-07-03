@@ -1,0 +1,19 @@
+{
+  "overline": "OPD Check-In",
+  "leftTitle": "Care that begins\nbefore you arrive.",
+  "leftSubtitle": "Your details reach the care team ahead of time — so your appointment is all about you, not paperwork.",
+  "title": "Scan to check in",
+  "subtitle": "Point your phone camera at the code — no app needed. Or start on this kiosk.",
+  "scanHint": "Scan with your phone camera",
+  "startButton": "Start kiosk check-in",
+  "stepScan": "Scan",
+  "stepDetails": "Details",
+  "stepToken": "Token",
+  "stepTrack": "Track live",
+  "trustNabh": "NABH-ready",
+  "trustAbdm": "ABDM linked",
+  "trustDpdp": "DPDP compliant",
+  "footerTriage": "AI triage active",
+  "footerFast": "Under 2 minutes",
+  "footerSecure": "Encrypted"
+}

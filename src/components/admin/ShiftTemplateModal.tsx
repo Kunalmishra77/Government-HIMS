@@ -22,7 +22,7 @@ export interface ShiftTemplateModalProps {
 
 const SHIFT_TINT: Record<ShiftType, string> = {
   Morning: 'bg-amber-400',
-  Evening: 'bg-[rgba(8,145,178,0.07)]0',
+  Evening: 'bg-[rgba(238,107,38,0.07)]0',
   Night:   'bg-[var(--color-primary)]',
   Off:     'bg-slate-200',
 }
@@ -142,7 +142,7 @@ export function ShiftTemplateModal({ open, onClose, preselectedStaffIds = [], de
               <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-[var(--color-primary)]" />Apply Shift Pattern
+                    <Sparkles className="h-5 w-5 text-[var(--color-accent)]" />Apply Shift Pattern
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">Bulk-apply a template across multiple staff · audit-logged</p>
                 </div>
@@ -160,7 +160,7 @@ export function ShiftTemplateModal({ open, onClose, preselectedStaffIds = [], de
                       <button key={t.id} onClick={() => setTemplateId(t.id)}
                         data-testid={`tmpl-${t.id}`}
                         className={cn('rounded-xl border p-3 text-left cursor-pointer transition',
-                          templateId === t.id ? 'border-cyan-400 bg-[rgba(8,145,178,0.07)]/50 ring-2 ring-cyan-200' : 'border-slate-200 hover:bg-slate-50')}>
+                          templateId === t.id ? 'border-primary bg-[rgba(238,107,38,0.07)]/50 ring-2 ring-primary/25' : 'border-slate-200 hover:bg-slate-50')}>
                         <p className="text-xs font-bold text-slate-800">{t.name}</p>
                         <p className="text-[10px] text-slate-500 mt-0.5">{t.description}</p>
                         <div className="flex items-center gap-0.5 mt-2">
@@ -183,13 +183,13 @@ export function ShiftTemplateModal({ open, onClose, preselectedStaffIds = [], de
                       </p>
                       <input type="date" value={fromDate}
                         onChange={(e) => setFromDate(e.target.value)}
-                        className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-200" />
+                        className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25" />
                     </div>
                     <div>
                       <p className="text-[10px] font-bold text-slate-500 mb-1">Weeks</p>
                       <input type="number" min={1} max={26} value={weeks}
                         onChange={(e) => setWeeks(Number(e.target.value))}
-                        className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-200" />
+                        className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25" />
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1.5">
@@ -205,13 +205,13 @@ export function ShiftTemplateModal({ open, onClose, preselectedStaffIds = [], de
                       Staff · {selectedStaff.size} selected
                     </p>
                     <button onClick={selectAllVisible}
-                      className="text-[11px] font-bold text-[var(--color-primary)] hover:underline cursor-pointer">
+                      className="text-[11px] font-bold text-[var(--color-accent)] hover:underline cursor-pointer">
                       {filteredStaff.every(s => selectedStaff.has(s.id)) ? 'Deselect visible' : 'Select all visible'}
                     </button>
                   </div>
                   <input value={staffFilter} onChange={(e) => setStaffFilter(e.target.value)}
                     placeholder="Filter by name / dept / role…"
-                    className="w-full h-9 px-2.5 mb-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-200" />
+                    className="w-full h-9 px-2.5 mb-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25" />
                   <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 max-h-64 overflow-y-auto">
                     {filteredStaff.length === 0 ? (
                       <p className="text-xs text-slate-400 italic p-4 text-center">No staff match this filter.</p>
@@ -230,7 +230,7 @@ export function ShiftTemplateModal({ open, onClose, preselectedStaffIds = [], de
                 {/* Preview */}
                 <section>
                   <button onClick={() => setPreviewOpen(v => !v)}
-                    className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--color-primary)] hover:underline cursor-pointer">
+                    className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--color-accent)] hover:underline cursor-pointer">
                     <Eye className="h-3 w-3" />{previewOpen ? 'Hide preview' : 'Preview first 14 days'}
                   </button>
                   {previewOpen && (

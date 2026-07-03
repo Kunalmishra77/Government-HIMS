@@ -5,12 +5,14 @@ import { motion } from "framer-motion"
 import { X, HeartPulse } from "lucide-react"
 import { useVitalsDraft } from "./useVitalsDraft"
 import { VitalsFields, VitalsAiPanel } from "./VitalsFields"
+import { VitalsHistory } from "./VitalsHistory"
 import type { VitalsRecord } from "@/store/useInpatientStore"
 
-export function VitalsForm({ title, subtitle, priorRecords = [], onClose, onSave }: {
+export function VitalsForm({ title, subtitle, priorRecords = [], history = [], onClose, onSave }: {
   title: string
   subtitle?: string
   priorRecords?: VitalsRecord[]   // oldest→newest, used to carry forward stable values
+  history?: VitalsRecord[]        // full prior-visit history to display alongside entry
   onClose: () => void
   onSave: (rec: Omit<VitalsRecord, "id" | "at">) => void
 }) {
@@ -35,7 +37,7 @@ export function VitalsForm({ title, subtitle, priorRecords = [], onClose, onSave
       <motion.div
         initial={{ opacity: 0, scale: 0.97, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[88vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
         role="dialog" aria-modal="true" aria-labelledby="vitals-modal-title"
       >
@@ -54,9 +56,14 @@ export function VitalsForm({ title, subtitle, priorRecords = [], onClose, onSave
           </button>
         </div>
 
-        <div className="px-6 py-4 overflow-y-auto space-y-5">
-          <VitalsFields api={api} />
-          <VitalsAiPanel news={api.news} anomalies={api.anomalies} />
+        <div className="px-6 py-4 overflow-y-auto grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-5">
+          <div className="space-y-5">
+            <VitalsFields api={api} />
+            <VitalsAiPanel news={api.news} anomalies={api.anomalies} />
+          </div>
+          <div className="lg:border-l lg:border-slate-100 lg:pl-5">
+            <VitalsHistory records={history} />
+          </div>
         </div>
 
         <div className="flex gap-3 px-6 py-4 border-t border-slate-100">

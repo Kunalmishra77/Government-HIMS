@@ -92,11 +92,11 @@ export function NabhEvidenceLiveCockpit({ className }: { className?: string }) {
 
   return (
     <section className={`rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-sm overflow-hidden ${className ?? ''}`}>
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-[rgba(8,145,178,0.06)] to-[rgba(8,145,178,0.04)]">
-        <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-surface-sunken">
+        <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
         <h3 className="text-[14px] font-semibold text-slate-900">NABH Evidence — Live Cockpit</h3>
         <span className="text-[11px] text-slate-500">{totalEvents} audited events across {total} chapters</span>
-        <span className="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]">
+        <span className="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]">
           <ShieldCheck className="h-3 w-3" /> {ready}/{total} ready · {overallScore}%
         </span>
       </header>
@@ -139,8 +139,8 @@ export function NabhEvidenceLiveCockpit({ className }: { className?: string }) {
               )}
 
               {needsAction && rem ? (
-                <div className="rounded-lg bg-[rgba(8,145,178,0.07)]/70 ring-1 ring-blue-200/50 px-2 py-1.5 mt-auto">
-                  <p className="text-[10px] font-semibold text-[var(--color-primary)] uppercase tracking-wide mb-0.5">AI suggested next-action</p>
+                <div className="rounded-lg bg-[rgba(238,107,38,0.07)]/70 ring-1 ring-primary/25 px-2 py-1.5 mt-auto">
+                  <p className="text-[10px] font-semibold text-[var(--color-accent)] uppercase tracking-wide mb-0.5">AI suggested next-action</p>
                   <p className="text-[11.5px] text-slate-800 leading-snug">{rem.nextAction}</p>
                 </div>
               ) : c.count >= 5 ? (
@@ -150,7 +150,7 @@ export function NabhEvidenceLiveCockpit({ className }: { className?: string }) {
               ) : null}
 
               <footer className="flex items-center gap-2">
-                <Link href={`/audit/log?chapter=${c.chapter}`} className="text-[10.5px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] inline-flex items-center gap-0.5">
+                <Link href={`/audit/log?chapter=${c.chapter}`} className="text-[10.5px] font-semibold text-[var(--color-accent)] hover:text-[var(--color-primary-dark)] inline-flex items-center gap-0.5">
                   Trail <ChevronRight className="h-3 w-3" />
                 </Link>
                 {needsAction ? (

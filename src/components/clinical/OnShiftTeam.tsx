@@ -51,13 +51,13 @@ const ROLE_ICON: Record<string, React.ElementType> = {
 }
 
 const ROLE_TINT: Record<string, string> = {
-  doctor:    'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
+  doctor:    'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
   emergency: 'bg-red-50 text-red-700',
   nurse:     'bg-emerald-50 text-emerald-700',
-  ot:        'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  lab:       'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  pharmacy:  'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  radiology: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
+  ot:        'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  lab:       'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  pharmacy:  'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  radiology: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
 }
 
 function deptMatches(staffDept: string, target: string): boolean {
@@ -175,7 +175,7 @@ export function OnShiftTeam({
                     <a href={`mailto:${member.email}`}
                       onClick={(e) => e.stopPropagation()}
                       title={`Email ${member.email}`}
-                      className="p-1.5 rounded-lg bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] hover:bg-[rgba(8,145,178,0.14)] cursor-pointer">
+                      className="p-1.5 rounded-lg bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] hover:bg-[rgba(238,107,38,0.14)] cursor-pointer">
                       <Mail className="h-3 w-3" />
                     </a>
                   )}

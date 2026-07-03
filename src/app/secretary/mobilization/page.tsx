@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Truck, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp,
   MapPin, Zap, Package, AlertTriangle, ArrowRight, RefreshCw, History,
@@ -16,10 +17,11 @@ const RESOURCE_ICONS: Record<MobilizationRequest['resourceType'], string> = {
 const SEVERITY_COLORS = {
   critical: { border: 'border-l-rose-500', bg: 'bg-rose-50', text: 'text-rose-700', badge: 'bg-rose-100 text-rose-700' },
   warning:  { border: 'border-l-amber-500', bg: 'bg-amber-50/30', text: 'text-amber-700', badge: 'bg-amber-100 text-amber-700' },
-  info:     { border: 'border-l-blue-400',  bg: 'bg-blue-50/30',  text: 'text-blue-700',  badge: 'bg-blue-100 text-blue-700' },
+  info:     { border: 'border-l-slate-400',  bg: 'bg-surface-sunken',  text: 'text-accent',  badge: 'bg-surface-sunken text-accent' },
 }
 
 function MobCard({ req }: { req: MobilizationRequest }) {
+  const t = useTranslations('secretary')
   const { approve, reject } = useSecretaryMobilizationStore()
   const [expanded, setExpanded] = useState(false)
   const [approving, setApproving] = useState(false)
@@ -62,7 +64,7 @@ function MobCard({ req }: { req: MobilizationRequest }) {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="text-xs text-[var(--color-foreground-muted)] flex items-center gap-1">
-              <Clock className="h-3 w-3" /> {req.urgencyHours}h needed
+              <Clock className="h-3 w-3" /> {t('mobilization.hoursNeeded', { hours: req.urgencyHours })}
             </span>
             <button onClick={() => setExpanded(!expanded)} className="p-1 hover:bg-[var(--color-surface-raised)] rounded">
               {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -74,25 +76,25 @@ function MobCard({ req }: { req: MobilizationRequest }) {
         <p className="text-sm text-[var(--color-foreground)] mt-3 bg-[var(--color-surface-raised)] rounded-lg px-3 py-2">{req.reason}</p>
 
         {/* AI suggestion */}
-        <div className="mt-3 bg-teal-50 border border-teal-200 rounded-xl px-4 py-3">
+        <div className="mt-3 bg-primary-soft border border-primary/20 rounded-xl px-4 py-3">
           <div className="flex items-center gap-2 mb-1">
-            <Zap className="h-4 w-4 text-[var(--color-primary)]" />
-            <span className="text-xs font-bold text-[var(--color-primary)]">AI सुझाव · AI Suggestion</span>
+            <Zap className="h-4 w-4 text-[var(--color-accent)]" />
+            <span className="text-xs font-bold text-[var(--color-accent)]">{t('mobilization.aiSuggestion')}</span>
           </div>
           <p className="text-sm font-semibold text-[var(--color-foreground)]">{req.aiSuggestion.source}</p>
           <p className="text-xs text-[var(--color-foreground-muted)]">
-            {req.aiSuggestion.distanceKm} km · ETA {Math.floor(req.aiSuggestion.etaMinutes / 60)}h {req.aiSuggestion.etaMinutes % 60}m
+            {t('mobilization.distanceEta', { km: req.aiSuggestion.distanceKm, h: Math.floor(req.aiSuggestion.etaMinutes / 60), m: req.aiSuggestion.etaMinutes % 60 })}
           </p>
           <p className="text-xs text-[var(--color-foreground-muted)] mt-1">{req.aiSuggestion.rationale}</p>
         </div>
 
         {expanded && req.alternatives.length > 0 && (
           <div className="mt-3 space-y-1">
-            <p className="text-xs font-semibold text-[var(--color-foreground-muted)] mb-1">Alternative sources:</p>
+            <p className="text-xs font-semibold text-[var(--color-foreground-muted)] mb-1">{t('mobilization.altSources')}</p>
             {req.alternatives.map((alt, i) => (
               <div key={i} className="flex items-center justify-between text-xs text-[var(--color-foreground)] bg-[var(--color-surface-raised)] rounded-lg px-3 py-2">
                 <span>{alt.source}</span>
-                <span className="text-[var(--color-foreground-muted)]">ETA {Math.floor(alt.etaMinutes / 60)}h {alt.etaMinutes % 60}m · {alt.note}</span>
+                <span className="text-[var(--color-foreground-muted)]">{t('mobilization.altEta', { h: Math.floor(alt.etaMinutes / 60), m: alt.etaMinutes % 60, note: alt.note })}</span>
               </div>
             ))}
           </div>
@@ -101,12 +103,12 @@ function MobCard({ req }: { req: MobilizationRequest }) {
         {/* Actions */}
         {done === 'approved' && (
           <div className="mt-3 flex items-center gap-2 text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2 text-sm font-medium">
-            <CheckCircle className="h-4 w-4" /> Approved · resources dispatched from {req.aiSuggestion.source}
+            <CheckCircle className="h-4 w-4" /> {t('mobilization.approvedDispatched', { source: req.aiSuggestion.source })}
           </div>
         )}
         {done === 'rejected' && (
           <div className="mt-3 flex items-center gap-2 text-rose-700 bg-rose-50 rounded-lg px-3 py-2 text-sm font-medium">
-            <XCircle className="h-4 w-4" /> Request rejected
+            <XCircle className="h-4 w-4" /> {t('mobilization.requestRejected')}
           </div>
         )}
         {!done && req.status === 'pending' && (
@@ -116,30 +118,30 @@ function MobCard({ req }: { req: MobilizationRequest }) {
                 <button onClick={handleApprove} disabled={approving}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-60 transition-opacity">
                   {approving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                  स्वीकार · Approve as suggested
+                  {t('mobilization.approveAsSuggested')}
                 </button>
                 <button onClick={() => setExpanded(true)}
                   className="px-4 py-2.5 border border-[var(--color-border)] text-[var(--color-foreground)] text-sm font-medium rounded-lg hover:bg-[var(--color-surface-raised)] transition-colors">
-                  Choose alternative
+                  {t('mobilization.chooseAlternative')}
                 </button>
                 <button onClick={() => setRejecting(true)}
                   className="px-4 py-2.5 border border-rose-300 text-rose-700 text-sm font-medium rounded-lg hover:bg-rose-50 transition-colors">
-                  Reject
+                  {t('common.reject')}
                 </button>
               </div>
             ) : (
               <div className="space-y-2">
                 <input value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                  placeholder="Reason for rejection (required)..."
+                  placeholder={t('mobilization.rejectReasonPlaceholder')}
                   className="w-full border border-rose-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" />
                 <div className="flex gap-2">
                   <button onClick={handleReject} disabled={!rejectReason.trim()}
                     className="flex-1 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 disabled:opacity-50">
-                    Confirm rejection
+                    {t('common.confirmRejection')}
                   </button>
                   <button onClick={() => setRejecting(false)}
                     className="px-4 py-2 border border-[var(--color-border)] text-sm rounded-lg hover:bg-[var(--color-surface-raised)]">
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 </div>
               </div>
@@ -152,28 +154,30 @@ function MobCard({ req }: { req: MobilizationRequest }) {
 }
 
 function InTransitCard({ req }: { req: MobilizationRequest }) {
+  const t = useTranslations('secretary')
   const eta = req.etaMinutes ?? 0
   const pct = req.aiSuggestion ? Math.max(0, Math.min(100, 100 - (eta / req.aiSuggestion.etaMinutes) * 100)) : 50
   return (
     <div className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Truck className="h-4 w-4 text-blue-600" />
+          <Truck className="h-4 w-4 text-accent" />
           <span className="text-sm font-semibold text-[var(--color-foreground)]">{req.fromDistrict} — {req.resourceDetail}</span>
         </div>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${eta === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
-          {eta === 0 ? 'Delivered' : `ETA ${Math.floor(eta / 60)}h ${Math.round(eta % 60)}m`}
+        <span className={`text-xs px-2 py-0.5 rounded-full ${eta === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-surface-sunken text-accent'}`}>
+          {eta === 0 ? t('mobilization.delivered') : t('mobilization.eta', { h: Math.floor(eta / 60), m: Math.round(eta % 60) })}
         </span>
       </div>
       <div className="w-full bg-slate-100 rounded-full h-2">
-        <div className="h-2 rounded-full bg-blue-500 transition-all duration-1000" style={{ width: `${pct}%` }} />
+        <div className="h-2 rounded-full bg-secondary transition-all duration-1000" style={{ width: `${pct}%` }} />
       </div>
-      <p className="text-xs text-[var(--color-foreground-muted)] mt-1">{req.quantity} · from {req.aiSuggestion?.source}</p>
+      <p className="text-xs text-[var(--color-foreground-muted)] mt-1">{t('mobilization.fromSource', { quantity: req.quantity, source: req.aiSuggestion?.source ?? '' })}</p>
     </div>
   )
 }
 
 export default function MobilizationPage() {
+  const t = useTranslations('secretary')
   const { requests } = useSecretaryMobilizationStore()
   const [tab, setTab] = useState<'pending' | 'transit' | 'history'>('pending')
 
@@ -182,17 +186,17 @@ export default function MobilizationPage() {
   const history   = requests.filter(r => r.status === 'delivered' || r.status === 'rejected')
 
   const kpis = [
-    { label: 'Open requests',       labelHi: 'खुले अनुरोध',      value: String(pending.length),   variant: 'critical' },
-    { label: 'Approved today',      labelHi: 'आज स्वीकृत',       value: String(inTransit.length), variant: 'info'     },
-    { label: 'Avg response time',   labelHi: 'औसत प्रतिक्रिया',  value: '18 min',                 variant: 'default'  },
-    { label: 'Volume this week',    labelHi: 'साप्ताहिक मात्रा', value: '₹47L',                   variant: 'default'  },
+    { label: t('mobilization.kpiOpen'),     labelHi: t('mobilization.kpiOpenHi'),     value: String(pending.length),   variant: 'critical' },
+    { label: t('mobilization.kpiApproved'), labelHi: t('mobilization.kpiApprovedHi'), value: String(inTransit.length), variant: 'info'     },
+    { label: t('mobilization.kpiResponse'), labelHi: t('mobilization.kpiResponseHi'), value: '18 min',                 variant: 'default'  },
+    { label: t('mobilization.kpiVolume'),   labelHi: t('mobilization.kpiVolumeHi'),   value: '₹47L',                   variant: 'default'  },
   ]
 
   return (
     <div className="p-6 space-y-5 max-w-screen-xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">Inter-district Mobilization</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">अंतर-जिला संसाधन · Real-time resource movement between districts</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('mobilization.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('mobilization.subtitle')}</p>
       </div>
 
       {/* KPI strip */}
@@ -200,7 +204,7 @@ export default function MobilizationPage() {
         {kpis.map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4 relative overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
             <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
-              k.variant === 'critical' ? 'bg-rose-500' : k.variant === 'info' ? 'bg-blue-400' : 'bg-[var(--color-primary)]'
+              k.variant === 'critical' ? 'bg-rose-500' : k.variant === 'info' ? 'bg-surface-sunken' : 'bg-[var(--color-primary)]'
             }`} />
             <div className="pl-1">
               <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -213,10 +217,10 @@ export default function MobilizationPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
-        {([['pending', `Pending (${pending.length})`], ['transit', `In transit (${inTransit.length})`], ['history', `History (${history.length})`]] as const).map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)}
+        {([['pending', t('mobilization.tabPending', { count: pending.length })], ['transit', t('mobilization.tabTransit', { count: inTransit.length })], ['history', t('mobilization.tabHistory', { count: history.length })]] as const).map(([tb, label]) => (
+          <button key={tb} onClick={() => setTab(tb)}
             className={`px-4 py-1.5 rounded-lg text-sm transition-all ${
-              tab === t ? 'bg-white text-[var(--color-primary)] font-semibold shadow' : 'font-medium text-slate-500 hover:text-slate-700'
+              tab === tb ? 'bg-white text-[var(--color-accent)] font-semibold shadow' : 'font-medium text-slate-500 hover:text-slate-700'
             }`}>{label}</button>
         ))}
       </div>
@@ -226,7 +230,7 @@ export default function MobilizationPage() {
           {pending.length === 0 && (
             <div className="text-center py-12 text-[var(--color-foreground-muted)]">
               <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p>No pending mobilization requests</p>
+              <p>{t('mobilization.emptyPending')}</p>
             </div>
           )}
           {pending.map(r => <MobCard key={r.id} req={r} />)}
@@ -238,7 +242,7 @@ export default function MobilizationPage() {
           {inTransit.length === 0 && (
             <div className="text-center py-12 text-[var(--color-foreground-muted)]">
               <Truck className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p>No transfers currently in transit</p>
+              <p>{t('mobilization.emptyTransit')}</p>
             </div>
           )}
           {inTransit.map(r => <InTransitCard key={r.id} req={r} />)}
@@ -250,8 +254,8 @@ export default function MobilizationPage() {
           <table className="w-full text-sm">
             <thead className="bg-[var(--color-surface-raised)]">
               <tr>
-                {['From district', 'Resource', 'Quantity', 'Status', 'Created', 'Resolved'].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">{h}</th>
+                {['mobilization.colFrom', 'mobilization.colResource', 'mobilization.colQuantity', 'mobilization.colStatus', 'mobilization.colCreated', 'mobilization.colResolved'].map(h => (
+                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">{t(h)}</th>
                 ))}
               </tr>
             </thead>

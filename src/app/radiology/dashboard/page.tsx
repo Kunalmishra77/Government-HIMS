@@ -46,7 +46,7 @@ const SHORTCUTS: { href: string; label: string; sub: string; icon: LucideIcon; t
   { href: "/radiology/distribution", label: "Distribution", sub: "Deliver · patient summary", icon: Send, tone: "brand" },
 ]
 const SHORTCUT_CHIP: Record<"brand" | "danger" | "success", string> = {
-  brand: "bg-accent-soft text-primary",
+  brand: "bg-accent-soft text-accent",
   danger: "bg-danger-bg text-danger",
   success: "bg-success-bg text-success-strong",
 }
@@ -55,7 +55,7 @@ const SHORTCUT_CHIP: Record<"brand" | "danger" | "success", string> = {
 // amber = needs action, indigo = in-flight, success = released, danger = critical.
 const STAGE_TONE = {
   warn:   "border-warning/30 bg-warning-bg text-brand-amber-strong",
-  brand:  "border-primary/20 bg-accent-soft text-primary",
+  brand:  "border-primary/20 bg-accent-soft text-accent",
   ok:     "border-success/25 bg-success-bg text-success-strong",
   danger: "border-danger/30 bg-danger-bg text-danger-strong ring-1 ring-danger/15",
   idle:   "border-border bg-surface text-foreground-lighter",
@@ -75,7 +75,9 @@ export default function RadiologyOverview() {
     const scheduledOnly = studies.filter(s => s.status === "scheduled")
     const arrivedOnly = studies.filter(s => s.status === "arrived")
     const ordered = studies.filter(s => s.status === "ordered" || s.status === "scheduled")
-    const onBench = studies.filter(s => s.status === "arrived" || s.status === "acquiring")
+    // "On bench" = exams actively being acquired. Arrived-but-not-started patients are the
+    // queue (surfaced separately as the Arrived stage), not bench work.
+    const onBench = studies.filter(s => s.status === "acquiring")
     const acquired = studies.filter(s => s.status === "acquired")
     const reading = studies.filter(s => s.status === "reading")
     const reported = studies.filter(s => s.status === "reported")
@@ -169,9 +171,9 @@ export default function RadiologyOverview() {
           Pipeline by modality · critical-finding SLA · AI exception triage
         </p>
         <div className="flex gap-2 flex-wrap">
-          <Link href="/radiology/inbox" className="u-press inline-flex items-center gap-1.5 text-xs font-bold text-primary bg-accent-soft hover:bg-accent-soft/70 px-3 py-2 rounded-xl transition-colors"><ClipboardList className="h-3.5 w-3.5" />Open Inbox</Link>
-          <Link href="/radiology/bench" className="u-press inline-flex items-center gap-1.5 text-xs font-bold text-primary bg-accent-soft hover:bg-accent-soft/70 px-3 py-2 rounded-xl transition-colors"><ScanLine className="h-3.5 w-3.5" />Open Bench</Link>
-          <Link href="/radiology/reading" className="u-press inline-flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark px-3 py-2 rounded-xl shadow-xs transition-colors">
+          <Link href="/radiology/inbox" className="u-press inline-flex items-center gap-1.5 text-xs font-bold text-accent bg-accent-soft hover:bg-accent-soft/70 px-3 py-2 rounded-xl transition-colors"><ClipboardList className="h-3.5 w-3.5" />Open Inbox</Link>
+          <Link href="/radiology/bench" className="u-press inline-flex items-center gap-1.5 text-xs font-bold text-accent bg-accent-soft hover:bg-accent-soft/70 px-3 py-2 rounded-xl transition-colors"><ScanLine className="h-3.5 w-3.5" />Open Bench</Link>
+          <Link href="/radiology/reading" className="u-press inline-flex items-center gap-1.5 text-xs font-bold text-[#0D2032] hover:text-[#0D2032] bg-primary hover:bg-primary-dark px-3 py-2 rounded-xl shadow-xs transition-colors">
             <FileText className="h-3.5 w-3.5" />Reading Room
           </Link>
         </div>
@@ -186,7 +188,7 @@ export default function RadiologyOverview() {
               <p className="text-[13px] font-bold text-foreground truncate">{label}</p>
               <p className="text-[11px] text-foreground-lighter truncate">{sub}</p>
             </div>
-            <ArrowRight className="h-4 w-4 text-foreground-placeholder ml-auto group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+            <ArrowRight className="h-4 w-4 text-foreground-placeholder ml-auto group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0" />
           </Link>
         ))}
       </div>
@@ -222,9 +224,9 @@ export default function RadiologyOverview() {
       {/* KPI strip */}
       <CompactKPIStrip className="gap-3">
         <CompactKPI label="Ordered / scheduled" value={m.kpis.ordered} tone="warn" icon={<ClipboardList className="h-4 w-4 text-brand-amber-strong" />} />
-        <CompactKPI label="On bench" value={m.kpis.onBench} tone="info" icon={<ScanLine className="h-4 w-4 text-primary" />} />
-        <CompactKPI label="Pending read" value={m.kpis.pendingRead} tone="info" icon={<Hourglass className="h-4 w-4 text-primary" />} />
-        <CompactKPI label="Pending verify" value={m.kpis.pendingVerify} tone="info" icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
+        <CompactKPI label="On bench" value={m.kpis.onBench} tone="info" icon={<ScanLine className="h-4 w-4 text-accent" />} />
+        <CompactKPI label="Pending read" value={m.kpis.pendingRead} tone="info" icon={<Hourglass className="h-4 w-4 text-accent" />} />
+        <CompactKPI label="Pending verify" value={m.kpis.pendingVerify} tone="info" icon={<ShieldCheck className="h-4 w-4 text-accent" />} />
         <CompactKPI label="Released today" value={m.kpis.releasedToday} tone="ok" icon={<PackageCheck className="h-4 w-4 text-success-strong" />} />
         <CompactKPI label="TAT breaches" value={m.kpis.tatBreaches} tone="danger" icon={<AlertTriangle className="h-4 w-4 text-danger-strong" />}
           onClick={m.kpis.tatBreaches > 0 ? escalateRadiologyTat : undefined} hint={m.kpis.tatBreaches > 0 ? "Click to escalate to admin + doctor" : undefined} />
@@ -247,9 +249,9 @@ export default function RadiologyOverview() {
                     <div className="mt-2 space-y-0.5">
                       {counts.scheduled + counts.ordered > 0 && <p className="text-[10px] text-foreground-lighter"><b>{counts.scheduled + counts.ordered}</b> awaiting</p>}
                       {counts.arrived + counts.acquiring > 0 && <p className="text-[10px] text-brand-amber-strong"><b>{counts.arrived + counts.acquiring}</b> on bench</p>}
-                      {counts.acquired > 0 && <p className="text-[10px] text-primary"><b>{counts.acquired}</b> awaiting read</p>}
-                      {counts.reading > 0 && <p className="text-[10px] text-primary"><b>{counts.reading}</b> being read</p>}
-                      {counts.reported > 0 && <p className="text-[10px] text-primary"><b>{counts.reported}</b> pending verify</p>}
+                      {counts.acquired > 0 && <p className="text-[10px] text-accent"><b>{counts.acquired}</b> awaiting read</p>}
+                      {counts.reading > 0 && <p className="text-[10px] text-accent"><b>{counts.reading}</b> being read</p>}
+                      {counts.reported > 0 && <p className="text-[10px] text-accent"><b>{counts.reported}</b> pending verify</p>}
                     </div>
                   </div>
                 )
@@ -305,7 +307,7 @@ export default function RadiologyOverview() {
                   icon={Hourglass}
                   title="Pending verification"
                   count={m.reported.length}
-                  action={<Link href="/radiology/verification" className="text-xs font-bold text-primary hover:underline flex items-center gap-1">Open Verification <ArrowRight className="h-3 w-3" /></Link>}
+                  action={<Link href="/radiology/verification" className="text-xs font-bold text-accent hover:underline flex items-center gap-1">Open Verification <ArrowRight className="h-3 w-3" /></Link>}
                 />
               </div>
               <div className="divide-y divide-border-light">
@@ -313,7 +315,7 @@ export default function RadiologyOverview() {
                   <div key={s.id} className="px-4 py-2.5 text-sm">
                     <span className="font-bold text-foreground">{s.patientName}</span>
                     <span className="text-foreground-placeholder mx-2">·</span>
-                    <span className="text-primary">{s.name}</span>
+                    <span className="text-accent">{s.name}</span>
                     <span className="text-foreground-placeholder mx-2">·</span>
                     <span className="text-[11px] text-foreground-lighter">read by {s.readingBy?.name ?? "—"}</span>
                   </div>
@@ -348,14 +350,14 @@ export default function RadiologyOverview() {
           </div>
 
           <motion.div {...motionPresets.cardIn} className="rounded-2xl border border-primary/20 bg-accent-soft p-4">
-            <h2 className="t-title text-primary flex items-center gap-2 mb-2"><Sparkles className="h-4 w-4" />AI exception triage</h2>
+            <h2 className="t-title text-accent flex items-center gap-2 mb-2"><Sparkles className="h-4 w-4" />AI exception triage</h2>
             {m.overOverdue.length === 0 ? (
               <p className="text-xs text-foreground-lighter">No exceptions. Pipeline is healthy.</p>
             ) : (
               <div className="space-y-2 text-xs">
                 {m.overOverdue.map(s => (
                   <p key={s.id} className="text-foreground-muted">
-                    <Clock className="h-3 w-3 inline -mt-0.5 mr-1 text-primary" />
+                    <Clock className="h-3 w-3 inline -mt-0.5 mr-1 text-accent" />
                     <b className="text-foreground">{s.patientName}</b> · {s.name} · <b className="tabular-nums">{minsElapsed(s.orderedAt)}m</b> elapsed (TAT {s.expectedTATmin}m) — likely stuck
                   </p>
                 ))}
@@ -364,9 +366,9 @@ export default function RadiologyOverview() {
           </motion.div>
 
           <div className="hms-card p-4 space-y-1.5">
-            <p className="text-xs text-foreground-lighter flex items-center gap-1.5"><CheckCircle className="h-3 w-3 text-success" />Verification queue: <Link href="/radiology/verification" className="font-bold text-primary hover:underline">open</Link></p>
-            <p className="text-xs text-foreground-lighter flex items-center gap-1.5"><FileText className="h-3 w-3 text-primary" />Templates: <Link href="/radiology/templates" className="font-bold text-primary hover:underline">open</Link></p>
-            <p className="text-xs text-foreground-lighter flex items-center gap-1.5"><ScanLine className="h-3 w-3 text-primary" />DICOM viewer: <Link href="/radiology/viewer" className="font-bold text-primary hover:underline">open</Link></p>
+            <p className="text-xs text-foreground-lighter flex items-center gap-1.5"><CheckCircle className="h-3 w-3 text-success" />Verification queue: <Link href="/radiology/verification" className="font-bold text-accent hover:underline">open</Link></p>
+            <p className="text-xs text-foreground-lighter flex items-center gap-1.5"><FileText className="h-3 w-3 text-accent" />Templates: <Link href="/radiology/templates" className="font-bold text-accent hover:underline">open</Link></p>
+            <p className="text-xs text-foreground-lighter flex items-center gap-1.5"><ScanLine className="h-3 w-3 text-accent" />DICOM viewer: <Link href="/radiology/viewer" className="font-bold text-accent hover:underline">open</Link></p>
           </div>
         </div>
       </div>

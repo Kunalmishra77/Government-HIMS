@@ -1,0 +1,13 @@
+{
+  "title": "Billing",
+  "invoice": "Bill",
+  "totalAmount": "Total Amount",
+  "paid": "Paid",
+  "outstanding": "Outstanding",
+  "discount": "Discount",
+  "netPayable": "Net Payable",
+  "generateBill": "Generate Bill",
+  "packages": "Packages",
+  "refunds": "Refunds",
+  "discounts": "Discounts"
+}

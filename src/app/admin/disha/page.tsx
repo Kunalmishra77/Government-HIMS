@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { useDialogs } from "@/components/ui/ConfirmDialog"
 import { DpdpSelfAuditPanel } from "@/components/admin/DpdpSelfAuditPanel"
+import { useTranslations } from "next-intl"
 
 // All DISHA / DPDP action codes we surface here
 const DISHA_ACTIONS = [
@@ -49,11 +50,11 @@ const ACTION_ICON: Record<DishaAction, React.ElementType> = {
 }
 
 const ACTION_TINT: Record<DishaAction, string> = {
-  disha_record_accessed:  'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
+  disha_record_accessed:  'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
   disha_consent_captured: 'bg-emerald-50 text-emerald-700',
   disha_consent_revoked:  'bg-amber-50 text-amber-700',
-  disha_data_export:      'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  disha_rtbf_requested:   'bg-orange-50 text-orange-700',
+  disha_data_export:      'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  disha_rtbf_requested:   'bg-primary-soft text-accent',
   disha_rtbf_fulfilled:   'bg-emerald-50 text-emerald-700',
   disha_breach_logged:    'bg-red-50 text-red-700',
 }
@@ -61,9 +62,11 @@ const ACTION_TINT: Record<DishaAction, string> = {
 const fmt = (iso: string) => new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 export default function DishaPage() {
+  const t = useTranslations('admin')
   const currentUser = useAuthStore(s => s.currentUser)
   const entries = useAuditStore(s => s.entries)
   const log = useAuditStore(s => s.log)
+  const actionLabel = (a: DishaAction) => t.has(`disha.action.${a}`) ? t(`disha.action.${a}`) : ACTION_LABEL[a]
 
   const canAttest = canDo(currentUser?.role, 'compliance.attest')
   const actorName = currentUser?.name ?? 'Administrator'
@@ -103,15 +106,15 @@ export default function DishaPage() {
   }, [dishaEntries, actionFilter, search])
 
   const logBreach = async () => {
-    if (!canAttest) { toast.error("You don't have permission to attest breaches"); return }
+    if (!canAttest) { toast.error(t('disha.noPermission')); return }
     const values = await prompt({
-      title: 'Log data breach',
-      body: 'Will be audit-logged. DPO must notify CERT-In within 6 hours per DPDP §8(6).',
+      title: t('disha.logBreachTitle'),
+      body: t('disha.logBreachBody'),
       tone: 'danger',
-      confirmLabel: 'Log breach',
+      confirmLabel: t('disha.logBreach'),
       fields: [
-        { id: 'summary', label: 'Breach summary', type: 'textarea',
-          placeholder: 'What happened, scope of records affected, mitigation in flight',
+        { id: 'summary', label: t('disha.breachSummary'), type: 'textarea',
+          placeholder: t('disha.breachPlaceholder'),
           required: true },
       ],
     })
@@ -122,7 +125,7 @@ export default function DishaPage() {
       resource: 'breach', resourceId: `BRC-${Date.now()}`,
       detail: values.summary,
     })
-    toast.error(`Breach logged — DPO notification required within 6 hours`)
+    toast.error(t('disha.breachLogged'))
   }
 
   const exportRegister = () => {
@@ -140,7 +143,7 @@ export default function DishaPage() {
       a.href = url; a.download = `disha-access-log-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
       URL.revokeObjectURL(url)
     }
-    toast.success(`Exported ${filtered.length} access events`)
+    toast.success(t('disha.exportedEvents', { count: filtered.length }))
   }
 
   return (
@@ -148,21 +151,21 @@ export default function DishaPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Lock className="h-6 w-6 text-rose-600" />DISHA / DPDP Compliance
+            <Lock className="h-6 w-6 text-rose-600" />{t('disha.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Patient data access log · consent register · RTBF queue · breach attestation · NABH PRE evidence
+            {t('disha.subtitle')}
           </p>
         </div>
         <div className="flex gap-2">
           <button onClick={exportRegister}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
-            <Download className="h-3.5 w-3.5" />Export register
+            <Download className="h-3.5 w-3.5" />{t('disha.exportRegister')}
           </button>
           {canAttest && (
             <button onClick={logBreach}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white cursor-pointer">
-              <AlertTriangle className="h-3.5 w-3.5" />Log breach
+              <AlertTriangle className="h-3.5 w-3.5" />{t('disha.logBreach')}
             </button>
           )}
         </div>
@@ -174,11 +177,11 @@ export default function DishaPage() {
       <DpdpSelfAuditPanel />
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <KPI label="Record accesses" value={kpis.access} icon={Eye} tint="bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]" />
-        <KPI label="Consents captured" value={kpis.consentCaptured} icon={ShieldCheck} tint="bg-emerald-50 border-emerald-200 text-emerald-700" />
-        <KPI label="Consents revoked" value={kpis.consentRevoked} icon={AlertTriangle} tint={kpis.consentRevoked > 0 ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-slate-50 border-slate-200 text-slate-600"} />
-        <KPI label="RTBF open" value={kpis.rtbfOpen} icon={Trash2} tint={kpis.rtbfOpen > 0 ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-slate-50 border-slate-200 text-slate-600"} />
-        <KPI label="Breaches logged" value={kpis.breaches} icon={ShieldCheck} tint={kpis.breaches > 0 ? "bg-red-50 border-red-200 text-red-700" : "bg-emerald-50 border-emerald-200 text-emerald-700"} />
+        <KPI label={t('disha.kpiAccesses')} value={kpis.access} icon={Eye} tint="bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]" />
+        <KPI label={t('disha.kpiConsentsCaptured')} value={kpis.consentCaptured} icon={ShieldCheck} tint="bg-emerald-50 border-emerald-200 text-emerald-700" />
+        <KPI label={t('disha.kpiConsentsRevoked')} value={kpis.consentRevoked} icon={AlertTriangle} tint={kpis.consentRevoked > 0 ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-slate-50 border-slate-200 text-slate-600"} />
+        <KPI label={t('disha.kpiRtbfOpen')} value={kpis.rtbfOpen} icon={Trash2} tint={kpis.rtbfOpen > 0 ? "bg-primary-soft border-primary/20 text-accent" : "bg-slate-50 border-slate-200 text-slate-600"} />
+        <KPI label={t('disha.kpiBreaches')} value={kpis.breaches} icon={ShieldCheck} tint={kpis.breaches > 0 ? "bg-red-50 border-red-200 text-red-700" : "bg-emerald-50 border-emerald-200 text-emerald-700"} />
       </div>
 
       {/* Breach notice if any */}
@@ -186,8 +189,7 @@ export default function DishaPage() {
         <div className="rounded-xl bg-red-50 border border-red-200 p-3 flex items-start gap-2">
           <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-red-800">
-            <b>Active breach record(s).</b> DPDP requires CERT-In notification within 6 hours and affected individuals notified per the rules.
-            DPO must complete root-cause analysis within 72 hours.
+            {t.rich('disha.breachNotice', { b: (chunks) => <b>{chunks}</b> })}
           </p>
         </div>
       )}
@@ -195,7 +197,7 @@ export default function DishaPage() {
       {/* RTBF queue (open requests) */}
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-          <Trash2 className="h-4 w-4 text-orange-600" />Right-to-Erasure requests (open)
+          <Trash2 className="h-4 w-4 text-accent" />{t('disha.rtbfRequestsOpen')}
         </h3>
         {(() => {
           // Open RTBFs = requested but not fulfilled
@@ -203,7 +205,7 @@ export default function DishaPage() {
           const fulfilled = new Set(dishaEntries.filter(e => e.action === 'disha_rtbf_fulfilled').map(e => e.resourceId))
           const open = requested.filter(r => !fulfilled.has(r.resourceId))
           if (open.length === 0) {
-            return <p className="text-xs text-slate-400 italic py-3 text-center">No open RTBF requests.</p>
+            return <p className="text-xs text-slate-400 italic py-3 text-center">{t('disha.noOpenRtbf')}</p>
           }
           return (
             <div className="space-y-1.5">
@@ -213,12 +215,12 @@ export default function DishaPage() {
                 const overdue = ageHours > 720  // 30-day SLA
                 return (
                   <div key={e.id} className={cn('flex items-center justify-between gap-2 p-2 rounded-lg',
-                    overdue ? 'bg-red-50 border border-red-200' : 'bg-orange-50/50 border border-orange-100')}>
+                    overdue ? 'bg-red-50 border border-red-200' : 'bg-primary-soft border border-primary/20')}>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-slate-800">{e.resourceId}</p>
                       <p className="text-[11px] text-slate-600 truncate">{e.detail}</p>
-                      <p className={cn('text-[10px]', overdue ? 'text-red-700 font-bold' : 'text-orange-700')}>
-                        {ageDays}d open · {overdue ? 'OVERDUE (>30d)' : `${30 - ageDays}d to SLA`}
+                      <p className={cn('text-[10px]', overdue ? 'text-red-700 font-bold' : 'text-accent')}>
+                        {t('disha.daysOpen', { days: ageDays })} · {overdue ? t('disha.overdue30') : t('disha.daysToSla', { days: 30 - ageDays })}
                       </p>
                     </div>
                     {canAttest && (
@@ -229,10 +231,10 @@ export default function DishaPage() {
                           resource: 'patient_record', resourceId: e.resourceId,
                           detail: `Right-to-Erasure fulfilled · all PII purged from operational stores · ${e.resourceId}`,
                         })
-                        toast.success(`RTBF fulfilled for ${e.resourceId}`)
+                        toast.success(t('disha.rtbfFulfilledFor', { id: e.resourceId ?? "" }))
                       }}
                         className="text-[10px] font-bold px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
-                        Fulfil
+                        {t('disha.fulfil')}
                       </button>
                     )}
                   </div>
@@ -248,13 +250,13 @@ export default function DishaPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search actor / patient ID / detail"
+            placeholder={t('disha.searchPlaceholder')}
             className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-300" />
         </div>
         <Select value={actionFilter} onChange={(e) => setActionFilter(e.target.value as DishaAction | 'all')}
           className="text-xs font-bold border border-slate-300 rounded-xl px-2 py-2 bg-white">
-          <option value="all">All actions</option>
-          {DISHA_ACTIONS.map(a => <option key={a} value={a}>{ACTION_LABEL[a]}</option>)}
+          <option value="all">{t('disha.allActions')}</option>
+          {DISHA_ACTIONS.map(a => <option key={a} value={a}>{actionLabel(a)}</option>)}
         </Select>
       </div>
 
@@ -263,15 +265,15 @@ export default function DishaPage() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              {['Time', 'Action', 'Actor', 'Patient', 'Detail'].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{h}</th>
+              {['colTime', 'colAction', 'colActor', 'colPatient', 'colDetail'].map(h => (
+                <th key={h} className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{t(`disha.${h}`)}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-400 italic">
-                No DISHA / DPDP events match.
+                {t('disha.noMatch')}
               </td></tr>
             ) : filtered.map((e, i) => {
               const action = e.action as DishaAction
@@ -284,11 +286,11 @@ export default function DishaPage() {
                   <td className="px-4 py-3 text-[11px] text-slate-500 whitespace-nowrap">{fmt(e.timestamp)}</td>
                   <td className="px-4 py-3">
                     <span className={cn('inline-flex items-center gap-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded', ACTION_TINT[action])}>
-                      <Icon className="h-3 w-3" />{ACTION_LABEL[action]}
+                      <Icon className="h-3 w-3" />{actionLabel(action)}
                     </span>
                     {sev !== 'info' && (
                       <span className={cn('ml-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded',
-                        sev === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700')}>{sev}</span>
+                        sev === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700')}>{t.has(`disha.severity.${sev}`) ? t(`disha.severity.${sev}`) : sev}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-xs">
@@ -305,8 +307,7 @@ export default function DishaPage() {
       </div>
 
       <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
-        <ScanSearch className="h-3 w-3" />Showing {filtered.length} of {dishaEntries.length} DISHA / DPDP events ·
-        Patient record views are logged automatically · rights exercised under DPDP Act 2023.
+        <ScanSearch className="h-3 w-3" />{t('disha.footer', { shown: filtered.length, total: dishaEntries.length })}
       </p>
       {dialogView}
     </div>

@@ -239,8 +239,8 @@ export function SickCallModal({ open, onClose, defaults }: SickCallModalProps) {
                       </p>
                     </div>
                     <div className="flex items-center gap-2 mb-1">
-                      <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)]">
+                      <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-accent)]">
                         Ranked candidates ({candidates.length}) · click one to assign
                       </p>
                     </div>
@@ -258,7 +258,7 @@ export function SickCallModal({ open, onClose, defaults }: SickCallModalProps) {
                           <button key={c.staff.id} onClick={() => setPickedReplacement(c.staff.id)}
                             className={cn('w-full text-left rounded-xl border p-3 cursor-pointer transition',
                               pickedReplacement === c.staff.id
-                                ? 'border-[var(--color-primary-light)] bg-[rgba(8,145,178,0.07)]/60 ring-2 ring-blue-200'
+                                ? 'border-[var(--color-primary-light)] bg-[rgba(238,107,38,0.07)]/60 ring-2 ring-primary/25'
                                 : 'border-slate-200 hover:bg-slate-50')}>
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -273,7 +273,7 @@ export function SickCallModal({ open, onClose, defaults }: SickCallModalProps) {
                             </div>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {c.reasons.map((r, i) => (
-                                <span key={i} className="text-[10px] text-[var(--color-primary)] bg-white border border-[rgba(8,145,178,0.15)] px-1.5 py-0.5 rounded">{r}</span>
+                                <span key={i} className="text-[10px] text-[var(--color-accent)] bg-white border border-[rgba(238,107,38,0.15)] px-1.5 py-0.5 rounded">{r}</span>
                               ))}
                             </div>
                             {(c.staff.phone || c.staff.email) && (

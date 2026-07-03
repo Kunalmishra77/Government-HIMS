@@ -1,0 +1,9 @@
+{
+  "back": "वापस",
+  "unknownPatient": "अज्ञात मरीज",
+  "male": "पुरुष",
+  "female": "महिला",
+  "ageYears": "{age} साल",
+  "ageGender": "{age} साल · {gender}",
+  "admitted": "एडमिट {date}"
+}

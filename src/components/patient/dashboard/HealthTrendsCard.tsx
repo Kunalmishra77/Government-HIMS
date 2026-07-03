@@ -10,7 +10,7 @@ const BP = [
 
 const STATS = [
   { icon: TrendingUp, tint: 'text-emerald-600 bg-emerald-50', label: 'Health score', value: '78', delta: '↑ 6' },
-  { icon: HeartPulse, tint: 'text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)]', label: 'Avg BP', value: '130/85', delta: '↓ improving' },
+  { icon: HeartPulse, tint: 'text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)]', label: 'Avg BP', value: '130/85', delta: '↓ improving' },
   { icon: Wallet, tint: 'text-amber-600 bg-amber-50', label: 'Spent (yr)', value: '₹4,280', delta: '3 visits' },
 ]
 

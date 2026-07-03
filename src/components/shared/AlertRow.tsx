@@ -29,7 +29,7 @@ const severityConfig: Record<AlertSeverity, { border: string; bg: string; titleC
   info: {
     border:     'border-l-[var(--color-info)]',
     bg:         'bg-[var(--color-info-bg)] hover:brightness-95',
-    titleColor: 'text-blue-900',
+    titleColor: 'text-accent',
   },
 }
 
@@ -71,7 +71,7 @@ export function AlertRow({ severity, title, detail, ageLabel, facility, source, 
       {onAcknowledge && !acknowledged && (
         <button
           onClick={e => { e.stopPropagation(); onAcknowledge() }}
-          className="flex-shrink-0 self-center text-[10.5px] font-semibold px-2.5 py-1 rounded-md border border-[var(--color-border)] bg-white text-[var(--color-foreground-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] transition-all duration-150"
+          className="flex-shrink-0 self-center text-[10.5px] font-semibold px-2.5 py-1 rounded-md border border-[var(--color-border)] bg-white text-[var(--color-foreground-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-primary-soft)] transition-all duration-150"
         >
           Ack
         </button>

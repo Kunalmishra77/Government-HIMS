@@ -52,25 +52,41 @@ export function startVoiceCommand(opts: {
    *  up (ms). Slow/elderly patients need a generous window — the browser's own
    *  no-speech timeout (~5-7s) is too short, so we auto-restart until this. */
   graceMs?: number
+  /** Silence after the patient STOPS speaking before we finalize (ms). Short
+   *  (~900ms) for snappy one-word answers; long for free-form answers where the
+   *  patient pauses between thoughts (symptoms, history). */
+  endpointMs?: number
+  /** Keep one recognition session alive across natural pauses instead of ending
+   *  on the first silence — lets the patient describe several symptoms, duration
+   *  and history in one breath without being cut off. */
+  continuous?: boolean
+  /** Hard cap on a single answer once speech has started (ms). Safety bound for
+   *  continuous mode so a noisy room can't keep the mic open indefinitely. */
+  maxMs?: number
 }): Recognition | null {
   const SR = typeof window !== 'undefined' ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null
   if (!SR) { opts.onError?.('unsupported'); return null }
 
   const grace = opts.graceMs ?? 15000
+  const endpointMs = opts.endpointMs ?? 900
+  const continuous = opts.continuous ?? false
+  const maxMs = opts.maxMs ?? 0
   const startedAt = Date.now()
   let finalText = ''
   let lastInterim = ''    // best interim transcript seen — used if no final arrives
   let spoke = false       // patient has produced some speech (interim or final)
   let stopped = false     // explicit stop() or a final result — do not restart
   let settleTimer: ReturnType<typeof setTimeout> | null = null
+  let maxTimer: ReturnType<typeof setTimeout> | null = null
   let rec: any
 
   const clearSettle = () => { if (settleTimer) { clearTimeout(settleTimer); settleTimer = null } }
+  const clearMax = () => { if (maxTimer) { clearTimeout(maxTimer); maxTimer = null } }
 
   const build = (): any | null => {
     let r: any
     try { r = new SR() } catch { opts.onError?.('init-failed'); return null }
-    r.continuous = false
+    r.continuous = continuous
     r.interimResults = true
     r.maxAlternatives = 1
     r.lang = opts.lang ?? browserLang()
@@ -84,13 +100,18 @@ export function startVoiceCommand(opts: {
       if (interim) lastInterim = interim
       if (interim || finalText) spoke = true
       opts.onPartial?.((finalText + interim).trim())
-      // Snappier endpointing: once we have a confident transcript, if no further
-      // speech arrives shortly, stop to finalize immediately instead of waiting
-      // for the browser's slow silence timeout. This cuts response latency,
-      // especially on short answers like "Male" / "28".
+      // Endpointing: once we have a confident transcript, finalize after a short
+      // silence instead of waiting for the browser's slow timeout. The window is
+      // tunable — short for snappy one-word answers ("Male" / "28"), long for
+      // free-form answers where the patient pauses mid-thought (symptoms).
       clearSettle()
       if (finalText.trim() || lastInterim.trim()) {
-        settleTimer = setTimeout(() => { try { r.stop() } catch { /* ignore */ } }, 900)
+        settleTimer = setTimeout(() => { try { r.stop() } catch { /* ignore */ } }, endpointMs)
+      }
+      // Once speech has started, bound a single answer so continuous mode can't
+      // stay open forever in a noisy room.
+      if (maxMs && !maxTimer) {
+        maxTimer = setTimeout(() => { stopped = true; try { r.stop() } catch { /* ignore */ } }, maxMs)
       }
     }
     r.onerror = (e: any) => {
@@ -100,6 +121,7 @@ export function startVoiceCommand(opts: {
     }
     r.onend = () => {
       clearSettle()
+      clearMax()
       // Use the final transcript, or fall back to the best interim — Chrome
       // frequently ends short utterances ("Male", "28") without ever marking a
       // result final, which previously dropped the answer and stalled the flow.
@@ -119,7 +141,7 @@ export function startVoiceCommand(opts: {
   rec = build()
   if (!rec) return null
   try { rec.start() } catch { opts.onError?.('start-failed'); return null }
-  return { stop: () => { stopped = true; clearSettle(); try { rec?.stop() } catch { /* ignore */ } } }
+  return { stop: () => { stopped = true; clearSettle(); clearMax(); try { rec?.stop() } catch { /* ignore */ } } }
 }
 
 // ── Text-to-speech (assistant voice) ─────────────────────────────────
@@ -185,6 +207,138 @@ if (typeof window !== 'undefined') {
   window.addEventListener('keydown', handler)
 }
 
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const MONTHS_HI = ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्तूबर', 'नवंबर', 'दिसंबर']
+
+// Rewrite any machine-format date ("2026-08-24", "24-08-26", "24/08/2026") into
+// spoken words in the active language ("24 August 2026" / "24 अगस्त 2026") so the
+// TTS never reads a separator as "minus" or spells the date out digit by digit.
+// ISO (year-first) is handled before day-first so the two patterns can't overlap.
+function humanizeDatesForSpeech(text: string, lang: 'en' | 'hi'): string {
+  const months = lang === 'hi' ? MONTHS_HI : MONTHS_EN
+  const fullYear = (y: number) => (y < 100 ? 2000 + y : y)
+  const out = text.replace(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g, (m, y, mo, d) => {
+    const mi = parseInt(mo, 10) - 1
+    return mi >= 0 && mi <= 11 ? `${parseInt(d, 10)} ${months[mi]} ${fullYear(parseInt(y, 10))}` : m
+  })
+  return out.replace(/\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b/g, (m, d, mo, y) => {
+    const mi = parseInt(mo, 10) - 1
+    return mi >= 0 && mi <= 11 ? `${parseInt(d, 10)} ${months[mi]} ${fullYear(parseInt(y, 10))}` : m
+  })
+}
+
+// ── Product names & healthcare abbreviations ─────────────────────────────────
+// Left alone, the TTS engine (and the browser fallback) guess at acronyms — it
+// spells "HIMS" out letter by letter, mangles "UHID", and reads "ABHA" as four
+// letters instead of the word it actually is. These rules rewrite each known
+// term into a phonetic form so it is spoken the same, correct way everywhere the
+// assistant talks — static lines and anything the LLM generates alike.
+
+// Spell an acronym so the TTS reads it one letter at a time. English uses
+// dotted capitals ("UHID" → "U.H.I.D") — the format ElevenLabs reliably reads as
+// letter names; Hindi uses the Devanagari letter names spaced apart.
+const LETTER_HI: Record<string, string> = {
+  A: 'ए', B: 'बी', C: 'सी', D: 'डी', E: 'ई', F: 'एफ़', G: 'जी', H: 'एच',
+  I: 'आई', J: 'जे', K: 'के', L: 'एल', M: 'एम', N: 'एन', O: 'ओ', P: 'पी',
+  Q: 'क्यू', R: 'आर', S: 'एस', T: 'टी', U: 'यू', V: 'वी', W: 'डब्ल्यू',
+  X: 'एक्स', Y: 'वाई', Z: 'ज़ेड',
+}
+const spellLetters = (word: string, lang: 'en' | 'hi'): string =>
+  lang === 'hi'
+    ? word.split('').map((c) => LETTER_HI[c.toUpperCase()] ?? c).join(' ')
+    : word.toUpperCase().split('').join('.')
+const spelled = (word: string) => ({ en: spellLetters(word, 'en'), hi: spellLetters(word, 'hi') })
+
+// Each rule is a case-sensitive, whole-word match (acronyms are only ever
+// written in caps in spoken copy, so matching case avoids catching ordinary
+// words like "it"/"im"/"ct"). Multi-word/product rules run first so a
+// single-word rule can't re-touch what they already rewrote; because every
+// replacement is lower-case or Devanagari, the caps-only patterns never rematch.
+const PRONUNCIATION: Array<{ re: RegExp; en: string; hi: string }> = [
+  // Product name — "HIMS" is read letter by letter ("H.I.M.S").
+  { re: /\bAgentix\s+HIMS\b/g, en: `Agentix ${spellLetters('HIMS', 'en')}`, hi: `एजेंटिक्स ${spellLetters('HIMS', 'hi')}` },
+  { re: /\bHIMS\b/g, ...spelled('HIMS') },
+  // ABHA (Ayushman Bharat Health Account) is a spoken word — "Ah-bha".
+  { re: /\bABHA\b/g, en: 'Abha', hi: 'आभा' },
+  // Everything below is read out letter by letter.
+  { re: /\bABDM\b/g, ...spelled('ABDM') },
+  { re: /\bUHID\b/g, ...spelled('UHID') },
+  { re: /\bNICU\b/g, ...spelled('NICU') },
+  { re: /\bICU\b/g, ...spelled('ICU') },
+  { re: /\bOPD\b/g, ...spelled('OPD') },
+  { re: /\bIPD\b/g, ...spelled('IPD') },
+  { re: /\bTPA\b/g, ...spelled('TPA') },
+  { re: /\bCMO\b/g, ...spelled('CMO') },
+  { re: /\bMRD\b/g, ...spelled('MRD') },
+  { re: /\bEMR\b/g, ...spelled('EMR') },
+  { re: /\bEHR\b/g, ...spelled('EHR') },
+  { re: /\bECG\b/g, ...spelled('ECG') },
+  { re: /\bEKG\b/g, ...spelled('EKG') },
+  { re: /\bCBC\b/g, ...spelled('CBC') },
+  { re: /\bMRI\b/g, ...spelled('MRI') },
+  { re: /\bSpO2\b/g, en: 'S.P.O.2', hi: 'एस पी ओ टू' },
+  { re: /\bOT\b/g, ...spelled('OT') },
+  { re: /\bBP\b/g, ...spelled('BP') },
+  { re: /\bIV\b/g, ...spelled('IV') },
+  { re: /\bIM\b/g, ...spelled('IM') },
+  { re: /\bCT\b/g, ...spelled('CT') },
+]
+
+// Rewrite product names and healthcare abbreviations into their spoken forms so
+// the assistant pronounces them naturally and identically every time.
+export function humanizeAbbrevsForSpeech(text: string, lang: 'en' | 'hi'): string {
+  return PRONUNCIATION.reduce((s, r) => s.replace(r.re, lang === 'hi' ? r.hi : r.en), text)
+}
+
+// Hindi cardinal numbers 0–59 — used to speak clock times as words.
+const NUM_HI = [
+  'शून्य', 'एक', 'दो', 'तीन', 'चार', 'पाँच', 'छह', 'सात', 'आठ', 'नौ',
+  'दस', 'ग्यारह', 'बारह', 'तेरह', 'चौदह', 'पंद्रह', 'सोलह', 'सत्रह', 'अठारह', 'उन्नीस',
+  'बीस', 'इक्कीस', 'बाईस', 'तेईस', 'चौबीस', 'पच्चीस', 'छब्बीस', 'सत्ताईस', 'अट्ठाईस', 'उनतीस',
+  'तीस', 'इकतीस', 'बत्तीस', 'तैंतीस', 'चौंतीस', 'पैंतीस', 'छत्तीस', 'सैंतीस', 'अड़तीस', 'उनतालीस',
+  'चालीस', 'इकतालीस', 'बयालीस', 'तैंतालीस', 'चौवालीस', 'पैंतालीस', 'छियालीस', 'सैंतालीस', 'अड़तालीस', 'उनचास',
+  'पचास', 'इक्यावन', 'बावन', 'तिरेपन', 'चौवन', 'पचपन', 'छप्पन', 'सत्तावन', 'अट्ठावन', 'उनसठ',
+]
+
+// Natural Hindi spoken form of a clock time, per receptionist convention:
+//   HH:00 -> "X बजे"   ·   HH:30 -> "साढ़े X बजे"   ·   else -> "X YY पर"
+function spokenTimeHi(h24: number, m: number): string {
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12
+  const hw = NUM_HI[h12]
+  if (m === 0) return `${hw} बजे`
+  if (m === 30) return `साढ़े ${hw} बजे`
+  return `${hw} ${NUM_HI[m] ?? String(m)} पर`
+}
+
+// Convert a "HH:MM AM/PM" / "HH:MM" string to its spoken form. Hindi uses the
+// natural word rules above; English just strips the leading zero ("2:00 PM").
+export function spokenTime(t: string, lang: 'en' | 'hi'): string {
+  const mt = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i)
+  if (!mt) return t
+  let h = parseInt(mt[1], 10); const min = parseInt(mt[2], 10); const ap = (mt[3] || '').toUpperCase()
+  if (ap === 'PM' && h < 12) h += 12
+  if (ap === 'AM' && h === 12) h = 0
+  if (lang !== 'hi') return `${h % 12 === 0 ? 12 : h % 12}:${mt[2]}${ap ? ` ${ap}` : ''}`
+  return spokenTimeHi(h, min)
+}
+
+// Rewrite any clock time the assistant says ("11:00 AM", "दोपहर 1:30 बजे", "10:32")
+// into natural Hindi words so the TTS never reads it as raw digits. Absorbs a
+// leading part-of-day word and a trailing AM/PM/बजे so nothing is left dangling.
+function humanizeTimesForSpeech(text: string, lang: 'en' | 'hi'): string {
+  if (lang !== 'hi') return text
+  return text.replace(
+    /(?:(?:सुबह|दोपहर|शाम|सवेरे|रात)\s*)?(\d{1,2}):(\d{2})(?:\s*(AM|PM|am|pm|बजे))?/g,
+    (_full, hh, mm, suffix) => {
+      let h = parseInt(hh, 10); const m = parseInt(mm, 10)
+      const ap = (suffix || '').toUpperCase()
+      if (ap === 'PM' && h < 12) h += 12
+      if (ap === 'AM' && h === 12) h = 0
+      return spokenTimeHi(h, m)
+    },
+  )
+}
+
 // Speaks via the ElevenLabs proxy (`/api/voice/tts`) for a natural assistant
 // voice, falling back to the browser's speechSynthesis if the request fails or
 // the key isn't configured. `onDone` fires exactly once when audio finishes.
@@ -192,6 +346,7 @@ export function speak(text: string, lang: 'en' | 'hi' = 'en', onDone?: () => voi
   cancelSpeech()
   if (typeof window === 'undefined' || !text.trim()) { onDone?.(); return }
 
+  const spoken = humanizeAbbrevsForSpeech(humanizeTimesForSpeech(humanizeDatesForSpeech(text, lang), lang), lang)
   const seq = ++speakSeq
   let settled = false
   const finish = () => { if (!settled) { settled = true; onDone?.() } }
@@ -199,7 +354,7 @@ export function speak(text: string, lang: 'en' | 'hi' = 'en', onDone?: () => voi
   fetch('/api/voice/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, lang }),
+    body: JSON.stringify({ text: spoken, lang }),
   })
     .then(async (res) => {
       // A newer speak()/cancelSpeech() superseded this request — drop it before
@@ -253,12 +408,12 @@ export function speak(text: string, lang: 'en' | 'hi' = 'en', onDone?: () => voi
       currentAudio = audio
       const cleanup = () => { URL.revokeObjectURL(url); if (currentAudio === audio) currentAudio = null }
       audio.onended = () => { cleanup(); finish() }
-      audio.onerror = () => { cleanup(); if (seq === speakSeq) browserSpeak(text, lang, finish) }
+      audio.onerror = () => { cleanup(); if (seq === speakSeq) browserSpeak(spoken, lang, finish) }
       let started = false
       const start = () => {
         if (started || seq !== speakSeq) return
         started = true
-        audio.play().catch(() => { cleanup(); if (seq === speakSeq) browserSpeak(text, lang, finish) })
+        audio.play().catch(() => { cleanup(); if (seq === speakSeq) browserSpeak(spoken, lang, finish) })
       }
       audio.addEventListener('canplaythrough', start, { once: true })
       audio.src = url
@@ -269,7 +424,7 @@ export function speak(text: string, lang: 'en' | 'hi' = 'en', onDone?: () => voi
       }, 60)
       setTimeout(() => { if (!started) { clearInterval(poll); start() } }, 2500)
     })
-    .catch(() => { if (seq === speakSeq) browserSpeak(text, lang, finish) })
+    .catch(() => { if (seq === speakSeq) browserSpeak(spoken, lang, finish) })
 }
 
 function browserSpeak(text: string, lang: 'en' | 'hi', onDone?: () => void): void {

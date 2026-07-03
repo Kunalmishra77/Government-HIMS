@@ -1,0 +1,75 @@
+{
+  "brand": "Agentix HIMS",
+  "hero": {
+    "title": "Find the Right Doctor",
+    "subtitle": "Search by symptom, specialty, or doctor name",
+    "searchPlaceholder": "e.g. \"chest pain\", \"Dr. Mehta\", \"Cardiology\"",
+    "suggested": "Suggested:"
+  },
+  "tabs": {
+    "search": "Find a Doctor",
+    "eligibility": "Cashless Eligibility",
+    "documents": "Document Checklist"
+  },
+  "search": {
+    "all": "All",
+    "yrsExp": "{years} yrs exp",
+    "reviews": "({count} reviews)",
+    "perVisit": "per visit",
+    "fullyBooked": "Fully booked today",
+    "book": "Book",
+    "emptyTitle": "No doctors found",
+    "emptySubtitle": "Try a different symptom or specialty"
+  },
+  "specialty": {
+    "General Medicine": "General Medicine",
+    "Cardiology": "Cardiology",
+    "Orthopedics": "Orthopedics",
+    "Dermatology": "Dermatology",
+    "Gastroenterology": "Gastroenterology",
+    "Neurology": "Neurology"
+  },
+  "eligibility": {
+    "providerLabel": "Your Insurance Provider",
+    "selectPlaceholder": "Select insurer...",
+    "cashlessTitle": "Cashless available at Agentix HIMS",
+    "cashlessBody": "{insurer} is a cashless partner. You can avail treatment without upfront payment — TPA will settle directly with the hospital.",
+    "cashlessPoint1": "✓ Pre-authorization required for planned admissions",
+    "cashlessPoint2": "✓ Emergency admissions can be intimated within 24h",
+    "cashlessPoint3": "✓ Room rent capping as per policy terms",
+    "noCashlessTitle": "Cashless not available",
+    "noCashlessBody": "{insurer} is not in our cashless network. You will need to pay out of pocket and submit a reimbursement claim.",
+    "noCashlessPoint1": "• Collect all original bills and receipts",
+    "noCashlessPoint2": "• Discharge summary and case papers needed for claim",
+    "noCashlessPoint3": "• Submit within 30 days of discharge",
+    "helpdeskTitle": "Insurance Helpdesk",
+    "helpdeskBody": "For pre-authorization and TPA queries, visit the Insurance Desk (Ground Floor) or call Ext. 1050"
+  },
+  "documents": {
+    "visitTypeLabel": "Visit Type",
+    "heading": "Documents to bring — {visitType}",
+    "tipTitle": "Tip",
+    "tipBody": "Keep scanned copies on your phone (Google Drive / DigiLocker) for quick access at the hospital desk."
+  },
+  "visitType": {
+    "OPD Self-Pay": "OPD Self-Pay",
+    "IPD Self-Pay": "IPD Self-Pay",
+    "Cashless Insurance": "Cashless Insurance",
+    "Corporate / TPA": "Corporate / TPA"
+  },
+  "docs": {
+    "photoIdFull": "Valid photo ID (Aadhaar / PAN / Passport)",
+    "prevPrescriptionOptional": "Previous prescription or reports (if any)",
+    "photoId": "Valid photo ID",
+    "recentBloodReports": "Recent blood reports",
+    "prevPrescription": "Previous prescription",
+    "priorImaging": "Any prior imaging (X-Ray, MRI, etc.)",
+    "insuranceCard": "Health insurance card",
+    "policyDocument": "Policy document / e-card",
+    "referralLetter": "Referral letter (if required by insurer)",
+    "prevDischargeSummary": "Previous hospital discharge summary (if any)",
+    "corporateCard": "Corporate health card",
+    "employeeId": "Employee ID",
+    "preAuthLetter": "Pre-authorization letter from employer"
+  }
+}

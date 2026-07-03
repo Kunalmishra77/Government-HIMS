@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { usePatientFeedbackStore } from "@/store/usePatientFeedbackStore"
 import { analyzeHospitalFeedback, type FeedbackInsightReport } from "@/ai-services/feedback-analyzer"
 import type { AiEnvelope } from "@/types/ai"
@@ -23,19 +24,20 @@ function ConfidenceMeter({ value }: { value: number }) {
   )
 }
 
-function SatisfactionGauge({ score }: { score: number }) {
+function SatisfactionGauge({ score, t }: { score: number; t: ReturnType<typeof useTranslations> }) {
   const color = score >= 70 ? 'text-emerald-600' : score >= 50 ? 'text-amber-600' : 'text-red-600'
   const bgColor = score >= 70 ? 'bg-emerald-50 border-emerald-200' : score >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'
   return (
     <div className={cn("flex flex-col items-center justify-center rounded-2xl border p-5", bgColor)}>
       <p className={cn("text-4xl font-bold", color)}>{score}</p>
-      <p className="text-xs text-slate-500 mt-1">Satisfaction Score</p>
-      <p className={cn("text-xs font-bold mt-0.5", color)}>out of 100</p>
+      <p className="text-xs text-slate-500 mt-1">{t('satisfactionScore')}</p>
+      <p className={cn("text-xs font-bold mt-0.5", color)}>{t('outOf100')}</p>
     </div>
   )
 }
 
 export default function FeedbackAIInsightsPage() {
+  const t = useTranslations('feedback')
   const records     = usePatientFeedbackStore(s => s.records)
   const expireStale = usePatientFeedbackStore(s => s.expireStale)
 
@@ -76,11 +78,11 @@ export default function FeedbackAIInsightsPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-[var(--color-primary)]" /> AI Insights
+            <Sparkles className="h-6 w-6 text-[var(--color-accent)]" /> {t('aiInsightsTitle')}
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Patient Feedback Analyzer · AI-powered quality intelligence
-            {lastRefreshed && <span className="ml-2 text-slate-400">· Updated {lastRefreshed}</span>}
+            {t('aiInsightsSubtitle')}
+            {lastRefreshed && <span className="ml-2 text-slate-400">{t('updatedAt', { time: lastRefreshed })}</span>}
           </p>
         </div>
         <button
@@ -89,7 +91,7 @@ export default function FeedbackAIInsightsPage() {
           className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-bold cursor-pointer transition-colors shadow-sm disabled:opacity-60"
         >
           <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-          Refresh Insights
+          {t('refreshInsights')}
         </button>
       </div>
 
@@ -98,7 +100,7 @@ export default function FeedbackAIInsightsPage() {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-red-600 text-white shadow-sm">
           <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold">Priority Alert</p>
+            <p className="text-sm font-bold">{t('priorityAlert')}</p>
             <p className="text-sm mt-0.5 opacity-90">{report.priorityAlert}</p>
           </div>
         </div>
@@ -114,29 +116,29 @@ export default function FeedbackAIInsightsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left column: summary cards */}
           <div className="space-y-4">
-            <SatisfactionGauge score={report.satisfactionScore} />
+            <SatisfactionGauge score={report.satisfactionScore} t={t} />
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase">Overall Sentiment</span>
+                <span className="text-xs font-bold text-slate-500 uppercase">{t('overallSentiment')}</span>
                 <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full capitalize",
                   report.overallSentiment === 'positive' ? 'bg-emerald-100 text-emerald-700'
                   : report.overallSentiment === 'negative' ? 'bg-red-100 text-red-700'
                   : 'bg-amber-100 text-amber-700',
                 )}>
-                  {report.overallSentiment}
+                  {t.has(`sentiment_${report.overallSentiment}`) ? t(`sentiment_${report.overallSentiment}`) : report.overallSentiment}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase">NPS Category</span>
+                <span className="text-xs font-bold text-slate-500 uppercase">{t('npsCategory')}</span>
                 <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full capitalize", npcsBg)}>
-                  {report.npsCategory}
+                  {t.has(`nps_${report.npsCategory}`) ? t(`nps_${report.npsCategory}`) : report.npsCategory}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase">Records Analyzed</span>
+                <span className="text-xs font-bold text-slate-500 uppercase">{t('recordsAnalyzed')}</span>
                 <div className="flex items-center gap-1.5">
                   <Star className="h-3.5 w-3.5 text-amber-400" />
                   <span className="text-xs font-bold text-slate-700">{report.processedCount}</span>
@@ -144,7 +146,7 @@ export default function FeedbackAIInsightsPage() {
               </div>
 
               <div className="pt-1 border-t border-slate-100">
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1.5">AI Confidence</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1.5">{t('aiConfidence')}</p>
                 <ConfidenceMeter value={envelope?.confidence ?? 0.84} />
               </div>
             </div>
@@ -156,7 +158,7 @@ export default function FeedbackAIInsightsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
                 <h2 className="text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" /> Key Strengths
+                  <CheckCircle className="h-4 w-4" /> {t('keyStrengths')}
                 </h2>
                 {report.keyStrengths.length > 0 ? (
                   <ul className="space-y-2">
@@ -168,13 +170,13 @@ export default function FeedbackAIInsightsPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-emerald-600 italic">No keyword-matched strengths in recent comments</p>
+                  <p className="text-xs text-emerald-600 italic">{t('noStrengths')}</p>
                 )}
               </div>
 
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
                 <h2 className="text-sm font-bold text-amber-800 mb-3 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" /> Improvement Areas
+                  <AlertTriangle className="h-4 w-4" /> {t('improvementAreas')}
                 </h2>
                 {report.improvementAreas.length > 0 ? (
                   <ul className="space-y-2">
@@ -186,7 +188,7 @@ export default function FeedbackAIInsightsPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-amber-600 italic">No critical issues detected in recent comments</p>
+                  <p className="text-xs text-amber-600 italic">{t('noIssues')}</p>
                 )}
               </div>
             </div>
@@ -194,12 +196,12 @@ export default function FeedbackAIInsightsPage() {
             {/* Recommendations */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
               <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Lightbulb className="h-4 w-4 text-[var(--color-primary)]" /> AI Recommendations
+                <Lightbulb className="h-4 w-4 text-[var(--color-accent)]" /> {t('aiRecommendations')}
               </h2>
               <ol className="space-y-3">
                 {report.recommendations.map((rec, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span className="flex-shrink-0 h-6 w-6 rounded-full bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] text-xs font-bold flex items-center justify-center">
+                    <span className="flex-shrink-0 h-6 w-6 rounded-full bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] text-xs font-bold flex items-center justify-center">
                       {i + 1}
                     </span>
                     <p className="text-sm text-slate-700 leading-relaxed">{rec}</p>
@@ -211,15 +213,15 @@ export default function FeedbackAIInsightsPage() {
             {/* AI reasoning */}
             {envelope?.reasoning && (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500 italic">
-                <span className="font-bold not-italic text-slate-600">Reasoning: </span>
+                <span className="font-bold not-italic text-slate-600">{t('reasoning')}</span>
                 {envelope.reasoning}
               </div>
             )}
 
             {/* Disclaimer */}
-            <div className="rounded-2xl border border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]/40 p-4 text-xs text-[var(--color-primary-dark)]">
-              <p className="font-bold mb-1">AI Disclaimer</p>
-              <p className="leading-relaxed">These insights are AI-generated from patient comment keyword analysis and rating distributions. They support human decision-making and should not replace direct patient engagement or clinical judgment.</p>
+            <div className="rounded-2xl border border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]/40 p-4 text-xs text-[var(--color-primary-dark)]">
+              <p className="font-bold mb-1">{t('aiDisclaimer')}</p>
+              <p className="leading-relaxed">{t('aiDisclaimerBody')}</p>
             </div>
           </div>
         </div>

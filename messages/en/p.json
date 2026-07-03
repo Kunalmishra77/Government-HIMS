@@ -1,0 +1,92 @@
+{
+  "rewrite": {
+    "registered": "You're registered at Agentix HIMS",
+    "erArrival": "You arrived at the Emergency department",
+    "triaged": "Triage assessment complete",
+    "claimed": "Your doctor is now reviewing you",
+    "erVitals": "Your vitals were recorded",
+    "opdVitals": "Your vitals were recorded",
+    "admit": "You're being admitted for further care",
+    "discharge": "You're cleared to go home",
+    "transfer": "Transfer being arranged to another facility",
+    "labOrdered": "Your doctor ordered some lab tests",
+    "specimenCollected": "Your blood sample was collected",
+    "released": "Your test result is ready",
+    "imagingOrdered": "Your doctor ordered an imaging scan",
+    "studyAcquired": "Your imaging scan is complete",
+    "reportVerified": "Your imaging report is ready",
+    "otBooked": "Your surgery is booked",
+    "surgeryStarted": "Your surgery has started",
+    "surgeryCompleted": "Your surgery is complete",
+    "dischargeInitiated": "Discharge process started",
+    "exitClearance": "You can leave the hospital",
+    "claim": "Insurance update"
+  },
+  "date": {
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
+  "location": {
+    "bed": "{ward} · Bed {bed}",
+    "emergency": "Emergency · {area}",
+    "triage": "Triage",
+    "opd": "OPD · {department}",
+    "visitComplete": "Visit complete"
+  },
+  "loading": "Loading secure tracking…",
+  "patientFallback": "Patient",
+  "consent": {
+    "title": "Consent needed",
+    "body": "Live tracking for <b>{name}</b> shares ward, care-team and progress with whoever holds this link. Continue only if you are the patient or an authorized family member.",
+    "thisPatient": "this patient",
+    "button": "I consent — show live status",
+    "note": "Your consent is recorded. You can ask the hospital to revoke this link anytime."
+  },
+  "gate": {
+    "expiredTitle": "Link expired",
+    "requiredTitle": "Secure link required",
+    "expiredBody": "This tracking link has expired for the patient's privacy.",
+    "requiredBody": "This page needs the secure link sent to you by SMS — the patient ID alone can't open it.",
+    "openSecure": "Open secure view",
+    "resendLink": "Ask hospital to resend link"
+  },
+  "notFound": {
+    "title": "Agentix HIMS",
+    "body": "Patient ID <mono>{uhid}</mono> not found. Check the link from your SMS — UHIDs look like <sampleMono>{sample}</sampleMono>.",
+    "call": "Call hospital"
+  },
+  "header": {
+    "hospital": "Hospital",
+    "meta": "UHID {uhid}{ageSuffix}{phoneSuffix} · Updates every 10 seconds",
+    "ageSuffix": " · {age}y",
+    "phoneSuffix": " · {phone}"
+  },
+  "authorized": "Tracking authorized · access expires {date} {time}",
+  "critical": {
+    "concern": "If you have any concerns, please speak with the duty doctor at the nursing station."
+  },
+  "latest": {
+    "label": "Latest update",
+    "by": "{time} · by {actor}",
+    "defaultActor": "hospital staff"
+  },
+  "care": {
+    "title": "Your care team",
+    "doctor": "Doctor:",
+    "room": "Room:",
+    "roomValue": "{ward} · Bed {bed}",
+    "expectedHome": "Expected home:"
+  },
+  "timeline": {
+    "title": "Hospital updates",
+    "ariaLabel": "Hospital updates timeline",
+    "empty": "You're registered. Updates will start appearing as your visit progresses."
+  },
+  "help": {
+    "label": "Need help?",
+    "reception": "Reception · 24×7",
+    "body": "For urgent concerns about your patient, speak with the duty doctor at the nursing station first.",
+    "phone": "+91 80 1234 0000"
+  },
+  "footer": "Agentix HIMS · This is a live tracking page · Updates every 10 seconds"
+}

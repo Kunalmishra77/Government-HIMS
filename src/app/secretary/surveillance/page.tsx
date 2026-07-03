@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Activity, AlertTriangle, TrendingUp, MapPin } from 'lucide-react'
 
 const OUTBREAKS = [
@@ -32,6 +33,7 @@ const RISK_STYLES = {
 }
 
 export default function SurveillancePage() {
+  const t = useTranslations('secretary')
   const active = OUTBREAKS.filter(o => o.status === 'active').length
   const totalCases = OUTBREAKS.reduce((s, o) => s + o.cases, 0)
   const totalDeaths = OUTBREAKS.reduce((s, o) => s + o.deaths, 0)
@@ -39,15 +41,15 @@ export default function SurveillancePage() {
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">State Surveillance & Outbreaks</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">निगरानी · IDSP integrated · Real-time disease tracking</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('surveillance.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('surveillance.subtitle')}</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Active outbreaks', value: String(active), warn: true },
-          { label: 'Total cases (active)', value: totalCases.toLocaleString(), warn: false },
-          { label: 'Deaths (active clusters)', value: String(totalDeaths), warn: totalDeaths > 0 },
-          { label: 'Districts with outbreaks', value: String(new Set(OUTBREAKS.filter(o => o.status === 'active').map(o => o.district)).size), warn: false },
+          { label: t('surveillance.kpiActive'), value: String(active), warn: true },
+          { label: t('surveillance.kpiTotalCases'), value: totalCases.toLocaleString(), warn: false },
+          { label: t('surveillance.kpiDeaths'), value: String(totalDeaths), warn: totalDeaths > 0 },
+          { label: t('surveillance.kpiDistricts'), value: String(new Set(OUTBREAKS.filter(o => o.status === 'active').map(o => o.district)).size), warn: false },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -59,14 +61,14 @@ export default function SurveillancePage() {
       {/* Outbreak table */}
       <div className="bg-white border border-[var(--color-border)] rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
         <div className="px-5 py-3.5 border-b border-[var(--color-border)] flex items-center gap-2">
-          <Activity className="h-4 w-4 text-[var(--color-primary)]" />
-          <span className="text-sm font-semibold text-[var(--color-foreground)]">Active disease clusters</span>
+          <Activity className="h-4 w-4 text-[var(--color-accent)]" />
+          <span className="text-sm font-semibold text-[var(--color-foreground)]">{t('surveillance.clustersTitle')}</span>
         </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-raised)]">
-              {['Disease', 'District', 'Cases', 'Deaths', 'Trend', 'Status', 'Risk', 'Last report', 'Action'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">{h}</th>
+              {['surveillance.colDisease', 'surveillance.colDistrict', 'surveillance.colCases', 'surveillance.colDeaths', 'surveillance.colTrend', 'surveillance.colStatus', 'surveillance.colRisk', 'surveillance.colLastReport', 'surveillance.colAction'].map(h => (
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">{t(h)}</th>
               ))}
             </tr>
           </thead>
@@ -81,7 +83,7 @@ export default function SurveillancePage() {
                 <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_STYLES[o.status as keyof typeof STATUS_STYLES]}`}>{o.status}</span></td>
                 <td className={`px-4 py-3 text-xs font-bold ${RISK_STYLES[o.riskLevel as keyof typeof RISK_STYLES]}`}>{o.riskLevel}</td>
                 <td className="px-4 py-3 text-xs text-[var(--color-foreground-lighter)]">{o.lastReport}</td>
-                <td className="px-4 py-3"><button className="text-xs text-[var(--color-primary)] hover:underline font-medium">Drill →</button></td>
+                <td className="px-4 py-3"><button className="text-xs text-[var(--color-accent)] hover:underline font-medium">{t('surveillance.drill')}</button></td>
               </tr>
             ))}
           </tbody>
@@ -90,7 +92,7 @@ export default function SurveillancePage() {
 
       {/* Trend */}
       <div className="bg-white border border-[var(--color-border)] rounded-2xl p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
-        <p className="text-sm font-semibold text-[var(--color-foreground)] mb-4">4-week trend (top diseases)</p>
+        <p className="text-sm font-semibold text-[var(--color-foreground)] mb-4">{t('surveillance.trendTitle')}</p>
         <div className="space-y-3">
           {(['dengue', 'malaria', 'leptospira'] as const).map(disease => {
             const max = Math.max(...WEEKLY.map(w => w[disease]))

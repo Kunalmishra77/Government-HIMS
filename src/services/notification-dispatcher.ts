@@ -88,8 +88,8 @@ export const CHANNEL_LABELS: Record<NotificationChannel, string> = {
 
 export const CHANNEL_COLORS: Record<NotificationChannel, string> = {
   in_app:   'bg-slate-100 text-slate-700',
-  push:     'bg-blue-100 text-blue-700',
+  push:     'bg-surface-sunken text-accent',
   sms:      'bg-amber-100 text-amber-700',
   whatsapp: 'bg-green-100 text-green-700',
-  email:    'bg-cyan-100 text-cyan-700',
+  email:    'bg-accent-soft text-accent',
 }

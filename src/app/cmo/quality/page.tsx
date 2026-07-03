@@ -1,5 +1,6 @@
 "use client"
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { CmoPageHeader } from '@/components/cmo/layout/CmoPageHeader'
 import { MetricTile } from '@/components/shared/MetricTile'
 import { DrillCard } from '@/components/shared/DrillCard'
@@ -16,28 +17,29 @@ const DEATHS = [
   { name: 'Ramesh K.', age: 58, type: 'In-hospital', facility: 'Hamidia DH', date: '2026-06-22', cause: 'Acute MI', auditStatus: 'completed' },
 ]
 
-const TABS = ['NQAS/Kayakalp/LaQshya', 'Incidents', 'Death audits', 'Patient satisfaction']
+const TAB_KEYS = ['quality.tabNqas', 'quality.tabIncidents', 'quality.tabDeathAudits', 'quality.tabPatientSatisfaction']
 
 export default function CmoQualityPage() {
+  const t = useTranslations('cmo')
   const [tab, setTab] = useState(0)
   const [drillIncident, setDrillIncident] = useState<typeof INCIDENTS[0] | null>(null)
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      <CmoPageHeader title="Quality, incidents & deaths · गुणवत्ता, घटनाएं, मृत्यु" />
+      <CmoPageHeader title={t('quality.title')} />
       <div className="grid grid-cols-4 gap-3">
-        <MetricTile label="NQAS-certified" value="18 of 142" />
-        <MetricTile label="Open incidents" value={INCIDENTS.length} variant="warning" />
-        <MetricTile label="Pending death audits" value="5" variant="critical" />
-        <MetricTile label="Patient satisfaction" value="4.1/5" variant="success" />
+        <MetricTile label={t('quality.nqasCertified')} value="18 of 142" />
+        <MetricTile label={t('quality.openIncidents')} value={INCIDENTS.length} variant="warning" />
+        <MetricTile label={t('quality.pendingDeathAudits')} value="5" variant="critical" />
+        <MetricTile label={t('quality.patientSatisfaction')} value="4.1/5" variant="success" />
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 overflow-x-auto">
-        {TABS.map((t, i) => (
-          <button key={t} onClick={() => setTab(i)}
+        {TAB_KEYS.map((tabKey, i) => (
+          <button key={tabKey} onClick={() => setTab(i)}
             className={cn('text-[12px] font-semibold px-3 py-2.5 border-b-2 -mb-px whitespace-nowrap transition-colors',
-              tab === i ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800')}>
-            {t}
+              tab === i ? 'border-border text-accent' : 'border-transparent text-slate-500 hover:text-slate-800')}>
+            {t(tabKey)}
           </button>
         ))}
       </div>
@@ -66,11 +68,11 @@ export default function CmoQualityPage() {
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <table className="w-full text-[12px]">
             <thead><tr className="bg-slate-50 border-b border-slate-100 text-slate-500">
-              <th className="px-4 py-2.5 text-left font-medium">Patient</th>
-              <th className="px-3 py-2.5 text-left font-medium">Type</th>
-              <th className="px-3 py-2.5 text-left font-medium">Facility</th>
-              <th className="px-3 py-2.5 text-left font-medium">Cause</th>
-              <th className="px-3 py-2.5 text-center font-medium">Audit</th>
+              <th className="px-4 py-2.5 text-left font-medium">{t('quality.colPatient')}</th>
+              <th className="px-3 py-2.5 text-left font-medium">{t('quality.colType')}</th>
+              <th className="px-3 py-2.5 text-left font-medium">{t('quality.colFacility')}</th>
+              <th className="px-3 py-2.5 text-left font-medium">{t('quality.colCause')}</th>
+              <th className="px-3 py-2.5 text-center font-medium">{t('quality.colAudit')}</th>
             </tr></thead>
             <tbody>
               {DEATHS.map((d, i) => (
@@ -94,7 +96,7 @@ export default function CmoQualityPage() {
 
       {(tab === 0 || tab === 3) && (
         <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400 text-[13px]">
-          {tab === 0 ? '18 NQAS certified · 4 Kayakalp awardees · 2 LaQshya facilities · CHC Berasia reassessment due' : 'Patient satisfaction: 4.1/5 · 847 responses this month · Top complaint: waiting time'}
+          {tab === 0 ? t('quality.nqasEmpty') : t('quality.satisfactionEmpty')}
         </div>
       )}
 
@@ -102,11 +104,11 @@ export default function CmoQualityPage() {
         {drillIncident && (
           <div className="space-y-3 text-[13px]">
             <div className="bg-slate-50 rounded-lg p-3">
-              <p className="text-slate-500 text-[11px]">Severity</p>
+              <p className="text-slate-500 text-[11px]">{t('quality.severity')}</p>
               <p className="font-semibold capitalize text-slate-900">{drillIncident.severity}</p>
             </div>
             <div>
-              <p className="font-semibold text-slate-700 mb-1">Root cause analysis</p>
+              <p className="font-semibold text-slate-700 mb-1">{t('quality.rca')}</p>
               <p className="text-slate-600 leading-relaxed">{drillIncident.rca}</p>
             </div>
           </div>

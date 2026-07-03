@@ -22,11 +22,11 @@ interface StatCardProps {
 // Brand tones (blue/purple/teal/slate) collapse to the deep-blue system; status
 // tones stay semantic; `green` uses the disciplined clinical brand-green token.
 const COLOR_MAP: Record<StatColor, { icon: string; value: string }> = {
-  blue:   { icon: "bg-accent-soft text-primary",            value: "text-foreground" },
+  blue:   { icon: "bg-accent-soft text-accent",            value: "text-foreground" },
   green:  { icon: "bg-brand-green-soft text-brand-green",   value: "text-foreground" },
   amber:  { icon: "bg-warning-bg text-warning",             value: "text-foreground" },
   red:    { icon: "bg-danger-bg text-danger",               value: "text-foreground" },
-  purple: { icon: "bg-accent-soft text-primary",            value: "text-foreground" },
+  purple: { icon: "bg-accent-soft text-accent",            value: "text-foreground" },
   slate:  { icon: "bg-surface-sunken text-foreground-muted",value: "text-foreground" },
   teal:   { icon: "bg-accent-soft text-accent",             value: "text-foreground" },
 }

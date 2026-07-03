@@ -57,10 +57,10 @@ export function RoleGuard({ allowedRole, children }: Props) {
 
   if (!currentUser || activeRole !== allowedRole) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="h-10 w-10 rounded-full border-4 border-[rgba(8,145,178,0.20)] border-t-blue-600 animate-spin mx-auto mb-3" role="status" aria-label="Redirecting" />
-          <p className="text-sm font-medium text-slate-500">Redirecting...</p>
+          <div className="h-10 w-10 rounded-full border-4 border-primary/20 border-t-primary animate-spin mx-auto mb-3" role="status" aria-label="Redirecting" />
+          <p className="text-sm font-medium text-foreground-lighter">Redirecting...</p>
         </div>
       </div>
     )
