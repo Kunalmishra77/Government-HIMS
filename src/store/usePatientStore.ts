@@ -349,6 +349,39 @@ const MOCK_PATIENTS: Patient[] = [
     symptoms: ['Routine BP review', 'Mild giddiness'], history: ['HTN', 'T2DM'], registeredAt: '11:25 AM', registeredDate: TODAY,
     triageLevel: 'Low', latestHbA1c: 6.9, latestBP: '142/88',
   },
+  // Walk-ins without ABHA / Aadhaar linkage — surface under "Needs Aadhaar".
+  {
+    id: 'PT-20414', name: 'Ramesh Yadav', age: 44, gender: 'Male', phone: '9835551201', bloodGroup: 'B+', token: 23,
+    queueStatus: 'waiting', estimatedWait: 58, doctor: 'Dr. Priya Nair', department: 'General Medicine',
+    vitals: undefined,
+    symptoms: ['Fever · 3 days', 'Body ache'], history: ['No significant history'], registeredAt: '11:30 AM', registeredDate: TODAY,
+    triageLevel: 'Medium',
+    source: 'walk_in', aadhaarVerified: false,
+  },
+  {
+    id: 'PT-20415', name: 'Sunita Devi', age: 51, gender: 'Female', phone: '9812007745', bloodGroup: 'O+', token: 24,
+    queueStatus: 'waiting', estimatedWait: 62, doctor: 'Dr. Ananya Iyer', department: 'Dermatology',
+    vitals: undefined,
+    symptoms: ['Recurrent skin allergy'], history: ['Nil significant'], registeredAt: '11:35 AM', registeredDate: TODAY,
+    triageLevel: 'Low',
+    source: 'walk_in', aadhaarVerified: false,
+  },
+  {
+    id: 'PT-20416', name: 'Mohd Aslam', age: 34, gender: 'Male', phone: '9899334417', bloodGroup: 'A+', token: 25,
+    queueStatus: 'waiting', estimatedWait: 66, doctor: 'Dr. Vikram Rathore', department: 'Orthopaedics',
+    vitals: undefined,
+    symptoms: ['Wrist pain after fall', 'Swelling'], history: ['No known allergies'], registeredAt: '11:40 AM', registeredDate: TODAY,
+    triageLevel: 'Medium',
+    source: 'walk_in', aadhaarVerified: false,
+  },
+  {
+    id: 'PT-20417', name: 'Kamla Prasad', age: 68, gender: 'Female', phone: '9866120099', bloodGroup: 'B-', token: 26,
+    queueStatus: 'waiting', estimatedWait: 70, doctor: 'Dr. Rohan Mehta', department: 'Cardiology',
+    vitals: undefined,
+    symptoms: ['Giddiness', 'Fatigue'], history: ['HTN'], registeredAt: '11:45 AM', registeredDate: TODAY,
+    triageLevel: 'High', latestBP: '158/96',
+    source: 'walk_in', aadhaarVerified: false,
+  },
   // Yesterday (Yesterday tab) — completed visits.
   {
     id: 'PT-20384', name: 'Arjun Reddy', age: 47, gender: 'Male', phone: '9845012345', bloodGroup: 'O+', token: 18,
