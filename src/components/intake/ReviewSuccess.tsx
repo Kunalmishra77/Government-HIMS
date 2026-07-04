@@ -114,7 +114,7 @@ export function SuccessStep({ form, token, familyToken, wait, uhid, patientId, a
       if (lang === 'hi') {
         const hon = first ? `${first} जी` : ''
         const when = `${apptDateLabel}${form.apptTime ? ` को ${spokenTime(form.apptTime, 'hi')}` : ''}`
-        speak(`धन्यवाद ${hon}। आपकी अपॉइंटमेंट ${when} के लिए बुक हो गई है, और आपका टोकन नंबर ${token} है। अस्पताल आते समय कृपया अपना आधार कार्ड और आधार से जुड़ा मोबाइल नंबर साथ लेकर आएँ, ताकि हम आपकी ABHA आईडी सत्यापित कर सकें, या ज़रूरत होने पर नई बनाकर आपका अस्पताल UHID तैयार कर सकें। धन्यवाद।`, 'hi')
+        speak(`थैंक यू ${hon}। आपकी अपॉइंटमेंट ${when} के लिए बुक हो गई है, और आपका टोकन नंबर ${token} है। हॉस्पिटल आते समय अपना आधार कार्ड और आधार से जुड़ा मोबाइल नंबर साथ ले आइए, ताकि हम आपकी ABHA आईडी वेरिफ़ाई कर सकें, या ज़रूरत हो तो नई बनाकर आपका हॉस्पिटल UHID तैयार कर सकें। थैंक यू।`, 'hi')
       } else {
         const when = `${apptDateEn}${form.apptTime ? ` at ${spokenTime(form.apptTime, 'en')}` : ''}`
         speak(`Thank you${first ? `, ${first}` : ''}. Your appointment is booked for ${when}, and your token number is ${token}. When you visit, please bring your Aadhaar card and the mobile number linked to it, so we can verify your ABHA ID — or create a new one if needed — and generate your hospital UHID. Thank you.`)
@@ -124,7 +124,7 @@ export function SuccessStep({ form, token, familyToken, wait, uhid, patientId, a
     // Typed/kiosk flow keeps the permanent-UHID announcement.
     if (uhid) {
       if (lang === 'hi') {
-        speak(`आप पंजीकृत हो गए हैं${first ? `, ${first}` : ''}। आपका यू.एच.आई.डी. है ${uhid}, कृपया इसे सुरक्षित रखें। आपका टोकन नंबर ${token} है।`, 'hi')
+        speak(`आप रजिस्टर हो गए हैं${first ? `, ${first}` : ''}। आपका यू.एच.आई.डी. है ${uhid}, इसे संभालकर रखिए। आपका टोकन नंबर ${token} है।`, 'hi')
       } else {
         speak(`You are registered${first ? `, ${first}` : ''}. Your UHID is ${uhid.split('').join(' ')}. Please save it for future visits. Your token number is ${token}.`)
       }
@@ -191,7 +191,7 @@ export function SuccessStep({ form, token, familyToken, wait, uhid, patientId, a
             </>
           ) : (
             <>
-              <p className="text-[12px] font-bold uppercase tracking-wider text-green-600 mt-1">{lang === 'hi' ? 'अपॉइंटमेंट कन्फर्म' : 'Appointment Confirmed'}</p>
+              <p className="text-[12px] font-bold uppercase tracking-wider text-green-600 mt-1">{lang === 'hi' ? 'अपॉइंटमेंट कन्फ़र्म' : 'Appointment Confirmed'}</p>
               <h2 className="text-[44px] leading-none font-bold text-slate-900 tracking-tight mt-1">#{token}</h2>
               <p className="text-[15px] font-medium text-slate-500 mt-1 mb-5">{voice ? `${lang === 'hi' ? 'टोकन' : 'Token'}${firstComma}` : `Check-in complete${firstComma} — ${paidLabel}`}</p>
               {!voice && (

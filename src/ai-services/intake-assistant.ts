@@ -198,7 +198,7 @@ export function promptFor(slot: SlotId, f: IntakeForm, lang: Lang = 'en'): strin
 function prompt(slot: SlotId, f: IntakeForm, lang: Lang): string {
   if (lang === 'hi') {
     switch (slot) {
-      case 'name': return 'नमस्कार। मैं आशा हूँ, Agentix HIMS की AI रिसेप्शनिस्ट। आपका नाम बताइए।'
+      case 'name': return 'नमस्ते! मैं आशा हूँ, Agentix HIMS की AI रिसेप्शनिस्ट। आपका नाम बताइए।'
       case 'age': return 'और आपकी उम्र?'
       case 'gender': return 'आपका जेंडर बताइए — पुरुष, महिला या अन्य।'
       case 'phone': return 'अपना मोबाइल नंबर बताइए।'
@@ -221,12 +221,12 @@ function prompt(slot: SlotId, f: IntakeForm, lang: Lang): string {
 function repairPrompt(slot: SlotId, lang: Lang): string {
   if (lang === 'hi') {
     switch (slot) {
-      case 'name': return 'माफ़ कीजिए, मैं आपका नाम समझ नहीं पाई। कृपया दोबारा बताएं।'
-      case 'age': return 'कृपया अपनी उम्र वर्षों में बताएं — जैसे अट्ठाईस।'
-      case 'gender': return 'कृपया कहें — पुरुष, महिला, या अन्य।'
-      case 'phone': return 'लगता है नंबर पूरा नहीं मिला, कृपया एक-एक अंक करके बताइए।'
-      case 'symptoms': return 'कृपया बताएं कि आपको क्या तकलीफ़ है — जैसे बुखार, खांसी, या पेट दर्द।'
-      default: return 'कृपया दोबारा कहें।'
+      case 'name': return 'माफ़ करना, मैं आपका नाम समझ नहीं पाई। ज़रा दोबारा बता दीजिए।'
+      case 'age': return 'अपनी उम्र साल में बता दीजिए — जैसे अट्ठाईस।'
+      case 'gender': return 'बस बता दीजिए — पुरुष, महिला, या अन्य।'
+      case 'phone': return 'लगता है नंबर पूरा नहीं मिला — एक-एक अंक करके बता दीजिए।'
+      case 'symptoms': return 'बताइए, आपको क्या तकलीफ़ है — जैसे बुखार, खांसी, या पेट दर्द।'
+      default: return 'ज़रा दोबारा कहिए।'
     }
   }
   switch (slot) {
@@ -247,9 +247,9 @@ function summary(f: IntakeForm, lang: Lang): string {
   if (lang === 'hi') {
     const dur = durVal ? durationLabel(durVal).replace('<', '').replace('>', '') : ''
     const parts = [
-      `धन्यवाद। मैंने यह जानकारी दर्ज की है। नाम ${f.name}, उम्र ${f.age}${f.gender ? `, ${GENDER_HI[f.gender] ?? f.gender}` : ''}।`,
-      f.symptoms.length ? `मुख्य शिकायत — ${f.symptoms.join(' और ')}${dur ? `, ${dur} से` : ''}।` : '',
-      `आकलित प्राथमिकता — ${TRIAGE_HI[triage.level] ?? triage.level}।`,
+      `थैंक यू। मैंने सब नोट कर लिया है। नाम ${f.name}, उम्र ${f.age}${f.gender ? `, ${GENDER_HI[f.gender] ?? f.gender}` : ''}।`,
+      f.symptoms.length ? `तकलीफ़ — ${f.symptoms.join(' और ')}${dur ? `, ${dur} से` : ''}।` : '',
+      `प्राथमिकता — ${TRIAGE_HI[triage.level] ?? triage.level}।`,
     ].filter(Boolean)
     return parts.join(' ')
   }

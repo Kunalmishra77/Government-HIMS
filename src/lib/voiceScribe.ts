@@ -13,6 +13,29 @@ export type Recognition = { stop: () => void }
 const browserLang = () =>
   typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US'
 
+// Score a candidate transcript by how digit-like it is: reward the digits it
+// carries, penalise word-clutter (letters) that means the audio was misheard as
+// words ("for"/"to") instead of digits. Density, not length — so it works the
+// same whether the number arrives whole or streamed one digit-group at a time.
+function phoneDigitScore(text: string): number {
+  const digits = (text.match(/\d/g) ?? []).length
+  if (!digits) return -1
+  const clutter = text.replace(/[\d\s-]/g, '').length
+  return digits * 2 - clutter
+}
+
+// Of a final result's alternatives, the one that best forms a mobile number.
+function bestPhoneAlternative(result: any): string {
+  let best = result[0]?.transcript ?? ''
+  let bestScore = phoneDigitScore(best)
+  for (let i = 1; i < result.length; i++) {
+    const alt = result[i]?.transcript ?? ''
+    const s = phoneDigitScore(alt)
+    if (s > bestScore) { best = alt; bestScore = s }
+  }
+  return best
+}
+
 // Starts continuous dictation; `onText` receives finalised chunks. Returns a
 // handle to stop, or null if unsupported / failed to start.
 export function startDictation(onText: (chunk: string) => void, onEnd: () => void): Recognition | null {
@@ -63,6 +86,9 @@ export function startVoiceCommand(opts: {
   /** Hard cap on a single answer once speech has started (ms). Safety bound for
    *  continuous mode so a noisy room can't keep the mic open indefinitely. */
   maxMs?: number
+  /** Capturing a phone number: ask the recognizer for several alternatives and
+   *  keep the one that best forms a 10-digit mobile, so it lands first try. */
+  digits?: boolean
 }): Recognition | null {
   const SR = typeof window !== 'undefined' ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null
   if (!SR) { opts.onError?.('unsupported'); return null }
@@ -71,6 +97,7 @@ export function startVoiceCommand(opts: {
   const endpointMs = opts.endpointMs ?? 900
   const continuous = opts.continuous ?? false
   const maxMs = opts.maxMs ?? 0
+  const digits = opts.digits ?? false
   const startedAt = Date.now()
   let finalText = ''
   let lastInterim = ''    // best interim transcript seen — used if no final arrives
@@ -88,14 +115,16 @@ export function startVoiceCommand(opts: {
     try { r = new SR() } catch { opts.onError?.('init-failed'); return null }
     r.continuous = continuous
     r.interimResults = true
-    r.maxAlternatives = 1
+    // More alternatives for phone capture so a dropped/misheard digit in the top
+    // pick can be recovered from a sibling candidate (see bestPhoneAlternative).
+    r.maxAlternatives = digits ? 6 : 1
     r.lang = opts.lang ?? browserLang()
     r.onresult = (e: any) => {
       let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript
-        if (e.results[i].isFinal) finalText += t
-        else interim += t
+        const res = e.results[i]
+        if (res.isFinal) finalText += digits ? bestPhoneAlternative(res) : res[0].transcript
+        else interim += res[0].transcript
       }
       if (interim) lastInterim = interim
       if (interim || finalText) spoke = true
@@ -339,6 +368,21 @@ function humanizeTimesForSpeech(text: string, lang: 'en' | 'hi'): string {
   )
 }
 
+// Read a spoken phone number digit by digit. Left alone, TTS voices "9876543210"
+// as one gigantic number ("nine billion…") — the patient can't verify it. Matches
+// a 7–13 digit run (optionally +91 / a leading 0, grouped with spaces or hyphens)
+// and expands the trailing 10 digits: Hindi as number words, English as spaced
+// digits the engine voices one at a time. Runs AFTER date/time humanization so
+// those are already words and can never be caught here.
+function humanizePhoneForSpeech(text: string, lang: 'en' | 'hi'): string {
+  return text.replace(/(?:\+?91[\s-]?)?\d(?:[\s-]?\d){6,12}/g, (m) => {
+    const d = m.replace(/\D/g, '')
+    if (d.length < 7 || d.length > 13) return m
+    const core = d.length > 10 ? d.slice(-10) : d
+    return core.split('').map(c => (lang === 'hi' ? NUM_HI[Number(c)] : c)).join(' ')
+  })
+}
+
 // Speaks via the ElevenLabs proxy (`/api/voice/tts`) for a natural assistant
 // voice, falling back to the browser's speechSynthesis if the request fails or
 // the key isn't configured. `onDone` fires exactly once when audio finishes.
@@ -346,7 +390,7 @@ export function speak(text: string, lang: 'en' | 'hi' = 'en', onDone?: () => voi
   cancelSpeech()
   if (typeof window === 'undefined' || !text.trim()) { onDone?.(); return }
 
-  const spoken = humanizeAbbrevsForSpeech(humanizeTimesForSpeech(humanizeDatesForSpeech(text, lang), lang), lang)
+  const spoken = humanizeAbbrevsForSpeech(humanizePhoneForSpeech(humanizeTimesForSpeech(humanizeDatesForSpeech(text, lang), lang), lang), lang)
   const seq = ++speakSeq
   let settled = false
   const finish = () => { if (!settled) { settled = true; onDone?.() } }

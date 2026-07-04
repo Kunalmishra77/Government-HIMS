@@ -38,7 +38,7 @@ const BARGE_IN = false
 
 // Escalating, reassuring nudges when the patient stays silent (by active language).
 const SILENCE_NUDGES = {
-  hi: ['क्या आप मेरी आवाज़ सुन पा रहे हैं?', 'कोई बात नहीं, आप आराम से बताइए।', 'यदि चाहें तो स्क्रीन पर जानकारी भर सकते हैं।'],
+  hi: ['क्या आप मेरी आवाज़ सुन पा रहे हैं?', 'कोई बात नहीं, आराम से बताइए।', 'अगर चाहें तो स्क्रीन पर भी भर सकते हैं।'],
   en: ['Can you hear me alright?', 'No rush — please take your time.', 'If you’d prefer, you can fill in your details on the screen.'],
 }
 
@@ -135,9 +135,17 @@ export function VoiceAssistantFlow({ form, update, onExitToForm }: { form: Intak
     // Plain listen → show it and start the silence clock now. Barge-in listen runs
     // under the still-playing speech, so the clock starts when the speech ends.
     if (!opts?.bargeIn) { setPhase('listening'); scheduleSilenceNudges() }
-    // Symptoms are described freely — multiple complaints, duration, history — so
-    // give a long, pause-tolerant window instead of cutting off mid-thought.
-    const freeForm = expectingRef.current === 'symptoms'
+    // Snappy one-word answers finalize on a short silence, but two slots need a
+    // longer, pause-tolerant window or capture ends early and forces a repeat:
+    //   · symptoms — described freely with pauses between complaints/history.
+    //   · phone    — dictated digit-by-digit; the gaps between digits are silence.
+    // Phone also runs in `digits` mode so the recognizer returns several
+    // alternatives and we keep the one that best forms a 10-digit mobile.
+    const slot = expectingRef.current
+    const tuning =
+      slot === 'symptoms' ? { continuous: true, endpointMs: 5000, maxMs: 45000 } :
+      slot === 'phone' ? { continuous: true, endpointMs: 2500, maxMs: 20000, digits: true } :
+      {}
     recRef.current = startVoiceCommand({
       lang: langRef.current === 'hi' ? 'hi-IN' : 'en-IN',
       graceMs: 25000,
@@ -152,7 +160,7 @@ export function VoiceAssistantFlow({ form, update, onExitToForm }: { form: Intak
       onFinal: (t) => { setInterim(''); clearSilenceTimers(); processReplyRef.current(t) },
       onError: (err) => { setSttError(err); if (phaseRef.current !== 'speaking') setPhase('paused') },
       onEnd: () => setPhase(p => (p === 'listening' ? 'paused' : p)),
-      ...(freeForm ? { continuous: true, endpointMs: 10000, maxMs: 45000 } : {}),
+      ...tuning,
     })
     if (!recRef.current && !opts?.bargeIn) setPhase('paused')
   }, [clearSilenceTimers, scheduleSilenceNudges])
@@ -267,8 +275,15 @@ export function VoiceAssistantFlow({ form, update, onExitToForm }: { form: Intak
   useEffect(() => {
     if (started.current) return
     started.current = true
+    // The shared form pre-fills a default appointment (today + first slot) for the
+    // typed flow. The voice assistant COLLECTS the date and time from the patient,
+    // so clear them first — otherwise the model sees them as "already collected",
+    // skips asking, and the review/confirmation shows the default instead of the
+    // patient's actual choice.
+    update({ apptDate: '', apptTime: '' })
+    formRef.current = { ...formRef.current, apptDate: '', apptTime: '' }
     void runTurn([])
-  }, [runTurn])
+  }, [runTurn, update])
 
   if (result) {
     return <SuccessStep form={form} patientId={result.patientId} token={result.token} familyToken={result.familyToken} wait={result.estWait} uhid={result.uhid} announce voice lang={lang} />
@@ -480,7 +495,7 @@ function VoiceReview({ form, lang, onUpdate, onEdit, onConfirm, onBack }: {
   const durLabel = durVal ? DURATION_OPTIONS.find(o => o.value === durVal)?.label : undefined
   const days = upcomingDays(5)
   const t = lang === 'hi'
-    ? { eyebrow: 'जानकारी जाँचें', title: 'अपनी जानकारी की पुष्टि करें', sub: 'पुष्टि करने तक कुछ भी सबमिट नहीं होगा।', patient: 'मरीज़', mobile: 'मोबाइल नंबर', complaint: 'मुख्य शिकायत', duration: 'लक्षण की अवधि', urgency: 'संभावित गंभीरता', appt: 'अपॉइंटमेंट', date: 'तारीख़ चुनें', time: 'समय चुनें', share: 'यह सारांश तेज़ और बेहतर देखभाल के लिए परामर्श से पहले आपके डॉक्टर के साथ साझा किया जाएगा।', confirm: 'पुष्टि करें और टोकन बनाएं', back: 'वापस जाएं', none: 'दर्ज नहीं' }
+    ? { eyebrow: 'डिटेल जाँचें', title: 'अपनी डिटेल कन्फ़र्म करें', sub: 'कन्फ़र्म करने तक कुछ भी सबमिट नहीं होगा।', patient: 'मरीज़', mobile: 'मोबाइल नंबर', complaint: 'क्या तकलीफ़ है', duration: 'कब से है', urgency: 'कितनी गंभीर स्थिति', appt: 'अपॉइंटमेंट', date: 'डेट चुनें', time: 'टाइम चुनें', share: 'यह डिटेल आपके डॉक्टर के साथ कंसल्टेशन से पहले शेयर की जाएगी, ताकि आपको जल्दी और बेहतर इलाज मिल सके।', confirm: 'कन्फ़र्म करें और टोकन बनाएं', back: 'वापस जाएँ', none: 'नहीं भरा' }
     : { eyebrow: 'Review Information', title: 'Please confirm your details', sub: 'Nothing is submitted until you confirm.', patient: 'Patient', mobile: 'Mobile Number', complaint: 'Chief Complaint', duration: 'Symptom Duration', urgency: 'Possible Severity / Urgency', appt: 'Appointment', date: 'Choose date', time: 'Choose time', share: 'This brief will be shared with your doctor before the consultation for faster, more accurate care.', confirm: 'Confirm & Generate Token', back: 'Go back', none: 'Not specified' }
 
   return (

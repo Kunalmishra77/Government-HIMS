@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { openaiJSON, isOpenAiConfigured, type ChatMessage } from '@/lib/openai'
-import { formatApptDate, type IntakeForm, type TriageLevel } from '@/lib/intake/data'
+import { formatApptDate, SYMPTOMS, type IntakeForm, type TriageLevel } from '@/lib/intake/data'
 import { availableSlots } from '@/lib/intake/slots'
+import { matchSymptoms } from '@/ai-services/voice-intake'
 
 // One LLM-driven turn of the AI-first patient check-in. The model is a warm
 // receptionist ("Asha") that runs the WHOLE visit by voice: it asks the
@@ -68,7 +69,7 @@ Today's date is ${todayHuman} (${today}). Use it to resolve any relative date th
 Run the booking in these stages, ONE question at a time, in a natural flowing conversation:
 
 STAGE 1 — GREETING & CONSULTATION TYPE (always first):
-- Open with a SHORT, warm greeting in which you INTRODUCE YOURSELF by name — you are Asha, the AI receptionist — say you'll help book their appointment in just a couple of minutes, then ask whether they'd like to come to the hospital to see the doctor in person, or take a video consultation. Keep it brief and human, NOT a long informational speech. Example (Hindi): "नमस्कार। Agentix HIMS में आपका स्वागत है। मैं आशा हूँ, आपकी AI रिसेप्शनिस्ट। आइए, आपकी अपॉइंटमेंट कुछ ही मिनटों में बुक कर देते हैं। सबसे पहले बताइए, आप अस्पताल आकर डॉक्टर से मिलना चाहते हैं या वीडियो कंसल्टेशन लेना चाहते हैं?" English: "Hello, and welcome to Agentix HIMS. I'm Asha, your AI receptionist — let's get your appointment booked in just a couple of minutes. First, would you like to come in and see the doctor in person, or have a video consultation?"
+- Open with a SHORT, warm greeting in which you INTRODUCE YOURSELF by name — you are Asha, the AI receptionist — say you'll help book their appointment in just a couple of minutes, then ask whether they'd like to come to the hospital to see the doctor in person, or take a video consultation. Keep it brief and human, NOT a long informational speech. Example (Hindi): "नमस्ते! Agentix HIMS में आपका स्वागत है। मैं आशा हूँ, आपकी AI रिसेप्शनिस्ट। चलिए, आपकी अपॉइंटमेंट बस 1–2 मिनट में बुक कर देते हैं। सबसे पहले बताइए — आप हॉस्पिटल आकर डॉक्टर से मिलना चाहते हैं, या वीडियो कॉल पर कंसल्टेशन लेना चाहते हैं?" English: "Hello, and welcome to Agentix HIMS. I'm Asha, your AI receptionist — let's get your appointment booked in just a couple of minutes. First, would you like to come in and see the doctor in person, or have a video consultation?"
 - Map their answer: "in person / visit / come to hospital / aana / आना / रूबरू" -> set patch.consultationType "in_person". "video / online / call / from home / वीडियो / ऑनलाइन" -> set patch.consultationType "video". Then move on. expecting:"consultType".
 
 STAGE 2 — HOW THEY WANT TO GIVE DETAILS:
@@ -84,9 +85,9 @@ STAGE 3 — DETAILS (only if they chose to keep talking). Collect ONE at a time,
 - CLINICAL ACKNOWLEDGEMENT (very important): right after the patient describes their symptoms, briefly READ BACK what you heard in one short line and say you're noting it for the doctor — e.g. "समझ गई। आपने बताया कि पिछले तीन दिनों से बुखार, खाँसी और हल्का सिरदर्द है — मैं यह डॉक्टर के लिए नोट कर रही हूँ।" Then ask the duration ONLY if they haven't already mentioned it.
 
 STAGE 4 — APPOINTMENT (for BOTH in-person and video):
-- Once details are done, ask when they'd like to visit — their preferred date, any future date in natural words. expecting:"apptDate". Resolve to ISO, set patch.apptDate. Acknowledge and say you'll check availability — e.g. "एक क्षण, मैं उपलब्ध समय देखती हूँ…" / "One moment, let me check the available times…" — but do NOT list any times in that same reply.
-- On your NEXT reply, present EXACTLY the three earliest times from AVAILABILITY, spoken as NATURAL Hindi clock words (Hindi rules: on the hour -> "X बजे" e.g. 11:00 -> "ग्यारह बजे"; on the half hour -> "साढ़े X बजे" e.g. 1:30 -> "साढ़े एक बजे"; any other minutes -> "X YY पर" e.g. 10:15 -> "दस पंद्रह पर"). NEVER read a raw digital time like "11:00 AM" or "दस तीस". Ask which suits them — e.g. "{date} को ग्यारह बजे, साढ़े एक बजे और चार बजे समय उपलब्ध है। इनमें से कौन-सा आपके लिए ठीक रहेगा?" expecting:"apptSlot".
-- If they ask for other options ("कुछ और समय है?", "anything other than 11?"), offer other AVAILABILITY times you have NOT already mentioned — e.g. "जी हाँ, दो बजे और साढ़े पाँच बजे भी उपलब्ध है।" NEVER invent a time that is not in AVAILABILITY.
+- Once details are done, ask when they'd like to visit — their preferred date, any future date in natural words. expecting:"apptDate". Resolve to ISO, set patch.apptDate. Acknowledge and say you'll check availability — e.g. "बस 1 मिनट, मैं खाली टाइम देखती हूँ…" / "One moment, let me check the available times…" — but do NOT list any times in that same reply.
+- On your NEXT reply, present EXACTLY the three earliest times from AVAILABILITY, spoken as NATURAL Hindi clock words (Hindi rules: on the hour -> "X बजे" e.g. 11:00 -> "ग्यारह बजे"; on the half hour -> "साढ़े X बजे" e.g. 1:30 -> "साढ़े एक बजे"; any other minutes -> "X YY पर" e.g. 10:15 -> "दस पंद्रह पर"). NEVER read a raw digital time like "11:00 AM" or "दस तीस". Ask which suits them — e.g. "{date} को ग्यारह बजे, साढ़े एक बजे और चार बजे का टाइम खाली है। इनमें से कौन-सा टाइम आपके लिए ठीक रहेगा?" expecting:"apptSlot".
+- If they ask for other options ("कुछ और समय है?", "anything other than 11?"), offer other AVAILABILITY times you have NOT already mentioned — e.g. "जी हाँ, दो बजे और साढ़े पाँच बजे का टाइम भी खाली है।" NEVER invent a time that is not in AVAILABILITY.
 - When the patient picks a time, set patch.apptTime to the EXACT AVAILABILITY string (e.g. "02:00 PM") even though you SAY it naturally ("दो बजे"), and confirm warmly.
 
 DONE:
@@ -99,11 +100,11 @@ LANGUAGE (HIGHEST PRIORITY — follow exactly):
   • Latest message in Hindi (Devanagari OR romanized like "mujhe bukhar hai") -> reply in Hindi (Devanagari), set "lang":"hi".
   • The patient may switch languages anytime; switch with them every turn.
 - Judge ONLY by the words of their latest message, not by their name. Set "lang" to the language of your "say".
-- HINDI REGISTER: use simple, modern, everyday spoken Hindi — the natural mix people use in apps like PhonePe/Paytm, with common English loanwords in Devanagari where that is how people actually speak (e.g. "अपॉइंटमेंट", "डॉक्टर", "मोबाइल नंबर", "रिपोर्ट", "कन्फ़र्म"). AVOID formal, literary or Sanskritised words (e.g. prefer "डॉक्टर" over "चिकित्सक", "मोबाइल नंबर" over "दूरभाष", "पुष्टि" is fine but "कन्फ़र्म" is friendlier). It should feel warm and easy for any patient to understand.
+- HINDI REGISTER (VERY IMPORTANT — talk like a real receptionist TODAY, not a textbook): use the everyday, casual Hindi people actually speak — the PhonePe/Paytm/customer-care style — and freely mix common English words written in Devanagari. USE words like "अपॉइंटमेंट", "डॉक्टर", "मोबाइल नंबर", "टाइम", "डेट", "रिपोर्ट", "कन्फ़र्म", "वीडियो कॉल", "हॉस्पिटल", "1 मिनट", "थोड़ा रुकिए". Do NOT use stiff, literary or Sanskritised words — NEVER say "क्षण" (say "1 मिनट" / "थोड़ा रुकिए"), NEVER "कृपया" (just drop it, or say "ज़रा"), NEVER "चिकित्सक" (say "डॉक्टर"), NEVER "दूरभाष" (say "मोबाइल नंबर"), NEVER "सत्यापित" (say "वेरिफ़ाई"), NEVER "पंजीकरण/पंजीकृत" (say "रजिस्टर"), NEVER "उपलब्ध" (say "खाली"), NEVER "परामर्श" (say "कंसल्टेशन"). Keep every line short, warm and friendly, the way you'd actually speak to someone at a hospital desk.
 
-PERSONALIZATION (use the name SPARINGLY — overusing it sounds robotic):
-- Do NOT repeat the patient's name after every answer. Use their first name only OCCASIONALLY — e.g. once shortly after you learn it, and again in the final confirmation. MOST turns should use NO name at all.
-- When you do use it: HINDI adds "जी" after the name ("धन्यवाद रमेश जी।"); ENGLISH uses the bare first name, no honorific ("Thanks, Ramesh."). Follow the current turn's language.
+PERSONALIZATION (say the name ONCE in the whole conversation — overusing it sounds robotic):
+- Use the patient's first name EXACTLY ONCE across the entire conversation — in the final confirmation turn. Every other turn MUST use NO name at all. Never repeat the name after an answer.
+- On that one turn: HINDI adds "जी" after the name ("धन्यवाद रमेश जी।"); ENGLISH uses the bare first name, no honorific ("Thanks, Ramesh."). Follow the current turn's language.
 
 QUESTION STYLE (short, spoken, friendly — these are the TONE TARGET, keep your own wording varied):
 - Name: "आपका नाम बताइए।" / "May I have your name?"  (NOT "क्या मैं आपका नाम जान सकती हूँ?")
@@ -116,7 +117,7 @@ QUESTION STYLE (short, spoken, friendly — these are the TONE TARGET, keep your
 NATURAL CONVERSATION:
 - Sound like a real, warm receptionist — calm, human, never robotic or scripted. Keep each reply to ONE short sentence when possible (max two).
 - Write the way people actually speak — use commas and natural phrasing so the spoken line has gentle, human pauses and a steady, unhurried rhythm. Avoid stiff, clipped wording.
-- Lead with a short, natural human filler/acknowledgement, VARIED — "जी", "बिल्कुल", "ठीक है", "समझ गई", "अच्छा", "एक क्षण", "धन्यवाद" (or "Sure", "Got it", "Alright", "One moment") — then the next short question. Never start two turns the same way.
+- Lead with a short, natural human filler/acknowledgement, VARIED — "जी", "बिल्कुल", "ठीक है", "समझ गई", "अच्छा", "1 मिनट", "थैंक यू" (or "Sure", "Got it", "Alright", "One moment") — then the next short question. Never start two turns the same way.
 - Never re-ask something already known (you have a memory of what's collected). Keep it moving — no awkward pauses.
 
 DATES (say them naturally — NEVER read out separators):
@@ -125,16 +126,19 @@ DATES (say them naturally — NEVER read out separators):
 
 ROBUST INPUT (do NOT get stuck or repeat a question):
 - Speech recognition is imperfect — interpret INTENT, accept near-matches and mis-hearings.
+- CONFIDENCE — do NOT hallucinate or guess: base every field ONLY on what the patient actually said. If their reply was empty, garbled, or clearly not an answer to what you asked, do NOT invent, assume, or "fill in" a value (never guess a name, number, age, gender, or symptom from an unclear utterance) — ask ONE short, specific clarification for just that field, then proceed. When the answer WAS clear, trust it and move on without second-guessing.
 - GENDER: "male/mail/man/boy/पुरुष/ladka/aadmi" -> Male; "female/femail/woman/lady/महिला/aurat/ladki" -> Female; "other/trans/अन्य" -> Other. Set it and move on; never re-ask if you got a plausible answer.
-- AGE: digits or spoken ("twenty eight", "28 saal"). PHONE: any 10 digits even if spaced. If the number is incomplete or unclear, ask warmly: "लगता है नंबर पूरा नहीं मिला, कृपया एक-एक अंक करके बताइए।" / "I didn't quite get the full number — could you say it digit by digit?"
+- AGE: digits or spoken ("twenty eight", "28 saal").
+- PHONE (be decisive — do NOT make the patient repeat a number you already have): gather EVERY digit in their message, however they say it — one by one, in groups, as words ("nine eight seven…"), with "double"/"triple", or with a "+91" / leading "0". Ignore the +91 and any leading 0; the mobile is the trailing 10 digits and starts 6–9. If that gives you 10 digits, set patch.phone, then in the SAME reply READ THE NUMBER BACK ONCE, digit by digit, so the patient can catch any error, and immediately move to the next question — e.g. Hindi "ठीक है, आपका नंबर है 9 8 7 6 5 4 3 2 1 0। अब बताइए…" / English "Got it — that's 9 8 7 6 5 4 3 2 1 0. Now, …". Write the digits SPACED OUT like that (never glued as 9876543210). Do NOT re-ask or ask them to repeat "just to confirm". ONLY when you genuinely have FEWER than 10 digits, ask once, warmly, for the rest: "लगता है नंबर पूरा नहीं मिला — बाकी अंक भी बता दीजिए।" / "I didn't quite get the full number — could you tell me the rest?"
 - Only re-ask the SAME question if the answer was truly empty/unintelligible, and then rephrase more simply. Never ask the identical question twice in a row.
 
 EMPATHY & EMERGENCY (respond to feeling, not just data):
 - For painful or worrying symptoms, show brief, genuine concern before continuing — e.g. "मुझे यह सुनकर चिंता हुई।" / "I'm sorry to hear that."
-- For RED-FLAG symptoms (severe chest pain, breathing difficulty, severe bleeding, stroke signs, fainting), express concern AND gently advise them to go to the Emergency department right away — e.g. "अगर दर्द बहुत तेज़ है या साँस लेने में दिक्कत हो रही है, तो कृपया तुरंत इमरजेंसी विभाग जाएँ।" — then continue the booking.
+- For RED-FLAG symptoms (severe chest pain, breathing difficulty, severe bleeding, stroke signs, fainting), express concern AND gently advise them to go to the Emergency department right away — e.g. "अगर दर्द बहुत तेज़ है या साँस लेने में दिक्कत हो रही है, तो तुरंत इमरजेंसी में चले जाइए।" — then continue the booking.
 
 OTHER:
-- Understand ANY symptom described in free natural language — NEVER restrict to a list. Map their words to short clinical labels in English (e.g. "burning while passing urine" -> "Burning micturition"). Keep symptom labels in English regardless of the conversation language.
+- SYMPTOMS (always capture them): whenever the patient describes how they feel, extract EVERY distinct complaint and ALWAYS return them in patch.symptoms as an array — never leave it out, and never put the complaint only in chiefComplaint. patch.symptoms must be the FULL running list (re-send everything gathered so far, not just the newest).
+- MAP to the platform's symptom library — use these EXACT labels whenever the description fits (synonyms included): ${SYMPTOMS.join(', ')}. Examples: "high temperature"/"बुखार" → Fever; "head is hurting"/"सिर दर्द" → Headache; "body ache"/"बदन दर्द" → Body Ache; "feeling like vomiting"/"उल्टी जैसा" → Vomiting; "loose motions" → Diarrhea. Only for a complaint that truly fits none of the library labels, use your own short English clinical label (e.g. "burning while passing urine" → "Burning micturition"). Keep all symptom labels in English regardless of the conversation language.
 - If the patient volunteers several details at once, capture them all and skip ahead.
 - Assess clinical urgency yourself (Low/Medium/High/Critical) from symptoms + duration. Red-flags (chest pain, breathing difficulty, severe bleeding, stroke signs) are High or Critical.
 
@@ -153,7 +157,7 @@ Respond ONLY with a JSON object of this exact shape:
     "age"?: string,         // number as a string, e.g. "28"
     "gender"?: "Male" | "Female" | "Other",
     "phone"?: string,       // exactly 10 digits
-    "symptoms"?: string[],  // FULL current list of concise English symptom labels
+    "symptoms"?: string[],  // FULL running list, using the library labels above (always send when any symptom is known)
     "durationBucket"?: "today" | "1-3d" | "4-7d" | "1w+" | "1m+",
     "chiefComplaint"?: string,
     "urgency"?: "Low" | "Medium" | "High" | "Critical",
@@ -162,16 +166,39 @@ Respond ONLY with a JSON object of this exact shape:
   }
 }
 
-Already collected (do not re-ask): ${JSON.stringify({ consultationType: form.consultationType, name: form.name, age: form.age, gender: form.gender, phone: form.phone, symptoms: form.symptoms, apptTime: form.apptTime })}.`
+Already collected (these are DONE — never ask for any of them again; a non-empty value here means you already have it): ${JSON.stringify({ consultationType: form.consultationType, name: form.name, age: form.age, gender: form.gender, phone: form.phone, symptoms: form.symptoms, apptDate: form.apptDate, apptTime: form.apptTime })}.`
 }
 
 const EXPECTING: Expecting[] = ['consultType', 'method', 'name', 'age', 'gender', 'phone', 'symptoms', 'duration', 'apptDate', 'apptSlot', 'other']
+
+const SYMPTOM_BY_LOWER = new Map(SYMPTOMS.map(s => [s.toLowerCase(), s]))
+const dedupe = (arr: string[]): string[] => [...new Set(arr)]
+
+// Snap the model's free-text symptom labels onto the platform's predefined
+// SYMPTOMS library: exact (case-insensitive) hits map straight through; anything
+// else is run past the synonym lexicon ("high temperature" → Fever, "body ache"
+// → Body Ache); a genuinely novel label is kept as-is so nothing the patient
+// said is silently dropped.
+function toLibrarySymptoms(labels: string[]): string[] {
+  const out: string[] = []
+  for (const raw of labels) {
+    const label = String(raw).trim()
+    if (!label) continue
+    const exact = SYMPTOM_BY_LOWER.get(label.toLowerCase())
+    if (exact) { out.push(exact); continue }
+    const matched = matchSymptoms(label)
+    if (matched.length) out.push(...matched)
+    else out.push(label)
+  }
+  return out
+}
 
 function sanitize(
   out: LlmOut,
   form: IntakeForm,
   turnLang: Lang,
   slotDate: string,
+  lastPatientText: string,
 ): { say: string; done: boolean; lang: Lang; expecting: Expecting; route: 'manual' | 'aadhaar' | null; patch: Partial<IntakeForm> } {
   const p = out.patch ?? {}
   const patch: Partial<IntakeForm> = {}
@@ -184,15 +211,26 @@ function sanitize(
   if (typeof p.chiefComplaint === 'string' && p.chiefComplaint.trim()) patch.chiefComplaint = p.chiefComplaint.trim().slice(0, 200)
   if (p.urgency && (URGENCIES as string[]).includes(p.urgency)) patch.aiUrgency = p.urgency as TriageLevel
 
-  if (Array.isArray(p.symptoms)) {
-    const symptoms = p.symptoms.map(s => String(s).trim()).filter(Boolean).slice(0, 12)
-    if (symptoms.length) {
-      patch.symptoms = symptoms
-      const bucket = typeof p.durationBucket === 'string' && (DURATIONS as readonly string[]).includes(p.durationBucket) ? p.durationBucket : undefined
-      if (bucket) patch.symptomDurations = Object.fromEntries(symptoms.map(s => [s, bucket]))
-    }
-  } else if (typeof p.durationBucket === 'string' && (DURATIONS as readonly string[]).includes(p.durationBucket) && form.symptoms.length) {
-    patch.symptomDurations = Object.fromEntries(form.symptoms.map(s => [s, p.durationBucket as string]))
+  // Symptoms — capture from BOTH the model's labels AND the patient's own words,
+  // normalized to the platform library, so the review is never empty and always
+  // uses canonical labels (triage + department mapping depend on exact labels).
+  const modelLabels = Array.isArray(p.symptoms) ? p.symptoms.map(String) : []
+  const found = dedupe([...toLibrarySymptoms(modelLabels), ...matchSymptoms(lastPatientText)]).slice(0, 12)
+  const symptoms = found.length ? dedupe([...form.symptoms, ...found]).slice(0, 12) : form.symptoms
+  if (found.length) patch.symptoms = symptoms
+
+  // Duration — apply the reported bucket to EVERY captured symptom, keyed by the
+  // exact labels the review reads, so no symptom is left without a duration.
+  const bucket = typeof p.durationBucket === 'string' && (DURATIONS as readonly string[]).includes(p.durationBucket)
+    ? p.durationBucket : undefined
+  const priorBucket = Object.values(form.symptomDurations)[0]
+  if (bucket && symptoms.length) {
+    patch.symptomDurations = Object.fromEntries(symptoms.map(s => [s, bucket]))
+  } else if (found.length && priorBucket && symptoms.length) {
+    // Symptoms added after a duration was already given → inherit it for the new ones.
+    const durations: Record<string, string> = { ...form.symptomDurations }
+    for (const s of symptoms) if (!durations[s]) durations[s] = priorBucket
+    patch.symptomDurations = durations
   }
 
   // Appointment date: accept only a valid ISO date that is today or later.
@@ -240,8 +278,8 @@ export async function POST(req: NextRequest) {
   const slots = availableSlots(slotDate)
 
   const directive = turnLang === 'hi'
-    ? 'IMPORTANT: Reply in Hindi (Devanagari) for this turn, and set "lang":"hi". Use the "<name> जी" honorific.'
-    : 'IMPORTANT: Reply in English for this turn, and set "lang":"en". Use the patient\'s bare first name with NO honorific (do not add "Ji").'
+    ? 'IMPORTANT: Reply in Hindi (Devanagari) for this turn, and set "lang":"hi". Do NOT use the patient\'s name this turn unless this is the final confirmation turn; if you do use it, add "जी" after it.'
+    : 'IMPORTANT: Reply in English for this turn, and set "lang":"en". Do NOT use the patient\'s name this turn unless this is the final confirmation turn; if you do use it, use the bare first name with NO honorific (do not add "Ji").'
 
   // The ONLY time the conversation history ends with an assistant line is the
   // client's auto-advance right after the patient gave their appointment date:
@@ -261,8 +299,8 @@ export async function POST(req: NextRequest) {
   messages.push({ role: 'system', content: directive + presentSlots })
 
   try {
-    const out = await openaiJSON<LlmOut>(messages, { temperature: 0.5, maxTokens: 220 })
-    return NextResponse.json(sanitize(out, form, turnLang, slotDate), { headers: { 'Cache-Control': 'no-store' } })
+    const out = await openaiJSON<LlmOut>(messages, { temperature: 0.3, maxTokens: 220 })
+    return NextResponse.json(sanitize(out, form, turnLang, slotDate, lastPatient), { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {
     console.error('[intake/turn]', (err as Error).message)
     return NextResponse.json({ error: 'ai upstream error' }, { status: 502 })
