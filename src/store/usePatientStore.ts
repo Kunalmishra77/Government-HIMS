@@ -266,6 +266,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Fever 102°F · 2 days', 'Throat pain'], history: ['Vaccinations up to date'], registeredAt: '10:35 AM', registeredDate: TODAY,
     triageLevel: 'Medium',
+    source: 'walk_in', uhid: 'PUH-2026-00031', abhaId: '14-3120-8845-2201', aadhaarVerified: true,
   },
   {
     id: 'PT-20403', name: 'Suresh Pillai', age: 58, gender: 'Male', phone: '9890112233', bloodGroup: 'O+', token: 12,
@@ -294,6 +295,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Hair loss', 'Scalp itching'], history: ['Anaemia'], registeredAt: '10:50 AM', registeredDate: TODAY,
     triageLevel: 'Low',
+    source: 'walk_in', uhid: 'PUH-2026-00032', abhaId: '14-4471-9930-5510', aadhaarVerified: true,
   },
   {
     id: 'PT-20407', name: 'Mohan Iyengar', age: 73, gender: 'Male', phone: '9866554433', bloodGroup: 'B+', token: 16,
@@ -312,6 +314,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Antenatal · 28 weeks', 'Routine review'], history: ['Gravida 2 Para 1'], registeredAt: '11:00 AM', registeredDate: TODAY,
     triageLevel: 'Low',
+    source: 'walk_in', uhid: 'PUH-2026-00033', abhaId: '14-5582-2214-7788', aadhaarVerified: true,
   },
   {
     id: 'PT-20409', name: 'Devansh Singh', age: 4, gender: 'Male', phone: '9890900011', bloodGroup: 'A+', token: 18,
@@ -326,6 +329,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Low back pain · radiating L leg', 'Numbness L foot'], history: ['Nil significant'], registeredAt: '11:10 AM', registeredDate: TODAY,
     triageLevel: 'Medium',
+    source: 'walk_in', uhid: 'PUH-2026-00034', abhaId: '14-6690-4471-9023', aadhaarVerified: true,
   },
   {
     id: 'PT-20411', name: 'Ishita Malhotra', age: 41, gender: 'Female', phone: '9876549988', bloodGroup: 'B+', token: 20,
@@ -341,6 +345,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Persistent dry cough · 3 weeks'], history: ['Ex-smoker'], registeredAt: '11:20 AM', registeredDate: TODAY,
     triageLevel: 'High',
+    source: 'walk_in', uhid: 'PUH-2026-00035', abhaId: '14-7712-6650-3341', aadhaarVerified: true,
   },
   {
     id: 'PT-20413', name: 'Geeta Sharma', age: 60, gender: 'Female', phone: '9866443322', bloodGroup: 'A+', token: 22,
@@ -348,6 +353,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Routine BP review', 'Mild giddiness'], history: ['HTN', 'T2DM'], registeredAt: '11:25 AM', registeredDate: TODAY,
     triageLevel: 'Low', latestHbA1c: 6.9, latestBP: '142/88',
+    source: 'walk_in', uhid: 'PUH-2026-00036', abhaId: '14-8830-1129-4456', aadhaarVerified: true,
   },
   // Walk-ins without ABHA / Aadhaar linkage — surface under "Needs Aadhaar".
   {
@@ -364,7 +370,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Recurrent skin allergy'], history: ['Nil significant'], registeredAt: '11:35 AM', registeredDate: TODAY,
     triageLevel: 'Low',
-    source: 'walk_in', aadhaarVerified: false,
+    source: 'walk_in', uhid: 'PUH-2026-00037', abhaId: '14-9945-7781-6620', aadhaarVerified: true,
   },
   {
     id: 'PT-20416', name: 'Mohd Aslam', age: 34, gender: 'Male', phone: '9899334417', bloodGroup: 'A+', token: 25,
@@ -372,7 +378,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Wrist pain after fall', 'Swelling'], history: ['No known allergies'], registeredAt: '11:40 AM', registeredDate: TODAY,
     triageLevel: 'Medium',
-    source: 'walk_in', aadhaarVerified: false,
+    source: 'walk_in', uhid: 'PUH-2026-00038', abhaId: '14-1057-3392-8874', aadhaarVerified: true,
   },
   {
     id: 'PT-20417', name: 'Kamla Prasad', age: 68, gender: 'Female', phone: '9866120099', bloodGroup: 'B-', token: 26,
