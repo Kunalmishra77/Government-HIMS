@@ -22,8 +22,8 @@ export function DemoControls() {
   }, [auto, done])
 
   const setMode = (m: LiveMode) => {
-    const token = usePatientLiveStore.getState().token
-    usePatientLiveStore.getState().startVisit(token, m)
+    const s = usePatientLiveStore.getState()
+    s.startVisit(s.token, m, s.apptDate, s.apptTime, s.doctor)
   }
 
   const Btn = ({ onClick, label, children }: { onClick: () => void; label: string; children: React.ReactNode }) => (

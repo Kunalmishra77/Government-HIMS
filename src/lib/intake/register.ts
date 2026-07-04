@@ -105,7 +105,8 @@ export function registerPatientFromIntake(form: IntakeForm, deps: RegisterDeps):
   const auth = useAuthStore.getState()
   auth.setRole('patient')
   auth.setUser({ id: newId, name: form.name, role: 'patient' })
-  usePatientLiveStore.getState().startVisit(newToken, mode)
+  const apptDoctor = mode === 'video' ? (form.slotDoctor || 'Dr. Priya Nair') : 'Dr. Priya Nair'
+  usePatientLiveStore.getState().startVisit(newToken, mode, form.apptDate, form.apptTime, apptDoctor)
 
   notifyAndAuditMany(['reception', 'doctor'], {
     type: 'appointment',

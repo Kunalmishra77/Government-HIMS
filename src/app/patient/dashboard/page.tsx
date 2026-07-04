@@ -10,6 +10,7 @@ import { PatientProfileCard } from "@/components/patient/dashboard/PatientProfil
 import { AiHealthSummaryCard } from "@/components/patient/dashboard/AiHealthSummaryCard"
 import { HealthTrendsCard } from "@/components/patient/dashboard/HealthTrendsCard"
 import { LiveVisitStatusCard } from "@/components/patient/dashboard/LiveVisitStatusCard"
+import { ArrivalWaitCard } from "@/components/patient/dashboard/ArrivalWaitCard"
 import { LiveActivityTimeline } from "@/components/patient/dashboard/LiveActivityTimeline"
 import { FamilyTrackingCard } from "@/components/patient/dashboard/FamilyTrackingCard"
 import { FamilyInviteCard } from "@/components/patient/dashboard/FamilyInviteCard"
@@ -96,6 +97,9 @@ export default function PatientDashboard() {
           Profile → Your health → Live status → Prescriptions + Diagnostics,
           then secondary: Trends + Financial → Family, with the activity log last. */}
       <div className="space-y-5">
+        {/* 0 — Estimated arrival & waiting time (top priority right after booking). */}
+        <ArrivalWaitCard />
+
         {/* 1 — Patient profile (primary identity card). */}
         <PatientProfileCard />
 
