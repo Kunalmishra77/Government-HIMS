@@ -756,13 +756,14 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
   },
 }),
   {
-    name: 'agentix-patientstore', version: 5,
+    name: 'agentix-patientstore', version: 6,
     storage: createJSONStorage(() => localStorage),
     skipHydration: true,
     // v3 added identity fields (source / uhid / abhaId) and reseeded the demo board.
     // v4 seeds prior-visit OPD vitals (opdVitalsHistory) so the Vitals Requests
     // screen shows a real history. v5 seeds recorded-today opdVitals so the Vitals
-    // Requests "Done" tab is populated. Migrations reset to the fresh seed.
+    // Requests "Done" tab is populated. v6 appends the unlinked (Needs-Aadhaar)
+    // walk-ins onto whatever board is already persisted without wiping it.
     migrate: (persisted, version) => {
       if (version < 5) {
         return {
@@ -773,6 +774,20 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
           appointments: MOCK_APPOINTMENTS,
           selectedPatient: null,
         } as unknown as PatientState
+      }
+      if (version < 6) {
+        const prev = persisted as PatientState
+        const existingIds = new Set(prev.patients.map(p => p.id))
+        const maxToken = Math.max(0, ...prev.patients.map(p => p.token ?? 0))
+        const needsAadhaar = MOCK_PATIENTS
+          .filter(p => p.queueStatus === 'waiting' && !p.uhid && p.registeredDate === TODAY && !existingIds.has(p.id))
+          .map((p, i) => ({ ...p, token: maxToken + 1 + i }))
+        const patients = [...prev.patients, ...needsAadhaar]
+        return {
+          ...prev,
+          patients,
+          queue: patients.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)),
+        } as PatientState
       }
       return persisted as PatientState
     },
