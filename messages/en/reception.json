@@ -252,6 +252,8 @@
     "nextSendToBilling": "Send to Billing",
     "nextMarkDone": "Mark Done",
     "statusWaiting": "Waiting",
+    "statusNeedsAadhaar": "Needs Aadhaar Verification",
+    "statusReadyForVitals": "Ready for Vitals",
     "statusInVitals": "In Vitals",
     "statusConsulting": "Consulting",
     "statusPharmacy": "Pharmacy",

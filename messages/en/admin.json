@@ -180,6 +180,23 @@
       "denialRisk": "High denial-risk claims",
       "statutory": "Overdue statutory filings",
       "erCensus": "ER census and high-acuity load"
+    },
+    "voice": {
+      "title": "Voice Assistant",
+      "close": "Close voice assistant",
+      "opening": "Listening… ask me anything about the hospital.",
+      "tapToSpeak": "Tap to speak",
+      "submit": "Tap to send your question",
+      "interrupt": "Tap to interrupt",
+      "listeningHint": "Listening… speak, then pause.",
+      "interruptHint": "Tap the orb to interrupt and speak.",
+      "state": {
+        "idle": "Idle",
+        "listening": "Listening",
+        "thinking": "Thinking",
+        "retrieving": "Retrieving data",
+        "speaking": "Speaking"
+      }
     }
   },
   "analytics": {

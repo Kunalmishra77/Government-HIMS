@@ -52,7 +52,11 @@ export function registerPatientFromIntake(form: IntakeForm, deps: RegisterDeps):
   const mode = form.consultationType === 'video' ? 'video' : 'in_person'
   const newToken = Math.max(...patients.map(p => p.token), 1000) + 1
   const newId = `PT-${Date.now()}`
-  const uhid = (form.abhaId && findUhidByAbha(form.abhaId)) || generateUhid(patients)
+  // A self-check-in patient does NOT get a UHID here. Identity is verified at the
+  // reception desk (Aadhaar → ABHA detect/create → UHID) before they can be sent
+  // to vitals, so they enter the OPD queue as "Needs Aadhaar Verification". The
+  // only exception is a returning patient whose ABHA already resolves to a UHID.
+  const uhid = (form.abhaId && findUhidByAbha(form.abhaId)) || ''
   const triage = effectiveTriage(form)
   const estWaitMins = (patients.filter(p => ['waiting', 'vitals'].includes(p.queueStatus)).length + 1) * 4
   const isGovtScheme = form.payer === 'govtScheme'
@@ -60,6 +64,8 @@ export function registerPatientFromIntake(form: IntakeForm, deps: RegisterDeps):
   addPatient({
     id: newId,
     uhid,
+    aadhaarVerified: !!uhid,
+    source: 'appointment',
     name: form.name,
     age: parseInt(form.age, 10),
     gender: (form.gender || 'Male') as Gender,
@@ -79,7 +85,7 @@ export function registerPatientFromIntake(form: IntakeForm, deps: RegisterDeps):
   })
 
   // Persist the permanent UHID↔ABHA link so future visits resolve the returning patient.
-  if (form.abhaId) {
+  if (form.abhaId && uhid) {
     usePatientProfileStore.getState().saveProfile(
       newId,
       {
@@ -112,9 +118,9 @@ export function registerPatientFromIntake(form: IntakeForm, deps: RegisterDeps):
     type: 'appointment',
     priority: triage.level === 'Critical' ? 'critical' : triage.level === 'High' ? 'high' : 'medium',
     title: `Self check-in · ${form.name}`,
-    body: `${form.name} just checked in (UHID ${uhid}). Triage: ${triage.level}. ${isGovtScheme ? `Govt scheme: ${form.schemeName} · ABHA verified. ` : ''}${form.symptoms.length ? 'Symptoms: ' + form.symptoms.join(', ') + '.' : 'No symptoms provided.'} Token #${newToken}.`,
+    body: `${form.name} just checked in (${uhid ? `UHID ${uhid}` : 'awaiting Aadhaar verification — no UHID yet'}). Triage: ${triage.level}. ${isGovtScheme ? `Govt scheme: ${form.schemeName} · ABHA verified. ` : ''}${form.symptoms.length ? 'Symptoms: ' + form.symptoms.join(', ') + '.' : 'No symptoms provided.'} Token #${newToken}.`,
     patientName: form.name,
-    audit: { action: 'reception_registered', resource: 'patient', resourceId: newId, detail: `Self-check-in completed · UHID ${uhid} · token ${newToken}`, userName: form.name },
+    audit: { action: 'reception_registered', resource: 'patient', resourceId: newId, detail: `Self-check-in completed · ${uhid ? `UHID ${uhid}` : 'UHID pending Aadhaar verification'} · token ${newToken}`, userName: form.name },
   })
 
   return { patientId: newId, uhid, token: newToken, familyToken, estWait: estWaitMins }

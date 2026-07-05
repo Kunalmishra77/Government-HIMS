@@ -107,6 +107,22 @@ export const RADIOLOGY_CATALOG: Record<string, CatalogEntry> = {
     code: 'MAMMO_SCREEN', name: 'Mammography (Bilateral Screening)', modality: 'MAMMO', bodyPart: 'Breasts',
     defaultPriority: 'Routine', expectedTATmin: 60, template: 'bi_rads', radiationDose: 'low',
   },
+  US_KUB: {
+    code: 'US_KUB', name: 'Ultrasound KUB', modality: 'US', bodyPart: 'Kidneys–Ureter–Bladder',
+    defaultPriority: 'Routine', expectedTATmin: 30, template: 'us_abdo',
+    preparation: 'Full bladder.',
+  },
+  ECHO: {
+    code: 'ECHO', name: 'Echocardiography (2D + Colour Doppler)', modality: 'US', bodyPart: 'Heart',
+    defaultPriority: 'Urgent', expectedTATmin: 40, template: 'general',
+    preparation: 'Left lateral decubitus · ECG leads for gating.',
+  },
+  CT_ANGIO_PULM: {
+    code: 'CT_ANGIO_PULM', name: 'CT Pulmonary Angiography', modality: 'CT', bodyPart: 'Chest',
+    defaultPriority: 'STAT', expectedTATmin: 60, template: 'general',
+    contrast: true, radiationDose: 'high',
+    preparation: 'IV access (18G) · eGFR · timing bolus.',
+  },
 }
 
 export const RADIOLOGY_CODES = Object.keys(RADIOLOGY_CATALOG)

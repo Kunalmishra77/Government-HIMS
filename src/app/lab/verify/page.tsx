@@ -192,7 +192,7 @@ export default function VerifyQueue() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-base font-bold text-slate-900">{order.patientName}</p>
-                          <span className="text-[11px] font-bold text-slate-400">{order.patientId}</span>
+                          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{order.uhid}</span>
                           <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded", SOURCE_TINT[order.source])}>{order.source}</span>
                           {order.wardBed && <span className="text-[11px] text-slate-500">· {order.wardBed}</span>}
                           <span className={cn("text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded", PRIORITY_TINT[test.priority])}>{test.priority}</span>

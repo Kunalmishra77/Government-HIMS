@@ -12,6 +12,7 @@ import {
 } from "@/components/doctor/ipd/chart"
 import { ERHandoverPanel } from "@/components/doctor/ipd/ERHandoverPanel"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 
 const TABS = ['Overview', 'Timeline', 'Rounds', 'Medications', 'Orders & Results', 'Procedure', 'Referrals', 'Discharge'] as const
 type Tab = typeof TABS[number]
@@ -55,7 +56,7 @@ export default function InpatientChart() {
         <div className="flex items-center gap-3 mb-4">
           <span className={cn("h-12 w-12 rounded-2xl text-white flex items-center justify-center font-bold text-[16px]", ip.condition === 'Critical' ? 'bg-gradient-to-br from-red-500 to-rose-600' : 'bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)]')}>{initials(ip.name)}</span>
           <div className="min-w-0">
-            <p className="text-[17px] font-bold text-slate-900 leading-tight truncate">{ip.name}</p>
+            <p className="text-[17px] font-bold text-slate-900 leading-tight truncate flex items-center gap-2">{ip.name}<span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{deriveUhid(ip.patientId)}</span></p>
             <p className="text-[12.5px] text-slate-500">{ip.patientId} · {ip.age}y · {ip.gender}</p>
           </div>
         </div>

@@ -9,6 +9,7 @@ import {
 import { useDischargeStore, type ClearancePillar, type DischargePatient } from "@/store/useDischargeStore"
 import { notifyAndAudit } from "@/lib/notifyAndAudit"
 import { NeonBadge } from "@/components/ui/neon-badge"
+import { deriveUhid } from "@/lib/uhid"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -133,6 +134,7 @@ function PatientCard({ patient, highlighted = false, dimmed = false }: { patient
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1">
             <h3 className="text-lg font-bold text-slate-900">{patient.patientName}</h3>
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{deriveUhid(patient.patientId)}</span>
             {patient.exitClearanceIssued
               ? <NeonBadge variant="success" dot>Exit Issued</NeonBadge>
               : canExit

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Receipt, CreditCard, CheckCircle2, AlertCircle, Smartphone, Banknote, ShieldCheck, Sparkles, XCircle, Loader2 } from "lucide-react"
 import { useBillingStore, type ChargeType } from "@/store/useBillingStore"
 import { NeonBadge } from "@/components/ui/neon-badge"
+import { deriveUhid } from "@/lib/uhid"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -129,7 +130,10 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
       <div className="bg-white border shadow-sm rounded-xl p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">{bill.patientName}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-2xl font-bold text-slate-900">{bill.patientName}</h2>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-0.5">{deriveUhid(bill.patientId)}</span>
+            </div>
             <p className="text-sm text-slate-500 mt-1">{bill.id} • {bill.visitType} • {bill.payerType}</p>
             {bill.admissionDate && <p className="text-xs text-slate-400 mt-0.5">Admitted: {new Date(bill.admissionDate).toLocaleDateString('en-IN')}</p>}
           </div>

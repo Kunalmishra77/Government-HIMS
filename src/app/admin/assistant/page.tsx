@@ -4,18 +4,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { Sparkles, Mic, Send, ArrowRight, Trash2, ShieldCheck } from "lucide-react"
 import { useAdminAssistantStore } from "@/store/useAdminAssistantStore"
-import { isSpeechSupported, startVoiceCommand, type Recognition } from "@/lib/voiceScribe"
+import { isSpeechSupported, unlockAudio } from "@/lib/voiceScribe"
+import { AdminVoiceConsole } from "@/components/admin/AdminVoiceConsole"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
-
-const VOICE_ERR_KEYS: Record<string, string> = {
-  "not-allowed": "assistant.voiceErr.blocked",
-  "service-not-allowed": "assistant.voiceErr.blocked",
-  "no-speech": "assistant.voiceErr.noSpeech",
-  "audio-capture": "assistant.voiceErr.noMic",
-  "network": "assistant.voiceErr.network",
-  "unsupported": "assistant.voiceErr.unsupported",
-}
 
 const SUGGESTION_KEYS = [
   "assistant.suggestion.snapshot",
@@ -56,35 +48,18 @@ export default function AdminAssistantPage() {
   const { messages, ask, clear } = useAdminAssistantStore()
   const [input, setInput] = useState("")
   const [mounted, setMounted] = useState(false)
-  const [listening, setListening] = useState(false)
   const [voiceOk, setVoiceOk] = useState(false)
-  const [voiceErr, setVoiceErr] = useState<string | null>(null)
-  const recRef = useRef<Recognition | null>(null)
+  const [voiceOpen, setVoiceOpen] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setMounted(true); setVoiceOk(isSpeechSupported()) }, [])
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }) }, [messages.length])
-  useEffect(() => () => { recRef.current?.stop() }, [])
 
   const submit = (text: string) => {
     const q = text.trim()
     if (!q) return
     ask(q)
     setInput("")
-  }
-
-  // Voice-command search: tap → speak → live transcript fills the box → on stop
-  // it auto-submits the question. Errors (blocked mic, no speech) are surfaced.
-  const toggleMic = () => {
-    if (listening) { recRef.current?.stop(); recRef.current = null; setListening(false); return }
-    setVoiceErr(null)
-    const rec = startVoiceCommand({
-      onPartial: (t) => setInput(t),
-      onFinal: (t) => { setInput(""); submit(t) },
-      onError: (err) => { setVoiceErr(VOICE_ERR_KEYS[err] ? t(VOICE_ERR_KEYS[err]) : t('assistant.voiceErr.generic')); setListening(false) },
-      onEnd: () => setListening(false),
-    })
-    if (rec) { recRef.current = rec; setListening(true) }
   }
 
   const empty = mounted && messages.length === 0
@@ -185,13 +160,9 @@ export default function AdminAssistantPage() {
         {voiceOk && (
           <button
             type="button"
-            onClick={toggleMic}
-            aria-label={listening ? t('assistant.stopVoice') : t('assistant.startVoice')}
-            aria-pressed={listening}
-            className={cn(
-              "tap grid place-items-center h-11 w-11 rounded-xl flex-shrink-0 transition-colors",
-              listening ? "bg-danger text-white animate-pulse" : "text-foreground-muted hover:bg-surface-sunken",
-            )}
+            onClick={() => { unlockAudio(); setVoiceOpen(true) }}
+            aria-label={t('assistant.voice.title')}
+            className="tap grid place-items-center h-11 w-11 rounded-xl flex-shrink-0 text-accent hover:bg-accent-soft transition-colors"
           >
             <Mic className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -201,7 +172,7 @@ export default function AdminAssistantPage() {
           id="admin-ai-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={listening ? t('assistant.listening') : t('assistant.inputPlaceholder')}
+          placeholder={t('assistant.inputPlaceholder')}
           autoComplete="off"
           className="flex-1 bg-transparent px-2 py-2.5 t-body text-foreground placeholder:text-foreground-placeholder focus:outline-none"
         />
@@ -214,14 +185,10 @@ export default function AdminAssistantPage() {
           <Send className="h-5 w-5" aria-hidden="true" />
         </button>
       </form>
-      {voiceErr && (
-        <p role="alert" className="mt-2 t-caption font-semibold text-danger text-center">{voiceErr}</p>
-      )}
       <p className="mt-2 t-caption text-foreground-lighter text-center">
-        {listening
-          ? t('assistant.listeningHint')
-          : t('assistant.disclaimer')}
+        {t('assistant.disclaimer')}
       </p>
+      <AdminVoiceConsole open={voiceOpen} onClose={() => setVoiceOpen(false)} />
     </div>
   )
 }

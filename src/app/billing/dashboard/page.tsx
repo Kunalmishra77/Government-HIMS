@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/useAuthStore"
 import { useBillingStore } from "@/store/useBillingStore"
 import { NeonBadge } from "@/components/ui/neon-badge"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 import Link from "next/link"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { toast } from "sonner"
@@ -98,7 +99,7 @@ export default function BillingDashboard() {
           <div className="space-y-2">
             {duplicates.map(({ bill, alerts }) => (
               <div key={bill.id} className="rounded-lg bg-white border border-[rgba(238,107,38,0.15)] p-3">
-                <p className="text-xs font-bold text-slate-800">{bill.patientName} <span className="text-slate-400">· {bill.id}</span></p>
+                <p className="text-xs font-bold text-slate-800">{bill.patientName} <span className="text-emerald-700">{deriveUhid(bill.patientId)}</span> <span className="text-slate-400">· {bill.id}</span></p>
                 {alerts.map((a) => (
                   <p key={a.groupKey} className="text-[11px] text-[var(--color-accent)] mt-1 flex items-start gap-1">
                     <ShieldAlert className="h-3 w-3 mt-0.5 flex-shrink-0" />

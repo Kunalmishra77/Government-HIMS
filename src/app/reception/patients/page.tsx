@@ -13,6 +13,7 @@ import { notifyAndAudit } from "@/lib/notifyAndAudit"
 import type { Role } from "@/types/roles"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 import { toast } from "sonner"
 import { PatientJourneyTimeline } from "@/components/clinical/PatientJourneyTimeline"
 import { DataTablePro, type ProColumn } from "@/components/ui/DataTablePro"
@@ -126,7 +127,7 @@ export default function ReceptionPatients() {
         <div className="flex items-center gap-3 min-w-0">
           <PatientAvatar name={p.name} photoUrl={p.photoUrl} size="sm" />
           <div className="min-w-0">
-            <p className="font-bold text-foreground truncate">{p.name}</p>
+            <p className="font-bold text-foreground truncate flex items-center gap-1.5">{p.name}<span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5">{p.uhid ?? deriveUhid(p.id)}</span></p>
             <p className="t-caption text-foreground-lighter">{p.id} · {p.age}y · {p.gender}</p>
           </div>
         </div>
@@ -248,7 +249,10 @@ function PatientDrawer({ patient: p, visits, appointments, onClose, onAnnounce, 
             ? <img src={p.photoUrl} alt={p.name} className="h-12 w-12 rounded-2xl object-cover border border-slate-200" />
             : <span className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] text-white flex items-center justify-center font-bold text-[16px]">{initials(p.name)}</span>}
           <div>
-            <p className="text-[17px] font-bold text-slate-900 leading-tight">{p.name}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-[17px] font-bold text-slate-900 leading-tight">{p.name}</p>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{p.uhid ?? deriveUhid(p.id)}</span>
+            </div>
             <p className="text-[12.5px] text-slate-500">{p.id} · {p.age}y · {p.gender}</p>
           </div>
         </div>

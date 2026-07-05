@@ -209,7 +209,7 @@ function OrderRow(props: {
         <button onClick={props.onToggle} className="flex-1 min-w-0 text-left cursor-pointer">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-slate-900 truncate">{o.patientName}</span>
-            <span className="text-[11px] font-bold text-slate-400">{o.patientId}</span>
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{o.uhid}</span>
             {o.wardBed && <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-0.5"><Bed className="h-3 w-3" />{o.wardBed}</span>}
             {stat && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 animate-pulse">STAT</span>}
             {rejected && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 flex items-center gap-0.5"><AlertTriangle className="h-3 w-3" />{t('inbox.recollectRequired')}</span>}

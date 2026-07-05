@@ -17,6 +17,7 @@ import {
 } from "@/lib/erClinical"
 import { useAuthStore } from "@/store/useAuthStore"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 import { toast } from "sonner"
 import { useTranslations } from "next-intl"
 import { OnShiftTeam } from "@/components/clinical/OnShiftTeam"
@@ -243,6 +244,7 @@ export default function ERDashboard() {
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 flex-wrap">
                           <span className="font-bold">{p.name}</span>
+                          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{deriveUhid(p.id)}</span>
                           <span className="text-[11px] font-bold text-slate-400">{p.age}{p.gender}</span>
                           {p.esi && <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded', ESI_STYLE[p.esi].bg, ESI_STYLE[p.esi].fg)}>ESI {p.esi}</span>}
                           {n && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">NEWS2 {n.score}</span>}

@@ -22,6 +22,7 @@ import { useLabOrdersStore } from "@/store/useLabOrdersStore"
 import { useRadiologyStudiesStore } from "@/store/useRadiologyStudiesStore"
 import { notifyAndAudit } from "@/lib/notifyAndAudit"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 import { toast } from "sonner"
 import { useTranslations } from "next-intl"
 
@@ -263,6 +264,7 @@ function FloorRow(props: {
         <button onClick={props.onToggle} className="flex-1 min-w-0 text-left cursor-pointer">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-slate-900 truncate">{p.name}</span>
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{deriveUhid(p.id)}</span>
             <span className="text-[11px] font-bold text-slate-400">{p.age}{p.gender}</span>
             {p.bedNumber && <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-0.5"><Bed className="h-3 w-3" />{p.bedNumber}</span>}
             {p.trauma && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">{t('floor.trauma')}</span>}

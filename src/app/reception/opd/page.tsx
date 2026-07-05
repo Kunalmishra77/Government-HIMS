@@ -164,7 +164,16 @@ export default function OpdQueuePage() {
         : <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1"><AlertTriangle className="h-3.5 w-3.5" /> {t('opd.needsAadhaar')}</span>,
     },
     { key: 'triageLevel', label: t('opd.colAcuity'), sortable: true, sortAccessor: p => TRIAGE_RANK[p.triageLevel ?? 'Low'], render: p => p.triageLevel ? <StatusPill status={opdTriageToken(p.triageLevel)} label={p.triageLevel} dense /> : <span className="text-foreground-placeholder">—</span> },
-    { key: 'queueStatus', label: t('opd.colStatus'), sortable: true, render: p => <StatusPill status={STATUS_TOKEN[p.queueStatus]} label={t(`opd.${STATUS_PILL[p.queueStatus].key}`)} dense /> },
+    {
+      key: 'queueStatus', label: t('opd.colStatus'), sortable: true,
+      // A waiting patient is gated on identity: no UHID → "Needs Aadhaar
+      // Verification"; once reception stamps the UHID → "Ready for Vitals".
+      render: p => p.queueStatus === 'waiting'
+        ? (p.uhid
+          ? <StatusPill status="stable" label={t('opd.statusReadyForVitals')} dense />
+          : <StatusPill status="caution" label={t('opd.statusNeedsAadhaar')} dense />)
+        : <StatusPill status={STATUS_TOKEN[p.queueStatus]} label={t(`opd.${STATUS_PILL[p.queueStatus].key}`)} dense />,
+    },
     {
       key: 'wait', label: t('opd.colWait'), hideOnMobile: true,
       render: p => {

@@ -176,7 +176,7 @@ function StudyRow(props: {
         <button onClick={props.onToggle} className="flex-1 min-w-0 text-left cursor-pointer">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-foreground truncate">{s.patientName}</span>
-            <span className="text-[11px] font-bold text-foreground-placeholder">{s.patientId}</span>
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{s.uhid}</span>
             {s.wardBed && <span className="text-[11px] font-semibold text-foreground-lighter flex items-center gap-0.5"><Bed className="h-3 w-3" />{s.wardBed}</span>}
             <StatusPill status={priorityStatus(s.priority)} label={s.priority} dense />
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-accent">{s.modality}</span>

@@ -255,6 +255,7 @@ export default function LabOverview() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="text-sm font-bold text-slate-900">{order.patientName}</p>
+                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700">{order.uhid}</span>
                         <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700">{test.name}</span>
                         <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded-md", SOURCE_COLORS[order.source] ?? 'bg-slate-100 text-slate-600')}>
                           {order.source}
@@ -304,6 +305,7 @@ export default function LabOverview() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-bold text-slate-900">{order.patientName}</p>
+                          <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700">{order.uhid}</span>
                           <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-red-100 text-red-700">{test.name}</span>
                           {crit && (
                             <span className="text-xs font-bold text-red-700">{crit.analyte} {crit.value} {crit.unit} {crit.flag}</span>

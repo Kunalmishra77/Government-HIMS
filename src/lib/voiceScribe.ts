@@ -205,7 +205,7 @@ function getAudioCtx(): AudioContext | null {
 // Unlocking early guarantees the engine is fully initialized before the
 // assistant's first greeting plays. Idempotent.
 let audioUnlocked = false
-function unlockAudio(): void {
+export function unlockAudio(): void {
   const ctx = getAudioCtx()
   if (!ctx) return
   if (ctx.state === 'suspended') ctx.resume().catch(() => {})
@@ -445,6 +445,8 @@ export function speak(text: string, lang: 'en' | 'hi' = 'en', onDone?: () => voi
 
       // Fallback: HTMLAudioElement, played only once fully ready (canplaythrough)
       // so the first word still isn't clipped on browsers without Web Audio.
+      // Resume a suspended context first so autoplay isn't blocked here either.
+      if (ctx && ctx.state === 'suspended') { try { await ctx.resume() } catch { /* ignore */ } }
       const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }))
       if (seq !== speakSeq) { URL.revokeObjectURL(url); return }
       const audio = new Audio()

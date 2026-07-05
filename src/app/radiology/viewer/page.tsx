@@ -36,6 +36,7 @@ export default function RadiologyViewer() {
             <button key={s.id} onClick={() => setSelectedId(s.id)}
               className={cn("u-press w-full text-left bg-surface rounded-xl border p-3 transition-all", selectedId === s.id ? "border-primary-dark ring-1 ring-primary-dark" : "border-border hover:border-border-strong")}>
               <p className="font-bold text-foreground text-sm truncate">{s.patientName}</p>
+              <p className="text-[10px] font-bold text-emerald-700 truncate">{s.uhid}</p>
               <p className="text-xs text-foreground-lighter truncate">{s.modality} · {s.bodyPart}</p>
               <p className="text-[10px] text-foreground-placeholder mt-0.5">{s.id} · {s.status}</p>
             </button>
@@ -62,7 +63,7 @@ export default function RadiologyViewer() {
                   ))}
                 </div>
                 <div className="absolute bottom-3 left-3 text-[11px] text-white/60">
-                  <p className="font-bold text-white/80">{selected.patientName}</p>
+                  <p className="font-bold text-white/80">{selected.patientName} <span className="text-emerald-300">{selected.uhid}</span></p>
                   <p>{selected.name} · {selected.bodyPart}</p>
                 </div>
                 <span className="absolute bottom-3 right-3 text-[9px] text-white/40">{t("viewer.aiOverlayDemo")}</span>

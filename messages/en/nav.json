@@ -145,6 +145,7 @@
     "pharmacy_messages": "Messaging",
 
     "radiology_dashboard": "RIS Command Center",
+    "radiology_in_queue": "In Queue",
     "radiology_ai_command": "AI Command Center",
     "radiology_critical": "Critical Results",
     "radiology_analytics": "Analytics",
@@ -155,6 +156,7 @@
     "radiology_bench": "Modality Bench",
     "radiology_reading": "Reading Room",
     "radiology_verification": "Verification",
+    "radiology_reports": "Reports",
     "radiology_viewer": "DICOM Viewer",
     "radiology_templates": "Report Templates",
     "radiology_distribution": "Result Distribution",
@@ -263,6 +265,7 @@
     "emergency_dashboard": "ER Overview",
 
     "lab_dashboard": "Lab Overview",
+    "lab_in_queue": "In Queue",
     "lab_phlebotomy": "Phlebotomy",
     "lab_inbox": "Sample Inbox",
     "lab_analyzer_feed": "Analyzer feed",
@@ -271,6 +274,7 @@
     "lab_microbiology": "Microbiology",
     "lab_qc": "Quality Control",
     "lab_reflex": "Reflex Tests",
+    "lab_reports": "Reports",
 
     "insurance_dashboard": "TPA Overview",
     "insurance_pipeline": "Approval Pipeline",

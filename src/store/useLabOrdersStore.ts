@@ -4,6 +4,7 @@ import { useNotificationStore } from './useNotificationStore'
 import { useAuditStore } from './useAuditStore'
 import { LAB_CATALOG, computeFlag, type Bench, type Priority, type SpecimenType, type AnalyteSpec } from '@/lib/labCatalog'
 import { evaluateReflex } from '@/lib/reflexRules'
+import { deriveUhid } from '@/lib/uhid'
 
 // ─── Domain types ──────────────────────────────────────────────────────────
 
@@ -80,6 +81,8 @@ export type LabOrder = {
   id: string
   patientId: string
   patientName: string
+  uhid: string
+  department: string
   source: LabSource
   wardBed?: string
   doctorName: string
@@ -276,6 +279,8 @@ interface State {
   addOrder: (input: {
     patientId: string
     patientName: string
+    uhid?: string
+    department?: string
     source: LabSource
     wardBed?: string
     doctorName: string
@@ -326,11 +331,14 @@ function buildSeedOrder(p: {
   id: string
   patientId: string
   patientName: string
+  uhid?: string
+  department?: string
   source: LabSource
   wardBed?: string
   doctorName: string
   orderedMinAgo: number
   paymentMode: PaymentMode
+  fastingStatus?: 'fasting' | 'non_fasting' | 'unknown'
   collected: boolean
   collectedMinAgo?: number
   collectedBy?: string
@@ -384,11 +392,14 @@ function buildSeedOrder(p: {
     id: p.id,
     patientId: p.patientId,
     patientName: p.patientName,
+    uhid: p.uhid ?? deriveUhid(p.patientId),
+    department: p.department ?? 'General Medicine',
     source: p.source,
     wardBed: p.wardBed,
     doctorName: p.doctorName,
     orderedAt,
     paymentMode: p.paymentMode,
+    fastingStatus: p.fastingStatus,
     tests,
     specimens: Array.from(specimensByType.values()),
   }
@@ -429,6 +440,7 @@ const SEED_ORDERS: LabOrder[] = [
   // LO-403: Ramesh Kumar — OPD, both still awaiting collection
   buildSeedOrder({
     id: 'LO-403', patientId: 'PT-10236', patientName: 'Ramesh Kumar', source: 'OPD',
+    department: 'General Medicine',
     doctorName: 'Dr. Priya Nair', orderedMinAgo: 12, paymentMode: 'Cash',
     collected: false,
     tests: [
@@ -538,6 +550,7 @@ const SEED_ORDERS: LabOrder[] = [
   // LO-410: Rajesh Khanna — STAT cardiac panel from cards OPD, just ordered
   buildSeedOrder({
     id: 'LO-410', patientId: 'PT-20401', patientName: 'Rajesh Khanna', source: 'OPD',
+    department: 'Cardiology',
     doctorName: 'Dr. Rohan Mehta', orderedMinAgo: 6, paymentMode: 'Insurance',
     collected: false,
     tests: [
@@ -548,6 +561,7 @@ const SEED_ORDERS: LabOrder[] = [
   // LO-411: Mohan Iyengar — CKD-IV labs, STAT
   buildSeedOrder({
     id: 'LO-411', patientId: 'PT-20407', patientName: 'Mohan Iyengar', source: 'OPD',
+    department: 'Nephrology',
     doctorName: 'Dr. Priya Nair', orderedMinAgo: 4, paymentMode: 'Cash',
     collected: false,
     tests: [
@@ -582,6 +596,73 @@ const SEED_ORDERS: LabOrder[] = [
     collected: true, collectedMinAgo: 12,
     tests: [
       { code: 'LIPID', status: 'on_bench' },
+    ],
+  }),
+
+  // ── In Queue demo — freshly ordered tests awaiting collection ───────────
+  // LO-415: Neha Reddy — Cardiology STAT cardiac + lipid workup
+  buildSeedOrder({
+    id: 'LO-415', patientId: 'PT-20411', patientName: 'Neha Reddy', source: 'OPD',
+    department: 'Cardiology',
+    doctorName: 'Dr. Anjali Desai', orderedMinAgo: 3, paymentMode: 'Insurance',
+    collected: false,
+    tests: [
+      { code: 'TROPI', status: 'awaiting_collection' },
+      { code: 'LIPID', status: 'awaiting_collection' },
+    ],
+  }),
+  // LO-416: Farhan Ali — Gastroenterology LFT
+  buildSeedOrder({
+    id: 'LO-416', patientId: 'PT-20415', patientName: 'Farhan Ali', source: 'OPD',
+    department: 'Gastroenterology',
+    doctorName: 'Dr. Sameer Khan', orderedMinAgo: 8, paymentMode: 'UPI',
+    collected: false, fastingStatus: 'fasting',
+    tests: [
+      { code: 'LFT', status: 'awaiting_collection' },
+    ],
+  }),
+  // LO-417: Deepa Nair — Nephrology inpatient renal + haemogram
+  buildSeedOrder({
+    id: 'LO-417', patientId: 'PT-44021', patientName: 'Deepa Nair', source: 'IPD', wardBed: 'Ward C — 4',
+    department: 'Nephrology',
+    doctorName: 'Dr. Vikram Rathore', orderedMinAgo: 15, paymentMode: 'Insurance',
+    collected: false,
+    tests: [
+      { code: 'RFT', status: 'awaiting_collection' },
+      { code: 'CBC', status: 'awaiting_collection' },
+    ],
+  }),
+  // LO-418: Arjun Menon — Endocrinology diabetic review
+  buildSeedOrder({
+    id: 'LO-418', patientId: 'PT-20418', patientName: 'Arjun Menon', source: 'OPD',
+    department: 'Endocrinology',
+    doctorName: 'Dr. Priya Nair', orderedMinAgo: 10, paymentMode: 'Cash',
+    collected: false, fastingStatus: 'fasting',
+    tests: [
+      { code: 'HBA1C', status: 'awaiting_collection' },
+      { code: 'LIPID', status: 'awaiting_collection' },
+    ],
+  }),
+  // LO-419: Sana Sheikh — Emergency STAT sepsis screen
+  buildSeedOrder({
+    id: 'LO-419', patientId: 'PT-20420', patientName: 'Sana Sheikh', source: 'ER',
+    department: 'Emergency',
+    doctorName: 'Dr. Rohan Mehta', orderedMinAgo: 2, paymentMode: 'Credit',
+    collected: false,
+    tests: [
+      { code: 'CBC', status: 'awaiting_collection' },
+      { code: 'CRP', status: 'awaiting_collection' },
+      { code: 'CULT_BLOOD', status: 'awaiting_collection' },
+    ],
+  }),
+  // LO-420: Gopal Das — Urology urine culture
+  buildSeedOrder({
+    id: 'LO-420', patientId: 'PT-20424', patientName: 'Gopal Das', source: 'OPD',
+    department: 'Urology',
+    doctorName: 'Dr. Meena Iyer', orderedMinAgo: 22, paymentMode: 'UPI',
+    collected: false,
+    tests: [
+      { code: 'CULT_URINE', status: 'awaiting_collection' },
     ],
   }),
 ]
@@ -659,6 +740,8 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
       id,
       patientId: input.patientId,
       patientName: input.patientName,
+      uhid: input.uhid ?? deriveUhid(input.patientId),
+      department: input.department ?? 'General Medicine',
       source: input.source,
       wardBed: input.wardBed,
       doctorName: input.doctorName,
@@ -978,7 +1061,7 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
   }
 },
   {
-    name: 'agentix-labordersstore', version: 5,
+    name: 'agentix-labordersstore', version: 6,
     // mergingStorage makes every persist a read-merge-write against the latest
     // localStorage snapshot, so concurrent tabs converge instead of clobbering
     // each other (no lost doctor orders, no reset lab progress — see mergeOrders).
@@ -991,9 +1074,17 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
     partialize: (state) => ({ reflexSuggestions: state.reflexSuggestions, orders: state.orders }),
     migrate: (persisted: unknown, _fromVersion: number) => {
       const s = persisted as Partial<{ reflexSuggestions: ReflexSuggestion[]; orders: LabOrder[] }>
+      const orders = Array.isArray(s?.orders) && s.orders.length > 0
+        // Backfill uhid/department for orders persisted before v6 introduced them.
+        ? s.orders.map(o => ({
+            ...o,
+            uhid: o.uhid ?? deriveUhid(o.patientId),
+            department: o.department ?? 'General Medicine',
+          }))
+        : SEED_ORDERS
       return {
         reflexSuggestions: Array.isArray(s?.reflexSuggestions) ? s.reflexSuggestions : [],
-        orders: Array.isArray(s?.orders) && s.orders.length > 0 ? s.orders : SEED_ORDERS,
+        orders,
       }
     },
   },

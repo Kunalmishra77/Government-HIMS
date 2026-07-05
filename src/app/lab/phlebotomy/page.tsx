@@ -242,7 +242,7 @@ export default function PhlebotomyBench() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-base font-bold text-slate-900">{o.patientName}</p>
-                      <span className="text-[11px] font-semibold text-slate-400">{o.patientId}</span>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{o.uhid}</span>
                       <span className={cn("text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border", SOURCE_TINT[o.source])}>
                         {o.source}
                       </span>

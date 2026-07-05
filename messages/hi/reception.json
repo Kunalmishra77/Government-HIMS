@@ -252,6 +252,8 @@
     "nextSendToBilling": "बिलिंग भेजें",
     "nextMarkDone": "पूरा मार्क करें",
     "statusWaiting": "इंतज़ार में",
+    "statusNeedsAadhaar": "आधार वेरिफ़िकेशन बाकी",
+    "statusReadyForVitals": "वाइटल्स के लिए तैयार",
     "statusInVitals": "वाइटल्स में",
     "statusConsulting": "कंसल्टिंग",
     "statusPharmacy": "फार्मेसी",

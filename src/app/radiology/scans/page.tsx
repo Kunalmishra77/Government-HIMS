@@ -9,6 +9,7 @@ import { StatusPill, type Status } from "@/components/ui/StatusPill"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -175,7 +176,7 @@ export default function RadiologyScansPage() {
                             )}
                             {overdue && <NeonBadge variant="danger" dot pulse>{t("scans.overdue")}</NeonBadge>}
                           </div>
-                          <p className="text-sm text-foreground-lighter mt-0.5 font-medium">{scan.patientName}</p>
+                          <p className="text-sm text-foreground-lighter mt-0.5 font-medium flex items-center gap-1.5">{scan.patientName}<span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5">{deriveUhid(scan.patientId ?? scan.id)}</span></p>
                           <div className="flex items-center gap-3 text-xs text-foreground-placeholder mt-0.5">
                             {scan.bodyPart && <span>{scan.bodyPart}</span>}
                             {scan.orderedBy && <span>{t("scans.orderedBy", { name: scan.orderedBy })}</span>}

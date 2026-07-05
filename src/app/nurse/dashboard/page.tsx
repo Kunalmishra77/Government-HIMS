@@ -27,6 +27,7 @@ import { CompactKPI } from "@/components/ui/CompactKPI"
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { news2Token } from "@/lib/statusColors"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { useTranslations } from "next-intl"
@@ -240,6 +241,7 @@ export default function NurseDashboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-bold text-sm text-foreground">{req.patientName}</p>
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{deriveUhid(req.patientId)}</span>
                         <span className="text-xs text-foreground-placeholder">{req.patientAge}y · {req.patientGender}</span>
                         {req.triageLevel && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-danger-bg text-danger-strong border border-danger/25">{req.triageLevel}</span>}
                       </div>

@@ -139,6 +139,7 @@ const RADIOLOGY_SECTIONS: { header: string; items: NavItem[] }[] = [
     { href: '/radiology/analytics',   label: 'item.radiology_analytics',   icon: BarChart3 },
   ] },
   { header: 'section.workflow', items: [
+    { href: '/radiology/in-queue',    label: 'item.radiology_in_queue',     icon: ClipboardList },
     { href: '/radiology/orders',      label: 'item.radiology_orders',       icon: ClipboardCheck },
     { href: '/radiology/schedule',    label: 'item.radiology_schedule',     icon: Activity },
     { href: '/radiology/arrival',     label: 'item.radiology_arrival',      icon: ScanLine },
@@ -148,6 +149,7 @@ const RADIOLOGY_SECTIONS: { header: string; items: NavItem[] }[] = [
     { href: '/radiology/verification',label: 'item.radiology_verification', icon: ShieldCheck },
   ] },
   { header: 'section.reports', items: [
+    { href: '/radiology/reports',     label: 'item.radiology_reports',      icon: FileText },
     { href: '/radiology/viewer',      label: 'item.radiology_viewer',       icon: Microscope },
     { href: '/radiology/templates',   label: 'item.radiology_templates',    icon: BookOpen },
     { href: '/radiology/distribution',label: 'item.radiology_distribution', icon: Send },
@@ -312,6 +314,7 @@ const navByRole: Record<Role, NavItem[]> = {
   ],
   lab: [
     { href: '/lab/dashboard',       label: 'item.lab_dashboard',      icon: LayoutDashboard },
+    { href: '/lab/in-queue',        label: 'item.lab_in_queue',       icon: ClipboardList },
     { href: '/lab/phlebotomy',      label: 'item.lab_phlebotomy',     icon: Droplet },
     { href: '/lab/inbox',           label: 'item.lab_inbox',          icon: ClipboardList },
     { href: '/lab/analyzer-feed',   label: 'item.lab_analyzer_feed',  icon: Cpu },
@@ -320,6 +323,7 @@ const navByRole: Record<Role, NavItem[]> = {
     { href: '/lab/microbiology',    label: 'item.lab_microbiology',   icon: Bug },
     { href: '/lab/qc',              label: 'item.lab_qc',             icon: SlidersHorizontal },
     { href: '/lab/reflex',          label: 'item.lab_reflex',         icon: RefreshCw },
+    { href: '/lab/reports',         label: 'item.lab_reports',        icon: FileText },
   ],
   radiology: RADIOLOGY_SECTIONS.flatMap(s => s.items),
   insurance: [

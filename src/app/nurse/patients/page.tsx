@@ -6,6 +6,7 @@ import { useShiftStore } from "@/store/useShiftStore"
 import { WardSwitcher } from "@/components/nurse/ShiftBanner"
 import { Bed, AlertCircle, ChevronRight } from "lucide-react"
 import { NeonBadge } from "@/components/ui/neon-badge"
+import { deriveUhid } from "@/lib/uhid"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { news2Token } from "@/lib/statusColors"
 import { Card } from "@/components/ui/card"
@@ -43,6 +44,7 @@ export default function NursePatientsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-foreground">{patient.name}</h3>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{deriveUhid(patient.id)}</span>
                       <NeonBadge
                         variant={patient.condition === 'Critical' ? 'danger' : patient.condition === 'Stable' ? 'success' : 'warning'}
                       >

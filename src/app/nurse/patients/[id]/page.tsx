@@ -11,6 +11,7 @@ import { fluidBalance, ivStatus } from "@/lib/fluids"
 import { newsTrendVitals, trendArrow } from "@/lib/escalation"
 import { Card } from "@/components/ui/card"
 import { NeonBadge } from "@/components/ui/neon-badge"
+import { deriveUhid } from "@/lib/uhid"
 import { news2Token, news2ScoreToken } from "@/lib/statusColors"
 import { ArrowLeft, Pill, Droplets, FileText, ClipboardList, HeartPulse } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -59,7 +60,10 @@ export default function NursePatientDetail() {
       <Card className="p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{ip.name}</h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold text-foreground">{ip.name}</h1>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-0.5">{deriveUhid(ip.patientId)}</span>
+            </div>
             <p className="text-sm text-foreground-lighter mt-0.5">{t('patientDetail.meta', { id: ip.patientId, age: ip.age, gender: ip.gender, ward: ip.ward, bed: ip.bed })}</p>
             <p className="text-sm text-foreground-muted mt-1">{ip.diagnosis}</p>
           </div>

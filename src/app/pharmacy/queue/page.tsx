@@ -22,6 +22,7 @@ import { useAuthStore } from "@/store/useAuthStore"
 import { checkRx } from "@/lib/drugSafety"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 import { useTranslations } from "next-intl"
 
 const SOURCE_STYLE: Record<RxSource, string> = {
@@ -324,6 +325,7 @@ function QueueRow(props: {
         <button onClick={props.onToggle} className="flex-1 min-w-0 text-left cursor-pointer">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-slate-900 truncate">{rx.patientName}</span>
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{deriveUhid(rx.patientId)}</span>
             {rx.tokenNumber > 0 && <span className="text-[11px] font-bold text-slate-400">#{rx.tokenNumber}</span>}
             {rx.wardBed && <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-0.5"><Bed className="h-3 w-3" />{rx.wardBed}</span>}
             <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full capitalize", STATUS_STYLE[rx.status])}>{rx.status}</span>

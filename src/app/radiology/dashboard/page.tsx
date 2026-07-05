@@ -274,6 +274,7 @@ export default function RadiologyOverview() {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground flex items-center gap-2 flex-wrap">
                         <span className="font-bold">{s.patientName}</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700">{s.uhid}</span>
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-danger-bg text-danger-strong">{s.name}</span>
                       </p>
                       <p className="text-[11px] text-foreground-lighter mt-0.5 truncate">impression: {s.reportSections.impression?.slice(0, 80)}…</p>
@@ -314,6 +315,7 @@ export default function RadiologyOverview() {
                 {m.reported.slice(0, 5).map(s => (
                   <div key={s.id} className="px-4 py-2.5 text-sm">
                     <span className="font-bold text-foreground">{s.patientName}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 ml-2">{s.uhid}</span>
                     <span className="text-foreground-placeholder mx-2">·</span>
                     <span className="text-accent">{s.name}</span>
                     <span className="text-foreground-placeholder mx-2">·</span>
@@ -358,7 +360,7 @@ export default function RadiologyOverview() {
                 {m.overOverdue.map(s => (
                   <p key={s.id} className="text-foreground-muted">
                     <Clock className="h-3 w-3 inline -mt-0.5 mr-1 text-accent" />
-                    <b className="text-foreground">{s.patientName}</b> · {s.name} · <b className="tabular-nums">{minsElapsed(s.orderedAt)}m</b> elapsed (TAT {s.expectedTATmin}m) — likely stuck
+                    <b className="text-foreground">{s.patientName}</b> · <span className="text-emerald-700 font-bold">{s.uhid}</span> · {s.name} · <b className="tabular-nums">{minsElapsed(s.orderedAt)}m</b> elapsed (TAT {s.expectedTATmin}m) — likely stuck
                   </p>
                 ))}
               </div>

@@ -7,6 +7,7 @@ import {
   type Modality,
   type Priority,
 } from '@/lib/radiologyCatalog'
+import { deriveUhid } from '@/lib/uhid'
 
 // ─── Domain types ─────────────────────────────────────────────────────────
 
@@ -53,6 +54,8 @@ export type RadiologyStudy = {
   id: string
   patientId: string
   patientName: string
+  uhid: string
+  department: string
   source: RadSource
   wardBed?: string
   doctorName: string
@@ -123,6 +126,8 @@ interface State {
   addOrder: (input: {
     patientId: string
     patientName: string
+    uhid?: string
+    department?: string
     source: RadSource
     wardBed?: string
     doctorName: string
@@ -169,6 +174,8 @@ function seedStudy(p: {
   id: string
   patientId: string
   patientName: string
+  uhid?: string
+  department?: string
   source: RadSource
   wardBed?: string
   doctorName: string
@@ -197,6 +204,8 @@ function seedStudy(p: {
     id: p.id,
     patientId: p.patientId,
     patientName: p.patientName,
+    uhid: p.uhid ?? deriveUhid(p.patientId),
+    department: p.department ?? 'General Medicine',
     source: p.source,
     wardBed: p.wardBed,
     doctorName: p.doctorName,
@@ -230,6 +239,7 @@ const SEED_STUDIES: RadiologyStudy[] = [
   // RS-101: Rahul Verma — XR Chest ordered, awaiting scheduling
   seedStudy({
     id: 'RS-101', patientId: 'PT-10232', patientName: 'Rahul Verma', source: 'OPD',
+    department: 'Pulmonology',
     doctorName: 'Dr. Priya Nair', orderedMinAgo: 12, paymentMode: 'Cash',
     code: 'XR_CHEST', clinicalQuestion: 'Persistent cough, R/O pneumonia',
     status: 'ordered',
@@ -337,6 +347,7 @@ const SEED_STUDIES: RadiologyStudy[] = [
   // RS-110: Rajesh Khanna — CT chest, just ordered (no slot yet)
   seedStudy({
     id: 'RS-110', patientId: 'PT-20401', patientName: 'Rajesh Khanna', source: 'OPD',
+    department: 'Nephrology',
     doctorName: 'Dr. Rohan Mehta', orderedMinAgo: 7, paymentMode: 'Insurance',
     code: 'CT_CHEST', clinicalQuestion: 'CKD-III, breathlessness · R/O pulmonary oedema',
     priority: 'Urgent', status: 'ordered',
@@ -344,6 +355,7 @@ const SEED_STUDIES: RadiologyStudy[] = [
   // RS-111: Suresh Pillai — MRI knee, ordered routine
   seedStudy({
     id: 'RS-111', patientId: 'PT-20403', patientName: 'Suresh Pillai', source: 'OPD',
+    department: 'Orthopaedics',
     doctorName: 'Dr. Vikram Rathore', orderedMinAgo: 22, paymentMode: 'Cash',
     code: 'MRI_SPINE', clinicalQuestion: 'Right knee pain · R/O meniscal tear',
     status: 'ordered',
@@ -382,6 +394,72 @@ const SEED_STUDIES: RadiologyStudy[] = [
       impression: 'No acute intracranial pathology. Incidental maxillary sinus mucosal thickening.',
     },
   }),
+
+  // ── In Queue demo — freshly ordered studies across every modality ───────
+  // RS-114: Kavya Rao — Obstetric anomaly scan
+  seedStudy({
+    id: 'RS-114', patientId: 'PT-20431', patientName: 'Kavya Rao', source: 'OPD',
+    department: 'Obstetrics & Gynaecology',
+    doctorName: 'Dr. Anjali Desai', orderedMinAgo: 9, paymentMode: 'UPI',
+    code: 'US_OBS', clinicalQuestion: '20-week anomaly scan · G2P1',
+    status: 'ordered',
+  }),
+  // RS-115: Imran Sheikh — STAT non-contrast head CT for suspected stroke
+  seedStudy({
+    id: 'RS-115', patientId: 'PT-20433', patientName: 'Imran Sheikh', source: 'ER',
+    department: 'Neurology',
+    doctorName: 'Dr. Rohan Mehta', orderedMinAgo: 3, paymentMode: 'Credit',
+    code: 'CT_HEAD', clinicalQuestion: 'Acute onset left hemiparesis · R/O stroke',
+    priority: 'Stroke', status: 'ordered',
+  }),
+  // RS-116: Lakshmi Nair — screening mammography
+  seedStudy({
+    id: 'RS-116', patientId: 'PT-20436', patientName: 'Lakshmi Nair', source: 'OPD',
+    department: 'Breast Clinic',
+    doctorName: 'Dr. Aisha Khurana', orderedMinAgo: 18, paymentMode: 'Insurance',
+    code: 'MAMMO_SCREEN', clinicalQuestion: 'Screening · palpable lump upper outer quadrant',
+    priority: 'Urgent', status: 'ordered',
+  }),
+  // RS-117: Rohit Das — echocardiography
+  seedStudy({
+    id: 'RS-117', patientId: 'PT-20438', patientName: 'Rohit Das', source: 'OPD',
+    department: 'Cardiology',
+    doctorName: 'Dr. Rohan Mehta', orderedMinAgo: 14, paymentMode: 'Cash',
+    code: 'ECHO', clinicalQuestion: 'Exertional dyspnoea · assess LV function',
+    priority: 'Urgent', status: 'ordered',
+  }),
+  // RS-118: Sneha Kulkarni — thyroid ultrasound
+  seedStudy({
+    id: 'RS-118', patientId: 'PT-20441', patientName: 'Sneha Kulkarni', source: 'OPD',
+    department: 'Endocrinology',
+    doctorName: 'Dr. Priya Nair', orderedMinAgo: 26, paymentMode: 'UPI',
+    code: 'US_THYROID', clinicalQuestion: 'Solitary thyroid nodule · TI-RADS characterisation',
+    status: 'ordered',
+  }),
+  // RS-119: Vijay Anand — STAT CT pulmonary angiography
+  seedStudy({
+    id: 'RS-119', patientId: 'PT-20443', patientName: 'Vijay Anand', source: 'ER',
+    department: 'Emergency',
+    doctorName: 'Dr. Vikram Rathore', orderedMinAgo: 5, paymentMode: 'Credit',
+    code: 'CT_ANGIO_PULM', clinicalQuestion: 'Pleuritic chest pain, high Wells · R/O PE',
+    priority: 'STAT', status: 'ordered',
+  }),
+  // RS-120: Pooja Reddy — US KUB
+  seedStudy({
+    id: 'RS-120', patientId: 'PT-20446', patientName: 'Pooja Reddy', source: 'OPD',
+    department: 'Urology',
+    doctorName: 'Dr. Meena Iyer', orderedMinAgo: 31, paymentMode: 'Cash',
+    code: 'US_KUB', clinicalQuestion: 'Right flank pain · R/O renal calculus',
+    status: 'ordered',
+  }),
+  // RS-121: Arjun Nair — extremity radiograph
+  seedStudy({
+    id: 'RS-121', patientId: 'PT-20448', patientName: 'Arjun Nair', source: 'OPD',
+    department: 'Orthopaedics',
+    doctorName: 'Dr. Vikram Rathore', orderedMinAgo: 11, paymentMode: 'UPI',
+    code: 'XR_EXTREMITY', clinicalQuestion: 'Fall on outstretched hand · R/O distal radius fracture',
+    status: 'ordered',
+  }),
 ]
 
 // ─── Store ────────────────────────────────────────────────────────────────
@@ -397,6 +475,8 @@ export const useRadiologyStudiesStore = create<State>()(persist((set, get) => ({
       id,
       patientId: input.patientId,
       patientName: input.patientName,
+      uhid: input.uhid ?? deriveUhid(input.patientId),
+      department: input.department ?? 'General Medicine',
       source: input.source,
       wardBed: input.wardBed,
       doctorName: input.doctorName,
@@ -592,9 +672,21 @@ export const useRadiologyStudiesStore = create<State>()(persist((set, get) => ({
   })),
 }),
   {
-    name: 'agentix-radiologystudiesstore', version: 2,
+    name: 'agentix-radiologystudiesstore', version: 3,
     storage: createJSONStorage(() => localStorage),
     skipHydration: true,
+    migrate: (persisted: unknown, _fromVersion: number) => {
+      const s = persisted as Partial<{ studies: RadiologyStudy[] }>
+      const studies = Array.isArray(s?.studies) && s.studies.length > 0
+        // Backfill uhid/department for studies persisted before v3 introduced them.
+        ? s.studies.map(x => ({
+            ...x,
+            uhid: x.uhid ?? deriveUhid(x.patientId),
+            department: x.department ?? 'General Medicine',
+          }))
+        : SEED_STUDIES
+      return { studies }
+    },
   },
 ))
 
