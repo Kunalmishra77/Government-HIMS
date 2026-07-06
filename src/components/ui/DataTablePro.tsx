@@ -70,8 +70,11 @@ export function DataTablePro<T>({
   toolbarActions,
   selectable = false,
   bulkActions,
-  pageSizeOptions = [10, 25, 50],
-  initialPageSize = 10,
+  pageSizeOptions = [10, 25, 50, 100],
+  // Default to a high page size so a just-registered patient (who sorts to the
+  // end of a queue) is never hidden on page 2 — the whole active queue shows at
+  // once. Tables can still override this.
+  initialPageSize = 50,
   emptyState,
   className,
   showColumnManager = true,

@@ -203,7 +203,7 @@ export default function VitalsRequestsPage() {
           onRowClick={(p) => setEditing(p)}
           searchKeys={["name", "doctor", "department"]}
           searchPlaceholder={t('vitalsRequests.searchPatientDoctor')}
-          initialPageSize={10}
+          initialPageSize={50}
           emptyState={
             <EmptyState
               icon={CheckCircle2}
@@ -223,7 +223,7 @@ export default function VitalsRequestsPage() {
           onRowClick={(p) => setViewing(p)}
           searchKeys={["name", "doctor", "department"]}
           searchPlaceholder={t('vitalsRequests.searchPatientDoctor')}
-          initialPageSize={10}
+          initialPageSize={50}
           emptyState={
             <EmptyState
               icon={HeartPulse}
