@@ -254,43 +254,71 @@ export const useAdmissionStore = create<AdmissionState>()(persist((set, get) => 
         ),
       }
     })
-    if (snap) {
-      useAuditStore.getState().log({
-        userId: 'ADM-1801', userName: 'Bed Manager',
-        action: 'admission_admit',
-        resource: 'admission_request', resourceId: requestId,
-        detail: `Admitted ${snap.patientName} (${snap.patientId}) · ${snap.diagnosis}`,
-      })
-    }
+    if (!snap) return
+    useAuditStore.getState().log({
+      userId: 'ADM-1801', userName: 'Bed Manager',
+      action: 'admission_admit',
+      resource: 'admission_request', resourceId: requestId,
+      detail: `Admitted ${snap.patientName} (${snap.patientId}) · ${snap.diagnosis}`,
+    })
+
+    const bed = snap.assignedBedId ? get().beds.find(b => b.id === snap!.assignedBedId) : undefined
+    const admittedAt = new Date().toISOString()
+
+    // Populate the IPD ward list IMMEDIATELY — this MUST run in the local/demo
+    // flow too (no Supabase session), otherwise an admitted patient never shows
+    // up in the doctor/nurse IPD chart (the reported Admission→IPD break). The
+    // real DB write below only adds persistence + stamps the real id;
+    // admitFromRequest dedups by patientId so the two paths can't double-add.
+    useInpatientStore.getState().admitFromRequest({
+      id: `IPD-${snap.patientId}-${Date.now()}`,
+      patientId: snap.patientId,
+      patientName: snap.patientName,
+      age: snap.patientAge,
+      gender: snap.patientGender,
+      bed: bed?.bedNumber ?? snap.bedTypePreference,
+      ward: bed?.ward ?? snap.admissionType,
+      admittingDoctor: snap.requestedBy,
+      diagnosis: snap.diagnosis,
+      admittedAt,
+      condition: snap.triageLevel === 'Critical' ? 'Critical' : 'Stable',
+    })
+
+    // Real backend persistence — only when this request has a real row + a live
+    // session. On success, stamp the real ipd_stays id onto the local inpatient
+    // so a later hydrateReal dedups against it instead of duplicating the row.
     void (async () => {
-      if (!snap?.realId) return
+      if (!snap!.realId) return
       const { data: { session } } = await getSupabaseClient().auth.getSession()
       if (!session) return
-      const bed = snap.assignedBedId ? get().beds.find(b => b.id === snap!.assignedBedId) : undefined
       try {
         const { AdmissionRequests, IpdStays } = await import('@/lib/api')
-        await AdmissionRequests.markAdmitted(snap.realId)
+        await AdmissionRequests.markAdmitted(snap!.realId)
         const stay = await IpdStays.create({
-          admissionRequestId: snap.realId,
-          patientId: snap.patientId,
-          patientName: snap.patientName,
-          age: snap.patientAge,
-          gender: snap.patientGender,
-          bed: bed?.bedNumber ?? snap.bedTypePreference,
-          ward: bed?.ward ?? snap.admissionType,
-          admittingDoctor: snap.requestedBy,
-          diagnosis: snap.diagnosis,
-          admittedAt: new Date().toISOString(),
-          condition: snap.triageLevel === 'Critical' ? 'Critical' : 'Stable',
+          admissionRequestId: snap!.realId,
+          patientId: snap!.patientId,
+          patientName: snap!.patientName,
+          age: snap!.patientAge,
+          gender: snap!.patientGender,
+          bed: bed?.bedNumber ?? snap!.bedTypePreference,
+          ward: bed?.ward ?? snap!.admissionType,
+          admittingDoctor: snap!.requestedBy,
+          diagnosis: snap!.diagnosis,
+          admittedAt,
+          condition: snap!.triageLevel === 'Critical' ? 'Critical' : 'Stable',
           events: [{
-            id: `e-admit-${Date.now()}`, at: new Date().toISOString(), type: 'admission',
-            actor: 'Reception', title: `Admitted — ${snap.diagnosis}`, severity: 'info',
+            id: `e-admit-${Date.now()}`, at: admittedAt, type: 'admission',
+            actor: 'Reception', title: `Admitted — ${snap!.diagnosis}`, severity: 'info',
             patientText: 'You were admitted to the ward.',
           }],
         })
-        useInpatientStore.getState().admitFromRequest(stay)
+        useInpatientStore.setState(s => ({
+          inpatients: s.inpatients.map(ip =>
+            ip.patientId === snap!.patientId && ip.stage !== 'discharged' ? { ...ip, realId: stay.id } : ip
+          ),
+        }))
       } catch (err) {
-        console.error('[useAdmissionStore] real backend markAdmitted failed (local state still updated):', err)
+        console.error('[useAdmissionStore] real backend markAdmitted failed (local ward chart still updated):', err)
       }
     })()
   },
