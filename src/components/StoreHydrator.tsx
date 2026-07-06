@@ -59,23 +59,6 @@ import { useWhatsAppStore } from "@/store/useWhatsAppStore"
 // Phase-1: also bootstrap the mock API and bridge the audit store.
 export function StoreHydrator() {
   useEffect(() => {
-    // ── Live cross-tab real-time sync ──────────────────────────────────────
-    // Each department runs in its own browser tab; an action in one tab (e.g.
-    // Reception → Send to Vitals, Nurse → record vitals, Doctor → order labs)
-    // is broadcast to every other tab so the next department's queue updates
-    // instantly, with no page refresh. Only the shared clinical/workflow stores
-    // are synced — per-user drafts (consultation notes, auth) stay tab-local.
-    const syncCleanups = [
-      syncStoreAcrossTabs(usePatientStore, 'patients'),
-      syncStoreAcrossTabs(useLabOrdersStore, 'lab-orders'),
-      syncStoreAcrossTabs(useRadiologyStudiesStore, 'radiology'),
-      syncStoreAcrossTabs(usePharmacyStore, 'pharmacy'),
-      syncStoreAcrossTabs(usePharmacyInventoryStore, 'pharmacy-inventory'),
-      syncStoreAcrossTabs(useAdmissionStore, 'admission'),
-      syncStoreAcrossTabs(useInpatientStore, 'inpatient'),
-      syncStoreAcrossTabs(useNursingStore, 'nursing'),
-    ]
-
     // Pre-existing persisted stores (Phase 0).
     useMessagingStore.persist.rehydrate()
     useNotificationStore.persist.rehydrate()
@@ -125,6 +108,28 @@ export function StoreHydrator() {
     useRadiologyStudiesStore.persist.rehydrate()
     useWardStore.persist.rehydrate()
     useWhatsAppStore.persist.rehydrate()
+
+    // ── Live cross-tab real-time sync ──────────────────────────────────────
+    // Each department runs in its own browser tab; an action in one tab (e.g.
+    // Reception → Send to Vitals, Nurse → record vitals, Doctor → order labs)
+    // is broadcast to every other tab so the next department's queue updates
+    // instantly, with no page refresh. Only the shared clinical/workflow stores
+    // are synced — per-user drafts (consultation notes, auth) stay tab-local.
+    //
+    // Set up AFTER the persist rehydrations above so a synced store already
+    // holds its latest localStorage state before it starts broadcasting/
+    // applying — otherwise a late async rehydrate could clobber a live update
+    // just received from another tab.
+    const syncCleanups = [
+      syncStoreAcrossTabs(usePatientStore, 'patients'),
+      syncStoreAcrossTabs(useLabOrdersStore, 'lab-orders'),
+      syncStoreAcrossTabs(useRadiologyStudiesStore, 'radiology'),
+      syncStoreAcrossTabs(usePharmacyStore, 'pharmacy'),
+      syncStoreAcrossTabs(usePharmacyInventoryStore, 'pharmacy-inventory'),
+      syncStoreAcrossTabs(useAdmissionStore, 'admission'),
+      syncStoreAcrossTabs(useInpatientStore, 'inpatient'),
+      syncStoreAcrossTabs(useNursingStore, 'nursing'),
+    ]
 
     // ── Mock API boot + audit bridge + demo seed ─────────────────────────
     void (async () => {
