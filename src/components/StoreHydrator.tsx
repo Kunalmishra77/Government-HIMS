@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 import { getSupabaseClient } from "@/lib/supabase/client"
 import { syncStoreAcrossTabs } from "@/lib/cross-tab-sync"
 import { useMessagingStore } from "@/store/useMessagingStore"
@@ -182,15 +183,40 @@ export function StoreHydrator() {
         const { data: { session } } = await getSupabaseClient().auth.getSession()
         if (!session) return
         await Promise.all([
+          usePatientStore.getState().hydrateReal(),
           useAdmissionStore.getState().hydrateReal(),
           useInpatientStore.getState().hydrateReal(),
         ])
       } catch (err) {
-        console.error('[StoreHydrator] real admission/inpatient hydration failed:', err)
+        console.error('[StoreHydrator] real hydration failed:', err)
       }
     })()
 
-    return () => { syncCleanups.forEach((fn) => fn()) }
+    // ── Cross-device real-time via Supabase Realtime ───────────────────────
+    // The 7 department modules run in separate browsers / machines, so the OPD
+    // queue lives in Postgres. Every connected module subscribes to row changes
+    // on the shared tables and re-hydrates instantly — a patient checked in on
+    // one device appears in Reception/Nurse/Doctor on every other device with
+    // no refresh. Realtime respects RLS, so each module only receives rows it
+    // may read. Complements the same-browser BroadcastChannel sync above.
+    let liveChannel: RealtimeChannel | null = null
+    try {
+      const rehydratePatients = () => { void usePatientStore.getState().hydrateReal() }
+      liveChannel = getSupabaseClient()
+        .channel('hims-live')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, rehydratePatients)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, rehydratePatients)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'admission_requests' }, () => { void useAdmissionStore.getState().hydrateReal() })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ipd_stays' }, () => { void useInpatientStore.getState().hydrateReal() })
+        .subscribe()
+    } catch (err) {
+      console.error('[StoreHydrator] realtime subscribe failed:', err)
+    }
+
+    return () => {
+      syncCleanups.forEach((fn) => fn())
+      if (liveChannel) void getSupabaseClient().removeChannel(liveChannel)
+    }
   }, [])
   return null
 }

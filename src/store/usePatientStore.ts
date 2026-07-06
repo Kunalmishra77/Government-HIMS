@@ -148,6 +148,10 @@ interface PatientState {
   linkPatientIdentity: (id: string, patch: { uhid?: string; abhaId?: string; aadhaarVerified?: boolean }) => Promise<void>
   sendToEmergency: (id: string) => void
   recordOpdVitals: (id: string, rec: Omit<VitalsRecord, 'id' | 'at'>) => Promise<void>
+  /** Read the real OPD queue (patients + active visits) from Postgres and merge
+   *  it into the local board, so a patient registered/checked-in on ANY device
+   *  appears here. Safe to call repeatedly (idempotent, dedups by id). */
+  hydrateReal: () => Promise<void>
   addPatient: (patient: Partial<Patient> & { name: string; phone: string }) => Promise<void>
   bookAppointment: (appt: Omit<Appointment, 'id'>) => void
   updateAppointment: (id: string, patch: Partial<Appointment>) => void
@@ -547,13 +551,60 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
       console.warn(`[usePatientStore] updateStatus: local status "${status}" has no visit_status_t mapping — skipping real backend write`)
       return
     }
-    const { data: { session } } = await getSupabaseClient().auth.getSession()
-    if (!session) return
+    // Advance the shared DB visit via the server route (service role) so the
+    // change reaches every device regardless of the acting staff role — see
+    // /api/opd-advance for why this bypasses per-role visits UPDATE RLS.
     try {
-      const { Visits } = await import('@/lib/api')
-      await Visits.advance(p.visitId, backendStatus)
+      await fetch('/api/opd-advance', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitId: p.visitId, status: backendStatus }),
+      })
     } catch (err) {
-      console.error('[usePatientStore] real backend status update failed (local queue still updated):', err)
+      console.error('[usePatientStore] status advance (server) failed (local queue still updated):', err)
+    }
+  },
+
+  hydrateReal: async () => {
+    try {
+      const { Patients, Visits } = await import('@/lib/api')
+      const [dbPatients, dbVisits] = await Promise.all([Patients.list(), Visits.active()])
+      if (!dbVisits.length) return
+      const byId = new Map(dbPatients.map(p => [p.id, p]))
+      const VISIT_TO_QUEUE: Partial<Record<string, QueueStatus>> = {
+        scheduled: 'waiting', waiting: 'waiting', vitals: 'vitals',
+        consulting: 'consulting', pharmacy: 'pharmacy', billing: 'billing',
+      }
+      const today = new Date().toISOString().slice(0, 10)
+      const fromDb: Patient[] = []
+      for (const v of dbVisits) {
+        const dp = byId.get(v.patientId)
+        const qs = VISIT_TO_QUEUE[v.status]
+        if (!dp || !qs) continue
+        fromDb.push({
+          id: dp.id, uhid: dp.uhid, name: dp.fullName, age: dp.age ?? 30,
+          gender: dp.sex === 'Female' ? 'Female' : dp.sex === 'Other' ? 'Other' : 'Male',
+          phone: dp.phone ?? '', bloodGroup: dp.bloodGroup ?? 'A+', token: v.token ?? 0,
+          queueStatus: qs, estimatedWait: v.estimatedWaitMin ?? 0,
+          doctor: v.doctorName ?? 'Dr. Priya Nair', department: v.department ?? 'General Medicine',
+          vitals: null, symptoms: v.symptoms ?? [], history: [],
+          registeredAt: '', registeredDate: today, triageLevel: v.triageLevel ?? 'Low',
+          source: 'appointment', aadhaarVerified: dp.aadhaarVerified, abhaId: dp.abhaId, visitId: v.id,
+        })
+      }
+      set((s) => {
+        // Update status/visitId of already-present DB-linked patients, then add
+        // any real patients this device hasn't seen (dedup by id).
+        const dbById = new Map(fromDb.map(p => [p.id, p]))
+        const merged = s.patients.map(p => {
+          const d = dbById.get(p.id)
+          return d ? { ...p, queueStatus: d.queueStatus, visitId: d.visitId } : p
+        })
+        const seen = new Set(merged.map(p => p.id))
+        const all = [...fromDb.filter(p => !seen.has(p.id)), ...merged]
+        return { patients: all, queue: all.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)) }
+      })
+    } catch (err) {
+      console.error('[usePatientStore] hydrateReal failed:', err)
     }
   },
 
@@ -689,13 +740,23 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
     // matters (a stale "logged in" flag survives in localStorage across app
     // restarts and must not by itself re-arm real writes).
     if (updatedPatient?.visitId) {
+      const visitId = updatedPatient.visitId
+      // Advance the shared visit to 'consulting' via the server route so the
+      // Doctor sees the patient on EVERY device (cross-device, role-agnostic).
+      try {
+        await fetch('/api/opd-advance', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ visitId, status: 'consulting' }),
+        })
+      } catch (err) {
+        console.error('[usePatientStore] vitals status advance (server) failed:', err)
+      }
+      // Also persist the actual vitals reading when a real staff session exists.
       const { data: { session } } = await getSupabaseClient().auth.getSession()
       if (session) {
-        const actorId = session.user.id
         try {
-          const { VitalsReadings, Visits } = await import('@/lib/api')
-          await VitalsReadings.create({ visitId: updatedPatient.visitId, recordedBy: actorId, payload: rec })
-          await Visits.advance(updatedPatient.visitId, 'consulting')
+          const { VitalsReadings } = await import('@/lib/api')
+          await VitalsReadings.create({ visitId, recordedBy: session.user.id, payload: rec })
         } catch (err) {
           console.error('[usePatientStore] real backend vitals write failed (local record still updated):', err)
         }
@@ -881,49 +942,33 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
         detail: `${p.name} (Token ${p.token}) registered · ${p.department} · ${p.triageLevel ?? 'Low'}`,
       })
 
-      // Phase 2 — also create the real backend records, so this patient can
-      // flow through Nurse/Doctor/etc. once those portals are wired. A real
-      // signed-in staff session (Task 6) is required by RLS; if none exists
-      // (e.g. this is still the pre-login demo flow), skip silently and keep
-      // the local-only behavior working exactly as before.
-      //
-      // This checks the live Supabase session directly (not the persisted
-      // `isRealSession` flag on useAuthStore) — that flag survives in
-      // localStorage across app restarts once a real login has ever
-      // happened, so trusting it here would silently re-arm real backend
-      // writes on a stale cached flag even after the underlying session has
-      // expired/signed out. `auth.getSession()` reads the SDK's own
-      // in-memory/local session state, which is kept in sync with actual
-      // token validity, so it's the real source of truth for this decision.
-      const { data: { session } } = await getSupabaseClient().auth.getSession()
-      if (session) {
-        const actorId = session.user.id
-        try {
-          const { Patients, Visits } = await import('@/lib/api')
-          // AABHA/UHID bridge: forward uhid/abhaId/aadhaarVerified when
-          // already set on the local patient (the normal case — Reception's
-          // register/page.tsx flow completes Aadhaar/ABHA before "Add to
-          // Queue"). writeWithUhidRetry only engages its retry-on-collision
-          // path when a uhid is actually present; patients without one
-          // (self-check-in, pending Aadhaar) write straight through once.
-          const { writeWithUhidRetry } = await import('@/lib/intake/register')
-          const { uhid: finalUhid } = await writeWithUhidRetry(get().patients, p.uhid, (candidateUhid) =>
-            Patients.create({
-              id: p.id, hn: p.id, fullName: p.name, phone: p.phone, age: p.age,
-              sex: p.gender, bloodGroup: p.bloodGroup,
-              uhid: candidateUhid, abhaId: p.abhaId, aadhaarVerified: p.aadhaarVerified,
-            } as Parameters<typeof Patients.create>[0]),
-          )
-          const visit = await Visits.create({
-            patientId: p.id, kind: 'OPD', department: p.department, status: 'waiting', token: p.token,
-          } as Parameters<typeof Visits.create>[0])
-          set((state) => ({
-            patients: state.patients.map((x) => x.id === p.id ? { ...x, visitId: visit.id, uhid: finalUhid ?? x.uhid } : x),
-            queue: state.queue.map((x) => x.id === p.id ? { ...x, visitId: visit.id, uhid: finalUhid ?? x.uhid } : x),
+      // Database-backed OPD queue — register the patient + visit in Postgres via
+      // the server route (service role), so it works for BOTH the anonymous
+      // self-check-in kiosk AND logged-in staff, without exposing patient PII to
+      // the browser's anon role. Every module then reads this from the DB
+      // (hydrateReal) + Supabase Realtime, so the patient appears on every
+      // device. The local record was already created above, so a DB/network
+      // failure never breaks the local queue.
+      try {
+        const res = await fetch('/api/opd-register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: p.id, name: p.name, phone: p.phone, age: p.age, gender: p.gender,
+            bloodGroup: p.bloodGroup, uhid: p.uhid, abhaId: p.abhaId,
+            aadhaarVerified: p.aadhaarVerified, department: p.department, doctor: p.doctor,
+            token: p.token, symptoms: p.symptoms, triageLevel: p.triageLevel, estimatedWait: p.estimatedWait,
+          }),
+        })
+        if (res.ok) {
+          const { visitId } = await res.json() as { visitId?: string }
+          if (visitId) set((state) => ({
+            patients: state.patients.map((x) => x.id === p.id ? { ...x, visitId } : x),
+            queue: state.queue.map((x) => x.id === p.id ? { ...x, visitId } : x),
           }))
-        } catch (err) {
-          console.error('[usePatientStore] real backend registration failed (local record still created):', err)
         }
+      } catch (err) {
+        console.error('[usePatientStore] OPD registration (server) failed (local record still created):', err)
       }
     }
   },
