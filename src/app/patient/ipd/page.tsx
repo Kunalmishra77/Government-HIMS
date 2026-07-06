@@ -45,6 +45,12 @@ export default function IpdPage() {
   // after mount so the server and first client render match (no hydration drift).
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
+
+  // Bug C fix — hydrate real ipd_stays rows so a patient who was genuinely
+  // admitted today (not part of the local seed data) can see their own stay.
+  useEffect(() => {
+    void useInpatientStore.getState().hydrateReal()
+  }, [])
   if (!mounted) return (
     <div className="max-w-3xl mx-auto py-20 flex justify-center">
       <div className="h-8 w-8 rounded-full border-4 border-[rgba(8,145,178,0.20)] border-t-blue-600 animate-spin" role="status" aria-label="Loading" />

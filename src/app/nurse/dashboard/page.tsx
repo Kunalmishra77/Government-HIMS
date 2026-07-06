@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useWard, type WardPatient } from "@/lib/useWard"
 import { VitalsForm } from "@/components/nurse/VitalsForm"
@@ -38,6 +38,15 @@ export default function NurseDashboard() {
   const { patients, activeNurses, availableBeds, updateVitals, dismissAlert } = useWard()
   const { initDischarge, dischargeQueue, setClearance } = useDischargeStore()
   const addNursingNote = useInpatientStore(s => s.addNursingNote)
+
+  // Bug C fix — useWard() (above) reads straight off useInpatientStore's
+  // inpatients array, which otherwise has no way to learn about a real
+  // ipd_stays row (e.g. a patient admitted today) that isn't already in the
+  // local seed/mock list. Hydrate once on mount so the nurse ward view shows
+  // genuinely-newly-admitted real patients too.
+  useEffect(() => {
+    void useInpatientStore.getState().hydrateReal()
+  }, [])
   const [dischargingPatient, setDischargingPatient] = useState<WardPatient | null>(null)
   const { admissionRequests, beds, markAdmitted } = useAdmissionStore()
   const cameraRequests = useCameraStore((s) => s.requests)

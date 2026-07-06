@@ -1,0 +1,43 @@
+-- Security review finding (important, not critical): visits_update_nurse
+-- (narrowed in 20260704122501) correctly restricts WHICH transition a nurse
+-- can make (status='vitals' -> status='consulting'), but RLS policies can
+-- only filter ROWS, not COLUMNS — a nurse's single UPDATE statement could in
+-- principle also rewrite patient_id, doctor_id, department, or token in the
+-- same statement, as long as the row still ends at status='consulting'.
+--
+-- Postgres column-level GRANTs close this: they restrict which columns an
+-- UPDATE may target, at the role level, independent of RLS. Supabase runs
+-- every RLS-authenticated request (any signed-in user — reception, admin,
+-- doctor, nurse, ...) as the single Postgres role `authenticated`; there is
+-- no separate Postgres role per application role (doctor/nurse/reception are
+-- distinguished only via `profiles.role` + RLS policy logic, not Postgres
+-- roles). That means a column-level GRANT on `visits` for `authenticated`
+-- applies identically to every staff role, so its column list must cover
+-- every column any staff role's real (non-test) code actually updates today
+-- — not just the nurse's.
+--
+-- Audited every real UPDATE call site against `visits` in this codebase
+-- (src/lib/api/visits.ts's Visits.advance/complete/patch, and every caller
+-- of them under src/store and src/app) as of this migration:
+--   - Visits.advance(id, status)  -> patches {status, updated_at}
+--       called from usePatientStore.recordOpdVitals (nurse) and
+--       usePatientStore.updateStatus (reception/doctor/etc, the
+--       reception->vitals bridge fixed alongside this migration)
+--   - Visits.complete / Visits.patch (arbitrary column set) and the
+--     generic `table('visits', ...).patch()` used directly for other
+--     columns -- confirmed via grep: NEITHER is called anywhere in
+--     src/app or src/store yet. Every column outside status/updated_at
+--     (patient_id, doctor_id, department, token, ...) is set only at
+--     Visits.create() time (an INSERT, unaffected by this UPDATE-only
+--     grant), never via a real UPDATE call site today.
+--
+-- So {status, updated_at} is both necessary (the nurse transition needs it)
+-- and sufficient (no staff role's real code updates any other visits column
+-- today). If a future phase wires a real UPDATE that touches other columns
+-- (e.g. Visits.complete's completed_at, or a doctor reassignment flow), this
+-- grant must be widened in that phase's migration — it will fail loudly
+-- (an explicit permission-denied error, not a silent no-op) rather than
+-- corrupting data, so the failure mode is safe in the meantime.
+
+revoke update on visits from authenticated;
+grant update (status, updated_at) on visits to authenticated;

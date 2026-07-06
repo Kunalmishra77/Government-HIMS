@@ -10,7 +10,7 @@ import {
   BedDouble, CreditCard, Scissors, Heart, ShoppingCart, MessageSquarePlus,
   Building2,
 } from "lucide-react"
-import { useAuthStore, type Role } from "@/store/useAuthStore"
+import { type Role } from "@/store/useAuthStore"
 import { cn } from "@/lib/utils"
 
 type RoleCard = { role: Role; label: string; desc: string; icon: React.ElementType; href: string }
@@ -65,14 +65,13 @@ const BRAND_COLOR = "var(--color-primary)"
 const BRAND_SOFT = "rgba(8,145,178,0.08)"
 
 export function PortalLauncher() {
-  const { setRole } = useAuthStore()
   const router = useRouter()
   const [selectedHref, setSelectedHref] = React.useState<string | null>(null)
   const [loadingHref, setLoadingHref]   = React.useState<string | null>(null)
   const [activeTab, setActiveTab] = React.useState("clinical")
 
-  const handleLogin = (role: Role, href: string) => {
-    setSelectedHref(href); setLoadingHref(href); setRole(role); router.push(href)
+  const handleLogin = (_role: Role, _href: string) => {
+    router.push("/login")
   }
   const activeGroup = allRoleGroups.find(g => g.id === activeTab) ?? allRoleGroups[0]
   const totalRoles = allRoleGroups.reduce((n, g) => n + g.roles.length, 0)

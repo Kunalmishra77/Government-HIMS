@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { getSupabaseClient } from '@/lib/supabase/client'
 
 // The nurse works in shifts, assigned to a ward with responsibilities. This store
 // holds the logged-in nurse's assignment, the active-ward view (switcher), and a
@@ -27,6 +28,7 @@ export type HandoverRecord = {
   receivedAt?: string
   receivedBy?: string
   status: 'signed' | 'received'
+  realId?: string                          // the real shift_handovers.id, once materialized (Phase 7 Task 10)
 }
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
@@ -54,10 +56,26 @@ interface ShiftState {
   pendingIncoming: () => HandoverRecord[]
   signHandover: (rec: Omit<HandoverRecord, 'id' | 'signedAt' | 'status'>) => string
   receiveHandover: (id: string, by: string) => void
+  setHandoverRealId: (id: string, realId: string) => void
 }
 
 let _seq = 0
 const uid = () => `ho-${Date.now()}-${++_seq}`
+
+// Phase 7 Task 10 — mirrors useInpatientStore.ts's resolveRealIpdActor
+// line-for-line (per-store duplication, same precedent as Lab/Radiology):
+// resolves the REAL signed-in nurse from a live session + profiles lookup,
+// never from the local `fromNurse`/`toNurse`/`receivedBy` display strings —
+// signing/receiving a shift handover is a real clinical accountability act.
+async function resolveRealShiftActor(): Promise<{ id: string; name: string } | undefined> {
+  const supabase = getSupabaseClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return undefined
+  const { data: profile } = await supabase
+    .from('profiles').select('full_name').eq('id', session.user.id).maybeSingle()
+  if (!profile) return undefined
+  return { id: session.user.id, name: profile.full_name }
+}
 
 export const useShiftStore = create<ShiftState>()(
   persist(
@@ -81,10 +99,43 @@ export const useShiftStore = create<ShiftState>()(
       signHandover: (rec) => {
         const id = uid()
         set(s => ({ handovers: [{ ...rec, id, signedAt: new Date().toISOString(), status: 'signed' }, ...s.handovers] }))
+        void (async () => {
+          const actor = await resolveRealShiftActor()
+          if (!actor) return
+          try {
+            const { ShiftHandovers } = await import('@/lib/api')
+            const saved = await ShiftHandovers.sign({
+              ward: rec.ward, date: rec.date, fromShift: rec.fromShift, toShift: rec.toShift,
+              sbar: rec.sbar, addendum: rec.addendum, patientCount: rec.patientCount,
+            }, actor)
+            get().setHandoverRealId(id, saved.id)
+          } catch (err) {
+            console.error('[useShiftStore] real backend signHandover failed (local handover still recorded):', err)
+          }
+        })()
         return id
       },
-      receiveHandover: (id, by) => set(s => ({
-        handovers: s.handovers.map(h => h.id === id ? { ...h, status: 'received', receivedAt: new Date().toISOString(), receivedBy: by } : h),
+      receiveHandover: (id, by) => {
+        let realId: string | undefined
+        set(s => {
+          const next = { handovers: s.handovers.map(h => h.id === id ? { ...h, status: 'received' as const, receivedAt: new Date().toISOString(), receivedBy: by } : h) }
+          realId = next.handovers.find(h => h.id === id)?.realId
+          return next
+        })
+        if (!realId) return
+        void (async () => {
+          const actor = await resolveRealShiftActor()
+          if (!actor) return
+          try {
+            const { ShiftHandovers } = await import('@/lib/api')
+            await ShiftHandovers.receive(realId!, actor)
+          } catch (err) {
+            console.error('[useShiftStore] real backend receiveHandover failed (local handover still updated):', err)
+          }
+        })()
+      },
+      setHandoverRealId: (id, realId) => set(s => ({
+        handovers: s.handovers.map(h => h.id === id ? { ...h, realId } : h),
       })),
     }),
     { name: 'agentix-nurse-shift', version: 1, storage: createJSONStorage(() => localStorage), skipHydration: true },

@@ -20,6 +20,16 @@ export const PatientSchema = z.object({
   allergies: z.array(z.string()).default([]),
   chronicConditions: z.array(z.string()).default([]),
   dishaConsentAt: z.string().optional(),
+  authUserId: z.string().uuid().optional(),
+  // AABHA/UHID identity (Reception's Aadhaar -> ABHA -> UHID flow).
+  // uhid/abhaId single-capital acronyms -> uhid/abha_id snake_case via
+  // _core.ts's toSnakeCase (no consecutive-capitals pitfall here — that only
+  // bites names like "abhaID"). uhid stays optional/nullable: self-check-in
+  // patients don't get one until reception completes verification (see
+  // src/lib/intake/register.ts).
+  uhid: z.string().optional(),
+  abhaId: z.string().optional(),
+  aadhaarVerified: z.boolean().default(false),
   familyContacts: z.array(z.object({ name: z.string(), relation: z.string(), phone: z.string() })).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),

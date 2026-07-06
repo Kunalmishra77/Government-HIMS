@@ -18,8 +18,10 @@ import { usePharmacyStore } from "@/store/usePharmacyStore"
 import { usePatientProfileStore } from "@/store/usePatientProfileStore"
 import { useLabStore } from "@/store/useLabStore"
 import { useLabOrdersStore } from "@/store/useLabOrdersStore"
-import { LAB_CATALOG } from "@/lib/labCatalog"
-import { useRadiologyStore } from "@/store/useRadiologyStore"
+import { LAB_CATALOG, type SpecimenType } from "@/lib/labCatalog"
+import { useRadiologyStore, codeForLegacy } from "@/store/useRadiologyStore"
+import { useRadiologyStudiesStore, emptyReportSections } from "@/store/useRadiologyStudiesStore"
+import { RADIOLOGY_CATALOG } from "@/lib/radiologyCatalog"
 import { useAdmissionStore, WARD_ORDER } from "@/store/useAdmissionStore"
 import { NeonBadge } from "@/components/ui/neon-badge"
 import { EmptyState } from "@/components/ui/EmptyState"
@@ -38,6 +40,8 @@ import { openPrint, olFrom, para } from "@/lib/printDoc"
 import { useDoctorProfileStore } from "@/store/useDoctorProfileStore"
 import { useHRStore } from "@/store/useHRStore"
 import { useDialogs } from "@/components/ui/ConfirmDialog"
+import { getSupabaseClient } from "@/lib/supabase/client"
+import type { Session } from "@supabase/supabase-js"
 
 const DRUGS = ["Paracetamol 500mg","Amoxicillin 500mg","Azithromycin 500mg","Cetirizine 10mg","Pantoprazole 40mg","Dolo 650mg","Metformin 500mg","Amlodipine 5mg","Atorvastatin 20mg","Omeprazole 20mg","Ibuprofen 400mg","Montelukast 10mg","Metronidazole 400mg","Ondansetron 4mg","Diclofenac 50mg"]
 // Lab tests come straight from the central catalog so every doctor-selected
@@ -189,6 +193,55 @@ function PatientProfileHeader({ patient, onOpenHistory }: { patient: Patient; on
   )
 }
 
+// Phase 3 Task 3 — local lab/radiology dispatch only ever offers 'Routine' | 'Urgent'
+// (no 'stat' equivalent here), so the real backend OrderUrgency's 'stat' value is
+// intentionally unreachable from this mapping.
+function mapLocalPriorityToOrderUrgency(priority: 'Routine' | 'Urgent'): 'routine' | 'urgent' | 'stat' {
+  return priority === 'Urgent' ? 'urgent' : 'routine'
+}
+
+// Phase 3 Task 4 — the local Prescription.duration field is free text (default
+// "5 days", but doctors can type anything, e.g. "2 weeks" or "SOS"). Only the
+// common "N day(s)" shape is parsed into a real day count for the backend's
+// RxLine.days; anything else falls back to the RxLineSchema default of 5.
+function parseDurationDays(duration: string): number {
+  const m = /(\d+)\s*day/i.exec(duration)
+  return m ? parseInt(m[1]!, 10) : 5
+}
+
+// Phase 3 cleanup — shared guard for every "local write also lands in the real
+// backend" bridge in this file (dispatchLabOrder, dispatchRadOrder, sendRx,
+// both of completeConsult's bridges, and handleSendAdmission). Centralizing
+// this scaffolding means a future call site (Lab/Radiology/Pharmacy will
+// likely add more of these) cannot forget the guard: it is structurally
+// impossible to reach `write` without both a real live Supabase session and a
+// real visitId, and any failure inside `write` is always caught and logged,
+// never thrown into the local flow that triggered it.
+//
+// `session` is taken as a parameter rather than fetched inside the helper so a
+// caller that already fetched a session for an earlier check in the same
+// function (see completeConsult, which reuses one fetch across both of its
+// bridges) can pass that same value straight through instead of hitting the
+// SDK a second time. `visitId` is likewise re-handed to `write` (narrowed to
+// `string`) so call sites never need a non-null assertion on
+// `currentPatient.visitId`. The `write` callback's own `session`/`visitId`
+// parameter names intentionally shadow the outer nullable/optional locals at
+// each call site — that's deliberate: inside `write`, only the guaranteed-live
+// values should ever be referenced.
+async function withLiveSession(
+  session: Session | null,
+  visitId: string | undefined,
+  write: (session: Session, visitId: string) => Promise<void>,
+  errorContext: string,
+): Promise<void> {
+  if (!session || !visitId) return
+  try {
+    await write(session, visitId)
+  } catch (err) {
+    console.error(`[doctor/dashboard] ${errorContext}:`, err)
+  }
+}
+
 // One-line AI crux of a patient's background, so the doctor gets the gist first.
 function historyBrief(p: Patient): string {
   const chronic = p.history.filter(x => /diabet|hypertens|asthma|ckd|cardiac|copd|thyroid|arthrit|migrain|epileps/i.test(x))
@@ -213,9 +266,11 @@ export default function DoctorDashboard() {
   const recordStat = useDoctorStatsStore(s => s.record)
   const doctorId = currentUser?.id ?? 'DR-1012'
   const { addPrescription: addToPharmacy } = usePharmacyStore()
+  const setPharmacyRealId = usePharmacyStore(s => s.setRealId)
   const { addOrderFromDoctor: addLabToStore } = useLabStore()
   const addLabRichOrder = useLabOrdersStore(s => s.addOrder)
   const { addOrderFromDoctor: addRadToStore } = useRadiologyStore()
+  const addRadRichOrder = useRadiologyStudiesStore(s => s.addOrder)
   const { requestAdmission, beds } = useAdmissionStore()
 
   const wardSummary = WARD_ORDER.map(w => {
@@ -342,19 +397,54 @@ export default function DoctorDashboard() {
   }
 
   // End the consultation → advance the patient down the journey and clear the workspace.
-  const completeConsult = () => {
+  const completeConsult = async () => {
     if (!currentPatient) return
     recordStat(doctorId, isOnlineConsult ? 'online' : 'opd')
     // Close the loop: write a visit into the patient's history.
+    const finalDiagnosis = diagnosis.trim() || (isOnlineConsult ? 'Teleconsultation' : 'OPD consultation')
+    const finalNotes = notes.trim() || `${isOnlineConsult ? 'Online' : 'In-person'} consultation completed${diagnosis.trim() ? '' : '; no specific diagnosis recorded'}.`
     addVisit({
       patientId: currentPatient.id,
       date: new Date().toISOString().slice(0, 10),
       doctor: currentPatient.doctor,
-      diagnosis: diagnosis.trim() || (isOnlineConsult ? 'Teleconsultation' : 'OPD consultation'),
-      notes: notes.trim() || `${isOnlineConsult ? 'Online' : 'In-person'} consultation completed${diagnosis.trim() ? '' : '; no specific diagnosis recorded'}.`,
+      diagnosis: finalDiagnosis,
+      notes: finalNotes,
       prescriptions: prescriptions.map(p => ({ medicine: p.medicine, dosage: p.dosage, duration: p.duration })),
       mode: isOnlineConsult ? 'online' : 'in_person',
     })
+
+    // Phase 3 Task 5 — same additive real-backend bridge as dispatchLabOrder/dispatchRadOrder
+    // (Task 3) and sendRx (Task 4): gate on the *live* Supabase session (never a persisted
+    // auth flag) and only when this patient has a real visit. A backend failure here must
+    // never block the local consult-completion flow above/below.
+    // `session` is fetched once here and reused below for the admission-request bridge
+    // (Task 6) further down this function — see withLiveSession's doc comment for why
+    // it's passed in rather than re-fetched.
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    await withLiveSession(session, currentPatient.visitId, async (session, visitId) => {
+      const { Encounters } = await import('@/lib/api')
+      // Field-mapping simplification: EncounterSchema has no dedicated `diagnosis` column,
+      // only the SOAP fields (subjective/objective/assessment/plan/noteMarkdown). We map
+      // local `diagnosis` -> backend `assessment` (the closest established clinical-note
+      // field for a diagnosis) and local `notes` -> backend `plan`. This is a deliberate
+      // simplification: the local store keeps `diagnosis`/`notes` as two free-text concepts
+      // that don't cleanly split into SOAP's four fields. A future phase should revisit this
+      // if the UI ever separates subjective/objective concerns from notes.
+      // `aiPreBriefAccepted` is omitted: AiPreBrief (src/components/features/AiPreBrief.tsx)
+      // is a read-only display with no accept/reject affordance or callback, so this signal
+      // does not exist anywhere in local state to report.
+      const enc = await Encounters.create({
+        visitId,
+        patientId: currentPatient.id,
+        doctorId: session.user.id,
+        doctorName: currentPatient.doctor,
+        kind: isOnlineConsult ? 'OnlineConsult' : 'SOAP',
+        assessment: finalDiagnosis,
+        plan: finalNotes,
+      })
+      await Encounters.sign(enc.id)
+    }, 'real encounter write failed')
+
     if (isOnlineConsult) {
       toast.success(`Online consultation complete — ${currentPatient.name}`)
     } else if (admissionOrder && !admissionOrder.sent) {
@@ -385,6 +475,27 @@ export default function DoctorDashboard() {
         },
       })
       markAdmissionSent()
+
+      // Phase 3 Task 6 — same additive real-backend bridge as handleSendAdmission
+      // below: gate on the *live* Supabase session and only when this patient has
+      // a real visit. A backend failure here must never block the local flow above.
+      // Reuses the `session` fetched once above (Task 5) instead of re-fetching.
+      await withLiveSession(session, currentPatient.visitId, async (session, visitId) => {
+        const { AdmissionRequests } = await import('@/lib/api')
+        await AdmissionRequests.create({
+          visitId,
+          patientId: currentPatient.id,
+          doctorId: session.user.id,
+          diagnosis: diagnosis.trim() || admissionOrder.reason,
+          admissionType: admissionOrder.admissionType,
+          bedTypePreference: admissionOrder.bedTypePreference,
+          reason: admissionOrder.reason,
+          department: currentPatient.department,
+          triageLevel: currentPatient.triageLevel,
+          payerType: 'General',
+        })
+      }, 'real admission request write failed')
+
       updateStatus(currentPatient.id, 'done')
       toast.success(`Consultation complete — ${currentPatient.name} → Admission requested (${admissionOrder.admissionType})`)
     } else {
@@ -424,10 +535,15 @@ export default function DoctorDashboard() {
     toast.success(`${def.label} applied`, { description: `${summary} dispatched to queues.` })
   }
 
-  const sendRx = () => {
+  const sendRx = async () => {
     if (!currentPatient || prescriptions.length === 0) return
+    const localRxId = `RX-${Date.now()}`
+    const medicines = prescriptions.map(p => ({
+      name: p.medicine, dosage: p.dosage, frequency: p.instructions ?? "As directed",
+      duration: p.duration, quantity: parseInt(qty) || 10,
+    }))
     addToPharmacy({
-      id: `RX-${Date.now()}`,
+      id: localRxId,
       patientId: currentPatient.id,
       patientName: currentPatient.name,
       tokenNumber: currentPatient.token,
@@ -437,24 +553,86 @@ export default function DoctorDashboard() {
       dispatchedAt: new Date().toISOString(),
       estimatedReadyIn: prescriptions.length * 3,
       triageLevel: currentPatient.triageLevel,
-      medicines: prescriptions.map(p => ({ name: p.medicine, dosage: p.dosage, frequency: p.instructions ?? "As directed", duration: p.duration, quantity: parseInt(qty) || 10 })),
+      medicines,
     })
     sendToPharmacy()
     recordStat(doctorId, 'prescriptions', prescriptions.length)
     toast.success("Prescription sent to Pharmacy")
+
+    // Phase 3 Task 4 — same additive real-backend bridge as dispatchLabOrder/dispatchRadOrder
+    // above: gate on the *live* Supabase session (never a persisted auth flag) and only
+    // when this patient has a real visit. A backend failure here must never break the
+    // local pharmacy-queue UX above.
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    await withLiveSession(session, currentPatient.visitId, async (session, visitId) => {
+      const { Prescriptions, PharmacyDispenses } = await import('@/lib/api')
+      const rx = await Prescriptions.draft({
+        visitId,
+        patientId: currentPatient.id,
+        doctorId: session.user.id,
+        doctorName: currentPatient.doctor,
+        lines: prescriptions.map((p, i) => ({
+          id: `RL-${i}`,
+          drugName: p.medicine,
+          dose: p.dosage,
+          days: parseDurationDays(p.duration),
+          quantity: 0,
+          instructions: p.instructions,
+          status: 'draft' as const,
+        })),
+      })
+      // Phase 3 Task 4 simplification — NOT a real safety verification. The local
+      // useConsultationStore's Prescription type carries no allergy/interaction/dose/
+      // narcotic check results at all today (no drug-safety-check UI exists client-side
+      // yet), so these values are hardcoded placeholders and cannot reflect any actual
+      // check performed. A future phase wiring real prescribing safety checks (against
+      // useDrugMasterStore) must replace this with the genuine check results before this
+      // can be treated as a verified safety envelope.
+      await Prescriptions.sign(rx.id, {
+        allergyChecked: true, interactionChecked: true, doseChecked: true, narcoticChecked: false, flags: [],
+      })
+
+      // Phase 6 Task 3 (order rewire) — materialize the real pharmacy_dispenses
+      // row the pharmacy actually works against, mirroring
+      // usePharmacyStore.addPrescription()'s client-side logic. `department`/
+      // `tokenNumber`/`medicines` are the exact same values already sent to the
+      // local store above — built once, reused for both writes.
+      const dispense = await PharmacyDispenses.create({
+        prescriptionId: rx.id,
+        patientId: currentPatient.id,
+        patientName: currentPatient.name,
+        tokenNumber: currentPatient.token,
+        doctorName: currentPatient.doctor,
+        department: currentPatient.department,
+        source: 'OPD',
+        paymentMode: 'Cash',
+        medicines,
+        dispatchedAt: rx.createdAt,
+        estimatedReadyIn: prescriptions.length * 3,
+        triageLevel: currentPatient.triageLevel,
+      })
+      setPharmacyRealId(localRxId, dispense.id)
+    }, 'real prescription write failed (local pharmacy queue still updated)')
   }
 
   // Dispatches a single lab test immediately to the lab queue AND stages it in the
   // consultation store (marked sent to prevent double-dispatch via any legacy path).
-  const dispatchLabOrder = (testName: string, priority: 'Routine' | 'Urgent') => {
+  const dispatchLabOrder = async (testName: string, priority: 'Routine' | 'Urgent') => {
     if (!currentPatient) { toast.error("Select a patient from the queue first"); return }
     addLabOrder({ testName, priority })
     // Zustand mutations are synchronous — getState() reflects the change immediately.
     const newId = useConsultationStore.getState().labOrders.slice(-1)[0]?.id
     if (newId) markLabOrderSent(newId)
     const code = Object.values(LAB_CATALOG).find(e => e.name === testName || e.code === testName)?.code
+    // Phase 4 — the real-id-alignment fix: capture the LOCAL order id addOrder()
+    // returns so the real order/specimen/test ids materialized below can be
+    // stamped back onto this exact local order via setRealIds(). Only set when
+    // `code` resolved — the legacy addLabToStore fallback path below has no
+    // catalog entry to bridge from, matching the `codes.length > 0` guard further
+    // down that decides whether any real materialization happens at all.
+    let localOrderId: string | undefined
     if (code) {
-      addLabRichOrder({
+      localOrderId = addLabRichOrder({
         patientId: currentPatient.id,
         patientName: currentPatient.name,
         source: 'OPD',
@@ -467,20 +645,170 @@ export default function DoctorDashboard() {
     }
     recordStat(doctorId, 'tests', 1)
     toast.success(`${testName} → Lab queue`)
+
+    // Phase 3 Task 3 — additive bridge into the real backend `orders` table, so this
+    // order also flows to Lab's real dashboards once wired. Same guarded pattern as
+    // usePatientStore's addPatient/recordOpdVitals/updateStatus: gate on the *live*
+    // Supabase session (never a persisted auth flag — see comments there for why),
+    // and only when this patient has a real visit (Phase 2's reception flow stamps
+    // `visitId`). A backend failure here must never break the local queue UX above.
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    await withLiveSession(session, currentPatient.visitId, async (session, visitId) => {
+      const { Orders, LabSpecimens, LabTests } = await import('@/lib/api')
+      const order = await Orders.create({
+        visitId,
+        patientId: currentPatient.id,
+        doctorId: session.user.id,
+        doctorName: currentPatient.doctor,
+        kind: 'lab',
+        urgency: mapLocalPriorityToOrderUrgency(priority),
+        indication: undefined,
+        items: [{ id: `OI-${Date.now()}`, name: testName, qty: 1 }],
+        bench: code ? LAB_CATALOG[code]?.bench : undefined,
+      })
+
+      // Task 3 (order rewire) — materialize the real lab_specimens/lab_tests rows a
+      // lab tech actually works against, mirroring useLabOrdersStore.addOrder()'s
+      // client-side logic: group the ordered test codes into one specimen per
+      // distinct specimen type, then create one lab_tests row per code referencing
+      // the real order id and its matching specimen id. Only possible when `code`
+      // resolved from LAB_CATALOG (same condition the local addLabRichOrder branch
+      // above already requires) — the legacy addLabToStore fallback path has no
+      // catalog entry to materialize from, exactly as on the client.
+      const codes = code ? [code] : []
+      if (codes.length > 0) {
+        const specimensByType = new Map<string, { id: string }>()
+        // Phase 4 — id-alignment fix: collect the real specimen/test ids as
+        // they're created, so they can be stamped back onto the LOCAL order
+        // (localOrderId) that addLabRichOrder built above from the same
+        // `codes`/catalog grouping. Without this, the real orders/
+        // lab_specimens/lab_tests rows have no recoverable link back to the
+        // local LabOrder/Specimen/TestRun objects every lab-store bridge
+        // (collectOrder/rejectSpecimen/recollectOrder, and later
+        // claim/finishEntry/verifyTest/microRelease) keys off.
+        const realSpecimens: { type: SpecimenType; realId: string }[] = []
+        for (const c of codes) {
+          const cat = LAB_CATALOG[c]
+          if (!cat) continue
+          if (!specimensByType.has(cat.specimen)) {
+            const specimen = await LabSpecimens.create({
+              orderId: order.id,
+              type: cat.specimen,
+              container: cat.container,
+            })
+            specimensByType.set(cat.specimen, specimen)
+            realSpecimens.push({ type: cat.specimen, realId: specimen.id })
+          }
+        }
+        const realTests: { code: string; realId: string }[] = []
+        for (const c of codes) {
+          const cat = LAB_CATALOG[c]
+          if (!cat) continue
+          const specimen = specimensByType.get(cat.specimen)
+          const test = await LabTests.create({
+            orderId: order.id,
+            specimenId: specimen?.id,
+            code: c,
+            name: cat.name,
+            bench: cat.bench,
+            priority: cat.defaultPriority,
+            // LabTests' `expectedTatMin` field (not the store's `expectedTATmin` —
+            // see lab-tests.ts's module comment on why the spelling differs) mirrors
+            // addOrder's own fallback: non-micro tests use expectedTATmin directly;
+            // micro tests (no expectedTATmin) fall back to expectedDays converted to
+            // minutes.
+            expectedTatMin: cat.expectedTATmin ?? (cat.expectedDays ? cat.expectedDays * 24 * 60 : 60),
+            orderedAt: order.createdAt,
+          })
+          realTests.push({ code: c, realId: test.id })
+        }
+        if (localOrderId) {
+          useLabOrdersStore.getState().setRealIds(localOrderId, {
+            orderId: order.id,
+            specimens: realSpecimens,
+            tests: realTests,
+          })
+        }
+      }
+    }, 'real lab order write failed (local queue still updated)')
   }
 
   // Same pattern for radiology.
-  const dispatchRadOrder = (scanType: typeof radScanType, bodyPart: string, priority: 'Routine' | 'Urgent') => {
+  const dispatchRadOrder = async (scanType: typeof radScanType, bodyPart: string, priority: 'Routine' | 'Urgent') => {
     if (!currentPatient) { toast.error("Select a patient from the queue first"); return }
     addRadiologyOrder({ scanType, bodyPart, priority })
     const newId = useConsultationStore.getState().radiologyOrders.slice(-1)[0]?.id
     if (newId) markRadiologyOrderSent(newId)
-    addRadToStore({ patientName: currentPatient.name, patientId: currentPatient.id, scanType, bodyPart, priority, orderedBy: currentPatient.doctor })
+    const code = codeForLegacy(scanType, bodyPart)
+    // Phase 5 Task 3 — the real-id-alignment fix, mirroring Lab's Task 4:
+    // capture the LOCAL study id addOrder() returns so the real order/study
+    // ids materialized below can be stamped back onto this exact local study
+    // via setRealId(). Only set when `code` resolved — the legacy addRadToStore
+    // fallback path has no catalog entry to bridge from.
+    let localStudyId: string | undefined
+    if (code) {
+      localStudyId = addRadRichOrder({
+        patientId: currentPatient.id,
+        patientName: currentPatient.name,
+        source: 'OPD',
+        doctorName: currentPatient.doctor,
+        paymentMode: 'Cash',
+        code,
+        priority: priority === 'Urgent' ? 'Urgent' : undefined,
+      })
+    } else {
+      addRadToStore({ patientName: currentPatient.name, patientId: currentPatient.id, scanType, bodyPart, priority, orderedBy: currentPatient.doctor })
+    }
     recordStat(doctorId, 'tests', 1)
     toast.success(`${scanType} — ${bodyPart} → Radiology queue`)
+
+    // Phase 3 Task 3 — additive bridge into the real backend `orders` table.
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    await withLiveSession(session, currentPatient.visitId, async (session, visitId) => {
+      const { Orders, RadiologyStudies } = await import('@/lib/api')
+      const order = await Orders.create({
+        visitId,
+        patientId: currentPatient.id,
+        doctorId: session.user.id,
+        doctorName: currentPatient.doctor,
+        kind: 'radiology',
+        urgency: mapLocalPriorityToOrderUrgency(priority),
+        indication: undefined,
+        items: [{ id: `OI-${Date.now()}`, name: `${scanType} — ${bodyPart}`, qty: 1 }],
+        modality: scanType,
+      })
+
+      // Task 3 (order rewire) — materialize the real radiology_studies row a
+      // radiology tech/radiologist actually works against, mirroring
+      // useRadiologyStudiesStore.addOrder()'s client-side logic. Only possible
+      // when `code` resolved from RADIOLOGY_CATALOG (same condition the local
+      // addRadRichOrder branch above already requires).
+      if (code) {
+        const cat = RADIOLOGY_CATALOG[code]!
+        const study = await RadiologyStudies.create({
+          orderId: order.id,
+          patientId: currentPatient.id,
+          patientName: currentPatient.name,
+          source: 'OPD',
+          doctorName: currentPatient.doctor,
+          paymentMode: 'Cash',
+          code,
+          name: cat.name,
+          modality: cat.modality,
+          bodyPart: cat.bodyPart,
+          priority: priority === 'Urgent' ? 'Urgent' : cat.defaultPriority,
+          reportSections: emptyReportSections(code),
+          expectedTatMin: cat.expectedTATmin,
+          orderedAt: order.createdAt,
+        })
+        if (localStudyId) {
+          useRadiologyStudiesStore.getState().setRealId(localStudyId, study.id)
+        }
+      }
+    }, 'real radiology order write failed (local queue still updated)')
   }
 
-  const handleSendAdmission = () => {
+  const handleSendAdmission = async () => {
     if (!currentPatient) return
     if (!admReason.trim()) { toast.error("Please enter reason for admission"); return }
     // Build from the form state directly (avoids reading a not-yet-propagated store value).
@@ -510,6 +838,29 @@ export default function DoctorDashboard() {
     })
     markAdmissionSent()
     recordStat(doctorId, 'admissions', 1)
+
+    // Phase 3 Task 6 — same additive real-backend bridge as dispatchLabOrder/
+    // dispatchRadOrder (Task 3), sendRx (Task 4), and completeConsult's encounter
+    // write (Task 5): gate on the *live* Supabase session (never a persisted auth
+    // flag) and only when this patient has a real visit. A backend failure here
+    // must never block the local admission-request flow above.
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    await withLiveSession(session, currentPatient.visitId, async (session, visitId) => {
+      const { AdmissionRequests } = await import('@/lib/api')
+      await AdmissionRequests.create({
+        visitId,
+        patientId: currentPatient.id,
+        doctorId: session.user.id,
+        diagnosis,
+        admissionType: admType,
+        bedTypePreference: admType,
+        reason: admReason,
+        department: currentPatient.department,
+        triageLevel: currentPatient.triageLevel,
+        payerType: 'General',
+      })
+    }, 'real admission request write failed')
+
     setActiveDrawer(null)
     toast.success("Admission card + documents sent to Bed Manager")
   }

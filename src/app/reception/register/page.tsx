@@ -236,11 +236,29 @@ export default function RegisterPatientPage() {
   }
 
   // ── Add to queue ──────────────────────────────────────────────────────────
-  function addToQueue(sendToVitals: boolean) {
+  // addPatient is async — it awaits the real backend Patients.create/Visits.create
+  // calls (Phase 2) before stamping `visitId` onto the local patient record.
+  // updateStatus's reception→vitals bridge only mirrors into the real `visits`
+  // row when it finds that `visitId` (see usePatientStore.ts). Firing
+  // updateStatus without awaiting addPatient first raced ahead of that stamp
+  // every time, so the real visit stayed stuck at 'waiting' even though the
+  // local queue (and this screen) showed "sent to Vitals" — the nurse's later
+  // real advance-to-consulting then silently no-opped against RLS. Awaiting
+  // addPatient here closes that race.
+  async function addToQueue(sendToVitals: boolean) {
+    setBusy(true)
+    try {
+      await addToQueueImpl(sendToVitals)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function addToQueueImpl(sendToVitals: boolean) {
     const id = `PT-${Date.now()}`
     const finalUhid = uhid || generateUhid(usePatientStore.getState().patients)
     if (!uhid) setUhid(finalUhid)
-    addPatient({
+    await addPatient({
       id,
       name: form.name.trim(),
       phone: form.phone.replace(/\D/g, "").slice(-10),
@@ -257,9 +275,18 @@ export default function RegisterPatientPage() {
       aadhaarVerified: aadhaarVerified || undefined,
       photoUrl,
     })
-    if (finalUhid) {
+    // addPatient's real-backend bridge retries with a freshly bumped
+    // candidate on a concurrent UHID collision (writeWithUhidRetry in
+    // src/lib/intake/register.ts) — vanishingly rare for a single reception
+    // desk, but if it happened the patient record now reflects the real,
+    // persisted UHID, which may differ from `finalUhid` computed above.
+    // Reconcile so this screen's display/print/profile-link never drifts
+    // from what's actually in Postgres.
+    const settledUhid = usePatientStore.getState().patients.find((p) => p.id === id)?.uhid ?? finalUhid
+    if (settledUhid !== uhid) setUhid(settledUhid)
+    if (settledUhid) {
       saveProfile(id, {
-        ...emptyProfile(), uhid: finalUhid, abhaId: abha?.abhaNumber,
+        ...emptyProfile(), uhid: settledUhid, abhaId: abha?.abhaNumber,
         address: form.address, city: form.city, pincode: form.pincode,
         emergencyName: form.emergencyName || undefined,
         emergencyRelation: form.emergencyRelation || undefined,
@@ -268,7 +295,7 @@ export default function RegisterPatientPage() {
     }
     journeyAdd(id, form.name.trim(), form.doctor)
     const token = usePatientStore.getState().patients.find((p) => p.id === id)?.token ?? 0
-    if (sendToVitals) updateStatus(id, "vitals")
+    if (sendToVitals) await updateStatus(id, "vitals")
     toast.success(`${form.name.trim()} added to OPD queue`, { description: sendToVitals ? `Token #${token} · sent to Vitals` : `Token #${token} · Waiting` })
     setResult({ id, token, sentToVitals: sendToVitals })
     setStage("done")
@@ -574,11 +601,15 @@ export default function RegisterPatientPage() {
           </dl>
 
           <div className="flex flex-wrap gap-3 pt-1">
-            <Button variant="outline" onClick={() => setStage("details")} className="h-11 rounded-xl gap-1.5"><ArrowLeft className="h-4 w-4" /> Back</Button>
-            <Button variant="outline" onClick={printSlip} className="h-11 rounded-xl gap-1.5"><Printer className="h-4 w-4" /> Print slip</Button>
+            <Button variant="outline" onClick={() => setStage("details")} disabled={busy} className="h-11 rounded-xl gap-1.5"><ArrowLeft className="h-4 w-4" /> Back</Button>
+            <Button variant="outline" onClick={printSlip} disabled={busy} className="h-11 rounded-xl gap-1.5"><Printer className="h-4 w-4" /> Print slip</Button>
             <div className="flex-1" />
-            <Button variant="secondary" onClick={() => addToQueue(false)} className="h-11 rounded-xl gap-1.5"><UserPlus className="h-4 w-4" /> Add to Queue</Button>
-            <Button onClick={() => addToQueue(true)} className="h-11 rounded-xl gap-1.5"><Activity className="h-4 w-4" /> Add &amp; Send to Vitals</Button>
+            <Button variant="secondary" onClick={() => { void addToQueue(false) }} disabled={busy} className="h-11 rounded-xl gap-1.5">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} Add to Queue
+            </Button>
+            <Button onClick={() => { void addToQueue(true) }} disabled={busy} className="h-11 rounded-xl gap-1.5">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />} Add &amp; Send to Vitals
+            </Button>
           </div>
         </Panel>
       )}

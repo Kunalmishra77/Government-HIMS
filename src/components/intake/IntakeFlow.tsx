@@ -108,8 +108,8 @@ export function IntakeFlow() {
   const handleSubmit = async () => {
     setSubmitting(true)
     await new Promise(r => setTimeout(r, 1600))
-    const res = registerPatientFromIntake(form, { patients, addPatient, generateFamilyToken })
-    setToken(res.token); setFamilyToken(res.familyToken); setEstWait(res.estWait); setUhid(res.uhid)
+    const res = await registerPatientFromIntake(form, { patients, addPatient, generateFamilyToken })
+    setToken(res.token); setFamilyToken(res.familyToken); setEstWait(res.estWait); setUhid(res.uhid ?? null)
     setSubmitting(false); setCurrent('success')
   }
 

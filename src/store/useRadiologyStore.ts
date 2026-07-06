@@ -30,7 +30,7 @@ interface LegacyRadStore {
 }
 
 // Map the legacy scanType + bodyPart hint to a catalog code.
-function codeForLegacy(scanType: string, bodyPart?: string): string | undefined {
+export function codeForLegacy(scanType: string, bodyPart?: string): string | undefined {
   const part = (bodyPart ?? '').toLowerCase()
   // Try exact catalog name first
   const byName = Object.values(RADIOLOGY_CATALOG).find(c => c.name === `${scanType}${bodyPart ? ` ${bodyPart}` : ''}`)

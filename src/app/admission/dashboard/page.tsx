@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Bed, Clock, AlertCircle, CheckCircle2, X, ChevronRight, Sparkles, FileText, FlaskConical, ScanLine, Pill, ShieldAlert, Info, UserCheck, BedDouble, Hourglass, Activity, Wrench, ArrowRight } from "lucide-react"
 import { useAdmissionStore, type AdmissionRequest } from "@/store/useAdmissionStore"
@@ -109,6 +109,9 @@ function BundlePanel({ req }: { req: AdmissionRequest }) {
 
 export default function AdmissionDashboard() {
   const { admissionRequests, beds, assignBed, markAdmitted, cancelRequest } = useAdmissionStore()
+  useEffect(() => {
+    void useAdmissionStore.getState().hydrateReal()
+  }, [])
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null)
   const [bundleViewId, setBundleViewId] = useState<string | null>(null)
 

@@ -67,11 +67,18 @@ export const MarDoseSchema = z.object({
 })
 export type MarDose = z.infer<typeof MarDoseSchema>
 
-const wards = table<Ward>('wards', WardSchema)
-const beds = table<Bed>('beds', BedSchema)
-const stays = table<IpdStay>('ipd_stays', IpdStaySchema)
-const vitals = table<Vital>('vitals', VitalSchema)
-const mars = table<MarDose>('mar_doses', MarDoseSchema)
+// Table names are prefixed `legacy_` so this pre-Phase-7 scaffolding never
+// collides with the real Postgres tables Phase 7 Task 1 created under the
+// plain names ('beds', 'ipd_stays') — see src/lib/api/beds.ts and
+// src/lib/api/ipd-stays.ts, which are the real, migrated modules. This
+// module (still reachable via _seed.ts's runDemoSeed()) must keep falling
+// back to its original localStorage behavior, not silently start writing
+// incompatible shapes into the live tables.
+const wards = table<Ward>('legacy_wards', WardSchema)
+const beds = table<Bed>('legacy_beds', BedSchema)
+const stays = table<IpdStay>('legacy_ipd_stays', IpdStaySchema)
+const vitals = table<Vital>('legacy_vitals', VitalSchema)
+const mars = table<MarDose>('legacy_mar_doses', MarDoseSchema)
 
 export const Ipd = {
   wards: { list: () => wards.list(), put: (w: Ward) => wards.put(w) },

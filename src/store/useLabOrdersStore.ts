@@ -4,6 +4,7 @@ import { useNotificationStore } from './useNotificationStore'
 import { useAuditStore } from './useAuditStore'
 import { LAB_CATALOG, computeFlag, type Bench, type Priority, type SpecimenType, type AnalyteSpec } from '@/lib/labCatalog'
 import { evaluateReflex } from '@/lib/reflexRules'
+import { getSupabaseClient } from '@/lib/supabase/client'
 
 // ─── Domain types ──────────────────────────────────────────────────────────
 
@@ -47,6 +48,15 @@ export type Specimen = {
   collectedAt?: string
   volume?: string
   rejectReason?: RejectReason
+  // Phase 4 — the real `lab_specimens.id` once this specimen has been
+  // materialized in the real backend (stamped by the doctor-dashboard's
+  // dispatchLabOrder via useLabOrdersStore.setRealIds, right after
+  // LabSpecimens.create resolves). Same backreference pattern as
+  // usePatientStore's Patient.visitId: undefined for demo-seeded orders or
+  // whenever the real write never fired (no live session) — every bridge
+  // keyed off this field must treat a missing realId as "no real
+  // counterpart exists, skip the backend write silently".
+  realId?: string
 }
 
 export type TestRun = {
@@ -74,6 +84,11 @@ export type TestRun = {
   // Set automatically on every mutation that changes this test (see stamping set
   // wrapper). Drives last-write-wins conflict resolution in the cross-tab merge.
   updatedAt?: string
+  // Phase 4 — the real `lab_tests.id`, same backreference pattern as
+  // Specimen.realId above (see that field's doc comment for the full
+  // rationale). Set by useLabOrdersStore.setRealIds once LabTests.create
+  // resolves in dispatchLabOrder.
+  realId?: string
 }
 
 export type LabOrder = {
@@ -89,6 +104,10 @@ export type LabOrder = {
   clinicalNotes?: string
   tests: TestRun[]
   specimens: Specimen[]
+  // Phase 4 — the real `orders.id`, same backreference pattern as
+  // Specimen.realId/TestRun.realId (see Specimen.realId's doc comment for
+  // the full rationale).
+  realId?: string
 }
 
 export type ReflexSuggestion = {
@@ -200,6 +219,27 @@ export function generateAnalyzerValue(testCode: string, spec: AnalyteSpec, idx: 
   return Math.round(raw * 100) / 100
 }
 
+// Phase 4 Task 5 — resolves the REAL signed-in actor for a human bench action
+// (claim/finishEntry), from a *live* Supabase session + a `profiles.full_name`
+// lookup — never from the local `LabTech` parameter the UI passed in. That
+// local parameter (e.g. TECH_RAVI, id 'LT-101') is a display-friendly demo
+// roster entry, not necessarily a real `profiles.id`; mirroring it into
+// `assigned_to`/`entered_by` verbatim would let any caller claim to be any
+// tech, poisoning the audit trail (see src/lib/api/lab-tests.ts's
+// module-level note, and Task 1's review). `benchHint` carries over the local
+// LabTech's non-identity `bench` metadata only — it plays no part in who the
+// actor "is". Returns undefined (skip the write) if there's no live session
+// or the session has no matching profile row.
+async function resolveRealActor(benchHint?: Bench[]): Promise<LabTech | undefined> {
+  const supabase = getSupabaseClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return undefined
+  const { data: profile } = await supabase
+    .from('profiles').select('full_name').eq('id', session.user.id).maybeSingle()
+  if (!profile) return undefined
+  return { id: session.user.id, name: profile.full_name, bench: benchHint }
+}
+
 // ─── Cross-tab convergent merge (prevents last-write-wins clobber) ──────────
 // Multiple tabs (doctor, lab, reception …) each hold an independent in-memory
 // copy of `orders`. Without merging, whichever tab persists last overwrites the
@@ -247,9 +287,22 @@ function mergeById<T extends { id: string }>(prev: T[], next: T[]): T[] {
 // Read-merge-write wrapper: every persist merges with the latest localStorage
 // snapshot, so concurrent tabs converge instead of clobbering one another. The
 // stored value is the Zustand persist envelope { state, version }.
+//
+// Phase 4 Task 4 — guarded on `isBrowser` (same pattern as _core.ts's
+// readRaw/writeRaw/removeRaw), found while adding this task's real-backend
+// integration test: `createJSONStorage(() => mergingStorage)` (below) always
+// succeeds — `mergingStorage` is a plain object, unlike `() => localStorage`
+// elsewhere, whose ReferenceError zustand's createJSONStorage catches and
+// treats as "storage unavailable" — so its methods only fail lazily, the
+// first time persist actually calls getItem/setItem, at which point the bare
+// `localStorage` reference threw uncaught in any non-browser environment
+// (SSR, this Node-based vitest suite, ...). Any store action that calls
+// `set()` (e.g. addOrder/collectOrder) would crash outside a real browser.
+const isBrowser = typeof window !== 'undefined'
 const mergingStorage = {
-  getItem: (name: string) => localStorage.getItem(name),
+  getItem: (name: string) => isBrowser ? localStorage.getItem(name) : null,
   setItem: (name: string, value: string) => {
+    if (!isBrowser) return
     try {
       const incoming = JSON.parse(value)
       const existingRaw = localStorage.getItem(name)
@@ -265,7 +318,7 @@ const mergingStorage = {
     } catch { /* fall through to plain write */ }
     localStorage.setItem(name, value)
   },
-  removeItem: (name: string) => localStorage.removeItem(name),
+  removeItem: (name: string) => { if (isBrowser) localStorage.removeItem(name) },
 }
 
 // ─── State ────────────────────────────────────────────────────────────────
@@ -284,28 +337,50 @@ interface State {
     fastingStatus?: 'fasting' | 'non_fasting' | 'unknown'
     clinicalNotes?: string
   }) => string
-  collectOrder: (orderId: string, collectedBy: string) => void
-  rejectSpecimen: (orderId: string, accession: string, reason: RejectReason) => void
-  recollectOrder: (orderId: string) => void
-  claim: (testId: string, tech: LabTech) => void
-  unclaim: (testId: string) => void
-  enterAnalyte: (testId: string, analyte: string, value: number | string) => void
-  finishEntry: (testId: string, enteredBy: LabTech) => void
-  verifyTest: (testId: string, verifiedBy: LabTech) => void
-  releaseTest: (testId: string) => void
-  rejectTest: (testId: string, reason: RejectReason) => void
+  // Phase 4 — stamps the real order/specimen/test ids returned by
+  // Orders.create/LabSpecimens.create/LabTests.create (dispatchLabOrder, in
+  // src/app/doctor/dashboard/page.tsx) back onto the LOCAL order/specimens/
+  // tests that produced them, so every later action here (collectOrder/
+  // rejectSpecimen/recollectOrder, and future claim/finishEntry/verifyTest/
+  // microRelease bridges) has an unambiguous real id to key off. Matches by
+  // POSITION, not by type/code: dispatchLabOrder builds `real.specimens`/
+  // `real.tests` by iterating the exact same ordered `codes` list (via the
+  // same LAB_CATALOG grouping logic) that addOrder used to build the local
+  // `o.specimens`/`o.tests` arrays, so index i on one side always
+  // corresponds to index i on the other — including if a future caller ever
+  // submits duplicate test codes (e.g. ['CBC','CBC']), which a `find(r =>
+  // r.code === t.code)` lookup would ambiguously map to the same real row
+  // twice. The type/code check per index is kept as a belt-and-suspenders
+  // sanity check: a mismatch there means the ordering assumption above no
+  // longer holds, so we skip stamping that item and warn instead of risking
+  // a silent mislink.
+  setRealIds: (localOrderId: string, real: {
+    orderId: string
+    specimens: { type: SpecimenType; realId: string }[]
+    tests: { code: string; realId: string }[]
+  }) => void
+  collectOrder: (orderId: string, collectedBy: string) => Promise<void>
+  rejectSpecimen: (orderId: string, accession: string, reason: RejectReason) => Promise<void>
+  recollectOrder: (orderId: string) => Promise<void>
+  claim: (testId: string, tech: LabTech) => Promise<void>
+  unclaim: (testId: string) => Promise<void>
+  enterAnalyte: (testId: string, analyte: string, value: number | string) => Promise<void>
+  finishEntry: (testId: string, enteredBy: LabTech) => Promise<void>
+  verifyTest: (testId: string, verifiedBy: LabTech) => Promise<void>
+  releaseTest: (testId: string) => Promise<void>
+  rejectTest: (testId: string, reason: RejectReason) => Promise<void>
   // M13.9 — analyzer auto-feed. Simulates the modern lab workflow where
   // barcoded samples are loaded onto analyzers and the analyzer pushes
   // results back over HL7/ASTM (no human typing). Generates realistic
   // values within reference / occasionally flagged ranges + audit row.
-  analyzerAutoFeed: (testId: string) => void
-  microAdvance: (testId: string, patch: Partial<MicrobioResult>) => void
-  microRelease: (testId: string, verifiedBy: LabTech) => void
+  analyzerAutoFeed: (testId: string) => Promise<void>
+  microAdvance: (testId: string, patch: Partial<MicrobioResult>) => Promise<void>
+  microRelease: (testId: string, verifiedBy: LabTech) => Promise<void>
   logCallback: (testId: string, calledBy: string, recipient: string) => void
   ackResult: (testId: string) => void
   pushReflex: (s: Omit<ReflexSuggestion, 'id' | 'createdAt'>) => void
-  orderReflex: (suggestionId: string) => void
-  dismissReflex: (suggestionId: string) => void
+  orderReflex: (suggestionId: string) => Promise<void>
+  dismissReflex: (suggestionId: string) => Promise<void>
 }
 
 // ─── Seed builder ─────────────────────────────────────────────────────────
@@ -678,8 +753,41 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
     return id
   },
 
-  collectOrder: (orderId, collectedBy) => {
+  setRealIds: (localOrderId, real) => set(s => ({
+    orders: s.orders.map(o => o.id !== localOrderId ? o : ({
+      ...o,
+      realId: real.orderId,
+      specimens: o.specimens.map((sp, i) => {
+        const match = real.specimens[i]
+        if (!match) return sp
+        if (match.type !== sp.type) {
+          console.warn(`[useLabOrdersStore] setRealIds: specimen index ${i} type mismatch for order ${localOrderId} (local=${sp.type}, real=${match.type}) — skipping realId link`)
+          return sp
+        }
+        return { ...sp, realId: match.realId }
+      }),
+      tests: o.tests.map((t, i) => {
+        const match = real.tests[i]
+        if (!match) return t
+        if (match.code !== t.code) {
+          console.warn(`[useLabOrdersStore] setRealIds: test index ${i} code mismatch for order ${localOrderId} (local=${t.code}, real=${match.code}) — skipping realId link`)
+          return t
+        }
+        return { ...t, realId: match.realId }
+      }),
+    })),
+  })),
+
+  collectOrder: async (orderId, collectedBy) => {
     const at = new Date().toISOString()
+    // Snapshot before the local mutation — decides which real specimens/tests
+    // this call is actually about to advance, mirroring the local `set()`
+    // logic below exactly (an already-collected specimen / a test that isn't
+    // awaiting_collection is left untouched here too).
+    const before = get().orders.find(o => o.id === orderId)
+    const specimensToCollect = (before?.specimens ?? []).filter(sp => !sp.collectedAt && sp.realId)
+    const testsToBench = (before?.tests ?? []).filter(t => t.status === 'awaiting_collection' && t.realId)
+
     set(s => ({
       orders: s.orders.map(o => o.id !== orderId ? o : ({
         ...o,
@@ -687,9 +795,34 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
         tests: o.tests.map(t => t.status === 'awaiting_collection' ? { ...t, status: 'on_bench' as TestStatus } : t),
       })),
     }))
+
+    // Phase 4 Task 4 — additive bridge into the real backend, guarded exactly
+    // like usePatientStore's addPatient/updateStatus/recordOpdVitals: a
+    // *live* Supabase session (never useAuthStore — see those actions'
+    // comments for why), try/catch so a backend failure never breaks the
+    // local bench workflow above. Specimens/tests with no `realId` have no
+    // real counterpart (demo-seeded order, or the real write in
+    // dispatchLabOrder never fired) and are skipped silently.
+    if (specimensToCollect.length === 0 && testsToBench.length === 0) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabSpecimens, LabTests } = await import('@/lib/api')
+      await Promise.all([
+        ...specimensToCollect.map(sp => LabSpecimens.collect(sp.realId!, collectedBy)),
+        ...testsToBench.map(t => LabTests.markOnBench(t.realId!)),
+      ])
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend collect failed (local order still updated):', err)
+    }
   },
 
-  rejectSpecimen: (orderId, accession, reason) => {
+  rejectSpecimen: async (orderId, accession, reason) => {
+    const before = get().orders.find(o => o.id === orderId)
+    const specimen = before?.specimens.find(sp => sp.accession === accession)
+    const affectedTests = (before?.tests ?? []).filter(t =>
+      t.specimenId === accession && t.status !== 'released' && t.status !== 'verified')
+
     set(s => ({
       orders: s.orders.map(o => o.id !== orderId ? o : ({
         ...o,
@@ -698,9 +831,27 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
           ? { ...t, status: 'rejected' as TestStatus, rejectReason: reason } : t),
       })),
     }))
+
+    // Phase 4 Task 4 — same guarded real-backend bridge as collectOrder above.
+    if (!specimen?.realId && affectedTests.every(t => !t.realId)) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabSpecimens, LabTests } = await import('@/lib/api')
+      const writes: Promise<unknown>[] = []
+      if (specimen?.realId) writes.push(LabSpecimens.reject(specimen.realId, reason))
+      for (const t of affectedTests) if (t.realId) writes.push(LabTests.reject(t.realId, reason))
+      await Promise.all(writes)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend reject failed (local order still updated):', err)
+    }
   },
 
-  recollectOrder: (orderId) => {
+  recollectOrder: async (orderId) => {
+    const before = get().orders.find(o => o.id === orderId)
+    const specimensToRecollect = (before?.specimens ?? []).filter(sp => sp.rejectReason && sp.realId)
+    const testsToRecollect = (before?.tests ?? []).filter(t => t.status === 'rejected' && t.realId)
+
     set(s => ({
       orders: s.orders.map(o => o.id !== orderId ? o : ({
         ...o,
@@ -708,54 +859,150 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
         tests: o.tests.map(t => t.status === 'rejected' ? { ...t, status: 'awaiting_collection' as TestStatus, rejectReason: undefined } : t),
       })),
     }))
+
+    // Phase 4 Task 4 — same guarded real-backend bridge as collectOrder above.
+    if (specimensToRecollect.length === 0 && testsToRecollect.length === 0) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabSpecimens, LabTests } = await import('@/lib/api')
+      await Promise.all([
+        ...specimensToRecollect.map(sp => LabSpecimens.recollect(sp.realId!)),
+        ...testsToRecollect.map(t => LabTests.recollect(t.realId!)),
+      ])
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend recollect failed (local order still updated):', err)
+    }
   },
 
-  claim: (testId, tech) => set(s => ({
-    orders: s.orders.map(o => ({
-      ...o,
-      tests: o.tests.map(t => t.id === testId && (t.status === 'on_bench' || t.status === 'collected')
-        ? { ...t, status: 'in_progress' as TestStatus, assignedTo: tech }
-        : t),
-    })),
-  })),
+  claim: async (testId, tech) => {
+    // Snapshot the real id BEFORE the local mutation, exactly like
+    // collectOrder/rejectSpecimen/recollectOrder above — only a test that was
+    // actually eligible (on_bench/collected) and has a real counterpart gets
+    // a backend write.
+    let realId: string | undefined
+    set(s => ({
+      orders: s.orders.map(o => ({
+        ...o,
+        tests: o.tests.map(t => {
+          if (t.id !== testId || (t.status !== 'on_bench' && t.status !== 'collected')) return t
+          realId = t.realId
+          return { ...t, status: 'in_progress' as TestStatus, assignedTo: tech }
+        }),
+      })),
+    }))
 
-  unclaim: (testId) => set(s => ({
-    orders: s.orders.map(o => ({
-      ...o,
-      tests: o.tests.map(t => t.id === testId && t.status === 'in_progress'
-        ? { ...t, status: 'on_bench' as TestStatus, assignedTo: undefined }
-        : t),
-    })),
-  })),
+    // Phase 4 Task 5 — additive bridge into the real backend, guarded like
+    // every Task 4 bridge (live session, try/catch, silent skip with no
+    // realId). The actor written to `assigned_to` is resolveRealActor()'s
+    // session-derived identity, NOT the local `tech` param — see that
+    // function's doc comment and src/lib/api/lab-tests.ts's module note.
+    if (!realId) return
+    const actor = await resolveRealActor(tech.bench)
+    if (!actor) return
+    try {
+      const { LabTests } = await import('@/lib/api')
+      await LabTests.claim(realId, actor)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend claim failed (local test still updated):', err)
+    }
+  },
 
-  enterAnalyte: (testId, analyte, value) => set(s => ({
-    orders: s.orders.map(o => ({
-      ...o,
-      tests: o.tests.map(t => {
-        if (t.id !== testId) return t
-        const cat = LAB_CATALOG[t.code]
-        const spec: AnalyteSpec | undefined = cat?.analytes.find(a => a.analyte === analyte)
-        return {
-          ...t,
-          analytes: t.analytes.map(a => a.analyte === analyte
-            ? { ...a, value, flag: spec ? computeFlag(value, spec) : a.flag }
-            : a),
-        }
-      }),
-    })),
-  })),
+  unclaim: async (testId) => {
+    let realId: string | undefined
+    set(s => ({
+      orders: s.orders.map(o => ({
+        ...o,
+        tests: o.tests.map(t => {
+          if (t.id !== testId || t.status !== 'in_progress') return t
+          realId = t.realId
+          return { ...t, status: 'on_bench' as TestStatus, assignedTo: undefined }
+        }),
+      })),
+    }))
 
-  finishEntry: (testId, enteredBy) => set(s => ({
-    orders: s.orders.map(o => ({
-      ...o,
-      tests: o.tests.map(t => t.id === testId && t.status === 'in_progress'
-        ? { ...t, status: 'entered' as TestStatus, enteredBy }
-        : t),
-    })),
-  })),
+    // Phase 4 Task 5 — same guarded real-backend bridge as claim above.
+    // unclaim() clears `assigned_to` unconditionally (no actor recorded —
+    // see src/lib/api/lab-tests.ts's unclaim()), so this only needs a live
+    // session to authorize the write under RLS, not a profile lookup.
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabTests } = await import('@/lib/api')
+      await LabTests.unclaim(realId)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend unclaim failed (local test still updated):', err)
+    }
+  },
 
-  verifyTest: (testId, verifiedBy) => {
+  enterAnalyte: async (testId, analyte, value) => {
+    let realId: string | undefined
+    let realFlag: AnalyteFlag | undefined
+    set(s => ({
+      orders: s.orders.map(o => ({
+        ...o,
+        tests: o.tests.map(t => {
+          if (t.id !== testId) return t
+          const cat = LAB_CATALOG[t.code]
+          const spec: AnalyteSpec | undefined = cat?.analytes.find(a => a.analyte === analyte)
+          const flag = spec ? computeFlag(value, spec) : undefined
+          realId = t.realId
+          realFlag = flag
+          return {
+            ...t,
+            analytes: t.analytes.map(a => a.analyte === analyte
+              ? { ...a, value, flag: flag ?? a.flag }
+              : a),
+          }
+        }),
+      })),
+    }))
+
+    // Phase 4 Task 5 — same guarded real-backend bridge as claim above.
+    // No actor recorded here (LabTests.enterAnalyte takes none), just a live
+    // session to authorize the write under RLS.
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabTests } = await import('@/lib/api')
+      await LabTests.enterAnalyte(realId, analyte, value, realFlag)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend enterAnalyte failed (local test still updated):', err)
+    }
+  },
+
+  finishEntry: async (testId, enteredBy) => {
+    let realId: string | undefined
+    set(s => ({
+      orders: s.orders.map(o => ({
+        ...o,
+        tests: o.tests.map(t => {
+          if (t.id !== testId || t.status !== 'in_progress') return t
+          realId = t.realId
+          return { ...t, status: 'entered' as TestStatus, enteredBy }
+        }),
+      })),
+    }))
+
+    // Phase 4 Task 5 — same guarded real-backend bridge as claim above. The
+    // actor written to `entered_by` is resolveRealActor()'s session-derived
+    // identity, NOT the local `enteredBy` param.
+    if (!realId) return
+    const actor = await resolveRealActor(enteredBy.bench)
+    if (!actor) return
+    try {
+      const { LabTests } = await import('@/lib/api')
+      await LabTests.finishEntry(realId, actor)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend finishEntry failed (local test still updated):', err)
+    }
+  },
+
+  verifyTest: async (testId, verifiedBy) => {
     let verified: TestRun | undefined
+    let realId: string | undefined
     set(s => ({
       orders: s.orders.map(o => ({
         ...o,
@@ -763,6 +1010,7 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
           if (t.id !== testId || t.status !== 'entered') return t
           const v: TestRun = { ...t, status: 'verified', verifiedBy }
           verified = v
+          realId = t.realId
           return v
         }),
       })),
@@ -775,11 +1023,31 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
         detail: `${verified.name} verified by ${verifiedBy.name}`,
       })
     }
+
+    // Phase 4 Task 6 — additive bridge into the real backend, same guarded
+    // shape as claim/finishEntry (Task 5): live session, try/catch, silent
+    // skip with no realId. The actor written to `verified_by` is
+    // resolveRealActor()'s session-derived identity, NEVER the local
+    // `verifiedBy` parameter — see that helper's doc comment and
+    // src/lib/api/lab-tests.ts's module note, which calls this out as
+    // precisely the segregation-of-duties boundary Task 1's review flagged
+    // (verified_by must be the actual pathologist, not whoever the caller
+    // claims it is).
+    if (!realId) return
+    const actor = await resolveRealActor(verifiedBy.bench)
+    if (!actor) return
+    try {
+      const { LabTests } = await import('@/lib/api')
+      await LabTests.verify(realId, actor)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend verify failed (local test still updated):', err)
+    }
   },
 
-  releaseTest: (testId) => {
+  releaseTest: async (testId) => {
     let releasedTest: TestRun | undefined
     let parentOrder: LabOrder | undefined
+    let realId: string | undefined
     set(s => ({
       orders: s.orders.map(o => {
         const tests = o.tests.map(t => {
@@ -787,11 +1055,13 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
           const updated: TestRun = { ...t, status: 'released', releasedAt: new Date().toISOString() }
           releasedTest = updated
           parentOrder = o
+          realId = t.realId
           return updated
         })
         return { ...o, tests }
       }),
     }))
+    let reflexMatches: ReturnType<typeof evaluateReflex> = []
     if (releasedTest && parentOrder) {
       const t = releasedTest
       const critical = t.analytes.some(a => a.flag === 'CH' || a.flag === 'CL')
@@ -815,8 +1085,38 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
         detail: `${t.name} released · ${summary}`,
       })
       // Reflex auto-trigger — any rule matches land on the incharge's reflex queue
-      const reflexMatches = evaluateReflex(t, parentOrder.patientName)
+      reflexMatches = evaluateReflex(t, parentOrder.patientName)
       for (const m of reflexMatches) get().pushReflex(m)
+    }
+
+    // Phase 4 Task 6 — additive bridge into the real backend, same guarded
+    // shape as unclaim/analyzerAutoFeed (Task 5): release() takes no actor
+    // (see lab-tests.ts's release() — status/releasedAt only), so this only
+    // needs a live session to authorize the write under RLS, not a profile
+    // lookup.
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabTests, LabReflexSuggestions } = await import('@/lib/api')
+      await LabTests.release(realId)
+      // Any reflex match also gets a REAL lab_reflex_suggestions row, keyed
+      // off the REAL test id (not the local one — the table's FK requires an
+      // actual lab_tests row), so Task 8's accept/dismiss bridge has
+      // something real to act on. No actor concern here (see
+      // lab-reflex-suggestions.ts's module note — this table has no
+      // identity-bearing field to protect).
+      for (const m of reflexMatches) {
+        await LabReflexSuggestions.create({
+          basedOnTestId: realId,
+          patientName: m.patientName,
+          triggerSummary: m.triggerSummary,
+          code: m.code,
+          reason: m.reason,
+        })
+      }
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend release failed (local test still updated):', err)
     }
   },
 
@@ -826,9 +1126,10 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
   // values (80% within reference, 15% mildly out, 5% critical), computes
   // flags, sets status → 'entered', and stamps `enteredBy` with the
   // analyzer name so pathologists can tell "auto" from "manual".
-  analyzerAutoFeed: (testId) => {
+  analyzerAutoFeed: async (testId) => {
     let order: LabOrder | undefined
     let result: TestRun | undefined
+    let realId: string | undefined
     set(s => ({
       orders: s.orders.map(o => {
         const t = o.tests.find(x => x.id === testId)
@@ -836,6 +1137,7 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
         const cat = LAB_CATALOG[t.code]
         if (!cat || cat.micro || cat.bench === 'HISTO') return o   // manual-only
         order = o
+        realId = t.realId
         const analyzerName = (cat as { analyzer?: string }).analyzer ?? 'Auto-analyzer'
         const enteredBy: LabTech = { id: 'ANLZ', name: analyzerName }
         const newAnalytes: AnalyteResult[] = cat.analytes.map((spec, idx) => {
@@ -870,40 +1172,111 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
         detail: `${result.name} auto-fed by ${result.enteredBy?.name} · ${result.analytes.filter(a => a.flag !== 'N').length} flag(s) · awaiting pathologist verification`,
       })
     }
+
+    // Phase 4 Task 5 — additive bridge into the real backend, same guard
+    // shape as claim/finishEntry above. analyzerAutoFeed is a SYSTEM action:
+    // there is no human actor to authenticate, so unlike claim/finishEntry
+    // this never does a profiles lookup and always records the fixed 'ANLZ'
+    // constant (never the session's identity) as `entered_by` — unlike a
+    // human action, "who is signed in" is irrelevant to what gets written.
+    // A live session is still required here purely so the write is
+    // authorized under lab_tests' RLS policy (`auth.uid()` must match a
+    // lab/admin profile — see the laboratory_schema migration) — whichever
+    // lab user has this analyzer-feed page open. Reuses the existing
+    // enterAnalyte/finishEntry methods one analyte at a time (sequentially,
+    // not Promise.all — each call does its own get()+patch() round trip, so
+    // parallel calls could race and clobber each other's analyte writes)
+    // rather than adding a new combined API method, per the brief's
+    // "bridge each additively."
+    if (!realId || !result) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabTests } = await import('@/lib/api')
+      for (const a of result.analytes) {
+        await LabTests.enterAnalyte(realId, a.analyte, a.value, a.flag)
+      }
+      await LabTests.finishEntry(realId, { id: 'ANLZ', name: result.enteredBy?.name ?? 'Auto-analyzer' })
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend analyzerAutoFeed failed (local test still updated):', err)
+    }
   },
 
-  rejectTest: (testId, reason) => set(s => ({
+  rejectTest: async (testId, reason) => {
+    let realId: string | undefined
     // Marks the test rejected AND stamps the underlying specimen so the inbox
     // and bench views stay in sync (both surface "recollect required").
-    orders: s.orders.map(o => {
-      const target = o.tests.find(t => t.id === testId)
-      if (!target || target.status === 'released') return o
-      return {
-        ...o,
-        tests: o.tests.map(t => t.id === testId
-          ? { ...t, status: 'rejected' as TestStatus, rejectReason: reason }
-          : t),
-        specimens: o.specimens.map(sp => sp.accession === target.specimenId
-          ? { ...sp, rejectReason: reason }
-          : sp),
-      }
-    }),
-  })),
-
-  microAdvance: (testId, patch) => set(s => ({
-    orders: s.orders.map(o => ({
-      ...o,
-      tests: o.tests.map(t => {
-        if (t.id !== testId) return t
-        const current: MicrobioResult = t.micro ?? { phase: 'inoculated', day: 0 }
-        return { ...t, micro: { ...current, ...patch } }
+    set(s => ({
+      orders: s.orders.map(o => {
+        const target = o.tests.find(t => t.id === testId)
+        if (!target || target.status === 'released') return o
+        realId = target.realId
+        return {
+          ...o,
+          tests: o.tests.map(t => t.id === testId
+            ? { ...t, status: 'rejected' as TestStatus, rejectReason: reason }
+            : t),
+          specimens: o.specimens.map(sp => sp.accession === target.specimenId
+            ? { ...sp, rejectReason: reason }
+            : sp),
+        }
       }),
-    })),
-  })),
+    }))
 
-  microRelease: (testId, verifiedBy) => {
+    // Phase 4 Task 6 — additive bridge into the real backend, same guarded
+    // shape as rejectSpecimen (Task 4). LabTests.reject() takes no actor
+    // (status/rejectReason only, matching lab-specimens.ts's reject()), so
+    // this only needs a live session to authorize the write under RLS.
+    // Mirrors rejectSpecimen's scope: the underlying specimen's real row is
+    // NOT touched here — rejecting one test on a shared specimen must not
+    // reject the specimen itself while its other tests are still active;
+    // specimen-level rejection remains rejectSpecimen's job.
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabTests } = await import('@/lib/api')
+      await LabTests.reject(realId, reason)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend rejectTest failed (local test still updated):', err)
+    }
+  },
+
+  microAdvance: async (testId, patch) => {
+    let realId: string | undefined
+    set(s => ({
+      orders: s.orders.map(o => ({
+        ...o,
+        tests: o.tests.map(t => {
+          if (t.id !== testId) return t
+          realId = t.realId
+          const current: MicrobioResult = t.micro ?? { phase: 'inoculated', day: 0 }
+          return { ...t, micro: { ...current, ...patch } }
+        }),
+      })),
+    }))
+
+    // Phase 4 Task 7 — additive bridge into the real backend, same guarded
+    // shape as enterAnalyte/unclaim (Task 5): live session, try/catch, silent
+    // skip with no realId. LabTests.microAdvance() takes no actor (just
+    // merges the `micro` jsonb patch, mirroring the local mutation above), so
+    // this only needs a live session to authorize the write under RLS
+    // (lab_tests_all_lab, `for all`, requires a lab/admin profile).
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabTests } = await import('@/lib/api')
+      await LabTests.microAdvance(realId, patch)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend microAdvance failed (local test still updated):', err)
+    }
+  },
+
+  microRelease: async (testId, verifiedBy) => {
     let releasedTest: TestRun | undefined
     let parentOrder: LabOrder | undefined
+    let realId: string | undefined
     set(s => ({
       orders: s.orders.map(o => {
         const tests = o.tests.map(t => {
@@ -912,6 +1285,7 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
           const updated: TestRun = { ...t, status: 'released', verifiedBy, releasedAt: new Date().toISOString() }
           releasedTest = updated
           parentOrder = o
+          realId = t.realId
           return updated
         })
         return { ...o, tests }
@@ -928,6 +1302,28 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
         patientName: parentOrder.patientName,
         channels: ['in_app'],
       })
+    }
+
+    // Phase 4 Task 7 — additive bridge into the real backend, same guarded
+    // shape as verifyTest/finishEntry (Tasks 5/6). microRelease is
+    // conceptually closest to verifyTest+releaseTest collapsed into a single
+    // atomic write (status + verified_by + released_at) — LabTests.microRelease
+    // already exists for exactly this shape (see Task 1's schema/lab-tests.ts).
+    // No reflex handling here: unlike releaseTest, the local microRelease
+    // action above never calls evaluateReflex/pushReflex (micro releases are
+    // final-phase culture reports, not the analyte-driven reflex path), so
+    // none is invented here either. The actor written to `verified_by` is
+    // resolveRealActor()'s session-derived identity, NEVER the local
+    // `verifiedBy` parameter — same segregation-of-duties boundary as
+    // verifyTest (Task 6).
+    if (!realId) return
+    const actor = await resolveRealActor(verifiedBy.bench)
+    if (!actor) return
+    try {
+      const { LabTests } = await import('@/lib/api')
+      await LabTests.microRelease(realId, actor)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend microRelease failed (local test still updated):', err)
     }
   },
 
@@ -951,13 +1347,15 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
     reflexSuggestions: [{ ...sugg, id: `RS-${Date.now()}-${++_rsSeq}`, createdAt: new Date().toISOString() }, ...s.reflexSuggestions],
   })),
 
-  orderReflex: (suggestionId) => {
+  orderReflex: async (suggestionId) => {
     const sugg = get().reflexSuggestions.find(rs => rs.id === suggestionId)
     if (!sugg || sugg.orderedAt) return
     const origin = get().orders.find(o => o.tests.some(t => t.id === sugg.basedOnTestId))
     if (!origin) return
-    if (!LAB_CATALOG[sugg.code]) return
-    get().addOrder({
+    const cat = LAB_CATALOG[sugg.code]
+    if (!cat) return
+    const originTest = origin.tests.find(t => t.id === sugg.basedOnTestId)
+    const newLocalOrderId = get().addOrder({
       patientId: origin.patientId,
       patientName: origin.patientName,
       source: origin.source,
@@ -970,11 +1368,109 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
     set(s => ({
       reflexSuggestions: s.reflexSuggestions.map(rs => rs.id === suggestionId ? { ...rs, orderedAt: new Date().toISOString() } : rs),
     }))
+
+    // Phase 4 Task 8 — additive bridge into the real backend.
+    //
+    // Design decision (the brief's open question): a reflex order is for a
+    // SINGLE already-known test code against the SAME patient/order-context as
+    // the original test, not a doctor's independent multi-item order — so this
+    // does NOT call Orders.create() to mint a brand-new real `orders` row.
+    // Confirmed against the live project: `orders`' only write-granting RLS
+    // policy is `orders_all_doctor` (`for all`, `doctor_id = auth.uid()`) — this
+    // action is invoked from the LAB incharge's reflex queue
+    // (src/app/lab/reflex/page.tsx), signed in as lab/admin, which has NO write
+    // grant on `orders` at all (only `orders_select_staff`, reception/admin
+    // SELECT). Calling Orders.create() here would 403 under RLS. Instead, this
+    // attaches a new lab_specimens + lab_tests row to the ORIGINAL real order
+    // (`origin.realId`) — `lab_specimens_all_lab`/`lab_tests_all_lab` already
+    // grant lab/admin unconditional read/write on both tables, so no RLS change
+    // is needed for this path. This mirrors dispatchLabOrder's real
+    // materialization (src/app/doctor/dashboard/page.tsx, Task 3) simplified to
+    // exactly one code instead of N, which is also why a simpler direct
+    // LabSpecimens.create + LabTests.create pair is used here rather than
+    // duplicating dispatchLabOrder's whole order-creation flow.
+    const originRealId = origin.realId
+    const originTestRealId = originTest?.realId
+    if (!originRealId || !originTestRealId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabSpecimens, LabTests, LabReflexSuggestions } = await import('@/lib/api')
+      const specimen = await LabSpecimens.create({
+        orderId: originRealId,
+        type: cat.specimen,
+        container: cat.container,
+      })
+      const test = await LabTests.create({
+        orderId: originRealId,
+        specimenId: specimen.id,
+        code: sugg.code,
+        name: cat.name,
+        bench: cat.bench,
+        priority: cat.defaultPriority,
+        expectedTatMin: cat.expectedTATmin ?? (cat.expectedDays ? cat.expectedDays * 24 * 60 : 60),
+        orderedAt: new Date().toISOString(),
+      })
+      // Stamp the new LOCAL order (created via addOrder above — always exactly
+      // one specimen + one test for a single-code order) with the real ids just
+      // created, reusing setRealIds — same positional-match contract
+      // dispatchLabOrder relies on (see setRealIds' doc comment).
+      get().setRealIds(newLocalOrderId, {
+        orderId: originRealId,
+        specimens: [{ type: cat.specimen, realId: specimen.id }],
+        tests: [{ code: sugg.code, realId: test.id }],
+      })
+      // Best-effort: also stamp the real suggestion row's ordered_at, so a lab
+      // incharge querying lab_reflex_suggestions directly (outside this UI)
+      // sees it as actioned too — mirrors the local mutation above exactly
+      // (orderedAt stamped, row otherwise left in place). There is no realId
+      // link on the LOCAL ReflexSuggestion (it's a display-only local queue
+      // item — Task 6 never stamped one back, since pushReflex/LabReflexSuggestions.create
+      // mint unrelated ids), so the real row is found by querying every
+      // suggestion keyed to the origin's real test id and matching this
+      // suggestion's code — safe because releaseTest (Task 6) creates at most
+      // one real row per (test, code) pair per release.
+      const realMatches = await LabReflexSuggestions.byTest(originTestRealId)
+      const realMatch = realMatches.find(r => r.code === sugg.code && !r.orderedAt)
+      if (realMatch) await LabReflexSuggestions.orderIt(realMatch.id)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend orderReflex failed (local reflex order still updated):', err)
+    }
   },
 
-  dismissReflex: (suggestionId) => set(s => ({
-    reflexSuggestions: s.reflexSuggestions.filter(rs => rs.id !== suggestionId),
-  })),
+  dismissReflex: async (suggestionId) => {
+    const sugg = get().reflexSuggestions.find(rs => rs.id === suggestionId)
+    set(s => ({
+      reflexSuggestions: s.reflexSuggestions.filter(rs => rs.id !== suggestionId),
+    }))
+    if (!sugg) return
+
+    // Phase 4 Task 8 — additive bridge into the real backend. "Dismiss" deletes
+    // the real row outright (rather than marking it, e.g., a `dismissed`
+    // column) because `lab_reflex_suggestions` has no such column (Task 1's
+    // schema: id, based_on_test_id, patient_name, trigger_summary, code,
+    // reason, ordered_at, created_at — confirmed against the migration) and
+    // because it exactly matches the LOCAL behavior above: a dismissed
+    // suggestion is filtered out of `reflexSuggestions` entirely, with no
+    // "dismissed" history retained anywhere in the UI (src/app/lab/reflex/page.tsx
+    // only ever renders `pending`/`ordered`, never a dismissed list).
+    const origin = get().orders.find(o => o.tests.some(t => t.id === sugg.basedOnTestId))
+    const originTestRealId = origin?.tests.find(t => t.id === sugg.basedOnTestId)?.realId
+    if (!originTestRealId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { LabReflexSuggestions } = await import('@/lib/api')
+      // Same code-matching lookup as orderReflex above — no realId link exists
+      // on the LOCAL ReflexSuggestion, so the real row is found via the origin
+      // test's real id + this suggestion's code.
+      const realMatches = await LabReflexSuggestions.byTest(originTestRealId)
+      const realMatch = realMatches.find(r => r.code === sugg.code && !r.orderedAt)
+      if (realMatch) await LabReflexSuggestions.dismiss(realMatch.id)
+    } catch (err) {
+      console.error('[useLabOrdersStore] real backend dismissReflex failed (local reflex dismiss still applied):', err)
+    }
+  },
   }
 },
   {

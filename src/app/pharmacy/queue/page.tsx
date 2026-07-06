@@ -126,13 +126,19 @@ export default function PharmacyQueue() {
 
   // Final dispense: record collector, decrement stock for lines we actually
   // supply, auto-log controlled drugs, and clear the discharge pharmacy pillar.
-  const confirmCollect = (rx: PharmacyPrescription) => {
+  //
+  // Phase 6 Task 6 — `decrementByName` is now `Promise<StockItem | undefined>`
+  // (bridged into the real backend), so its return value — read synchronously
+  // right here to gate the controlled-substance auto-log — must be awaited.
+  // `forEach` can't do that, so this loop is a `for...of` instead; each
+  // medicine line is still processed in its original prescribed order.
+  const confirmCollect = async (rx: PharmacyPrescription) => {
     const who = collector.trim() || "Self (patient)"
     markCollected(rx.id, who)
     const now = new Date()
-    rx.medicines.forEach(m => {
-      if (m.supply === "advised_outside") return // bought outside — not our stock
-      const item = decrementByName(m.name, qtyOf(rx, m))
+    for (const m of rx.medicines) {
+      if (m.supply === "advised_outside") continue // bought outside — not our stock
+      const item = await decrementByName(m.name, qtyOf(rx, m))
       if (item?.schedule) {
         addNarcoticEntry({
           drug: item.name, date: now.toISOString().slice(0, 10),
@@ -142,7 +148,7 @@ export default function PharmacyQueue() {
           batchNo: "BTH-20240501-M", runningStock: Math.max(0, item.qty - qtyOf(rx, m)),
         })
       }
-    })
+    }
     if (srcOf(rx) === "Discharge") {
       setClearance(rx.patientId, "pharmacy", "cleared")
       notifyAndAudit({

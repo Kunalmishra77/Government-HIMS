@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { useAuditStore } from './useAuditStore'
+import { getSupabaseClient } from '@/lib/supabase/client'
+import { useInpatientStore } from './useInpatientStore'
 
 export type BedStatus = 'Available' | 'Occupied' | 'Cleaning' | 'Reserved' | 'Maintenance'
 
@@ -51,6 +53,7 @@ export type AdmissionRequest = {
   status: 'Pending' | 'Assigned' | 'Admitted' | 'Cancelled'
   assignedBedId?: string
   bundle?: AdmissionBundle
+  realId?: string                          // the real admission_requests.id, once hydrated/created (Phase 7 Task 3)
 }
 
 // ── Multi-branch bed availability ──────────────────────────────────
@@ -96,6 +99,8 @@ interface AdmissionState {
   markBedForCleaning: (bedId: string, staffName?: string) => void
   confirmBedReady: (bedId: string) => void
   cancelRequest: (requestId: string) => void
+  setRealId: (id: string, realId: string) => void
+  hydrateReal: () => Promise<void>
 }
 
 const MOCK_BEDS: Bed[] = [
@@ -115,7 +120,7 @@ const MOCK_BEDS: Bed[] = [
   { id: 'BED-DC-02', bedNumber: 'DC-02', ward: 'Day Care', floor: '1st', status: 'Available', gender: 'Any' },
 ]
 
-export const useAdmissionStore = create<AdmissionState>()(persist((set) => ({
+export const useAdmissionStore = create<AdmissionState>()(persist((set, get) => ({
   beds: MOCK_BEDS,
   admissionRequests: [
     {
@@ -223,6 +228,20 @@ export const useAdmissionStore = create<AdmissionState>()(persist((set) => ({
         detail: `${assigned.req.patientName} (${assigned.req.patientId}) → ${assigned.bed.ward} bed ${assigned.bed.bedNumber}`,
       })
     }
+    void (async () => {
+      if (!assigned.req?.realId) return
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
+      if (!session) return
+      const updatedBed = get().beds.find(b => b.id === bedId)
+      if (!updatedBed) return
+      try {
+        const { AdmissionRequests, Beds } = await import('@/lib/api')
+        await AdmissionRequests.assignToBed(assigned.req!.realId!)
+        await Beds.upsert(updatedBed)
+      } catch (err) {
+        console.error('[useAdmissionStore] real backend assignBed failed (local state still updated):', err)
+      }
+    })()
   },
 
   markAdmitted: (requestId) => {
@@ -243,28 +262,157 @@ export const useAdmissionStore = create<AdmissionState>()(persist((set) => ({
         detail: `Admitted ${snap.patientName} (${snap.patientId}) · ${snap.diagnosis}`,
       })
     }
+    void (async () => {
+      if (!snap?.realId) return
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
+      if (!session) return
+      const bed = snap.assignedBedId ? get().beds.find(b => b.id === snap!.assignedBedId) : undefined
+      try {
+        const { AdmissionRequests, IpdStays } = await import('@/lib/api')
+        await AdmissionRequests.markAdmitted(snap.realId)
+        const stay = await IpdStays.create({
+          admissionRequestId: snap.realId,
+          patientId: snap.patientId,
+          patientName: snap.patientName,
+          age: snap.patientAge,
+          gender: snap.patientGender,
+          bed: bed?.bedNumber ?? snap.bedTypePreference,
+          ward: bed?.ward ?? snap.admissionType,
+          admittingDoctor: snap.requestedBy,
+          diagnosis: snap.diagnosis,
+          admittedAt: new Date().toISOString(),
+          condition: snap.triageLevel === 'Critical' ? 'Critical' : 'Stable',
+          events: [{
+            id: `e-admit-${Date.now()}`, at: new Date().toISOString(), type: 'admission',
+            actor: 'Reception', title: `Admitted — ${snap.diagnosis}`, severity: 'info',
+            patientText: 'You were admitted to the ward.',
+          }],
+        })
+        useInpatientStore.getState().admitFromRequest(stay)
+      } catch (err) {
+        console.error('[useAdmissionStore] real backend markAdmitted failed (local state still updated):', err)
+      }
+    })()
   },
 
-  markBedForCleaning: (bedId, staffName) =>
+  markBedForCleaning: (bedId, staffName) => {
     set((s) => ({
       beds: s.beds.map(b =>
         b.id === bedId ? { ...b, status: 'Cleaning', cleaningAssignedTo: staffName } : b
       ),
-    })),
+    }))
+    void (async () => {
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
+      if (!session) return
+      const updatedBed = get().beds.find(b => b.id === bedId)
+      if (!updatedBed) return
+      try {
+        const { Beds } = await import('@/lib/api')
+        await Beds.upsert(updatedBed)
+      } catch (err) {
+        console.error('[useAdmissionStore] real backend markBedForCleaning failed (local state still updated):', err)
+      }
+    })()
+  },
 
-  confirmBedReady: (bedId) =>
+  confirmBedReady: (bedId) => {
     set((s) => ({
       beds: s.beds.map(b =>
         b.id === bedId ? { ...b, status: 'Available', cleaningAssignedTo: undefined, lastCleaned: new Date().toISOString() } : b
       ),
-    })),
+    }))
+    void (async () => {
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
+      if (!session) return
+      const updatedBed = get().beds.find(b => b.id === bedId)
+      if (!updatedBed) return
+      try {
+        const { Beds } = await import('@/lib/api')
+        await Beds.upsert(updatedBed)
+      } catch (err) {
+        console.error('[useAdmissionStore] real backend confirmBedReady failed (local state still updated):', err)
+      }
+    })()
+  },
 
-  cancelRequest: (requestId) =>
-    set((s) => ({
-      admissionRequests: s.admissionRequests.map(r =>
-        r.id === requestId ? { ...r, status: 'Cancelled' } : r
-      ),
-    })),
+  cancelRequest: (requestId) => {
+    let snap: AdmissionRequest | undefined
+    set((s) => {
+      snap = s.admissionRequests.find(r => r.id === requestId)
+      return {
+        admissionRequests: s.admissionRequests.map(r =>
+          r.id === requestId ? { ...r, status: 'Cancelled' } : r
+        ),
+      }
+    })
+    void (async () => {
+      if (!snap?.realId) return
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
+      if (!session) return
+      try {
+        const { AdmissionRequests } = await import('@/lib/api')
+        await AdmissionRequests.cancel(snap.realId)
+      } catch (err) {
+        console.error('[useAdmissionStore] real backend cancelRequest failed (local state still updated):', err)
+      }
+    })()
+  },
+
+  setRealId: (id, realId) => set(s => ({
+    admissionRequests: s.admissionRequests.map(r => r.id === id ? { ...r, realId } : r),
+  })),
+
+  // Phase 7 Task 3 — pulls in every real admission_requests row not already
+  // represented locally (the doctor dashboard's existing Phase 3 bridge
+  // writes directly to the real table and never touches this local queue).
+  // The real row's id is used as BOTH the local id and realId — no fuzzy
+  // matching needed, since a freshly-hydrated entry has no other local
+  // representation to reconcile against.
+  hydrateReal: async () => {
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    const { AdmissionRequests, Patients } = await import('@/lib/api')
+    const supabase = getSupabaseClient()
+    const rows = await AdmissionRequests.list()
+    const statusMap: Record<string, AdmissionRequest['status']> = {
+      requested: 'Pending', bed_assigned: 'Assigned', admitted: 'Admitted', cancelled: 'Cancelled',
+    }
+    const existingRealIds = new Set(get().admissionRequests.map(r => r.realId).filter(Boolean))
+    const toHydrate = rows.filter(r => !existingRealIds.has(r.id))
+    const fresh: AdmissionRequest[] = []
+    for (const r of toHydrate) {
+      const patient = await Patients.get(r.patientId)
+      const { data: doctorProfile } = await supabase.from('profiles').select('full_name').eq('id', r.doctorId).maybeSingle()
+      fresh.push({
+        id: r.id, realId: r.id,
+        patientId: r.patientId,
+        patientName: patient?.fullName ?? r.patientId,
+        patientAge: patient?.age ?? 0,
+        patientGender: patient?.sex ?? '',
+        diagnosis: r.diagnosis ?? '',
+        admissionType: r.admissionType,
+        bedTypePreference: r.bedTypePreference ?? r.admissionType,
+        reason: r.reason ?? '',
+        requestedBy: doctorProfile?.full_name ?? 'Doctor',
+        department: r.department ?? '',
+        triageLevel: r.triageLevel,
+        payerType: r.payerType ?? '',
+        requestedAt: r.requestedAt,
+        status: statusMap[r.status] ?? 'Pending',
+      })
+    }
+    // Re-check against the CURRENT state at commit time, not the stale
+    // `existingRealIds` snapshot taken before the awaits above — otherwise
+    // two overlapping hydrateReal() calls (e.g. React Strict Mode's
+    // double-invoked mount effect, or two consumer pages mounting at once)
+    // each compute the same `fresh` list before either commits, and both
+    // append it, duplicating the same real row locally.
+    if (fresh.length) set(s => {
+      const already = new Set(s.admissionRequests.map(r => r.realId).filter(Boolean))
+      const toAdd = fresh.filter(f => !already.has(f.realId))
+      return toAdd.length ? { admissionRequests: [...s.admissionRequests, ...toAdd] } : s
+    })
+  },
 }),
   {
     name: 'agentix-admissionstore', version: 1,

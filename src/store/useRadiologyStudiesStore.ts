@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { useNotificationStore, type NotificationChannel } from './useNotificationStore'
+import { getSupabaseClient } from '@/lib/supabase/client'
 import {
   RADIOLOGY_CATALOG,
   TEMPLATE_SECTIONS,
@@ -94,6 +95,8 @@ export type RadiologyStudy = {
   escalation?: Escalation              // critical-result escalation ladder
   distribution?: DistributionEntry[]   // result delivery log
   comparisonPriorId?: string           // linked prior study for comparison
+
+  realId?: string                     // the real radiology_studies.id, once materialized (Phase 5 Task 3)
 }
 
 // Lab/Radiology roster — currentUser for the radiology role is Dr. Sameer Khan (RAD-304)
@@ -109,11 +112,32 @@ let _attSeq = 0
 const nextStudyId = () => `RS-${Date.now()}-${++_studySeq}`
 const nextAttId = () => `ATT-${Date.now()}-${++_attSeq}`
 
-function emptyReportSections(code: string): Record<string, string> {
+export function emptyReportSections(code: string): Record<string, string> {
   const cat = RADIOLOGY_CATALOG[code]
   if (!cat) return {}
   const tmpl = TEMPLATE_SECTIONS[cat.template]
   return Object.fromEntries(tmpl.map(s => [s.key, '']))
+}
+
+// Phase 5 Task 5 — resolves the REAL signed-in actor for a human radiology
+// action (claimAcquisition/claimReading/submitReport/residentSubmit/
+// verifyAndRelease), from a *live* Supabase session + a `profiles.full_name`
+// lookup — never from the local `RadTech` parameter the UI passed in. That
+// local parameter (e.g. RAD_RAVI, id 'RT-101') is a display-friendly demo
+// roster entry, not necessarily a real `profiles.id`; mirroring it into
+// `acquiring_by`/`reading_by`/`verified_by` verbatim would let any caller
+// claim to be any tech/radiologist, poisoning the audit trail (see
+// src/lib/api/radiology-studies.ts's module-level note). Returns undefined
+// (skip the write) if there's no live session or the session has no matching
+// profile row.
+async function resolveRealRadActor(): Promise<RadTech | undefined> {
+  const supabase = getSupabaseClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return undefined
+  const { data: profile } = await supabase
+    .from('profiles').select('full_name').eq('id', session.user.id).maybeSingle()
+  if (!profile) return undefined
+  return { id: session.user.id, name: profile.full_name }
 }
 
 // ─── State ────────────────────────────────────────────────────────────────
@@ -131,33 +155,35 @@ interface State {
     clinicalQuestion?: string
     priority?: Priority
   }) => string
-  schedule: (id: string, scheduledFor: string) => void
-  markArrived: (id: string) => void
-  claimAcquisition: (id: string, tech: RadTech) => void
-  markAcquired: (id: string) => void
-  attachImage: (id: string, file: { filename: string; url?: string; caption?: string; uploadedBy: string }) => void
-  claimReading: (id: string, radiologist: RadTech) => void
-  setAIPrelim: (id: string) => void
-  updateReportSection: (id: string, sectionKey: string, value: string) => void
-  submitReport: (id: string, radiologist: RadTech) => void
-  verifyAndRelease: (id: string, verifier: RadTech) => void
-  cancelStudy: (id: string, reason?: string) => void
-  logCallback: (id: string, calledBy: string, recipient: string) => void
-  ackResult: (id: string) => void
-  setContrastConsented: (id: string, ok: boolean) => void
+  schedule: (id: string, scheduledFor: string) => Promise<void>
+  markArrived: (id: string) => Promise<void>
+  claimAcquisition: (id: string, tech: RadTech) => Promise<void>
+  markAcquired: (id: string) => Promise<void>
+  attachImage: (id: string, file: { filename: string; url?: string; caption?: string; uploadedBy: string }) => Promise<void>
+  claimReading: (id: string, radiologist: RadTech) => Promise<void>
+  setAIPrelim: (id: string) => Promise<void>
+  updateReportSection: (id: string, sectionKey: string, value: string) => Promise<void>
+  submitReport: (id: string, radiologist: RadTech) => Promise<void>
+  verifyAndRelease: (id: string, verifier: RadTech) => Promise<void>
+  cancelStudy: (id: string, reason?: string) => Promise<void>
+  logCallback: (id: string, calledBy: string, recipient: string) => Promise<void>
+  ackResult: (id: string) => Promise<void>
+  setContrastConsented: (id: string, ok: boolean) => Promise<void>
 
   // ── Enterprise RIS extensions (additive; never alter existing transitions) ──
-  setNoShowRisk: (id: string, risk: number) => void
-  setPredictedDuration: (id: string, minutes: number) => void
-  recordDose: (id: string, dose: DoseRecord) => void
-  setAIFindings: (id: string, findings: AiFinding[]) => void
-  flagQuality: (id: string, flags: QualityFlags) => void
-  residentSubmit: (id: string, resident: RadTech) => void      // reading → reported, tagged resident-level
+  setNoShowRisk: (id: string, risk: number) => Promise<void>
+  setPredictedDuration: (id: string, minutes: number) => Promise<void>
+  recordDose: (id: string, dose: DoseRecord) => Promise<void>
+  setAIFindings: (id: string, findings: AiFinding[]) => Promise<void>
+  flagQuality: (id: string, flags: QualityFlags) => Promise<void>
+  residentSubmit: (id: string, resident: RadTech) => Promise<void>      // reading → reported, tagged resident-level
   consultantVerify: (id: string, verifier: RadTech) => void    // reported → released, tagged consultant-level
-  recordDistribution: (id: string, entry: DistributionEntry) => void
-  startEscalation: (id: string) => void
-  ackEscalation: (id: string, by: string) => void
-  linkPrior: (id: string, priorId: string) => void
+  recordDistribution: (id: string, entry: DistributionEntry) => Promise<void>
+  startEscalation: (id: string) => Promise<void>
+  ackEscalation: (id: string, by: string) => Promise<void>
+  linkPrior: (id: string, priorId: string) => Promise<void>
+
+  setRealId: (id: string, realId: string) => void
 }
 
 // ─── Seed ─────────────────────────────────────────────────────────────────
@@ -384,6 +410,23 @@ const SEED_STUDIES: RadiologyStudy[] = [
   }),
 ]
 
+// Phase 5 Task 3 — guarded on `isBrowser` (same pattern as _core.ts's
+// readRaw/writeRaw/removeRaw, and useLabOrdersStore.ts's mergingStorage fix
+// from Phase 4 Task 4). `createJSONStorage(() => localStorage)` always
+// succeeded at store-creation time (the arrow function itself is valid), but
+// its bare `localStorage` reference threw uncaught the first time persist
+// actually called getItem/setItem in any non-browser environment (SSR, this
+// Node-based vitest suite) — any store action that calls `set()` would crash
+// outside a real browser. No cross-tab merge behavior is added here (unlike
+// useLabOrdersStore.ts's mergingStorage) since none exists for this store
+// today; only the crash is fixed.
+const isBrowser = typeof window !== 'undefined'
+const safeStorage = {
+  getItem: (name: string) => isBrowser ? localStorage.getItem(name) : null,
+  setItem: (name: string, value: string) => { if (isBrowser) localStorage.setItem(name, value) },
+  removeItem: (name: string) => { if (isBrowser) localStorage.removeItem(name) },
+}
+
 // ─── Store ────────────────────────────────────────────────────────────────
 
 export const useRadiologyStudiesStore = create<State>()(persist((set, get) => ({
@@ -417,68 +460,200 @@ export const useRadiologyStudiesStore = create<State>()(persist((set, get) => ({
     return id
   },
 
-  schedule: (id, scheduledFor) => set(s => ({
-    studies: s.studies.map(x => x.id === id && x.status === 'ordered'
-      ? { ...x, status: 'scheduled' as StudyStatus, scheduledFor }
-      : x),
-  })),
+  schedule: async (id, scheduledFor) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id || x.status !== 'ordered') return x
+        realId = x.realId
+        return { ...x, status: 'scheduled' as StudyStatus, scheduledFor }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.schedule(realId, scheduledFor)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend schedule failed (local study still updated):', err)
+    }
+  },
 
-  markArrived: (id) => set(s => ({
-    studies: s.studies.map(x => x.id === id && (x.status === 'scheduled' || x.status === 'ordered')
-      ? { ...x, status: 'arrived' as StudyStatus, arrivedAt: new Date().toISOString() }
-      : x),
-  })),
+  markArrived: async (id) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id || (x.status !== 'scheduled' && x.status !== 'ordered')) return x
+        realId = x.realId
+        return { ...x, status: 'arrived' as StudyStatus, arrivedAt: new Date().toISOString() }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.markArrived(realId)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend markArrived failed (local study still updated):', err)
+    }
+  },
 
-  claimAcquisition: (id, tech) => set(s => ({
-    studies: s.studies.map(x => x.id === id && x.status === 'arrived'
-      ? { ...x, status: 'acquiring' as StudyStatus, acquiringBy: tech }
-      : x),
-  })),
+  claimAcquisition: async (id, tech) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id || x.status !== 'arrived') return x
+        realId = x.realId
+        return { ...x, status: 'acquiring' as StudyStatus, acquiringBy: tech }
+      }),
+    }))
+    if (!realId) return
+    const actor = await resolveRealRadActor()
+    if (!actor) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.claimAcquisition(realId, actor)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend claimAcquisition failed (local study still updated):', err)
+    }
+  },
 
-  markAcquired: (id) => set(s => ({
-    studies: s.studies.map(x => x.id === id && x.status === 'acquiring'
-      ? { ...x, status: 'acquired' as StudyStatus, acquiredAt: new Date().toISOString() }
-      : x),
-  })),
+  markAcquired: async (id) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id || x.status !== 'acquiring') return x
+        realId = x.realId
+        return { ...x, status: 'acquired' as StudyStatus, acquiredAt: new Date().toISOString() }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.markAcquired(realId)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend markAcquired failed (local study still updated):', err)
+    }
+  },
 
-  attachImage: (id, file) => set(s => ({
-    studies: s.studies.map(x => x.id === id
-      ? { ...x, attachments: [...x.attachments, { ...file, id: nextAttId(), uploadedAt: new Date().toISOString() }] }
-      : x),
-  })),
+  attachImage: async (id, file) => {
+    let realId: string | undefined
+    let savedAttachment: Attachment | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        const attachment: Attachment = { ...file, id: nextAttId(), uploadedAt: new Date().toISOString() }
+        savedAttachment = attachment
+        return { ...x, attachments: [...x.attachments, attachment] }
+      }),
+    }))
+    if (!realId || !savedAttachment) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.attachImage(realId, savedAttachment)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend attachImage failed (local study still updated):', err)
+    }
+  },
 
-  claimReading: (id, radiologist) => set(s => ({
-    studies: s.studies.map(x => x.id === id && x.status === 'acquired'
-      ? { ...x, status: 'reading' as StudyStatus, readingBy: radiologist }
-      : x),
-  })),
+  claimReading: async (id, radiologist) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id || x.status !== 'acquired') return x
+        realId = x.realId
+        return { ...x, status: 'reading' as StudyStatus, readingBy: radiologist }
+      }),
+    }))
+    if (!realId) return
+    const actor = await resolveRealRadActor()
+    if (!actor) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.claimReading(realId, actor)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend claimReading failed (local study still updated):', err)
+    }
+  },
 
-  setAIPrelim: (id) => set(s => ({
-    studies: s.studies.map(x => {
-      if (x.id !== id) return x
-      // Stub AI: choose a plausible finding by modality + body part
-      const ai = AI_PRELIM_BY_CODE[x.code] ?? `AI prelim: no acute findings on initial review of ${x.name}.`
-      return { ...x, aiPrelim: ai }
-    }),
-  })),
+  setAIPrelim: async (id) => {
+    let realId: string | undefined
+    let computedAi: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        // Stub AI: choose a plausible finding by modality + body part
+        const ai = AI_PRELIM_BY_CODE[x.code] ?? `AI prelim: no acute findings on initial review of ${x.name}.`
+        computedAi = ai
+        return { ...x, aiPrelim: ai }
+      }),
+    }))
+    if (!realId || !computedAi) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.setAIPrelim(realId, computedAi)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend setAIPrelim failed (local study still updated):', err)
+    }
+  },
 
-  updateReportSection: (id, key, value) => set(s => ({
-    studies: s.studies.map(x => x.id === id
-      ? { ...x, reportSections: { ...x.reportSections, [key]: value } }
-      : x),
-  })),
+  updateReportSection: async (id, key, value) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, reportSections: { ...x.reportSections, [key]: value } }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.updateReportSection(realId, key, value)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend updateReportSection failed (local study still updated):', err)
+    }
+  },
 
-  submitReport: (id, radiologist) => set(s => ({
-    studies: s.studies.map(x => x.id === id && x.status === 'reading'
-      ? { ...x, status: 'reported' as StudyStatus, readingBy: radiologist, reportedAt: new Date().toISOString() }
-      : x),
-  })),
+  submitReport: async (id, radiologist) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id || x.status !== 'reading') return x
+        realId = x.realId
+        return { ...x, status: 'reported' as StudyStatus, readingBy: radiologist, reportedAt: new Date().toISOString() }
+      }),
+    }))
+    if (!realId) return
+    const actor = await resolveRealRadActor()
+    if (!actor) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.submitReport(realId, actor)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend submitReport failed (local study still updated):', err)
+    }
+  },
 
-  verifyAndRelease: (id, verifier) => {
+  verifyAndRelease: async (id, verifier) => {
     let released: RadiologyStudy | undefined
+    let realId: string | undefined
     set(s => ({
       studies: s.studies.map(x => {
         if (x.id !== id || x.status !== 'reported') return x
+        realId = x.realId
         const updated: RadiologyStudy = {
           ...x,
           status: 'released',
@@ -505,60 +680,232 @@ export const useRadiologyStudiesStore = create<State>()(persist((set, get) => ({
         channels: ['in_app'],
       })
     }
+
+    // Phase 5 Task 7 — additive bridge into the real backend. `released` is
+    // only set when the local study was actually `reported` (matching the
+    // existing local guard), and `released.verificationLevel` (already
+    // 'consultant' if this call arrived via consultantVerify's delegation,
+    // else undefined) is threaded straight through — see this task's design
+    // note above.
+    if (!realId || !released) return
+    const actor = await resolveRealRadActor()
+    if (!actor) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.verifyAndRelease(realId, actor, released.verificationLevel)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend verifyAndRelease failed (local study still updated):', err)
+    }
   },
 
-  cancelStudy: (id, reason) => set(s => ({
-    studies: s.studies.map(x => x.id === id
-      ? { ...x, status: 'cancelled' as StudyStatus, cancelReason: reason }
-      : x),
-  })),
+  cancelStudy: async (id, reason) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, status: 'cancelled' as StudyStatus, cancelReason: reason }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.cancelStudy(realId, reason)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend cancelStudy failed (local study still updated):', err)
+    }
+  },
 
-  logCallback: (id, calledBy, recipient) => set(s => ({
-    studies: s.studies.map(x => x.id === id
-      ? { ...x, callback: { calledBy, recipient, calledAt: new Date().toISOString() } }
-      : x),
-  })),
+  logCallback: async (id, calledBy, recipient) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, callback: { calledBy, recipient, calledAt: new Date().toISOString() } }
+      }),
+    }))
+    if (!realId) return
+    const actor = await resolveRealRadActor()
+    if (!actor) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.logCallback(realId, actor.name, recipient)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend logCallback failed (local study still updated):', err)
+    }
+  },
 
-  ackResult: (id) => set(s => ({
-    studies: s.studies.map(x => x.id === id ? { ...x, acknowledgedAt: new Date().toISOString() } : x),
-  })),
+  ackResult: async (id) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, acknowledgedAt: new Date().toISOString() }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.ackResult(realId)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend ackResult failed (local study still updated):', err)
+    }
+  },
 
-  setContrastConsented: (id, ok) => set(s => ({
-    studies: s.studies.map(x => x.id === id ? { ...x, contrastConsented: ok } : x),
-  })),
+  setContrastConsented: async (id, ok) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, contrastConsented: ok }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.setContrastConsented(realId, ok)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend setContrastConsented failed (local study still updated):', err)
+    }
+  },
 
   // ── Enterprise RIS extensions ─────────────────────────────────────────────
-  setNoShowRisk: (id, risk) => set(s => ({
-    studies: s.studies.map(x => x.id === id ? { ...x, noShowRisk: risk } : x),
-  })),
+  setNoShowRisk: async (id, risk) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, noShowRisk: risk }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.setNoShowRisk(realId, risk)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend setNoShowRisk failed (local study still updated):', err)
+    }
+  },
 
-  setPredictedDuration: (id, minutes) => set(s => ({
-    studies: s.studies.map(x => x.id === id ? { ...x, predictedDurationMin: minutes } : x),
-  })),
+  setPredictedDuration: async (id, minutes) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, predictedDurationMin: minutes }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.setPredictedDuration(realId, minutes)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend setPredictedDuration failed (local study still updated):', err)
+    }
+  },
 
-  recordDose: (id, dose) => set(s => ({
-    studies: s.studies.map(x => x.id === id
-      ? { ...x, doseRecord: { ...dose, recordedAt: new Date().toISOString() } }
-      : x),
-  })),
+  recordDose: async (id, dose) => {
+    let realId: string | undefined
+    let savedDose: DoseRecord | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        const recorded: DoseRecord = { ...dose, recordedAt: new Date().toISOString() }
+        savedDose = recorded
+        return { ...x, doseRecord: recorded }
+      }),
+    }))
+    if (!realId || !savedDose) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.recordDose(realId, savedDose)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend recordDose failed (local study still updated):', err)
+    }
+  },
 
-  setAIFindings: (id, findings) => set(s => ({
-    studies: s.studies.map(x => x.id === id ? { ...x, aiFindings: findings } : x),
-  })),
+  setAIFindings: async (id, findings) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, aiFindings: findings }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.setAIFindings(realId, findings)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend setAIFindings failed (local study still updated):', err)
+    }
+  },
 
-  flagQuality: (id, flags) => set(s => ({
-    studies: s.studies.map(x => x.id === id
-      ? { ...x, qualityFlags: { ...flags, assessedAt: new Date().toISOString() } }
-      : x),
-  })),
+  flagQuality: async (id, flags) => {
+    let realId: string | undefined
+    let savedFlags: QualityFlags | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        const assessed: QualityFlags = { ...flags, assessedAt: new Date().toISOString() }
+        savedFlags = assessed
+        return { ...x, qualityFlags: assessed }
+      }),
+    }))
+    if (!realId || !savedFlags) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.flagQuality(realId, savedFlags)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend flagQuality failed (local study still updated):', err)
+    }
+  },
 
   // Resident first-read submit: same transition as submitReport (reading→reported)
   // but tags the verification level so the consultant queue knows it's a first read.
-  residentSubmit: (id, resident) => set(s => ({
-    studies: s.studies.map(x => x.id === id && x.status === 'reading'
-      ? { ...x, status: 'reported' as StudyStatus, readingBy: x.readingBy ?? resident, residentReadBy: resident, reportedAt: new Date().toISOString(), verificationLevel: 'resident' as VerificationLevel }
-      : x),
-  })),
+  residentSubmit: async (id, resident) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id || x.status !== 'reading') return x
+        realId = x.realId
+        return { ...x, status: 'reported' as StudyStatus, readingBy: x.readingBy ?? resident, residentReadBy: resident, reportedAt: new Date().toISOString(), verificationLevel: 'resident' as VerificationLevel }
+      }),
+    }))
+    if (!realId) return
+    const actor = await resolveRealRadActor()
+    if (!actor) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.residentSubmit(realId, actor)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend residentSubmit failed (local study still updated):', err)
+    }
+  },
 
   // Consultant sign-off: tags the level, then delegates to the existing
   // verifyAndRelease so the critical-finding notification path is unchanged.
@@ -567,33 +914,98 @@ export const useRadiologyStudiesStore = create<State>()(persist((set, get) => ({
     get().verifyAndRelease(id, verifier)
   },
 
-  recordDistribution: (id, entry) => set(s => ({
-    studies: s.studies.map(x => x.id === id
-      ? { ...x, distribution: [...(x.distribution ?? []), entry] }
-      : x),
-  })),
+  recordDistribution: async (id, entry) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, distribution: [...(x.distribution ?? []), entry] }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.recordDistribution(realId, entry)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend recordDistribution failed (local study still updated):', err)
+    }
+  },
 
-  startEscalation: (id) => set(s => ({
-    studies: s.studies.map(x => {
-      if (x.id !== id) return x
-      const level = (x.escalation?.level ?? 0) + 1
-      return { ...x, escalation: { startedAt: x.escalation?.startedAt ?? new Date().toISOString(), level, acknowledgedAt: undefined } }
-    }),
-  })),
+  startEscalation: async (id) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        const level = (x.escalation?.level ?? 0) + 1
+        return { ...x, escalation: { startedAt: x.escalation?.startedAt ?? new Date().toISOString(), level, acknowledgedAt: undefined } }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.startEscalation(realId)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend startEscalation failed (local study still updated):', err)
+    }
+  },
 
-  ackEscalation: (id, by) => set(s => ({
-    studies: s.studies.map(x => x.id === id && x.escalation
-      ? { ...x, escalation: { ...x.escalation, acknowledgedAt: new Date().toISOString(), acknowledgedBy: by } }
-      : x),
-  })),
+  ackEscalation: async (id, by) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id || !x.escalation) return x
+        realId = x.realId
+        return { ...x, escalation: { ...x.escalation, acknowledgedAt: new Date().toISOString(), acknowledgedBy: by } }
+      }),
+    }))
+    if (!realId) return
+    const actor = await resolveRealRadActor()
+    if (!actor) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.ackEscalation(realId, actor.name)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend ackEscalation failed (local study still updated):', err)
+    }
+  },
 
-  linkPrior: (id, priorId) => set(s => ({
-    studies: s.studies.map(x => x.id === id ? { ...x, comparisonPriorId: priorId } : x),
+  linkPrior: async (id, priorId) => {
+    let realId: string | undefined
+    set(s => ({
+      studies: s.studies.map(x => {
+        if (x.id !== id) return x
+        realId = x.realId
+        return { ...x, comparisonPriorId: priorId }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { RadiologyStudies } = await import('@/lib/api')
+      await RadiologyStudies.linkPrior(realId, priorId)
+    } catch (err) {
+      console.error('[useRadiologyStudiesStore] real backend linkPrior failed (local study still updated):', err)
+    }
+  },
+
+  // Phase 5 Task 3 — stamps the real backend id onto the matching local study,
+  // once dispatchRadOrder's materialization succeeds. One study per order (no
+  // grouping ambiguity like Lab's setRealIds), so a simple id match is correct
+  // with no positional-matching caveat needed.
+  setRealId: (id, realId) => set(s => ({
+    studies: s.studies.map(x => x.id === id ? { ...x, realId } : x),
   })),
 }),
   {
     name: 'agentix-radiologystudiesstore', version: 2,
-    storage: createJSONStorage(() => localStorage),
+    storage: createJSONStorage(() => safeStorage),
     skipHydration: true,
   },
 ))

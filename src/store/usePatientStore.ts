@@ -6,9 +6,33 @@ import { useEmergencyStore } from '@/store/useEmergencyStore'
 import { useAuditStore } from '@/store/useAuditStore'
 import { usePatientProfileStore, emptyProfile } from '@/store/usePatientProfileStore'
 import type { VitalsRecord } from '@/store/useInpatientStore'
+import { getSupabaseClient } from '@/lib/supabase/client'
 
 export type QueueStatus = 'waiting' | 'vitals' | 'consulting' | 'pharmacy' | 'billing' | 'done'
 export type TriageLevel = 'Low' | 'Medium' | 'High' | 'Critical'
+
+// Phase 2 (reception→vitals bridge) — local QueueStatus and the backend
+// visit_status_t enum (supabase/migrations/20260703123305_core_schema.sql)
+// are NOT the same set:
+//   QueueStatus:     waiting | vitals | consulting | pharmacy | billing | done
+//   visit_status_t:  scheduled | waiting | vitals | consulting | pharmacy | billing | completed | cancelled
+// Five values line up 1:1 (waiting/vitals/consulting/pharmacy/billing). The
+// sixth, local 'done', has no direct backend counterpart — the backend
+// instead distinguishes 'completed' (visit ran its course) from 'cancelled'
+// (visit was aborted). A queue reaching "done" via updateStatus always means
+// the visit completed normally (cancellation is its own separate action
+// elsewhere in this store, e.g. sendToEmergency, which does not call
+// updateStatus for this reason), so 'done' maps to 'completed'. There is no
+// local QueueStatus value that should ever map to 'scheduled' or 'cancelled'
+// here, so those are intentionally absent from this table.
+const QUEUE_STATUS_TO_VISIT_STATUS: Record<QueueStatus, 'waiting' | 'vitals' | 'consulting' | 'pharmacy' | 'billing' | 'completed'> = {
+  waiting: 'waiting',
+  vitals: 'vitals',
+  consulting: 'consulting',
+  pharmacy: 'pharmacy',
+  billing: 'billing',
+  done: 'completed',
+}
 
 export type FamilyViewableStatus = {
   wardRoom?: string
@@ -63,6 +87,10 @@ export type Patient = {
   // Comprehensive OPD vitals recorded by the nurse (M2 form) + AI triage flag.
   opdVitals?: VitalsRecord
   triageFlag?: { band: Band; label: string }
+  // Phase 2 — set when this patient/visit was created through the real backend
+  // (src/lib/api). Older/demo-seeded patients won't have this; the nurse-vitals
+  // wiring (Task 9) checks for its presence before attempting a real write.
+  visitId?: string
 }
 
 export type Appointment = {
@@ -96,12 +124,12 @@ interface PatientState {
   appointments: Appointment[]
   selectedPatient: Patient | null
   setSelectedPatient: (patient: Patient | null) => void
-  updateStatus: (id: string, status: QueueStatus) => void
+  updateStatus: (id: string, status: QueueStatus) => Promise<void>
   /** Link a verified hospital identity (UHID/ABHA) onto a queued patient. */
-  linkPatientIdentity: (id: string, patch: { uhid?: string; abhaId?: string; aadhaarVerified?: boolean }) => void
+  linkPatientIdentity: (id: string, patch: { uhid?: string; abhaId?: string; aadhaarVerified?: boolean }) => Promise<void>
   sendToEmergency: (id: string) => void
-  recordOpdVitals: (id: string, rec: Omit<VitalsRecord, 'id' | 'at'>) => void
-  addPatient: (patient: Partial<Patient> & { name: string; phone: string }) => void
+  recordOpdVitals: (id: string, rec: Omit<VitalsRecord, 'id' | 'at'>) => Promise<void>
+  addPatient: (patient: Partial<Patient> & { name: string; phone: string }) => Promise<void>
   bookAppointment: (appt: Omit<Appointment, 'id'>) => void
   updateAppointment: (id: string, patch: Partial<Appointment>) => void
   cancelAppointment: (id: string) => void
@@ -360,7 +388,7 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
 
   setSelectedPatient: (patient) => set({ selectedPatient: patient }),
 
-  updateStatus: (id, status) => {
+  updateStatus: async (id, status) => {
     set((state) => {
       const updated = state.patients.map(p => p.id === id ? { ...p, queueStatus: status } : p)
       return {
@@ -389,12 +417,39 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
         detail: `${p.name} (Token ${p.token}) → ${status}${p.triageLevel ? ` · ${p.triageLevel}` : ''}`,
       })
     }
+
+    // Phase 2 — this is the reception→vitals bridge: mirror the queue
+    // transition into the real backend `visits` row when this patient has
+    // one (Task 8's addPatient stamps `visitId` once the real visit exists)
+    // and a live staff session exists. Without this, the real visit stayed
+    // stuck at 'waiting' forever even though the local queue moved on,
+    // which meant the nurse's real Visits.advance(visitId, 'consulting')
+    // (Task 9) could never match a row scoped to status='vitals' and would
+    // silently no-op. Same guarded pattern as addPatient/recordOpdVitals:
+    // check the *live* Supabase session (not a persisted auth flag — see the
+    // comment on addPatient for why), dynamic-import '@/lib/api', and
+    // try/catch so a backend failure never breaks the local queue-management
+    // UX every portal here depends on.
+    if (!p?.visitId) return
+    const backendStatus = QUEUE_STATUS_TO_VISIT_STATUS[status]
+    if (!backendStatus) {
+      console.warn(`[usePatientStore] updateStatus: local status "${status}" has no visit_status_t mapping — skipping real backend write`)
+      return
+    }
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { Visits } = await import('@/lib/api')
+      await Visits.advance(p.visitId, backendStatus)
+    } catch (err) {
+      console.error('[usePatientStore] real backend status update failed (local queue still updated):', err)
+    }
   },
 
   // Aadhaar verification at the desk (or via the queue quick-action) establishes a
   // hospital identity for an online/appointment patient: stamp the UHID + ABHA on the
   // record and persist the UHID↔ABHA link so future visits resolve the same patient.
-  linkPatientIdentity: (id, patch) => {
+  linkPatientIdentity: async (id, patch) => {
     set((state) => ({
       patients: state.patients.map(p => p.id === id ? { ...p, ...patch } : p),
       queue: state.queue.map(p => p.id === id ? { ...p, ...patch } : p),
@@ -411,6 +466,43 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
         resource: 'patient_identity', resourceId: p.id,
         detail: `${p.name} identity linked · UHID ${patch.uhid ?? '—'}${patch.abhaId ? ` · ABHA ${patch.abhaId}` : ''}`,
       })
+    }
+
+    // Phase 2 (AABHA/UHID bridge) — mirror into the real `patients` row when
+    // this patient already has one (visitId set — proof from addPatient's
+    // bridge that Patients.create/Visits.create already succeeded for them)
+    // and a live staff session exists. This is the mirror-image case to
+    // addPatient's bridge: here, Aadhaar/ABHA verification completes AFTER
+    // the patient already exists in the queue (opd/page.tsx's "Complete
+    // Aadhaar" drawer), rather than before "Add to Queue" is clicked. Same
+    // live-session gate as every other bridge in this store — see the
+    // comment on addPatient's real-backend write for why `auth.getSession()`
+    // (not the persisted `isRealSession` flag) is the correct check.
+    if (!p?.visitId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { Patients } = await import('@/lib/api')
+      if (patch.uhid) {
+        const { writeWithUhidRetry } = await import('@/lib/intake/register')
+        const { uhid: finalUhid } = await writeWithUhidRetry(get().patients, patch.uhid, (candidateUhid) =>
+          Patients.update(p.id, { uhid: candidateUhid, abhaId: patch.abhaId, aadhaarVerified: patch.aadhaarVerified }),
+        )
+        // A collision on the very first candidate is exceedingly rare (see
+        // writeWithUhidRetry's ADR comment) but if the real, persisted UHID
+        // ended up different from what was already shown/audited above,
+        // correct the local record so it doesn't silently drift from Postgres.
+        if (finalUhid && finalUhid !== patch.uhid) {
+          set((state) => ({
+            patients: state.patients.map(x => x.id === id ? { ...x, uhid: finalUhid } : x),
+            queue: state.queue.map(x => x.id === id ? { ...x, uhid: finalUhid } : x),
+          }))
+        }
+      } else {
+        await Patients.update(p.id, { abhaId: patch.abhaId, aadhaarVerified: patch.aadhaarVerified })
+      }
+    } catch (err) {
+      console.error('[usePatientStore] linkPatientIdentity real backend update failed (local record still updated):', err)
     }
   },
 
@@ -437,7 +529,7 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
   // Nurse records the OPD vitals (comprehensive M2 set) → stores the full record,
   // mirrors the legacy summary, attaches an AI triage flag, and advances the
   // patient into the doctor's queue (consulting).
-  recordOpdVitals: (id, rec) => {
+  recordOpdVitals: async (id, rec) => {
     const news = news2FromRecord(rec)
     const full: VitalsRecord = { id: `v-${Date.now()}`, at: new Date().toISOString(), ...rec }
     const legacy = {
@@ -453,15 +545,38 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
         : news.band === 'medium' ? `NEWS ${news.score} — prioritise review`
           : `NEWS ${news.score} — routine`,
     }
+    let updatedPatient: Patient | undefined
     set((state) => {
       const updated = state.patients.map(p =>
         p.id === id ? { ...p, vitals: legacy, opdVitals: full, triageFlag, queueStatus: 'consulting' as QueueStatus } : p
       )
+      updatedPatient = updated.find(p => p.id === id)
       return {
         patients: updated,
         queue: updated.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)),
       }
     })
+
+    // Phase 2 — also mirror this into the real backend when this patient has a
+    // real visit (Task 8) and a real signed-in staff session exists. As in
+    // addPatient, this checks the live Supabase session directly
+    // (auth.getSession()) rather than any persisted Zustand flag — see the
+    // comment on addPatient's real-backend write for why that distinction
+    // matters (a stale "logged in" flag survives in localStorage across app
+    // restarts and must not by itself re-arm real writes).
+    if (updatedPatient?.visitId) {
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
+      if (session) {
+        const actorId = session.user.id
+        try {
+          const { VitalsReadings, Visits } = await import('@/lib/api')
+          await VitalsReadings.create({ visitId: updatedPatient.visitId, recordedBy: actorId, payload: rec })
+          await Visits.advance(updatedPatient.visitId, 'consulting')
+        } catch (err) {
+          console.error('[usePatientStore] real backend vitals write failed (local record still updated):', err)
+        }
+      }
+    }
   },
 
   bookAppointment: (appt) => {
@@ -592,7 +707,7 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
     return get().patients.filter(p => p.phone.replace(/\D/g, '').slice(-10) === norm)
   },
 
-  addPatient: (partial) => {
+  addPatient: async (partial) => {
     let created: Patient | null = null
     set((state) => {
     const nextToken = Math.max(...state.patients.map(p => p.token), 0) + 1
@@ -639,6 +754,51 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
         resource: 'opd_patient', resourceId: p.id,
         detail: `${p.name} (Token ${p.token}) registered · ${p.department} · ${p.triageLevel ?? 'Low'}`,
       })
+
+      // Phase 2 — also create the real backend records, so this patient can
+      // flow through Nurse/Doctor/etc. once those portals are wired. A real
+      // signed-in staff session (Task 6) is required by RLS; if none exists
+      // (e.g. this is still the pre-login demo flow), skip silently and keep
+      // the local-only behavior working exactly as before.
+      //
+      // This checks the live Supabase session directly (not the persisted
+      // `isRealSession` flag on useAuthStore) — that flag survives in
+      // localStorage across app restarts once a real login has ever
+      // happened, so trusting it here would silently re-arm real backend
+      // writes on a stale cached flag even after the underlying session has
+      // expired/signed out. `auth.getSession()` reads the SDK's own
+      // in-memory/local session state, which is kept in sync with actual
+      // token validity, so it's the real source of truth for this decision.
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
+      if (session) {
+        const actorId = session.user.id
+        try {
+          const { Patients, Visits } = await import('@/lib/api')
+          // AABHA/UHID bridge: forward uhid/abhaId/aadhaarVerified when
+          // already set on the local patient (the normal case — Reception's
+          // register/page.tsx flow completes Aadhaar/ABHA before "Add to
+          // Queue"). writeWithUhidRetry only engages its retry-on-collision
+          // path when a uhid is actually present; patients without one
+          // (self-check-in, pending Aadhaar) write straight through once.
+          const { writeWithUhidRetry } = await import('@/lib/intake/register')
+          const { uhid: finalUhid } = await writeWithUhidRetry(get().patients, p.uhid, (candidateUhid) =>
+            Patients.create({
+              id: p.id, hn: p.id, fullName: p.name, phone: p.phone, age: p.age,
+              sex: p.gender, bloodGroup: p.bloodGroup,
+              uhid: candidateUhid, abhaId: p.abhaId, aadhaarVerified: p.aadhaarVerified,
+            } as Parameters<typeof Patients.create>[0]),
+          )
+          const visit = await Visits.create({
+            patientId: p.id, kind: 'OPD', department: p.department, status: 'waiting', token: p.token,
+          } as Parameters<typeof Visits.create>[0])
+          set((state) => ({
+            patients: state.patients.map((x) => x.id === p.id ? { ...x, visitId: visit.id, uhid: finalUhid ?? x.uhid } : x),
+            queue: state.queue.map((x) => x.id === p.id ? { ...x, visitId: visit.id, uhid: finalUhid ?? x.uhid } : x),
+          }))
+        } catch (err) {
+          console.error('[usePatientStore] real backend registration failed (local record still created):', err)
+        }
+      }
     }
   },
 }),

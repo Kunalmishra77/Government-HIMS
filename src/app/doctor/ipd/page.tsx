@@ -89,6 +89,14 @@ export default function DoctorIpd() {
     return () => clearTimeout(t)
   }, [expireStale])
 
+  // Bug C fix — pull in real ipd_stays rows (e.g. a patient admitted today via
+  // the real admission flow) that aren't already in the local seed/mock list.
+  // Without this, a genuinely-newly-admitted real patient is unreachable from
+  // this ward list no matter what — see useInpatientStore.ts's hydrateReal().
+  useEffect(() => {
+    void useInpatientStore.getState().hydrateReal()
+  }, [])
+
   // Early-warning: push high-risk / overdue-round patients into the inbox (once,
   // after store rehydration; deduped by patient + title so reloads don't pile up).
   useEffect(() => {

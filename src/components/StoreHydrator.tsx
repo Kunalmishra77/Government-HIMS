@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { getSupabaseClient } from "@/lib/supabase/client"
 import { useMessagingStore } from "@/store/useMessagingStore"
 import { useNotificationStore } from "@/store/useNotificationStore"
 import { useInpatientStore } from "@/store/useInpatientStore"
@@ -130,6 +131,39 @@ export function StoreHydrator() {
         if (!fam.get('PT-20394')) fam.issue('PT-20394', 'Kiran Patil', { consent: true, issuedBy: 'seed' })
       } catch (err) {
         console.error('[StoreHydrator] mock-API bootstrap failed:', err)
+      }
+    })()
+
+    // ── Real-data bridge for useAdmissionStore / useInpatientStore ───────
+    // Fixes the "gap" where only a handful of pages explicitly called
+    // hydrateReal() on mount: most consumers of admissionRequests/inpatients
+    // never triggered it, so real admitted-patient/admission-request rows
+    // stayed invisible unless the user happened to land on one of those few
+    // wired pages first. StoreHydrator mounts once per app session (root
+    // layout), so calling both hydrateReal()s here closes the gap for every
+    // current and future consumer, regardless of which page loads first.
+    //
+    // Both hydrateReal() implementations already no-op without a live
+    // Supabase session AND are idempotent (they re-check current state at
+    // commit time before appending), so calling them here is safe even
+    // though a handful of pages (admission/dashboard, doctor/ipd,
+    // doctor/ipd/[id], nurse/dashboard, patient/ipd) also still call
+    // hydrateReal() on their own mount for freshness on revisit during a
+    // long-lived session — see those files for why that's intentionally
+    // kept, not removed. The session check below is a performance-only
+    // skip (avoids the dynamic `@/lib/api` import + network round trip) for
+    // the many fully public/unauthenticated pages (e.g. /p/[uhid]) that can
+    // never have a live session — it is NOT a security/authorization gate.
+    void (async () => {
+      try {
+        const { data: { session } } = await getSupabaseClient().auth.getSession()
+        if (!session) return
+        await Promise.all([
+          useAdmissionStore.getState().hydrateReal(),
+          useInpatientStore.getState().hydrateReal(),
+        ])
+      } catch (err) {
+        console.error('[StoreHydrator] real admission/inpatient hydration failed:', err)
       }
     })()
   }, [])

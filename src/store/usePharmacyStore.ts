@@ -3,6 +3,21 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { useAuditStore } from '@/store/useAuditStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { usePharmacyInventoryStore } from '@/store/usePharmacyInventoryStore'
+import { getSupabaseClient } from '@/lib/supabase/client'
+
+// Phase 6 Task 3 — guarded on `isBrowser` (same pattern as _core.ts's
+// readRaw/writeRaw/removeRaw, and useRadiologyStudiesStore.ts's safeStorage
+// fix from Phase 5 Task 3). `createJSONStorage(() => localStorage)` always
+// succeeded at store-creation time, but its bare `localStorage` reference
+// threw uncaught the first time persist actually called getItem/setItem in
+// any non-browser environment (SSR, this Node-based vitest suite) — any store
+// action that calls `set()` would crash outside a real browser.
+const isBrowser = typeof window !== 'undefined'
+const safeStorage = {
+  getItem: (name: string) => isBrowser ? localStorage.getItem(name) : null,
+  setItem: (name: string, value: string) => { if (isBrowser) localStorage.setItem(name, value) },
+  removeItem: (name: string) => { if (isBrowser) localStorage.removeItem(name) },
+}
 
 // Where a medicine order originated. Every order in the single queue is tagged
 // with one of these so the pharmacy can manage OPD/IPD/OT/ICU/home/discharge in
@@ -92,6 +107,7 @@ export interface PharmacyPrescription {
   dispensedBy?: Pharmacist    // set at collection = whoever dispensed
   collectedBy?: string        // who physically collected (patient/relative/nurse)
   collectedAt?: string        // ISO timestamp of collection
+  realId?: string             // the real pharmacy_dispenses.id, once materialized (Phase 6 Task 3)
 }
 
 export interface PharmacyMedicine {
@@ -108,23 +124,46 @@ export interface PharmacyMedicine {
 interface PharmacyStore {
   prescriptions: PharmacyPrescription[]
   addPrescription: (p: PharmacyPrescription) => void
-  updateStatus: (id: string, status: PrepStatus) => void
-  markCollected: (id: string, collectedBy?: string) => void
-  claim: (id: string, pharmacist: Pharmacist) => void
-  release: (id: string) => void
-  setMedicineSupply: (id: string, medicineName: string, supply: MedSupply) => void
-  substituteMedicine: (id: string, originalName: string, newName: string, substitutedBy: string) => void
+  updateStatus: (id: string, status: PrepStatus) => Promise<void>
+  markCollected: (id: string, collectedBy?: string) => Promise<void>
+  claim: (id: string, pharmacist: Pharmacist) => Promise<void>
+  release: (id: string) => Promise<void>
+  setMedicineSupply: (id: string, medicineName: string, supply: MedSupply) => Promise<void>
+  substituteMedicine: (id: string, originalName: string, newName: string, substitutedBy: string) => Promise<void>
   togglePatientModification: (prescriptionId: string, medicineName: string) => void
   applyModification: (prescriptionId: string) => void
-  requestProcurement: (id: string) => void
-  adjustQuantity: (prescriptionId: string, medicineName: string, newQty: number, reason: ModificationReason, adjustedBy: string) => void
-  approveSupervisorOverride: (prescriptionId: string, medicineName: string, supervisorId: string) => void
+  requestProcurement: (id: string) => Promise<void>
+  adjustQuantity: (prescriptionId: string, medicineName: string, newQty: number, reason: ModificationReason, adjustedBy: string) => Promise<void>
+  approveSupervisorOverride: (prescriptionId: string, medicineName: string, supervisorId: string) => Promise<void>
+  setRealId: (id: string, realId: string) => void
 }
 
 const RITU: Pharmacist = { id: 'PH-301', name: 'Ritu Sharma' }
 const ANIL: Pharmacist = { id: 'PH-302', name: 'Anil Kumar' }
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600_000).toISOString()
 const minsAgo = (m: number) => new Date(Date.now() - m * 60000).toISOString()
+
+// Phase 6 Task 4 — resolves the REAL signed-in actor for a human pharmacy
+// action (claim/adjustQuantity/approveSupervisorOverride), from a *live*
+// Supabase session + a `profiles.full_name` lookup — never from the local
+// `Pharmacist` parameter the UI passed in. That local parameter (RITU, ANIL,
+// or `me` built from useAuthStore.currentUser) is a display-friendly demo
+// roster entry / persisted-and-spoofable local flag, not necessarily a real
+// `profiles.id`; mirroring it into `assigned_to`/`quantity_modifications[].
+// supervisorApprovedBy` verbatim would let any caller claim to be any
+// pharmacist, poisoning the audit trail (see
+// src/lib/api/pharmacy-dispenses.ts's module-level note). Returns undefined
+// (skip the write) if there's no live session or the session has no matching
+// profile row.
+async function resolveRealPharmacyActor(): Promise<Pharmacist | undefined> {
+  const supabase = getSupabaseClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return undefined
+  const { data: profile } = await supabase
+    .from('profiles').select('full_name').eq('id', session.user.id).maybeSingle()
+  if (!profile) return undefined
+  return { id: session.user.id, name: profile.full_name }
+}
 
 const DEMO_PRESCRIPTIONS: PharmacyPrescription[] = [
   {
@@ -253,11 +292,14 @@ export const usePharmacyStore = create<PharmacyStore>()(persist((set, get) => ({
     set(state => ({ prescriptions: [stamped, ...state.prescriptions] }))
   },
 
-  updateStatus: (id, status) => {
+  updateStatus: async (id, status) => {
+    let realId: string | undefined
     set(state => ({
-      prescriptions: state.prescriptions.map(p =>
-        p.id === id ? { ...p, status, estimatedReadyIn: status === 'ready' ? 0 : p.estimatedReadyIn } : p
-      ),
+      prescriptions: state.prescriptions.map(p => {
+        if (p.id !== id) return p
+        realId = p.realId
+        return { ...p, status, estimatedReadyIn: status === 'ready' ? 0 : p.estimatedReadyIn }
+      }),
     }))
     // Closing the loop: when meds are ready, alert the right party — the ward
     // (nurse/MAR) for inpatient scripts, the patient for OPD scripts.
@@ -278,68 +320,133 @@ export const usePharmacyStore = create<PharmacyStore>()(persist((set, get) => ({
         })
       }
     }
+
+    // Phase 6 Task 4 — additive bridge into the real backend.
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { PharmacyDispenses, Prescriptions } = await import('@/lib/api')
+      const patched = await PharmacyDispenses.updateStatus(realId, status)
+      if (patched?.status === 'preparing') await Prescriptions.setDispenseStatus(patched.prescriptionId, 'dispensing')
+      if (patched?.status === 'collected') await Prescriptions.setDispenseStatus(patched.prescriptionId, 'dispensed')
+    } catch (err) {
+      console.error('[usePharmacyStore] real backend updateStatus failed (local prescription still updated):', err)
+    }
   },
 
   // Final dispense: records who collected it + who dispensed (the assignee).
-  markCollected: (id, collectedBy) =>
+  markCollected: async (id, collectedBy) => {
+    let realId: string | undefined
+    let priorDispensedBy: Pharmacist | undefined
     set(state => ({
-      prescriptions: state.prescriptions.map(p =>
-        p.id === id
-          ? {
-              ...p,
-              status: 'collected' as PrepStatus,
-              collectedBy: collectedBy ?? p.collectedBy ?? 'Self (patient)',
-              collectedAt: new Date().toISOString(),
-              dispensedBy: p.dispensedBy ?? p.assignedTo,
-            }
-          : p
-      ),
-    })),
+      prescriptions: state.prescriptions.map(p => {
+        if (p.id !== id) return p
+        realId = p.realId
+        priorDispensedBy = p.dispensedBy ?? p.assignedTo
+        return {
+          ...p,
+          status: 'collected' as PrepStatus,
+          collectedBy: collectedBy ?? p.collectedBy ?? 'Self (patient)',
+          collectedAt: new Date().toISOString(),
+          dispensedBy: priorDispensedBy,
+        }
+      }),
+    }))
+
+    if (!realId) return
+    const actor = await resolveRealPharmacyActor()
+    if (!actor) return
+    try {
+      const { PharmacyDispenses, Prescriptions } = await import('@/lib/api')
+      const patched = await PharmacyDispenses.markCollected(realId, collectedBy, actor)
+      if (patched) await Prescriptions.setDispenseStatus(patched.prescriptionId, 'dispensed')
+    } catch (err) {
+      console.error('[usePharmacyStore] real backend markCollected failed (local prescription still updated):', err)
+    }
+  },
 
   // Accept an order from the global queue into a pharmacist's personal counter.
-  claim: (id, pharmacist) =>
+  claim: async (id, pharmacist) => {
+    let realId: string | undefined
     set(state => ({
-      prescriptions: state.prescriptions.map(p =>
-        p.id === id
-          ? { ...p, assignedTo: pharmacist, status: p.status === 'queued' ? ('preparing' as PrepStatus) : p.status }
-          : p
-      ),
-    })),
+      prescriptions: state.prescriptions.map(p => {
+        if (p.id !== id) return p
+        realId = p.realId
+        return { ...p, assignedTo: pharmacist, status: p.status === 'queued' ? ('preparing' as PrepStatus) : p.status }
+      }),
+    }))
+    if (!realId) return
+    const actor = await resolveRealPharmacyActor()
+    if (!actor) return
+    try {
+      const { PharmacyDispenses, Prescriptions } = await import('@/lib/api')
+      const patched = await PharmacyDispenses.claim(realId, actor)
+      if (patched?.status === 'preparing') {
+        await Prescriptions.setDispenseStatus(patched.prescriptionId, 'dispensing')
+      }
+    } catch (err) {
+      console.error('[usePharmacyStore] real backend claim failed (local prescription still updated):', err)
+    }
+  },
 
-  release: (id) =>
+  release: async (id) => {
+    let realId: string | undefined
     set(state => ({
-      prescriptions: state.prescriptions.map(p =>
-        p.id === id
-          ? { ...p, assignedTo: undefined, status: p.status === 'preparing' ? ('queued' as PrepStatus) : p.status }
-          : p
-      ),
-    })),
+      prescriptions: state.prescriptions.map(p => {
+        if (p.id !== id) return p
+        realId = p.realId
+        return { ...p, assignedTo: undefined, status: p.status === 'preparing' ? ('queued' as PrepStatus) : p.status }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { PharmacyDispenses } = await import('@/lib/api')
+      await PharmacyDispenses.release(realId)
+    } catch (err) {
+      console.error('[usePharmacyStore] real backend release failed (local prescription still updated):', err)
+    }
+  },
 
-  setMedicineSupply: (id, medicineName, supply) =>
+  setMedicineSupply: async (id, medicineName, supply) => {
+    let realId: string | undefined
     set(state => ({
-      prescriptions: state.prescriptions.map(p =>
-        p.id === id
-          ? { ...p, medicines: p.medicines.map(m => m.name === medicineName ? { ...m, supply } : m) }
-          : p
-      ),
-    })),
+      prescriptions: state.prescriptions.map(p => {
+        if (p.id !== id) return p
+        realId = p.realId
+        return { ...p, medicines: p.medicines.map(m => m.name === medicineName ? { ...m, supply } : m) }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { PharmacyDispenses } = await import('@/lib/api')
+      await PharmacyDispenses.setMedicineSupply(realId, medicineName, supply)
+    } catch (err) {
+      console.error('[usePharmacyStore] real backend setMedicineSupply failed (local prescription still updated):', err)
+    }
+  },
 
   // Swap an out-of-stock line for a therapeutically equivalent one that's on
   // hand. Audited so the doctor/patient can see what was substituted and why.
-  substituteMedicine: (id, originalName, newName, substitutedBy) => {
+  substituteMedicine: async (id, originalName, newName, substitutedBy) => {
+    let realId: string | undefined
     set(state => ({
-      prescriptions: state.prescriptions.map(p =>
-        p.id === id
-          ? {
-              ...p,
-              medicines: p.medicines.map(m =>
-                m.name === originalName
-                  ? { ...m, name: newName, inStock: true, supply: 'pharmacy' as MedSupply, substitutedFrom: m.substitutedFrom ?? originalName }
-                  : m
-              ),
-            }
-          : p
-      ),
+      prescriptions: state.prescriptions.map(p => {
+        if (p.id !== id) return p
+        realId = p.realId
+        return {
+          ...p,
+          medicines: p.medicines.map(m =>
+            m.name === originalName
+              ? { ...m, name: newName, inStock: true, supply: 'pharmacy' as MedSupply, substitutedFrom: m.substitutedFrom ?? originalName }
+              : m
+          ),
+        }
+      }),
     }))
     const rx = get().prescriptions.find(p => p.id === id)
     if (rx) {
@@ -353,6 +460,16 @@ export const usePharmacyStore = create<PharmacyStore>()(persist((set, get) => ({
         before: { drug: originalName },
         after: { drug: newName },
       })
+    }
+
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { PharmacyDispenses } = await import('@/lib/api')
+      await PharmacyDispenses.substituteMedicine(realId, originalName, newName)
+    } catch (err) {
+      console.error('[usePharmacyStore] real backend substituteMedicine failed (local prescription still updated):', err)
     }
   },
 
@@ -377,21 +494,37 @@ export const usePharmacyStore = create<PharmacyStore>()(persist((set, get) => ({
       ),
     })),
 
-  requestProcurement: (id) =>
+  requestProcurement: async (id) => {
+    let realId: string | undefined
     set(state => ({
-      prescriptions: state.prescriptions.map(p =>
-        p.id === id
-          ? { ...p, procurementStatus: 'procurement_requested' as ProcurementStatus, requestedByWardAt: new Date().toISOString() }
-          : p
-      ),
-    })),
+      prescriptions: state.prescriptions.map(p => {
+        if (p.id !== id) return p
+        realId = p.realId
+        return { ...p, procurementStatus: 'procurement_requested' as ProcurementStatus, requestedByWardAt: new Date().toISOString() }
+      }),
+    }))
+    if (!realId) return
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
+    if (!session) return
+    try {
+      const { PharmacyDispenses } = await import('@/lib/api')
+      await PharmacyDispenses.requestProcurement(realId)
+    } catch (err) {
+      console.error('[usePharmacyStore] real backend requestProcurement failed (local prescription still updated):', err)
+    }
+  },
 
-  adjustQuantity: (prescriptionId, medicineName, newQty, reason, adjustedBy) =>
+  adjustQuantity: async (prescriptionId, medicineName, newQty, reason, adjustedBy) => {
+    let realId: string | undefined
+    let savedMod: QuantityModification | undefined
+    let savedAdjustedBill: number | undefined
+    let savedOriginalBill: number | undefined
     set(state => ({
       prescriptions: state.prescriptions.map(p => {
         if (p.id !== prescriptionId) return p
         const medicine = p.medicines.find(m => m.name === medicineName)
         if (!medicine) return p
+        realId = p.realId
         const originalQty = medicine.quantity
         const safeQty = Math.max(0, Math.min(originalQty, newQty))
         const requiresSupervisorOverride = originalQty > 0 && (originalQty - safeQty) / originalQty > 0.5
@@ -413,6 +546,9 @@ export const usePharmacyStore = create<PharmacyStore>()(persist((set, get) => ({
           return sum + qty * price
         }, 0)
         const originalBillTotal = p.originalBillTotal ?? p.medicines.reduce((sum, m) => sum + m.quantity * (UNIT_PRICES[m.name] ?? 0), 0)
+        savedMod = newMod
+        savedAdjustedBill = adjustedBillTotal
+        savedOriginalBill = originalBillTotal
 
         useAuditStore.getState().log({
           userId: adjustedBy,
@@ -427,12 +563,33 @@ export const usePharmacyStore = create<PharmacyStore>()(persist((set, get) => ({
 
         return { ...p, quantityModifications: allMods, adjustedBillTotal, originalBillTotal }
       }),
-    })),
+    }))
 
-  approveSupervisorOverride: (prescriptionId, medicineName, supervisorId) =>
+    if (!realId || !savedMod) return
+    const actor = await resolveRealPharmacyActor()
+    if (!actor) return
+    try {
+      const { PharmacyDispenses } = await import('@/lib/api')
+      // Local state keeps the UI-supplied `adjustedBy` (untouched above, same
+      // local/real divergence as claim()'s assignedTo) — only the single
+      // entry sent to the real backend gets its actor swapped for the real
+      // signed-in pharmacist. PharmacyDispenses.adjustQuantity reads the
+      // row's current quantityModifications itself and patches only this
+      // medicine's entry, so any OTHER already-adjusted medicine's real
+      // adjustedBy on the same prescription is never touched by this call.
+      const realMod: QuantityModification = { ...savedMod, adjustedBy: actor.name }
+      await PharmacyDispenses.adjustQuantity(realId, realMod, savedAdjustedBill, savedOriginalBill)
+    } catch (err) {
+      console.error('[usePharmacyStore] real backend adjustQuantity failed (local prescription still updated):', err)
+    }
+  },
+
+  approveSupervisorOverride: async (prescriptionId, medicineName, supervisorId) => {
+    let realId: string | undefined
     set(state => ({
       prescriptions: state.prescriptions.map(p => {
         if (p.id !== prescriptionId) return p
+        realId = p.realId
         const mods = (p.quantityModifications ?? []).map(m =>
           m.medicineName === medicineName ? { ...m, supervisorApprovedBy: supervisorId, requiresSupervisorOverride: false } : m
         )
@@ -446,11 +603,30 @@ export const usePharmacyStore = create<PharmacyStore>()(persist((set, get) => ({
         })
         return { ...p, quantityModifications: mods }
       }),
-    })),
+    }))
+
+    if (!realId) return
+    const actor = await resolveRealPharmacyActor()
+    if (!actor) return
+    try {
+      const { PharmacyDispenses } = await import('@/lib/api')
+      await PharmacyDispenses.approveSupervisorOverride(realId, medicineName, actor.name)
+    } catch (err) {
+      console.error('[usePharmacyStore] real backend approveSupervisorOverride failed (local prescription still updated):', err)
+    }
+  },
+
+  // Phase 6 Task 3 — stamps the real backend id onto the matching local
+  // prescription, once sendRx's materialization succeeds. One dispense row
+  // per prescription (no grouping ambiguity), so a simple id match is
+  // correct with no positional-matching caveat needed.
+  setRealId: (id, realId) => set(state => ({
+    prescriptions: state.prescriptions.map(p => p.id === id ? { ...p, realId } : p),
+  })),
 }),
   {
     name: 'agentix-pharmacystore', version: 1,
-    storage: createJSONStorage(() => localStorage),
+    storage: createJSONStorage(() => safeStorage),
     skipHydration: true,
   },
 ))

@@ -26,6 +26,14 @@ export default function InpatientChart() {
   // The chart renders client-store data with absolute timestamps; defer to after
   // mount so the server pass and first client render match (no hydration drift).
   useEffect(() => { setMounted(true) }, [])
+
+  // Bug C fix — a doctor can land directly on a specific patient's chart (e.g.
+  // via a notification link) without visiting the ward list first; hydrate
+  // real ipd_stays rows here too so a direct deep-link still finds a
+  // genuinely-newly-admitted real patient.
+  useEffect(() => {
+    void useInpatientStore.getState().hydrateReal()
+  }, [])
   if (!mounted) return (
     <div className="h-full flex items-center justify-center">
       <div className="h-8 w-8 rounded-full border-4 border-[rgba(8,145,178,0.20)] border-t-blue-600 animate-spin" role="status" aria-label="Loading chart" />

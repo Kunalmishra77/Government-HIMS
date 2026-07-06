@@ -12,7 +12,7 @@ export const VisitSchema = z.object({
   id: z.string(),                        // VIS-...
   patientId: z.string(),
   kind: VisitKind,
-  doctorId: z.string().optional(),
+  doctorId: z.string().uuid().optional(),
   doctorName: z.string().optional(),
   department: z.string(),
   status: VisitStatus,
@@ -45,7 +45,12 @@ export const Visits = {
       createdAt: isoNow(),
       updatedAt: isoNow(),
     }
-    const saved = await visits.put(row)
+    // Insert-only — a new visit is always a brand-new row, never an
+    // overwrite of an existing one. See _core.ts's `insert()` doc comment:
+    // `put()`'s upsert would require UPDATE privilege on every column at
+    // plan time, which the narrowed nurse column grant
+    // (20260704125515_nurse_visits_column_grant.sql) no longer grants.
+    const saved = await visits.insert(row)
     audit.emit({
       action: 'reception_registered',
       resource: 'visit',

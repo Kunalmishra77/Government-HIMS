@@ -38,6 +38,7 @@ export function VoiceAssistantFlow({ form, update, onTypeInstead }: { form: Inta
   const [phase, setPhase] = useState<Phase>('thinking')
   const [stage, setStage] = useState<Stage>('chat')
   const [result, setResult] = useState<RegisterResult | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const [sttError, setSttError] = useState<string | null>(null)
   const [showLog, setShowLog] = useState(false)
   const [aiDown, setAiDown] = useState(false)
@@ -121,9 +122,15 @@ export function VoiceAssistantFlow({ form, update, onTypeInstead }: { form: Inta
     present(promptFor(slot, formRef.current, langRef.current), false)
   }, [present])
 
-  const confirmAndRegister = useCallback(() => {
+  const confirmAndRegister = useCallback(async () => {
     cancelSpeech()
-    setResult(registerPatientFromIntake(formRef.current, { patients, addPatient, generateFamilyToken }))
+    setSubmitting(true)
+    try {
+      const res = await registerPatientFromIntake(formRef.current, { patients, addPatient, generateFamilyToken })
+      setResult(res)
+    } finally {
+      setSubmitting(false)
+    }
   }, [patients, addPatient, generateFamilyToken])
 
   const exitVoice = useCallback(() => { recRef.current?.stop(); cancelSpeech(); onTypeInstead() }, [onTypeInstead])
@@ -150,7 +157,7 @@ export function VoiceAssistantFlow({ form, update, onTypeInstead }: { form: Inta
   }
 
   if (stage === 'review') {
-    return <VoiceReview form={form} lang={lang} onUpdate={update} onEdit={editField} onConfirm={confirmAndRegister} onBack={() => editField('symptoms')} />
+    return <VoiceReview form={form} lang={lang} submitting={submitting} onUpdate={update} onEdit={editField} onConfirm={() => { void confirmAndRegister() }} onBack={() => editField('symptoms')} />
   }
 
   const stopAndAnswer = () => { recRef.current?.stop(); if (phase !== 'listening') beginListening() }
@@ -322,9 +329,10 @@ function TranscriptSheet({ messages, interim, onClose }: { messages: Msg[]; inte
 // submitted until the patient taps Confirm; each field can be re-asked by voice.
 // (The spoken AI summary plays just before this screen appears, so the review
 // screen itself stays silent — no duplicate narration.)
-function VoiceReview({ form, lang, onUpdate, onEdit, onConfirm, onBack }: {
+function VoiceReview({ form, lang, submitting, onUpdate, onEdit, onConfirm, onBack }: {
   form: IntakeForm
   lang: 'en' | 'hi'
+  submitting: boolean
   onUpdate: (patch: Partial<IntakeForm>) => void
   onEdit: (slot: SlotId) => void
   onConfirm: () => void
@@ -335,8 +343,8 @@ function VoiceReview({ form, lang, onUpdate, onEdit, onConfirm, onBack }: {
   const durLabel = durVal ? DURATION_OPTIONS.find(o => o.value === durVal)?.label : undefined
   const days = upcomingDays(5)
   const t = lang === 'hi'
-    ? { eyebrow: 'जानकारी जाँचें', title: 'अपनी जानकारी की पुष्टि करें', sub: 'पुष्टि करने तक कुछ भी सबमिट नहीं होगा।', patient: 'मरीज़', mobile: 'मोबाइल नंबर', complaint: 'मुख्य शिकायत', duration: 'लक्षण की अवधि', urgency: 'संभावित गंभीरता', appt: 'अपॉइंटमेंट', date: 'तारीख़ चुनें', time: 'समय चुनें', share: 'यह सारांश तेज़ और बेहतर देखभाल के लिए परामर्श से पहले आपके डॉक्टर के साथ साझा किया जाएगा।', confirm: 'पुष्टि करें और टोकन बनाएं', back: 'वापस जाएं', none: 'दर्ज नहीं' }
-    : { eyebrow: 'Review Information', title: 'Please confirm your details', sub: 'Nothing is submitted until you confirm.', patient: 'Patient', mobile: 'Mobile Number', complaint: 'Chief Complaint', duration: 'Symptom Duration', urgency: 'Possible Severity / Urgency', appt: 'Appointment', date: 'Choose date', time: 'Choose time', share: 'This brief will be shared with your doctor before the consultation for faster, more accurate care.', confirm: 'Confirm & Generate Token', back: 'Go back', none: 'Not specified' }
+    ? { eyebrow: 'जानकारी जाँचें', title: 'अपनी जानकारी की पुष्टि करें', sub: 'पुष्टि करने तक कुछ भी सबमिट नहीं होगा।', patient: 'मरीज़', mobile: 'मोबाइल नंबर', complaint: 'मुख्य शिकायत', duration: 'लक्षण की अवधि', urgency: 'संभावित गंभीरता', appt: 'अपॉइंटमेंट', date: 'तारीख़ चुनें', time: 'समय चुनें', share: 'यह सारांश तेज़ और बेहतर देखभाल के लिए परामर्श से पहले आपके डॉक्टर के साथ साझा किया जाएगा।', confirm: 'पुष्टि करें और टोकन बनाएं', registering: 'दर्ज हो रहा है…', back: 'वापस जाएं', none: 'दर्ज नहीं' }
+    : { eyebrow: 'Review Information', title: 'Please confirm your details', sub: 'Nothing is submitted until you confirm.', patient: 'Patient', mobile: 'Mobile Number', complaint: 'Chief Complaint', duration: 'Symptom Duration', urgency: 'Possible Severity / Urgency', appt: 'Appointment', date: 'Choose date', time: 'Choose time', share: 'This brief will be shared with your doctor before the consultation for faster, more accurate care.', confirm: 'Confirm & Generate Token', registering: 'Registering…', back: 'Go back', none: 'Not specified' }
 
   return (
     <div className="flex flex-col flex-1 h-full w-full">
@@ -413,10 +421,16 @@ function VoiceReview({ form, lang, onUpdate, onEdit, onConfirm, onBack }: {
         </div>
 
         <div className="px-6 pb-6 pt-3 flex flex-col gap-2.5 border-t border-slate-100 bg-gradient-to-t from-[color:var(--color-background)] via-[color:var(--color-background)] shrink-0 z-20">
-          <button onClick={onConfirm} className="w-full h-14 rounded-2xl font-semibold text-[17px] text-white bg-[#0891B2] hover:bg-[#0E7490] transition-all shadow-[0_8px_20px_rgba(8,145,178,0.28)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0891B2]">
-            {t.confirm}
+          <button
+            onClick={onConfirm}
+            disabled={submitting}
+            className={cn("w-full h-14 rounded-2xl font-semibold text-[17px] text-white transition-all active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0891B2] flex items-center justify-center gap-2",
+              submitting ? "bg-[#0891B2]/70 cursor-not-allowed" : "bg-[#0891B2] hover:bg-[#0E7490] shadow-[0_8px_20px_rgba(8,145,178,0.28)]")}
+          >
+            {submitting && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
+            {submitting ? t.registering : t.confirm}
           </button>
-          <button onClick={onBack} className="w-full h-14 rounded-2xl font-semibold text-[15px] text-slate-600 bg-slate-100/50 hover:bg-slate-100 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2]">
+          <button onClick={onBack} disabled={submitting} className="w-full h-14 rounded-2xl font-semibold text-[15px] text-slate-600 bg-slate-100/50 hover:bg-slate-100 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2] disabled:opacity-50 disabled:cursor-not-allowed">
             {t.back}
           </button>
         </div>
