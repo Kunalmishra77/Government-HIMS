@@ -7,3 +7,4 @@ build/
 .DS_Store
 npm-debug.log*
 .vercel
+_drive.mjs
