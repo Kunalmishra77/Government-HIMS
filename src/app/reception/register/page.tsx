@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
   ScanLine, Upload, PencilLine, Fingerprint, ShieldCheck, IdCard, CheckCircle2,
@@ -21,6 +21,7 @@ import { usePatientProfileStore, emptyProfile } from "@/store/usePatientProfileS
 import { useJourneyStore } from "@/store/useJourneyStore"
 import { useAuditStore } from "@/store/useAuditStore"
 import { doctorsForDept, firstDoctorOf, suggestTriage } from "@/lib/opd"
+import { listActiveDoctors, type RealDoctor } from "@/lib/opd-doctors"
 import { generateUhid, findUhidByAbha } from "@/lib/intake/register"
 import { printableHtml } from "@/lib/fileIO"
 import {
@@ -102,6 +103,32 @@ export default function RegisterPatientPage() {
 
   const suggestion = suggestTriage(form.symptoms)
   const set = (patch: Partial<RegForm>) => setForm((f) => ({ ...f, ...patch }))
+
+  // Real on-duty doctors from profiles (RLS-gated). Falls back to the static
+  // OPD_ROOMS roster when empty, so there is never a regression if the fetch is
+  // blocked or returns nothing.
+  const [realDoctors, setRealDoctors] = useState<RealDoctor[]>([])
+  useEffect(() => {
+    void listActiveDoctors().then((docs) => {
+      setRealDoctors(docs)
+      // If still on the mock default for the current department, prefer a real
+      // on-duty doctor so the assignment lands in that doctor's actual queue.
+      setForm((f) => {
+        const real = docs.find((d) => d.department === f.department)
+        return real && f.doctor === firstDoctorOf(f.department) ? { ...f, doctor: real.name } : f
+      })
+    })
+  }, [])
+  // Doctor options for a department: real on-duty doctors first, then the static
+  // OPD rooms, de-duped by name.
+  const doctorOptionsFor = (dept: string): { doctor: string; room: string }[] => {
+    const real = realDoctors
+      .filter((d) => d.department === dept)
+      .map((d) => ({ doctor: d.name, room: "On-duty" }))
+    const seen = new Set(real.map((r) => r.doctor))
+    return [...real, ...doctorsForDept(dept).filter((m) => !seen.has(m.doctor))]
+  }
+  const firstDoctorFor = (dept: string) => doctorOptionsFor(dept)[0]?.doctor ?? firstDoctorOf(dept)
 
   // ── Identity capture ──────────────────────────────────────────────────────
   function beginOtp(rawAadhaar: string) {
@@ -569,7 +596,7 @@ export default function RegisterPatientPage() {
               <div className="flex items-center gap-1.5 mb-1"><Sparkles className="h-3.5 w-3.5 text-[var(--color-accent)]" /><span className="text-[12px] font-bold text-[var(--color-primary-dark)]">{t('register.aiTriageSuggestion')}</span></div>
               <p className="text-[12px] text-[var(--color-primary-dark)]">{t('register.aiTriageText', { triage: t(`register.${TRIAGE_KEY[suggestion.triage]}`), department: DEPT_KEY[suggestion.department] ? t(`register.${DEPT_KEY[suggestion.department]}`) : suggestion.department, reason: suggestion.reason })}</p>
               {(form.triage !== suggestion.triage || form.department !== suggestion.department) && (
-                <button onClick={() => set({ triage: suggestion.triage, department: suggestion.department, doctor: firstDoctorOf(suggestion.department) })}
+                <button onClick={() => set({ triage: suggestion.triage, department: suggestion.department, doctor: firstDoctorFor(suggestion.department) })}
                   className="mt-2 text-[12px] font-bold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] rounded-lg px-3 py-1.5 transition">{t('register.applySuggestion')}</button>
               )}
             </div>
@@ -578,15 +605,15 @@ export default function RegisterPatientPage() {
           {/* Visit details */}
           <FieldGrid>
             <Field label={t('register.labelDepartment')}>
-              <Select value={form.department} onChange={(e) => set({ department: e.target.value, doctor: firstDoctorOf(e.target.value) })} className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
+              <Select value={form.department} onChange={(e) => set({ department: e.target.value, doctor: firstDoctorFor(e.target.value) })} className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
                 {DEPARTMENTS.map((d) => <option key={d} value={d}>{t(`register.${DEPT_KEY[d]}`)}</option>)}
               </Select>
             </Field>
             <Field label={t('register.labelDoctorRoom')}>
               <Select value={form.doctor} onChange={(e) => set({ doctor: e.target.value })} className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
-                {doctorsForDept(form.department).length === 0
+                {doctorOptionsFor(form.department).length === 0
                   ? <option value="Dr. Priya Nair">Dr. Priya Nair</option>
-                  : doctorsForDept(form.department).map((r) => <option key={r.doctor} value={r.doctor}>{r.doctor} · {r.room}</option>)}
+                  : doctorOptionsFor(form.department).map((r) => <option key={r.doctor} value={r.doctor}>{r.doctor} · {r.room}</option>)}
               </Select>
             </Field>
             <Field label={t('register.labelVisitType')}>
