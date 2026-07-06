@@ -18,8 +18,30 @@ import type { RadiologyStudy, AiFinding } from '@/store/useRadiologyStudiesStore
 export const CRITICAL_RE =
   /\b(haemorrhage|hemorrhage|bleed|pneumothorax|tamponade|stroke|infarct|acute occlusion|free air|peritonitis|pe\b|pulmonary embolism|cord compression|midline shift|bi-?rads ?(4|5|6)|lung-?rads ?(4|4a|4b|4x)|pi-?rads ?(4|5))\b/i
 
+// Negation cues that turn a critical keyword into a *normal* (ruled-out)
+// statement — "no pneumothorax", "no evidence of haemorrhage", "negative for
+// PE". Without this, the report-consistency gate falsely demands the radiologist
+// "reconcile" a critical finding that the Findings section actually excluded.
+const NEGATION_CUE = /\b(no|without|negative for|no evidence of|free of|ruled out|absent|unremarkable for)\b/
+
 export function isCriticalText(text?: string): boolean {
-  return !!text && CRITICAL_RE.test(text.toLowerCase())
+  if (!text) return false
+  const lower = text.toLowerCase()
+  const re = new RegExp(CRITICAL_RE.source, 'gi')
+  let m: RegExpExecArray | null
+  while ((m = re.exec(lower)) !== null) {
+    // Scope to the current clause (sentence-level boundaries, NOT commas, so a
+    // negated list like "no consolidation, effusion, or pneumothorax" stays one
+    // clause under its leading "no"). Only an ASSERTED critical term — one with
+    // no negation cue before it in the same clause — counts as critical.
+    const clauseStart = Math.max(
+      lower.lastIndexOf('.', m.index),
+      lower.lastIndexOf(';', m.index),
+      lower.lastIndexOf(':', m.index),
+    ) + 1
+    if (!NEGATION_CUE.test(lower.slice(clauseStart, m.index))) return true
+  }
+  return false
 }
 
 // ── Deterministic pseudo-randomness (stable per seed) ────────────────────────
