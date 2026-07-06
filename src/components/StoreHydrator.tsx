@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { getSupabaseClient } from "@/lib/supabase/client"
 import { syncStoreAcrossTabs } from "@/lib/cross-tab-sync"
+import { bindOrderSync } from "@/lib/cross-device-orders"
 import { useMessagingStore } from "@/store/useMessagingStore"
 import { useNotificationStore } from "@/store/useNotificationStore"
 import { useInpatientStore } from "@/store/useInpatientStore"
@@ -179,6 +180,7 @@ export function StoreHydrator() {
     // the many fully public/unauthenticated pages (e.g. /p/[uhid]) that can
     // never have a live session — it is NOT a security/authorization gate.
     let pollTimer: ReturnType<typeof setInterval> | null = null
+    let orderSyncCleanups: Array<() => void> = []
     void (async () => {
       try {
         const { data: { session } } = await getSupabaseClient().auth.getSession()
@@ -187,12 +189,29 @@ export function StoreHydrator() {
           usePatientStore.getState().hydrateReal(),
           useAdmissionStore.getState().hydrateReal(),
           useInpatientStore.getState().hydrateReal(),
+          useLabOrdersStore.getState().hydrateReal(),
+          useRadiologyStudiesStore.getState().hydrateReal(),
+          usePharmacyStore.getState().hydrateReal(),
         ])
+        // Auto-publish local changes to shared lab/radiology/pharmacy orders back
+        // to the board (e.g. Lab releases a result, Pharmacy dispenses) so other
+        // devices see the progress. Only orders already on the board are pushed.
+        orderSyncCleanups = [
+          bindOrderSync(useLabOrdersStore, 'lab', (s) => s.orders),
+          bindOrderSync(useRadiologyStudiesStore, 'radiology', (s) => s.studies),
+          bindOrderSync(usePharmacyStore, 'pharmacy', (s) => s.prescriptions),
+        ]
         // Poll fallback (staff only): guarantees a patient checked in / advanced
-        // on another device shows up within a few seconds even where Supabase
-        // Realtime can't deliver (realtime auth/RLS). Realtime below makes it
-        // instant when it works; this makes it reliable regardless.
-        pollTimer = setInterval(() => { void usePatientStore.getState().hydrateReal() }, 4000)
+        // — or a lab/radiology/pharmacy order dispatched — on another device
+        // shows up within a few seconds even where Supabase Realtime can't
+        // deliver (realtime auth/RLS). Realtime below makes it instant when it
+        // works; this makes it reliable regardless.
+        pollTimer = setInterval(() => {
+          void usePatientStore.getState().hydrateReal()
+          void useLabOrdersStore.getState().hydrateReal()
+          void useRadiologyStudiesStore.getState().hydrateReal()
+          void usePharmacyStore.getState().hydrateReal()
+        }, 4000)
       } catch (err) {
         console.error('[StoreHydrator] real hydration failed:', err)
       }
@@ -214,6 +233,11 @@ export function StoreHydrator() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, rehydratePatients)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'admission_requests' }, () => { void useAdmissionStore.getState().hydrateReal() })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'ipd_stays' }, () => { void useInpatientStore.getState().hydrateReal() })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'opd_orders' }, () => {
+          void useLabOrdersStore.getState().hydrateReal()
+          void useRadiologyStudiesStore.getState().hydrateReal()
+          void usePharmacyStore.getState().hydrateReal()
+        })
         .subscribe()
     } catch (err) {
       console.error('[StoreHydrator] realtime subscribe failed:', err)
@@ -221,6 +245,7 @@ export function StoreHydrator() {
 
     return () => {
       syncCleanups.forEach((fn) => fn())
+      orderSyncCleanups.forEach((fn) => fn())
       if (liveChannel) void getSupabaseClient().removeChannel(liveChannel)
       if (pollTimer) clearInterval(pollTimer)
     }

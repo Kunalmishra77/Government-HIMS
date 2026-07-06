@@ -8,3 +8,5 @@ build/
 npm-debug.log*
 .vercel
 _drive.mjs
+_checkin.mjs
+_zod.mjs

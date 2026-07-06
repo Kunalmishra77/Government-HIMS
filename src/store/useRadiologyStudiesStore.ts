@@ -9,6 +9,7 @@ import {
   type Priority,
 } from '@/lib/radiologyCatalog'
 import { deriveUhid } from '@/lib/uhid'
+import { pushOrder, pullOrders, mergeById } from '@/lib/cross-device-orders'
 
 // ─── Domain types ─────────────────────────────────────────────────────────
 
@@ -147,6 +148,8 @@ async function resolveRealRadActor(): Promise<RadTech | undefined> {
 
 interface State {
   studies: RadiologyStudy[]
+  /** Pull cross-device radiology orders from the shared board and merge them in. */
+  hydrateReal: () => Promise<void>
   addOrder: (input: {
     patientId: string
     patientName: string
@@ -510,6 +513,11 @@ const safeStorage = {
 export const useRadiologyStudiesStore = create<State>()(persist((set, get) => ({
   studies: SEED_STUDIES,
 
+  hydrateReal: async () => {
+    const pulled = await pullOrders<RadiologyStudy>('radiology')
+    if (pulled.length) set(s => ({ studies: mergeById(s.studies, pulled) }))
+  },
+
   addOrder: (input) => {
     const cat = RADIOLOGY_CATALOG[input.code]
     if (!cat) return ''
@@ -537,6 +545,7 @@ export const useRadiologyStudiesStore = create<State>()(persist((set, get) => ({
       orderedAt: new Date().toISOString(),
     }
     set(s => ({ studies: [study, ...s.studies] }))
+    void pushOrder('radiology', study)  // cross-device: appears in Radiology on every machine
     return id
   },
 

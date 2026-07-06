@@ -4,6 +4,7 @@ import { useAuditStore } from '@/store/useAuditStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { usePharmacyInventoryStore } from '@/store/usePharmacyInventoryStore'
 import { getSupabaseClient } from '@/lib/supabase/client'
+import { pushOrder, pullOrders, mergeById } from '@/lib/cross-device-orders'
 
 // Phase 6 Task 3 — guarded on `isBrowser` (same pattern as _core.ts's
 // readRaw/writeRaw/removeRaw, and useRadiologyStudiesStore.ts's safeStorage
@@ -123,6 +124,8 @@ export interface PharmacyMedicine {
 
 interface PharmacyStore {
   prescriptions: PharmacyPrescription[]
+  /** Pull cross-device prescriptions from the shared board and merge them in. */
+  hydrateReal: () => Promise<void>
   addPrescription: (p: PharmacyPrescription) => void
   updateStatus: (id: string, status: PrepStatus) => Promise<void>
   markCollected: (id: string, collectedBy?: string) => Promise<void>
@@ -274,6 +277,11 @@ const DEMO_PRESCRIPTIONS: PharmacyPrescription[] = [
 export const usePharmacyStore = create<PharmacyStore>()(persist((set, get) => ({
   prescriptions: DEMO_PRESCRIPTIONS,
 
+  hydrateReal: async () => {
+    const pulled = await pullOrders<PharmacyPrescription>('pharmacy')
+    if (pulled.length) set(state => ({ prescriptions: mergeById(state.prescriptions, pulled) }))
+  },
+
   addPrescription: (p) => {
     // Stamp defaults + check each line against live pharmacy inventory so
     // out-of-stock drugs are flagged the moment the order arrives.
@@ -290,6 +298,7 @@ export const usePharmacyStore = create<PharmacyStore>()(persist((set, get) => ({
       medicines,
     }
     set(state => ({ prescriptions: [stamped, ...state.prescriptions] }))
+    void pushOrder('pharmacy', stamped)  // cross-device: appears in Pharmacy on every machine
   },
 
   updateStatus: async (id, status) => {

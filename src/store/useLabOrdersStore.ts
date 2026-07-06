@@ -6,6 +6,7 @@ import { LAB_CATALOG, computeFlag, type Bench, type Priority, type SpecimenType,
 import { evaluateReflex } from '@/lib/reflexRules'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { deriveUhid } from '@/lib/uhid'
+import { pushOrder, pullOrders, mergeById as mergeSharedOrders } from '@/lib/cross-device-orders'
 
 // ─── Domain types ──────────────────────────────────────────────────────────
 
@@ -329,6 +330,8 @@ const mergingStorage = {
 interface State {
   orders: LabOrder[]
   reflexSuggestions: ReflexSuggestion[]
+  /** Pull cross-device lab orders from the shared board and merge them in. */
+  hydrateReal: () => Promise<void>
   addOrder: (input: {
     patientId: string
     patientName: string
@@ -776,6 +779,11 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
   orders: SEED_ORDERS,
   reflexSuggestions: [],
 
+  hydrateReal: async () => {
+    const pulled = await pullOrders<LabOrder>('lab')
+    if (pulled.length) set(s => ({ orders: mergeSharedOrders(s.orders, pulled) }))
+  },
+
   addOrder: (input) => {
     const id = `LO-${Date.now()}`
     const orderedAt = new Date().toISOString()
@@ -828,6 +836,7 @@ export const useLabOrdersStore = create<State>()(persist((rawSet, get) => {
       specimens: Array.from(specimensByType.values()),
     }
     set(s => ({ orders: [order, ...s.orders] }))
+    void pushOrder('lab', order)  // cross-device: appears in Lab on every machine
     useAuditStore.getState().log({
       userId: 'LAB-SYS', userName: input.doctorName ?? 'Lab',
       action: 'lab_order', resource: 'lab_order', resourceId: id,
