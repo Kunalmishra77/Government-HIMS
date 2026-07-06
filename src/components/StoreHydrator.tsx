@@ -178,6 +178,7 @@ export function StoreHydrator() {
     // skip (avoids the dynamic `@/lib/api` import + network round trip) for
     // the many fully public/unauthenticated pages (e.g. /p/[uhid]) that can
     // never have a live session — it is NOT a security/authorization gate.
+    let pollTimer: ReturnType<typeof setInterval> | null = null
     void (async () => {
       try {
         const { data: { session } } = await getSupabaseClient().auth.getSession()
@@ -187,6 +188,11 @@ export function StoreHydrator() {
           useAdmissionStore.getState().hydrateReal(),
           useInpatientStore.getState().hydrateReal(),
         ])
+        // Poll fallback (staff only): guarantees a patient checked in / advanced
+        // on another device shows up within a few seconds even where Supabase
+        // Realtime can't deliver (realtime auth/RLS). Realtime below makes it
+        // instant when it works; this makes it reliable regardless.
+        pollTimer = setInterval(() => { void usePatientStore.getState().hydrateReal() }, 4000)
       } catch (err) {
         console.error('[StoreHydrator] real hydration failed:', err)
       }
@@ -216,6 +222,7 @@ export function StoreHydrator() {
     return () => {
       syncCleanups.forEach((fn) => fn())
       if (liveChannel) void getSupabaseClient().removeChannel(liveChannel)
+      if (pollTimer) clearInterval(pollTimer)
     }
   }, [])
   return null
