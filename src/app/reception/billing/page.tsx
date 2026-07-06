@@ -4,16 +4,19 @@ import { useState } from "react"
 import { useBillingStore, type BillStatus } from "@/store/useBillingStore"
 import { VisibilityHeader, STAT_CARD } from "@/components/reception/VisibilityHeader"
 import { CreditCard, Wallet, CheckCircle2, AlertTriangle, Search, Receipt, ShieldCheck } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { printableHtml } from "@/lib/fileIO"
 
 const STATUS_TINT: Record<BillStatus, string> = {
-  draft: 'bg-slate-100 text-slate-600', frozen: 'bg-[rgba(8,145,178,0.07)] text-[#0E7490]', settled: 'bg-green-50 text-green-700', dispute: 'bg-red-50 text-red-600',
+  draft: 'bg-slate-100 text-slate-600', frozen: 'bg-[rgba(238,107,38,0.07)] text-[#B84A16]', settled: 'bg-green-50 text-green-700', dispute: 'bg-red-50 text-red-600',
 }
-const STATUS_LABEL: Record<BillStatus, string> = { draft: 'Draft', frozen: 'Awaiting payment', settled: 'Settled', dispute: 'In dispute' }
+const STATUS_KEY: Record<BillStatus, string> = { draft: 'statusDraft', frozen: 'statusFrozen', settled: 'statusSettled', dispute: 'statusDispute' }
+const FILTER_KEY: Record<string, string> = { all: 'filterAll', pending: 'filterPending', settled: 'filterSettled' }
 
 export default function ReceptionBilling() {
+  const t = useTranslations('reception')
   const bills = useBillingStore(s => s.bills)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'pending' | 'settled'>('all')
@@ -32,15 +35,15 @@ export default function ReceptionBilling() {
   })
 
   const tiles = [
-    { label: 'Outstanding', value: `₹${totalOutstanding.toLocaleString('en-IN')}`, icon: Wallet, tint: 'bg-rose-50 text-rose-600' },
-    { label: 'Pending bills', value: `${pendingCount}`, icon: AlertTriangle, tint: 'bg-amber-50 text-amber-600' },
-    { label: 'Settled', value: `${settledCount}`, icon: CheckCircle2, tint: 'bg-green-50 text-green-600' },
-    { label: 'Total billed', value: `₹${totalBilled.toLocaleString('en-IN')}`, icon: CreditCard, tint: 'bg-[rgba(8,145,178,0.07)] text-[#0E7490]' },
+    { label: t('billing.tileOutstanding'), value: `₹${totalOutstanding.toLocaleString('en-IN')}`, icon: Wallet, tint: 'bg-rose-50 text-rose-600' },
+    { label: t('billing.tilePendingBills'), value: `${pendingCount}`, icon: AlertTriangle, tint: 'bg-amber-50 text-amber-600' },
+    { label: t('billing.tileSettled'), value: `${settledCount}`, icon: CheckCircle2, tint: 'bg-green-50 text-green-600' },
+    { label: t('billing.tileTotalBilled'), value: `₹${totalBilled.toLocaleString('en-IN')}`, icon: CreditCard, tint: 'bg-[rgba(238,107,38,0.07)] text-[#B84A16]' },
   ]
 
   return (
     <div className="pb-6">
-      <VisibilityHeader title="Billing Status" subtitle="Settled vs pending — answer payment questions at a glance" owner="Billing desk" />
+      <VisibilityHeader title={t('billing.title')} subtitle={t('billing.subtitle')} owner={t('billing.owner')} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         {tiles.map(t => (
@@ -55,13 +58,13 @@ export default function ReceptionBilling() {
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search patient or bill no…"
-            className="w-full h-10 pl-9 pr-3 rounded-xl bg-white border border-slate-200 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-[rgba(8,145,178,0.30)] focus:ring-2 focus:ring-blue-100" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('billing.searchPlaceholder')}
+            className="w-full h-10 pl-9 pr-3 rounded-xl bg-white border border-slate-200 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-[rgba(238,107,38,0.30)] focus:ring-2 focus:ring-primary/20" />
         </div>
         <div className="flex gap-1">
           {(['all', 'pending', 'settled'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className={cn("text-[12px] font-bold px-3 py-1.5 rounded-lg capitalize transition", filter === f ? "bg-[#0E7490] text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}>{f}</button>
+              className={cn("text-[12px] font-bold px-3 py-1.5 rounded-lg capitalize transition", filter === f ? "bg-[#C2481A] text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}>{t(`billing.${FILTER_KEY[f]}`)}</button>
           ))}
         </div>
       </div>
@@ -79,38 +82,38 @@ export default function ReceptionBilling() {
                     <p className="text-[12px] text-slate-500">{b.id} · {b.visitType} · {b.payerType}</p>
                   </div>
                 </div>
-                <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0", STATUS_TINT[b.status])}>{STATUS_LABEL[b.status]}</span>
+                <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0", STATUS_TINT[b.status])}>{t(`billing.${STATUS_KEY[b.status]}`)}</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <Amt label="Bill total" value={b.subtotal} />
-                <Amt label="Insurance" value={b.insuranceCovered} prefix="−" tint="text-[#0E7490]" icon />
-                <Amt label="Paid" value={b.paidAmount} tint="text-green-600" />
-                <Amt label="Outstanding" value={due} tint={due > 0 ? "text-rose-600" : "text-slate-900"} bold />
+                <Amt label={t('billing.amtBillTotal')} value={b.subtotal} />
+                <Amt label={t('billing.amtInsurance')} value={b.insuranceCovered} prefix="−" tint="text-[#B84A16]" icon />
+                <Amt label={t('billing.amtPaid')} value={b.paidAmount} tint="text-green-600" />
+                <Amt label={t('billing.amtOutstanding')} value={due} tint={due > 0 ? "text-rose-600" : "text-slate-900"} bold />
               </div>
 
               {b.status !== 'settled' && (
                 <button onClick={() => {
-                  printableHtml(`Payment Slip · ${b.id}`, `
+                  printableHtml(t('billing.slipTitle', { id: b.id }), `
                     <div class="info-row">
-                      <div class="info-item"><span class="info-label">Patient</span><span class="info-value">${b.patientName}</span></div>
-                      <div class="info-item"><span class="info-label">Bill No.</span><span class="info-value">${b.id}</span></div>
-                      <div class="info-item"><span class="info-label">Visit Type</span><span class="info-value">${b.visitType}</span></div>
-                      <div class="info-item"><span class="info-label">Payer</span><span class="info-value">${b.payerType}</span></div>
+                      <div class="info-item"><span class="info-label">${t('billing.slipPatient')}</span><span class="info-value">${b.patientName}</span></div>
+                      <div class="info-item"><span class="info-label">${t('billing.slipBillNo')}</span><span class="info-value">${b.id}</span></div>
+                      <div class="info-item"><span class="info-label">${t('billing.slipVisitType')}</span><span class="info-value">${b.visitType}</span></div>
+                      <div class="info-item"><span class="info-label">${t('billing.slipPayer')}</span><span class="info-value">${b.payerType}</span></div>
                     </div>
-                    <h3>Payment Breakdown</h3>
-                    <table><thead><tr><th>Description</th><th style="text-align:right">Amount (₹)</th></tr></thead><tbody>
-                      <tr><td>Total billed</td><td style="text-align:right">${b.subtotal.toLocaleString('en-IN')}</td></tr>
-                      <tr><td>Insurance covered</td><td style="text-align:right">− ${b.insuranceCovered.toLocaleString('en-IN')}</td></tr>
-                      <tr><td>Paid so far</td><td style="text-align:right">− ${b.paidAmount.toLocaleString('en-IN')}</td></tr>
-                      <tr class="total"><td>Outstanding due</td><td style="text-align:right">₹${due.toLocaleString('en-IN')}</td></tr>
+                    <h3>${t('billing.slipPaymentBreakdown')}</h3>
+                    <table><thead><tr><th>${t('billing.slipDescription')}</th><th style="text-align:right">${t('billing.slipAmount')}</th></tr></thead><tbody>
+                      <tr><td>${t('billing.slipTotalBilled')}</td><td style="text-align:right">${b.subtotal.toLocaleString('en-IN')}</td></tr>
+                      <tr><td>${t('billing.slipInsuranceCovered')}</td><td style="text-align:right">− ${b.insuranceCovered.toLocaleString('en-IN')}</td></tr>
+                      <tr><td>${t('billing.slipPaidSoFar')}</td><td style="text-align:right">− ${b.paidAmount.toLocaleString('en-IN')}</td></tr>
+                      <tr class="total"><td>${t('billing.slipOutstandingDue')}</td><td style="text-align:right">₹${due.toLocaleString('en-IN')}</td></tr>
                     </tbody></table>`)
-                  toast.success(`Printing payment slip for ${b.patientName}`)
+                  toast.success(t('billing.printingSlipToast', { name: b.patientName }))
                 }}
-                  className="mt-3 text-[12.5px] font-semibold text-[#0E7490] hover:text-[#0E7490] cursor-pointer">Print payment slip →</button>
+                  className="mt-3 text-[12.5px] font-semibold text-[#B84A16] hover:text-[#B84A16] cursor-pointer">{t('billing.printPaymentSlip')}</button>
               )}
               {b.status === 'settled' && b.receiptNumber && (
-                <p className="mt-3 text-[12px] text-green-700 flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Settled · receipt {b.receiptNumber}</p>
+                <p className="mt-3 text-[12px] text-green-700 flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> {t('billing.settledReceipt', { receipt: b.receiptNumber })}</p>
               )}
             </div>
           )

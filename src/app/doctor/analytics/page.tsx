@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Users, Building2, Video, FlaskConical, Pill, BedDouble, Activity, CalendarRange, TrendingUp } from "lucide-react"
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts"
 import { useDoctorStatsStore, PERIODS, type PeriodKey } from "@/store/useDoctorStatsStore"
@@ -16,6 +17,7 @@ const isoDay = (d: Date) => d.toISOString().slice(0, 10)
 const fmtDay = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 
 export default function DoctorAnalytics() {
+  const tr = useTranslations('doctor')
   const currentUser = useAuthStore(s => s.currentUser)
   const totalsFor = useDoctorStatsStore(s => s.totalsFor)
   const totalsForRange = useDoctorStatsStore(s => s.totalsForRange)
@@ -33,12 +35,12 @@ export default function DoctorAnalytics() {
   const tickFmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 
   const tiles = [
-    { label: 'Total consultations', value: t.consults, icon: Users, tint: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]' },
-    { label: 'In-person (OPD)', value: t.opd, icon: Building2, tint: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]' },
-    { label: 'Online consults', value: t.online, icon: Video, tint: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]' },
-    { label: 'Tests ordered', value: t.tests, icon: FlaskConical, tint: 'bg-rose-50 text-rose-600' },
-    { label: 'Prescriptions', value: t.prescriptions, icon: Pill, tint: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]' },
-    { label: 'Admissions', value: t.admissions, icon: BedDouble, tint: 'bg-amber-50 text-amber-600' },
+    { label: tr('analytics.tileConsults'), value: t.consults, icon: Users, tint: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]' },
+    { label: tr('analytics.tileOpd'), value: t.opd, icon: Building2, tint: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]' },
+    { label: tr('analytics.tileOnline'), value: t.online, icon: Video, tint: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]' },
+    { label: tr('analytics.tileTests'), value: t.tests, icon: FlaskConical, tint: 'bg-rose-50 text-rose-600' },
+    { label: tr('analytics.tilePrescriptions'), value: t.prescriptions, icon: Pill, tint: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]' },
+    { label: tr('analytics.tileAdmissions'), value: t.admissions, icon: BedDouble, tint: 'bg-amber-50 text-amber-600' },
   ]
 
   return (
@@ -48,8 +50,8 @@ export default function DoctorAnalytics() {
         <DaySummaryCard doctorId={doctorId} doctorName={currentUser?.name ?? 'Dr. Priya Nair'} />
       </div>
       <div className="mb-4">
-        <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">My Activity</h1>
-        <p className="text-[13px] text-slate-500 mt-1">{currentUser?.name} · {currentUser?.id} — your consultation & ordering record, for accountability.</p>
+        <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">{tr('analytics.title')}</h1>
+        <p className="text-[13px] text-slate-500 mt-1">{tr('analytics.subtitle', { name: currentUser?.name ?? '', id: currentUser?.id ?? '' })}</p>
       </div>
 
       {/* Period selector */}
@@ -63,17 +65,17 @@ export default function DoctorAnalytics() {
           ))}
           <button onClick={() => setCustom(true)}
             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold transition", custom ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
-            <CalendarRange className="h-3.5 w-3.5" /> Custom
+            <CalendarRange className="h-3.5 w-3.5" /> {tr('analytics.custom')}
           </button>
         </div>
 
         {custom && (
           <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-200 px-3 py-1.5 shadow-sm">
             <input type="date" value={range.from} max={range.to} onChange={e => setRange(r => ({ ...r, from: e.target.value }))}
-              className="text-[12.5px] font-medium text-slate-700 outline-none bg-transparent" aria-label="From date" />
+              className="text-[12.5px] font-medium text-slate-700 outline-none bg-transparent" aria-label={tr('analytics.fromDate')} />
             <span className="text-slate-300">→</span>
             <input type="date" value={range.to} min={range.from} max={isoDay(new Date())} onChange={e => setRange(r => ({ ...r, to: e.target.value }))}
-              className="text-[12.5px] font-medium text-slate-700 outline-none bg-transparent" aria-label="To date" />
+              className="text-[12.5px] font-medium text-slate-700 outline-none bg-transparent" aria-label={tr('analytics.toDate')} />
           </div>
         )}
       </div>
@@ -92,8 +94,8 @@ export default function DoctorAnalytics() {
 
       {/* Performance trend */}
       <div className={cn(CARD, "p-5 mt-4")}>
-        <div className="flex items-center gap-2 mb-3"><TrendingUp className="h-4.5 w-4.5 text-[var(--color-primary)]" /><h3 className="text-[15px] font-bold text-slate-900">Performance trend · {periodLabel}</h3></div>
-        <ClientOnly fallback={<div className="h-[260px] flex items-center justify-center"><div className="h-7 w-7 rounded-full border-4 border-[rgba(8,145,178,0.20)] border-t-blue-600 animate-spin" /></div>}>
+        <div className="flex items-center gap-2 mb-3"><TrendingUp className="h-4.5 w-4.5 text-[var(--color-accent)]" /><h3 className="text-[15px] font-bold text-slate-900">{tr('analytics.perfTrend', { period: periodLabel })}</h3></div>
+        <ClientOnly fallback={<div className="h-[260px] flex items-center justify-center"><div className="h-7 w-7 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>}>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={series} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" vertical={false} />
@@ -101,27 +103,27 @@ export default function DoctorAnalytics() {
               <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={28} />
               <Tooltip labelFormatter={(d) => tickFmt(d as string)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line type="monotone" dataKey="consults" name="Consultations" stroke="#2563eb" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="tests" name="Tests" stroke="#16A34A" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="prescriptions" name="Prescriptions" stroke="#64748B" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="consults" name={tr('analytics.seriesConsults')} stroke="#16324A" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="tests" name={tr('analytics.seriesTests')} stroke="#16A34A" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="prescriptions" name={tr('analytics.seriesPrescriptions')} stroke="#64748B" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </ClientOnly>
       </div>
 
       <div className={cn(CARD, "p-5 mt-4")}>
-        <div className="flex items-center gap-2 mb-2"><Activity className="h-4.5 w-4.5 text-slate-400" /><h3 className="text-[15px] font-bold text-slate-900">Consultation mix · {periodLabel}</h3></div>
+        <div className="flex items-center gap-2 mb-2"><Activity className="h-4.5 w-4.5 text-slate-400" /><h3 className="text-[15px] font-bold text-slate-900">{tr('analytics.consultMix', { period: periodLabel })}</h3></div>
         <div className="flex items-center gap-3 mb-2">
-          <span className="text-[12.5px] font-semibold text-slate-500 w-24">In-person</span>
-          <div className="flex-1 h-3 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-[rgba(8,145,178,0.07)]0" style={{ width: `${t.consults ? (t.opd / t.consults) * 100 : 0}%` }} /></div>
+          <span className="text-[12.5px] font-semibold text-slate-500 w-24">{tr('analytics.inPerson')}</span>
+          <div className="flex-1 h-3 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-[rgba(238,107,38,0.07)]0" style={{ width: `${t.consults ? (t.opd / t.consults) * 100 : 0}%` }} /></div>
           <span className="text-[12.5px] font-bold text-slate-700 w-10 text-right">{t.opd}</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-[12.5px] font-semibold text-slate-500 w-24">Online</span>
-          <div className="flex-1 h-3 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-[rgba(8,145,178,0.07)]0" style={{ width: `${t.consults ? (t.online / t.consults) * 100 : 0}%` }} /></div>
+          <span className="text-[12.5px] font-semibold text-slate-500 w-24">{tr('analytics.online')}</span>
+          <div className="flex-1 h-3 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-[rgba(238,107,38,0.07)]0" style={{ width: `${t.consults ? (t.online / t.consults) * 100 : 0}%` }} /></div>
           <span className="text-[12.5px] font-bold text-slate-700 w-10 text-right">{t.online}</span>
         </div>
-        <p className="text-[11.5px] text-slate-400 mt-3">Live — completing a consultation, ordering tests, prescribing or admitting updates today&apos;s figures instantly.</p>
+        <p className="text-[11.5px] text-slate-400 mt-3">{tr('analytics.mixHint')}</p>
       </div>
     </div>
   )

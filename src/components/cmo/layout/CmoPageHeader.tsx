@@ -13,7 +13,7 @@ const badgeStyles = {
   default:  'bg-slate-100 text-slate-700 border-slate-200',
   critical: 'bg-[var(--color-danger-bg)] text-red-700 border-red-200',
   warning:  'bg-[var(--color-warning-bg)] text-amber-700 border-amber-200',
-  info:     'bg-[var(--color-info-bg)] text-blue-700 border-blue-200',
+  info:     'bg-[var(--color-info-bg)] text-accent border-border',
   success:  'bg-[var(--color-success-bg)] text-green-700 border-green-200',
 }
 

@@ -56,11 +56,11 @@ const FILTERS = ['All', 'Lab Reports', 'Prescriptions', 'Invoices', 'Summaries',
 type Filter = typeof FILTERS[number]
 
 const CATEGORY_STYLE: Record<Category, { Icon: typeof FileText; tint: string; fg: string }> = {
-  'Lab Reports':   { Icon: FlaskConical, tint: 'bg-[rgba(8,145,178,0.07)]',  fg: 'text-[var(--color-primary)]' },
-  'Prescriptions': { Icon: Pill,         tint: 'bg-[rgba(8,145,178,0.07)]',    fg: 'text-[var(--color-primary)]' },
+  'Lab Reports':   { Icon: FlaskConical, tint: 'bg-[rgba(238,107,38,0.07)]',  fg: 'text-[var(--color-accent)]' },
+  'Prescriptions': { Icon: Pill,         tint: 'bg-[rgba(238,107,38,0.07)]',    fg: 'text-[var(--color-accent)]' },
   'Invoices':      { Icon: Receipt,      tint: 'bg-amber-50',   fg: 'text-amber-600' },
-  'Summaries':     { Icon: FileText,     tint: 'bg-[rgba(8,145,178,0.07)]',    fg: 'text-[var(--color-primary)]' },
-  'Insurance':     { Icon: ShieldCheck,  tint: 'bg-[rgba(8,145,178,0.07)]',    fg: 'text-[var(--color-primary)]' },
+  'Summaries':     { Icon: FileText,     tint: 'bg-[rgba(238,107,38,0.07)]',    fg: 'text-[var(--color-accent)]' },
+  'Insurance':     { Icon: ShieldCheck,  tint: 'bg-[rgba(238,107,38,0.07)]',    fg: 'text-[var(--color-accent)]' },
 }
 
 function formatDate(iso: string) {
@@ -92,7 +92,7 @@ export default function DownloadsPage() {
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search documents…"
-            className="w-full rounded-2xl bg-slate-50 border border-slate-100 pl-11 pr-4 py-3 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-[rgba(8,145,178,0.20)] focus:bg-white transition-colors"
+            className="w-full rounded-2xl bg-slate-50 border border-slate-100 pl-11 pr-4 py-3 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-[rgba(238,107,38,0.20)] focus:bg-white transition-colors"
           />
         </div>
 

@@ -35,10 +35,10 @@ const variants = {
     bar:   'bg-[var(--color-warning)]',
   },
   info: {
-    card:  'bg-[var(--color-info-bg)] border-blue-200',
-    label: 'text-blue-500',
-    value: 'text-blue-900',
-    hint:  'text-blue-400',
+    card:  'bg-[var(--color-info-bg)] border-border',
+    label: 'text-accent',
+    value: 'text-accent',
+    hint:  'text-primary-light',
     bar:   'bg-[var(--color-info)]',
   },
   success: {

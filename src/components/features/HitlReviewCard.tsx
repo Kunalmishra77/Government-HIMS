@@ -177,7 +177,7 @@ export function HitlReviewCard<T>({
           </div>
         )}
         {status === 'modifying' && (
-          <div className="flex items-center gap-2 text-[var(--color-primary)] text-sm font-semibold">
+          <div className="flex items-center gap-2 text-[var(--color-accent)] text-sm font-semibold">
             <Edit3 className="h-4 w-4" /> Editing mode activated
           </div>
         )}

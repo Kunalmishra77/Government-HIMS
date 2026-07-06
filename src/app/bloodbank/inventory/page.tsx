@@ -3,6 +3,7 @@
 import { Select } from "@/components/ui/Select"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTranslations } from "next-intl"
 import { useBloodBankStore, type BloodGroup, type BloodComponent } from "@/store/useBloodBankStore"
 import { Package, Plus, X, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +22,7 @@ const DEFAULT_EXPIRY_DAYS: Record<BloodComponent, number> = {
 }
 
 function AddUnitModal({ onClose }: { onClose: () => void }) {
+  const t = useTranslations('bloodbank')
   const addUnit = useBloodBankStore((s) => s.addUnit)
   const [group, setGroup] = useState<BloodGroup>('O+')
   const [component, setComponent] = useState<BloodComponent>('Packed RBC')
@@ -33,15 +35,15 @@ function AddUnitModal({ onClose }: { onClose: () => void }) {
   })()
 
   function submit() {
-    if (!donorId.trim() || !bagNumber.trim()) { toast.error('Bag # and donor ID required'); return }
+    if (!donorId.trim() || !bagNumber.trim()) { toast.error(t('inventory.bagAndDonorRequired')); return }
     const id = addUnit({ bloodGroup: group, component, bagNumber: bagNumber.trim(), donorId: donorId.trim(), collectedOn, expiresOn })
     notifyAndAudit({
       to: 'blood_bank', type: 'system', priority: 'low',
-      title: `New blood unit registered`,
-      body: `${component} (${group}) from ${donorId} — Bag ${bagNumber}. Expires ${expiresOn}.`,
-      audit: { action: 'blood_issue', resource: 'blood_unit', resourceId: id, detail: `Registered ${group} ${component} (Bag ${bagNumber})`, userName: 'Blood bank tech' },
+      title: t('inventory.newUnitTitle'),
+      body: t('inventory.newUnitBody', { component, group, donorId, bagNumber, expiresOn }),
+      audit: { action: 'blood_issue', resource: 'blood_unit', resourceId: id, detail: t('inventory.auditRegistered', { group, component, bagNumber }), userName: 'Blood bank tech' },
     })
-    toast.success(`Bag ${bagNumber} registered`)
+    toast.success(t('inventory.bagRegistered', { bagNumber }))
     onClose()
   }
 
@@ -51,20 +53,20 @@ function AddUnitModal({ onClose }: { onClose: () => void }) {
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-bold text-slate-900">Register new blood unit</h2>
-          <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"><X className="h-4 w-4 text-slate-500" /></button>
+          <h2 className="text-base font-bold text-slate-900">{t('inventory.registerNewUnit')}</h2>
+          <button onClick={onClose} aria-label={t('inventory.close')} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"><X className="h-4 w-4 text-slate-500" /></button>
         </div>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Blood group *</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('inventory.bloodGroup')}</label>
               <Select value={group} onChange={e => setGroup(e.target.value as BloodGroup)}
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
                 {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Component *</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('inventory.component')}</label>
               <Select value={component} onChange={e => setComponent(e.target.value as BloodComponent)}
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
                 {COMPONENTS.map(c => <option key={c} value={c}>{c}</option>)}
@@ -73,33 +75,33 @@ function AddUnitModal({ onClose }: { onClose: () => void }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Bag # *</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('inventory.bagNumber')}</label>
               <input value={bagNumber} onChange={e => setBagNumber(e.target.value)}
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Donor ID *</label>
-              <input value={donorId} onChange={e => setDonorId(e.target.value)} placeholder="DN-xxx"
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('inventory.donorId')}</label>
+              <input value={donorId} onChange={e => setDonorId(e.target.value)} placeholder={t('inventory.donorIdPlaceholder')}
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Collected on</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('inventory.collectedOn')}</label>
               <input type="date" value={collectedOn} onChange={e => setCollectedOn(e.target.value)}
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Expires</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('inventory.expires')}</label>
               <input type="date" value={expiresOn} disabled
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm" />
             </div>
           </div>
         </div>
         <div className="flex gap-3 mt-5">
-          <button onClick={onClose} className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">Cancel</button>
+          <button onClick={onClose} className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">{t('inventory.cancel')}</button>
           <button onClick={submit} className="flex-1 h-10 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold cursor-pointer inline-flex items-center justify-center gap-1.5">
-            <Package className="h-3.5 w-3.5" /> Register
+            <Package className="h-3.5 w-3.5" /> {t('inventory.register')}
           </button>
         </div>
       </motion.div>
@@ -108,6 +110,7 @@ function AddUnitModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function BloodBankInventory() {
+  const t = useTranslations('bloodbank')
   const { units, discardUnit } = useBloodBankStore()
   const [adding, setAdding] = useState(false)
 
@@ -119,16 +122,16 @@ export default function BloodBankInventory() {
   }
 
   function discard(unitId: string, bag: string) {
-    const reason = typeof window !== 'undefined' ? window.prompt(`Discard reason for ${bag}? (e.g. expired, contamination, broken bag)`) : null
+    const reason = typeof window !== 'undefined' ? window.prompt(t('inventory.discardPromptTitle', { bag })) : null
     if (!reason || reason.trim().length < 3) return
     discardUnit(unitId, reason.trim())
     notifyAndAudit({
       to: 'admin', type: 'system', priority: 'medium',
-      title: `Blood unit discarded · ${bag}`,
-      body: `Unit ${bag} discarded. Reason: ${reason.trim()}.`,
-      audit: { action: 'blood_issue', resource: 'blood_unit', resourceId: unitId, detail: `Discarded ${bag} · ${reason.trim()}`, userName: 'Blood bank tech' },
+      title: t('inventory.discardTitle', { bag }),
+      body: t('inventory.discardBody', { bag, reason: reason.trim() }),
+      audit: { action: 'blood_issue', resource: 'blood_unit', resourceId: unitId, detail: t('inventory.auditDiscarded', { bag, reason: reason.trim() }), userName: 'Blood bank tech' },
     })
-    toast.success(`${bag} discarded · admin notified`)
+    toast.success(t('inventory.discardedToast', { bag }))
   }
 
   // M12-B — stock by group (KPIs)
@@ -140,12 +143,14 @@ export default function BloodBankInventory() {
     <div className="space-y-6 pt-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Blood Unit Inventory</h2>
-          <p className="text-slate-500 text-sm mt-1">{units.length} total · {available.length} available · {lowStock.length > 0 ? `${lowStock.length} group${lowStock.length === 1 ? '' : 's'} low` : 'all groups OK'}</p>
+          <h2 className="text-2xl font-bold text-slate-900">{t('inventory.title')}</h2>
+          <p className="text-slate-500 text-sm mt-1">{lowStock.length > 0
+            ? t('inventory.summaryLow', { total: units.length, available: available.length, low: `${lowStock.length} ${lowStock.length === 1 ? t('inventory.groupSingular') : t('inventory.groupPlural')}` })
+            : t('inventory.summaryOk', { total: units.length, available: available.length })}</p>
         </div>
         <button onClick={() => setAdding(true)}
           className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-colors cursor-pointer">
-          <Plus className="h-4 w-4" /> Add Unit
+          <Plus className="h-4 w-4" /> {t('inventory.addUnit')}
         </button>
       </div>
 
@@ -163,8 +168,8 @@ export default function BloodBankInventory() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              {['Bag #', 'Blood Group', 'Component', 'Collected', 'Expires', 'Status', ''].map((h) => (
-                <th key={h} scope="col" className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide">{h}</th>
+              {[t('inventory.colBag'), t('inventory.colBloodGroup'), t('inventory.colComponent'), t('inventory.colCollected'), t('inventory.colExpires'), t('inventory.colStatus'), ''].map((h, hi) => (
+                <th key={hi} scope="col" className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide">{h}</th>
               ))}
             </tr>
           </thead>
@@ -179,16 +184,16 @@ export default function BloodBankInventory() {
                   <td className="px-4 py-3 text-slate-700">{u.component}</td>
                   <td className="px-4 py-3 text-slate-500">{u.collectedOn}</td>
                   <td className={`px-4 py-3 font-medium ${daysToExpiry < 7 ? 'text-red-600' : 'text-slate-600'}`}>
-                    {u.expiresOn} {daysToExpiry < 7 && <span className="text-[10px] ml-1 bg-red-100 text-red-700 px-1 rounded">⚠ {daysToExpiry}d</span>}
+                    {u.expiresOn} {daysToExpiry < 7 && <span className="text-[10px] ml-1 bg-red-100 text-red-700 px-1 rounded">⚠ {t('inventory.daysBadge', { days: daysToExpiry })}</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant={statusVariant(u.status)}>{u.status}</Badge>
+                    <Badge variant={statusVariant(u.status)}>{t.has(`inventory.status${u.status.charAt(0).toUpperCase() + u.status.slice(1)}`) ? t(`inventory.status${u.status.charAt(0).toUpperCase() + u.status.slice(1)}`) : u.status}</Badge>
                   </td>
                   <td className="px-4 py-3 text-right">
                     {canDiscard && (
                       <button onClick={() => discard(u.id, u.bagNumber)}
-                        title="Discard / mark expired" className="text-[10.5px] font-bold text-rose-700 hover:bg-rose-50 px-2 py-1 rounded cursor-pointer inline-flex items-center gap-1">
-                        <Trash2 className="h-3 w-3" /> Discard
+                        title={t('inventory.discardTooltip')} className="text-[10.5px] font-bold text-rose-700 hover:bg-rose-50 px-2 py-1 rounded cursor-pointer inline-flex items-center gap-1">
+                        <Trash2 className="h-3 w-3" /> {t('inventory.discard')}
                       </button>
                     )}
                   </td>

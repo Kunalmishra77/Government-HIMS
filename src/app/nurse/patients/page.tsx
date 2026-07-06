@@ -6,26 +6,29 @@ import { useShiftStore } from "@/store/useShiftStore"
 import { WardSwitcher } from "@/components/nurse/ShiftBanner"
 import { Bed, AlertCircle, ChevronRight } from "lucide-react"
 import { NeonBadge } from "@/components/ui/neon-badge"
+import { deriveUhid } from "@/lib/uhid"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { news2Token } from "@/lib/statusColors"
 import { Card } from "@/components/ui/card"
+import { useTranslations } from "next-intl"
 
 export default function NursePatientsPage() {
+  const t = useTranslations('nurse')
   const { patients } = useWard()
   const activeWard = useShiftStore(s => s.activeWard)
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <p className="t-body text-foreground-lighter">{activeWard} · patients under nursing care this shift</p>
+        <p className="t-body text-foreground-lighter">{t('patients.subtitle', { ward: activeWard })}</p>
         <WardSwitcher />
       </div>
 
       {patients.length === 0 ? (
         <EmptyState
           icon={Bed}
-          title={`No patients in ${activeWard}`}
-          description="Switch ward above, or patients will appear here when admitted"
+          title={t('patients.noPatients', { ward: activeWard })}
+          description={t('patients.noPatientsDesc')}
           size="sm"
         />
       ) : (
@@ -41,6 +44,7 @@ export default function NursePatientsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-foreground">{patient.name}</h3>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{deriveUhid(patient.id)}</span>
                       <NeonBadge
                         variant={patient.condition === 'Critical' ? 'danger' : patient.condition === 'Stable' ? 'success' : 'warning'}
                       >
@@ -71,7 +75,7 @@ export default function NursePatientsPage() {
                 </div>
 
                 <div className="text-right flex-shrink-0">
-                  <p className="text-xs text-foreground-lighter">Last checked</p>
+                  <p className="text-xs text-foreground-lighter">{t('patients.lastChecked')}</p>
                   <p className="text-sm font-bold text-foreground">{patient.lastChecked}</p>
                   {patient.aiAlert && (
                     <div className="flex items-center gap-1 mt-1 text-xs font-bold text-danger">

@@ -36,8 +36,9 @@ const timeAgo = (iso?: string) => {
 
 const inOrdered = (s: RadiologyStudy) => s.status === "ordered"
 const inScheduled = (s: RadiologyStudy) => s.status === "scheduled"
-const inArrived = (s: RadiologyStudy) =>
-  s.status === "arrived" || s.status === "acquiring" || s.status === "acquired"
+// "Arrived" is the queue handed to the radiographer — patients waiting to begin acquisition.
+// Studies already being acquired/acquired live on the modality bench, not this inbox tab.
+const inArrived = (s: RadiologyStudy) => s.status === "arrived"
 
 // Token-driven segmented control button.
 const seg = (active: boolean) =>
@@ -175,10 +176,10 @@ function StudyRow(props: {
         <button onClick={props.onToggle} className="flex-1 min-w-0 text-left cursor-pointer">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-foreground truncate">{s.patientName}</span>
-            <span className="text-[11px] font-bold text-foreground-placeholder">{s.patientId}</span>
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{s.uhid}</span>
             {s.wardBed && <span className="text-[11px] font-semibold text-foreground-lighter flex items-center gap-0.5"><Bed className="h-3 w-3" />{s.wardBed}</span>}
             <StatusPill status={priorityStatus(s.priority)} label={s.priority} dense />
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-primary">{s.modality}</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-accent">{s.modality}</span>
             {needsContrast && (
               <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-0.5",
                 contrastReady ? "bg-success-bg text-success-strong" : "bg-warning-bg text-brand-amber-strong")}>
@@ -217,7 +218,7 @@ function StudyRow(props: {
                 <option value={120}>+2h</option>
               </Select>
               <button onClick={props.onSchedule}
-                className="u-press inline-flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark px-3 py-2 rounded-xl shadow-xs cursor-pointer whitespace-nowrap transition-colors">
+                className="u-press inline-flex items-center gap-1.5 text-xs font-bold text-[#0D2032] hover:text-[#0D2032] bg-primary hover:bg-primary-dark px-3 py-2 rounded-xl shadow-xs cursor-pointer whitespace-nowrap transition-colors">
                 <Calendar className="h-3.5 w-3.5" /> Schedule
               </button>
             </>
@@ -262,7 +263,7 @@ function StudyRow(props: {
             </div>
           )}
           {s.aiPrelim && (
-            <p className="text-[11px] text-primary italic">{s.aiPrelim}</p>
+            <p className="text-[11px] text-accent italic">{s.aiPrelim}</p>
           )}
           <p className="text-[11px] text-foreground-placeholder flex items-center gap-1"><Clock className="h-3 w-3" />TAT target: {s.expectedTATmin} min</p>
         </div>

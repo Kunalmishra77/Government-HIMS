@@ -13,6 +13,7 @@ import { canDo } from "@/lib/permissions"
 import { hoursWorked } from "@/lib/shiftConflicts"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 type Period = 'week' | 'fortnight' | 'month'
 
@@ -32,6 +33,7 @@ function isoDay(d: Date): string { return d.toISOString().split('T')[0]! }
 function fmtDate(s: string): string { return new Date(s + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) }
 
 export default function HoursPage() {
+  const t = useTranslations('admin')
   const currentUser = useAuthStore(s => s.currentUser)
   const staff = useHRStore(s => s.staff)
   const shifts = useHRStore(s => s.shifts)
@@ -90,10 +92,10 @@ export default function HoursPage() {
   }, [rows])
 
   const handleLogOT = () => {
-    if (!canLogOT) { toast.error("You don't have permission to log OT"); return }
-    if (!otForm.staffId) { toast.error('Pick a staff member'); return }
-    if (otForm.hours <= 0) { toast.error('Hours must be > 0'); return }
-    if (!otForm.reason.trim()) { toast.error('Reason is required'); return }
+    if (!canLogOT) { toast.error(t('hours.noPermission')); return }
+    if (!otForm.staffId) { toast.error(t('hours.pickStaff')); return }
+    if (otForm.hours <= 0) { toast.error(t('hours.hoursPositive')); return }
+    if (!otForm.reason.trim()) { toast.error(t('hours.reasonRequired')); return }
     logOvertime({
       staffId: otForm.staffId,
       date: otForm.date,
@@ -102,7 +104,7 @@ export default function HoursPage() {
       approved: true,
     }, actorName)
     const member = staff.find(s => s.id === otForm.staffId)
-    toast.success(`${otForm.hours}h OT logged for ${member?.name ?? otForm.staffId}`)
+    toast.success(t('hours.otLogged', { hours: otForm.hours, name: member?.name ?? otForm.staffId }))
     setOtForm({ staffId: '', date: isoDay(new Date()), hours: 2, reason: '' })
     setShowOTModal(false)
   }
@@ -125,7 +127,7 @@ export default function HoursPage() {
       a.click()
       URL.revokeObjectURL(url)
     }
-    toast.success(`Exported ${rows.length} staff records`)
+    toast.success(t('hours.exported', { count: rows.length }))
   }
 
   return (
@@ -133,19 +135,19 @@ export default function HoursPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Clock className="h-6 w-6 text-[var(--color-primary)]" />Hours &amp; Overtime
+            <Clock className="h-6 w-6 text-[var(--color-accent)]" />{t('hours.title')}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Scheduled hours · OT tracking · payroll-ready · NABH HRM</p>
+          <p className="text-sm text-slate-500 mt-1">{t('hours.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={exportCSV}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
-            <Download className="h-3.5 w-3.5" />Export
+            <Download className="h-3.5 w-3.5" />{t('hours.export')}
           </button>
           {canLogOT && (
             <button onClick={() => setShowOTModal(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white cursor-pointer">
-              <Plus className="h-3.5 w-3.5" />Log overtime
+              <Plus className="h-3.5 w-3.5" />{t('hours.logOvertime')}
             </button>
           )}
         </div>
@@ -153,10 +155,10 @@ export default function HoursPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KPI label="Scheduled hours" value={`${totals.scheduled}h`} tint="bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]" />
-        <KPI label="Overtime hours" value={`${totals.overtime}h`} tint="bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]" />
-        <KPI label="OT pay (₹)" value={`₹${totals.otPay.toLocaleString('en-IN')}`} tint="bg-emerald-50 border-emerald-200 text-emerald-700" />
-        <KPI label="OT-risk staff" value={totals.atRisk} tint={totals.atRisk > 0 ? "bg-red-50 border-red-200 text-red-700" : "bg-slate-50 border-slate-200 text-slate-600"} />
+        <KPI label={t('hours.kpiScheduled')} value={`${totals.scheduled}h`} tint="bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]" />
+        <KPI label={t('hours.kpiOvertime')} value={`${totals.overtime}h`} tint="bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]" />
+        <KPI label={t('hours.kpiOtPay')} value={`₹${totals.otPay.toLocaleString('en-IN')}`} tint="bg-emerald-50 border-emerald-200 text-emerald-700" />
+        <KPI label={t('hours.kpiOtRisk')} value={totals.atRisk} tint={totals.atRisk > 0 ? "bg-red-50 border-red-200 text-red-700" : "bg-slate-50 border-slate-200 text-slate-600"} />
       </div>
 
       {/* Controls */}
@@ -179,7 +181,7 @@ export default function HoursPage() {
               data-testid={`hours-period-${p}`}
               className={cn('px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer',
                 period === p ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
-              {PERIOD_LABEL[p]}
+              {t.has(`hours.period.${p}`) ? t(`hours.period.${p}`) : PERIOD_LABEL[p]}
             </button>
           ))}
         </div>
@@ -187,15 +189,15 @@ export default function HoursPage() {
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search…"
-            className="w-full pl-8 pr-3 py-1.5 text-xs font-bold border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-300" />
+            placeholder={t('hours.searchPlaceholder')}
+            className="w-full pl-8 pr-3 py-1.5 text-xs font-bold border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/25" />
         </div>
 
         <div className="flex items-center gap-1.5">
           <Filter className="h-3.5 w-3.5 text-slate-400" />
           <Select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}
             className="text-xs font-bold border border-slate-300 rounded-xl px-2 py-1.5 bg-white">
-            {departments.map(d => <option key={d}>{d}</option>)}
+            {departments.map(d => <option key={d} value={d}>{d === 'All' ? t('hours.allDepts') : d}</option>)}
           </Select>
         </div>
       </div>
@@ -205,25 +207,25 @@ export default function HoursPage() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              {['Staff', 'Dept', 'Scheduled', 'OT', 'Total', 'OT pay', 'Status'].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{h}</th>
+              {['colStaff', 'colDept', 'colScheduled', 'colOt', 'colTotal', 'colOtPay', 'colStatus'].map(h => (
+                <th key={h} className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{t(`hours.${h}`)}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400 italic">No staff records.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400 italic">{t('hours.noRecords')}</td></tr>
             ) : rows.map((r, i) => (
               <motion.tr key={r.staff.id}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.01 }}
                 className="hover:bg-slate-50">
                 <td className="px-4 py-3">
                   <p className="text-sm font-bold text-slate-800">{r.staff.name}</p>
-                  <p className="text-[11px] text-slate-400">{r.staff.id} · {r.staff.role.replace('_', ' ')}</p>
+                  <p className="text-[11px] text-slate-400">{r.staff.id} · {t.has(`coverage.role.${r.staff.role}`) ? t(`coverage.role.${r.staff.role}`) : r.staff.role.replace('_', ' ')}</p>
                 </td>
                 <td className="px-4 py-3 text-xs text-slate-600">{r.staff.department}</td>
                 <td className="px-4 py-3 text-xs font-bold text-slate-800 tabular-nums">{r.scheduled}h</td>
-                <td className={cn('px-4 py-3 text-xs font-bold tabular-nums', r.overtime > 0 ? 'text-[var(--color-primary)]' : 'text-slate-400')}>{r.overtime}h</td>
+                <td className={cn('px-4 py-3 text-xs font-bold tabular-nums', r.overtime > 0 ? 'text-[var(--color-accent)]' : 'text-slate-400')}>{r.overtime}h</td>
                 <td className={cn('px-4 py-3 text-xs font-black tabular-nums', r.otRisk ? 'text-red-700' : 'text-slate-800')}>{r.total}h</td>
                 <td className="px-4 py-3 text-xs font-bold tabular-nums text-slate-700">
                   {r.otPay > 0 ? `₹${r.otPay.toLocaleString('en-IN')}` : '—'}
@@ -231,12 +233,12 @@ export default function HoursPage() {
                 <td className="px-4 py-3">
                   {r.otRisk ? (
                     <span className="flex items-center gap-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-700">
-                      <AlertTriangle className="h-2.5 w-2.5" />OT risk
+                      <AlertTriangle className="h-2.5 w-2.5" />{t('hours.otRisk')}
                     </span>
                   ) : r.total > 0 ? (
-                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">OK</span>
+                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{t('hours.ok')}</span>
                   ) : (
-                    <span className="text-[10px] text-slate-400 italic">No hours</span>
+                    <span className="text-[10px] text-slate-400 italic">{t('hours.noHours')}</span>
                   )}
                 </td>
               </motion.tr>
@@ -246,8 +248,8 @@ export default function HoursPage() {
       </div>
 
       <p className="text-[11px] text-slate-400">
-        OT-risk threshold: {period === 'week' ? '48h/week' : period === 'fortnight' ? '96h/fortnight' : '192h/month'}
-        (Working Time Directive baseline)
+        {t('hours.thresholdLabel')}: {period === 'week' ? t('hours.threshWeek') : period === 'fortnight' ? t('hours.threshFortnight') : t('hours.threshMonth')}
+        {' '}{t('hours.wtdBaseline')}
       </p>
 
       {/* Log OT modal */}
@@ -259,15 +261,15 @@ export default function HoursPage() {
           <div onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5">
             <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-              <Plus className="h-4 w-4 text-[var(--color-primary)]" />Log overtime
+              <Plus className="h-4 w-4 text-[var(--color-accent)]" />{t('hours.logOvertime')}
             </h3>
-            <p className="text-xs text-slate-500 mb-4">Logged OT is added to the staff's total hours + payroll preview</p>
+            <p className="text-xs text-slate-500 mb-4">{t('hours.modalNote')}</p>
             <div className="space-y-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Staff member</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">{t('hours.staffMember')}</p>
                 <Select value={otForm.staffId} onChange={(e) => setOtForm({ ...otForm, staffId: e.target.value })}
-                  className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-200">
-                  <option value="">— Pick —</option>
+                  className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25">
+                  <option value="">{t('hours.pickOption')}</option>
                   {staff.filter(s => s.status === 'active').map(s => (
                     <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
                   ))}
@@ -275,31 +277,31 @@ export default function HoursPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Date</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">{t('hours.date')}</p>
                   <input type="date" value={otForm.date}
                     onChange={(e) => setOtForm({ ...otForm, date: e.target.value })}
-                    className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-200" />
+                    className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Hours</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">{t('hours.hoursLabel')}</p>
                   <input type="number" min={0.5} step={0.5} value={otForm.hours}
                     onChange={(e) => setOtForm({ ...otForm, hours: Number(e.target.value) })}
-                    className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-200" />
+                    className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25" />
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Reason</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">{t('hours.reason')}</p>
                 <input value={otForm.reason} onChange={(e) => setOtForm({ ...otForm, reason: e.target.value })}
-                  placeholder="e.g., Extended ICU coverage"
-                  className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-200" />
+                  placeholder={t('hours.reasonPlaceholder')}
+                  className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25" />
               </div>
             </div>
             <div className="flex gap-2 justify-end mt-5">
               <button onClick={() => setShowOTModal(false)}
-                className="px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
+                className="px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">{t('hours.cancel')}</button>
               <button onClick={handleLogOT}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white cursor-pointer">
-                <Sparkles className="h-3.5 w-3.5" />Log overtime
+                <Sparkles className="h-3.5 w-3.5" />{t('hours.logOvertime')}
               </button>
             </div>
           </div>

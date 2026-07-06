@@ -12,6 +12,8 @@ function baseOrder(overrides: Partial<LabOrder> = {}): LabOrder {
     id: 'LO-TEST-1',
     patientId: 'PT-1',
     patientName: 'Test Patient',
+    uhid: 'UHID-TEST-1',
+    department: 'General Medicine',
     source: 'OPD',
     doctorName: 'Dr. Test',
     orderedAt: new Date().toISOString(),

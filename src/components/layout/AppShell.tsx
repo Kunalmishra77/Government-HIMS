@@ -13,7 +13,7 @@ import {
   Droplets, Utensils, Truck, Heart, BookOpen, AlertTriangle, ShieldAlert,
   Sparkles, ChevronRight, MessageSquare, MessageSquarePlus, Video, Siren, Menu, ShoppingCart, Send,
   List, Star, Building2, ArrowLeftRight, MapPin, Baby, Bug,
-  Droplet, Cpu, SlidersHorizontal, RefreshCw, UserPlus,
+  Droplet, Cpu, SlidersHorizontal, RefreshCw, UserPlus, Gauge,
 } from "lucide-react"
 import { useAuthStore, type Role } from "@/store/useAuthStore"
 import { usePatientStore } from "@/store/usePatientStore"
@@ -24,229 +24,233 @@ import { LocaleToggle } from "@/components/ui/LocaleToggle"
 import { CommandPalette, CommandPaletteTrigger } from "@/components/layout/CommandPalette"
 import { CriticalValueBanner } from "@/components/clinical/CriticalValueBanner"
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 type NavItem = { href: string; label: string; icon: React.ElementType }
 
 const PATIENT_SECTIONS: { header: string; items: NavItem[] }[] = [
-  { header: 'Care', items: [
-    { href: '/patient/dashboard',    label: 'Dashboard',       icon: Home },
-    { href: '/patient/ai-care',      label: 'AI Care',         icon: Sparkles },
-    { href: '/patient/health-story', label: 'My Health Story', icon: Activity },
+  { header: 'section.care', items: [
+    { href: '/patient/dashboard',    label: 'item.patient_dashboard',    icon: Home },
+    { href: '/patient/ai-care',      label: 'item.patient_ai_care',      icon: Sparkles },
+    { href: '/patient/health-story', label: 'item.patient_health_story', icon: Activity },
   ] },
-  { header: 'Consultations', items: [
-    { href: '/patient/consultations', label: 'My Consultations', icon: Calendar },
-    { href: '/patient/orders',        label: "Doctor's Orders",  icon: ClipboardList },
+  { header: 'section.consultations', items: [
+    { href: '/patient/consultations', label: 'item.patient_consultations', icon: Calendar },
+    { href: '/patient/orders',        label: 'item.patient_orders',        icon: ClipboardList },
   ] },
-  { header: 'Hospital Services', items: [
-    { href: '/patient/emergency',  label: 'Emergency Visits', icon: Siren },
-    { href: '/patient/ipd',        label: 'IPD / Admission', icon: BedDouble },
-    { href: '/patient/discharge',  label: 'My Discharge',    icon: CheckCircle },
-    { href: '/patient/pharmacy',   label: 'Pharmacy',        icon: Pill },
-    { href: '/patient/pathology',  label: 'Pathology',       icon: FlaskConical },
-    { href: '/patient/radiology',  label: 'Radiology',       icon: ScanLine },
-    { href: '/patient/blood-bank', label: 'Blood Bank',      icon: Droplets },
-    { href: '/patient/ambulance',  label: 'Ambulance',       icon: Truck },
+  { header: 'section.hospital_services', items: [
+    { href: '/patient/emergency',  label: 'item.patient_emergency',   icon: Siren },
+    { href: '/patient/ipd',        label: 'item.patient_ipd',         icon: BedDouble },
+    { href: '/patient/discharge',  label: 'item.patient_discharge',   icon: CheckCircle },
+    { href: '/patient/pharmacy',   label: 'item.patient_pharmacy',    icon: Pill },
+    { href: '/patient/pathology',  label: 'item.patient_pathology',   icon: FlaskConical },
+    { href: '/patient/radiology',  label: 'item.patient_radiology',   icon: ScanLine },
+    { href: '/patient/blood-bank', label: 'item.patient_blood_bank',  icon: Droplets },
+    { href: '/patient/ambulance',  label: 'item.patient_ambulance',   icon: Truck },
   ] },
-  { header: 'Records & Billing', items: [
-    { href: '/patient/downloads', label: 'Download Center', icon: FileText },
-    { href: '/patient/billing',   label: 'Billing',         icon: Receipt },
-    { href: '/patient/insurance', label: 'Insurance',       icon: ShieldCheck },
+  { header: 'section.records_billing', items: [
+    { href: '/patient/downloads', label: 'item.patient_downloads', icon: FileText },
+    { href: '/patient/billing',   label: 'item.patient_billing',   icon: Receipt },
+    { href: '/patient/insurance', label: 'item.patient_insurance', icon: ShieldCheck },
   ] },
-  { header: 'Experience', items: [
-    { href: '/patient/feedback', label: 'Feedback', icon: MessageSquarePlus },
+  { header: 'section.experience', items: [
+    { href: '/patient/feedback', label: 'item.patient_feedback', icon: MessageSquarePlus },
   ] },
-  { header: 'Account', items: [
-    { href: '/patient/followup', label: 'Care & Follow-up',  icon: HeartPulse },
-    { href: '/patient/profile',  label: 'Profile & Privacy', icon: UserCog },
-    { href: '/patient/help',     label: 'Help & Emergency',  icon: AlertTriangle },
+  { header: 'section.account', items: [
+    { href: '/patient/followup', label: 'item.patient_followup', icon: HeartPulse },
+    { href: '/patient/profile',  label: 'item.patient_profile',  icon: UserCog },
+    { href: '/patient/help',     label: 'item.patient_help',     icon: AlertTriangle },
   ] },
 ]
 
 // Reception = front-desk command center. Owns the front-desk workflow;
 // surfaces read-only "visibility" windows into other modules; shared utilities.
 const RECEPTION_SECTIONS: { header: string; items: NavItem[] }[] = [
-  { header: 'Front Desk', items: [
-    { href: '/reception/dashboard',    label: 'Dashboard',     icon: Home },
-    { href: '/reception/opd',          label: 'OPD Queue',     icon: LayoutDashboard },
-    { href: '/reception/register',     label: 'Register Patient', icon: UserPlus },
-    { href: '/reception/journey',      label: 'Journey Board', icon: Activity },
-    { href: '/reception/queue',        label: 'OPD Display',   icon: Activity },
-    { href: '/reception/appointments', label: 'Appointments',  icon: Calendar },
-    { href: '/reception/patients',     label: 'Patients',      icon: Users },
+  { header: 'section.front_desk', items: [
+    { href: '/reception/dashboard',    label: 'item.reception_dashboard',    icon: Home },
+    { href: '/reception/opd',          label: 'item.reception_opd',          icon: LayoutDashboard },
+    { href: '/reception/register',     label: 'item.reception_register',     icon: UserPlus },
+    { href: '/reception/journey',      label: 'item.reception_journey',      icon: Activity },
+    { href: '/reception/queue',        label: 'item.reception_queue',        icon: Activity },
+    { href: '/reception/appointments', label: 'item.reception_appointments', icon: Calendar },
+    { href: '/reception/patients',     label: 'item.reception_patients',     icon: Users },
+    { href: '/reception/referrals',    label: 'item.reception_referrals',    icon: Send },
   ] },
-  { header: 'Coordination', items: [
-    { href: '/reception/beds',        label: 'Bed Status',      icon: BedDouble },
-    { href: '/reception/billing',     label: 'Billing Status',  icon: CreditCard },
-    { href: '/reception/tpa',         label: 'TPA / Insurance', icon: ShieldCheck },
-    { href: '/reception/diagnostics', label: 'Diagnostics',     icon: FlaskConical },
-    { href: '/reception/ambulance',   label: 'Ambulance',       icon: Truck },
+  { header: 'section.coordination', items: [
+    { href: '/reception/beds',        label: 'item.reception_beds',        icon: BedDouble },
+    { href: '/reception/billing',     label: 'item.reception_billing',     icon: CreditCard },
+    { href: '/reception/tpa',         label: 'item.reception_tpa',         icon: ShieldCheck },
+    { href: '/reception/diagnostics', label: 'item.reception_diagnostics', icon: FlaskConical },
+    { href: '/reception/ambulance',   label: 'item.reception_ambulance',   icon: Truck },
   ] },
-  { header: 'Utilities', items: [
-    { href: '/reception/messages',  label: 'Messaging',       icon: MessageSquare },
-    { href: '/reception/downloads', label: 'Download Center', icon: FileText },
-    { href: '/reception/reports',   label: 'Reports',         icon: BarChart3 },
-    { href: '/checkin',             label: 'Kiosk Check-in',  icon: ScanLine },
-    { href: '/reception/setup',     label: 'Setup',           icon: Settings },
+  { header: 'section.utilities', items: [
+    { href: '/reception/messages',  label: 'item.reception_messages',  icon: MessageSquare },
+    { href: '/reception/downloads', label: 'item.reception_downloads', icon: FileText },
+    { href: '/reception/reports',   label: 'item.reception_reports',   icon: BarChart3 },
+    { href: '/checkin',             label: 'item.reception_checkin',   icon: ScanLine },
+    { href: '/reception/setup',     label: 'item.reception_setup',     icon: Settings },
   ] },
 ]
 
 const DOCTOR_SECTIONS: { header: string; items: NavItem[] }[] = [
-  { header: 'Clinical', items: [
-    { href: '/doctor/dashboard',   label: 'OPD Consultations',  icon: Stethoscope },
-    { href: '/doctor/online',      label: 'Online Consultation', icon: Video },
-    { href: '/doctor/ipd',         label: 'IPD / Inpatients',   icon: HeartPulse },
-    { href: '/doctor/emergencies', label: 'Emergencies',        icon: Siren },
+  { header: 'section.clinical', items: [
+    { href: '/doctor/dashboard',   label: 'item.doctor_dashboard',   icon: Stethoscope },
+    { href: '/doctor/online',      label: 'item.doctor_online',      icon: Video },
+    { href: '/doctor/ipd',         label: 'item.doctor_ipd',         icon: HeartPulse },
+    { href: '/doctor/emergencies', label: 'item.doctor_emergencies', icon: Siren },
   ] },
-  { header: 'Patients', items: [
-    { href: '/doctor/records',     label: 'Patient Records',    icon: ClipboardList },
-    { href: '/doctor/ai-assistant',label: 'AI Assistant',       icon: Sparkles },
+  { header: 'patients', items: [
+    { href: '/doctor/records',     label: 'item.doctor_records',      icon: ClipboardList },
+    { href: '/doctor/ai-assistant',label: 'item.doctor_ai_assistant', icon: Sparkles },
   ] },
-  { header: 'Workspace', items: [
-    { href: '/doctor/schedule',    label: 'My Schedule',        icon: Calendar },
-    { href: '/doctor/inbox',       label: 'Inbox',              icon: MessageSquare },
+  { header: 'section.workspace', items: [
+    { href: '/doctor/schedule',    label: 'item.doctor_schedule', icon: Calendar },
+    { href: '/doctor/inbox',       label: 'item.doctor_inbox',    icon: MessageSquare },
   ] },
-  { header: 'Insights', items: [
-    { href: '/doctor/analytics',   label: 'My Activity',        icon: BarChart3 },
-    { href: '/doctor/beds',        label: 'Bed Availability',   icon: BedDouble },
-    { href: '/doctor/registries',  label: 'Disease Registries', icon: Users },
+  { header: 'section.insights', items: [
+    { href: '/doctor/analytics',   label: 'item.doctor_analytics',  icon: BarChart3 },
+    { href: '/doctor/beds',        label: 'item.doctor_beds',       icon: BedDouble },
+    { href: '/doctor/registries',  label: 'item.doctor_registries', icon: Users },
   ] },
 ]
 
 const PHARMACY_SECTIONS: { header: string; items: NavItem[] }[] = [
-  { header: 'Fulfilment', items: [
-    { href: '/pharmacy/dashboard', label: 'Overview',           icon: LayoutDashboard },
-    { href: '/pharmacy/queue',     label: 'Prescription Queue', icon: ClipboardList },
+  { header: 'section.fulfilment', items: [
+    { href: '/pharmacy/dashboard', label: 'item.pharmacy_dashboard', icon: LayoutDashboard },
+    { href: '/pharmacy/queue',     label: 'item.pharmacy_queue',     icon: ClipboardList },
   ] },
-  { header: 'Stock & Compliance', items: [
-    { href: '/pharmacy/inventory', label: 'Inventory',     icon: Package },
-    { href: '/pharmacy/master',    label: 'Drug Master',   icon: BookOpen },
-    { href: '/pharmacy/narcotics', label: 'Narcotics Log', icon: AlertTriangle },
+  { header: 'section.stock_compliance', items: [
+    { href: '/pharmacy/inventory', label: 'item.pharmacy_inventory', icon: Package },
+    { href: '/pharmacy/master',    label: 'item.pharmacy_master',    icon: BookOpen },
+    { href: '/pharmacy/narcotics', label: 'item.pharmacy_narcotics', icon: AlertTriangle },
   ] },
-  { header: 'Utilities', items: [
-    { href: '/pharmacy/messages',  label: 'Messaging',     icon: MessageSquare },
+  { header: 'section.utilities', items: [
+    { href: '/pharmacy/messages',  label: 'item.pharmacy_messages',  icon: MessageSquare },
   ] },
 ]
 
 // Enterprise RIS — grouped sidebar (Command / Workflow / Reports).
 const RADIOLOGY_SECTIONS: { header: string; items: NavItem[] }[] = [
-  { header: 'Command', items: [
-    { href: '/radiology/dashboard',   label: 'RIS Command Center', icon: LayoutDashboard },
-    { href: '/radiology/ai-command',  label: 'AI Command Center',  icon: Sparkles },
-    { href: '/radiology/critical',    label: 'Critical Results',   icon: Siren },
-    { href: '/radiology/analytics',   label: 'Analytics',          icon: BarChart3 },
+  { header: 'section.command', items: [
+    { href: '/radiology/dashboard',   label: 'item.radiology_dashboard',   icon: LayoutDashboard },
+    { href: '/radiology/ai-command',  label: 'item.radiology_ai_command',  icon: Sparkles },
+    { href: '/radiology/critical',    label: 'item.radiology_critical',    icon: Siren },
+    { href: '/radiology/analytics',   label: 'item.radiology_analytics',   icon: BarChart3 },
   ] },
-  { header: 'Workflow', items: [
-    { href: '/radiology/orders',      label: 'Order Desk',         icon: ClipboardCheck },
-    { href: '/radiology/schedule',    label: 'Scheduling',         icon: Activity },
-    { href: '/radiology/arrival',     label: 'Arrival Desk',       icon: ScanLine },
-    { href: '/radiology/inbox',       label: 'Worklist Inbox',     icon: ClipboardList },
-    { href: '/radiology/bench',       label: 'Modality Bench',     icon: ScanLine },
-    { href: '/radiology/reading',     label: 'Reading Room',       icon: FileText },
-    { href: '/radiology/verification',label: 'Verification',       icon: ShieldCheck },
+  { header: 'section.workflow', items: [
+    { href: '/radiology/in-queue',    label: 'item.radiology_in_queue',     icon: ClipboardList },
+    { href: '/radiology/orders',      label: 'item.radiology_orders',       icon: ClipboardCheck },
+    { href: '/radiology/schedule',    label: 'item.radiology_schedule',     icon: Activity },
+    { href: '/radiology/arrival',     label: 'item.radiology_arrival',      icon: ScanLine },
+    { href: '/radiology/inbox',       label: 'item.radiology_inbox',        icon: ClipboardList },
+    { href: '/radiology/bench',       label: 'item.radiology_bench',        icon: ScanLine },
+    { href: '/radiology/reading',     label: 'item.radiology_reading',      icon: FileText },
+    { href: '/radiology/verification',label: 'item.radiology_verification', icon: ShieldCheck },
   ] },
-  { header: 'Reports', items: [
-    { href: '/radiology/viewer',      label: 'DICOM Viewer',       icon: Microscope },
-    { href: '/radiology/templates',   label: 'Report Templates',   icon: BookOpen },
-    { href: '/radiology/distribution',label: 'Result Distribution',icon: Send },
+  { header: 'section.reports', items: [
+    { href: '/radiology/reports',     label: 'item.radiology_reports',      icon: FileText },
+    { href: '/radiology/viewer',      label: 'item.radiology_viewer',       icon: Microscope },
+    { href: '/radiology/templates',   label: 'item.radiology_templates',    icon: BookOpen },
+    { href: '/radiology/distribution',label: 'item.radiology_distribution', icon: Send },
   ] },
 ]
 
 const CMO_SECTIONS: { header: string; items: NavItem[] }[] = [
-  { header: 'Daily', items: [
-    { href: '/cmo',           label: 'Home · Today\'s brief',  icon: Home },
-    { href: '/cmo/alerts',    label: 'Alerts',                 icon: AlertTriangle },
-    { href: '/cmo/approvals', label: 'Approvals',              icon: ClipboardCheck },
+  { header: 'section.daily', items: [
+    { href: '/cmo',           label: 'item.cmo_home',      icon: Home },
+    { href: '/cmo/alerts',    label: 'item.cmo_alerts',    icon: AlertTriangle },
+    { href: '/cmo/approvals', label: 'item.cmo_approvals', icon: ClipboardCheck },
   ] },
-  { header: 'Operations', items: [
-    { href: '/cmo/facilities', label: 'Facilities & map',   icon: Building2 },
-    { href: '/cmo/beds',       label: 'Bed network',        icon: BedDouble },
-    { href: '/cmo/ambulance',  label: 'Ambulance command',  icon: Ambulance },
-    { href: '/cmo/emergency',  label: 'Emergency mode',     icon: Siren },
+  { header: 'section.operations', items: [
+    { href: '/cmo/facilities', label: 'item.cmo_facilities', icon: Building2 },
+    { href: '/cmo/beds',       label: 'item.cmo_beds',       icon: BedDouble },
+    { href: '/cmo/ambulance',  label: 'item.cmo_ambulance',  icon: Ambulance },
+    { href: '/cmo/emergency',  label: 'item.cmo_emergency',  icon: Siren },
   ] },
-  { header: 'Workforce', items: [
-    { href: '/cmo/staff',    label: 'Staff & attendance',    icon: Users },
-    { href: '/cmo/postings', label: 'Postings & escalations', icon: ArrowLeftRight },
+  { header: 'section.workforce', items: [
+    { href: '/cmo/staff',    label: 'item.cmo_staff',    icon: Users },
+    { href: '/cmo/postings', label: 'item.cmo_postings', icon: ArrowLeftRight },
   ] },
-  { header: 'Public Health', items: [
-    { href: '/cmo/surveillance',     label: 'Surveillance & outbreaks', icon: Activity },
-    { href: '/cmo/mch',              label: 'MCH & immunization',      icon: HeartPulse },
-    { href: '/cmo/disease-programs', label: 'Disease programs',         icon: Stethoscope },
+  { header: 'section.public_health', items: [
+    { href: '/cmo/surveillance',     label: 'item.cmo_surveillance',     icon: Activity },
+    { href: '/cmo/mch',              label: 'item.cmo_mch',              icon: HeartPulse },
+    { href: '/cmo/disease-programs', label: 'item.cmo_disease_programs', icon: Stethoscope },
   ] },
-  { header: 'Schemes & Supply', items: [
-    { href: '/cmo/schemes',   label: 'PM-JAY & schemes', icon: ShieldCheck },
-    { href: '/cmo/supply',    label: 'Drugs & supply',   icon: Pill },
-    { href: '/cmo/equipment', label: 'Equipment & AMC',  icon: Settings },
+  { header: 'section.schemes_supply', items: [
+    { href: '/cmo/schemes',   label: 'item.cmo_schemes',   icon: ShieldCheck },
+    { href: '/cmo/supply',    label: 'item.cmo_supply',    icon: Pill },
+    { href: '/cmo/equipment', label: 'item.cmo_equipment', icon: Settings },
   ] },
-  { header: 'Quality', items: [
-    { href: '/cmo/quality',    label: 'Quality & incidents', icon: Star },
-    { href: '/cmo/grievances', label: 'RTI & grievances',    icon: MessageSquare },
+  { header: 'section.quality', items: [
+    { href: '/cmo/quality',    label: 'item.cmo_quality',    icon: Star },
+    { href: '/cmo/grievances', label: 'item.cmo_grievances', icon: MessageSquare },
   ] },
-  { header: 'Field & Reports', items: [
-    { href: '/cmo/field-visits', label: 'Field visits',      icon: MapPin },
-    { href: '/cmo/reports',      label: 'Reports & returns', icon: FileText },
+  { header: 'section.field_reports', items: [
+    { href: '/cmo/field-visits', label: 'item.cmo_field_visits', icon: MapPin },
+    { href: '/cmo/reports',      label: 'item.cmo_reports',      icon: FileText },
   ] },
-  { header: 'Comms & AI', items: [
-    { href: '/cmo/communication', label: 'Communication', icon: MessageSquarePlus },
-    { href: '/cmo/ai-assistants', label: 'AI assistants', icon: Sparkles },
+  { header: 'section.comms_ai', items: [
+    { href: '/cmo/communication', label: 'item.cmo_communication', icon: MessageSquarePlus },
+    { href: '/cmo/ai-assistants', label: 'item.cmo_ai_assistants', icon: Sparkles },
   ] },
-  { header: 'Admin', items: [
-    { href: '/cmo/settings',  label: 'Settings',  icon: Settings },
-    { href: '/cmo/audit-log', label: 'Audit log', icon: ClipboardList },
-    { href: '/cmo/profile',   label: 'Profile',   icon: UserCog },
+  { header: 'section.admin', items: [
+    { href: '/cmo/settings',  label: 'item.cmo_settings',  icon: Settings },
+    { href: '/cmo/audit-log', label: 'item.cmo_audit_log', icon: ClipboardList },
+    { href: '/cmo/profile',   label: 'item.cmo_profile',   icon: UserCog },
   ] },
 ]
 
 const SECRETARY_SECTIONS: { header: string; items: NavItem[] }[] = [
-  { header: 'Daily', items: [
-    { href: '/secretary',           label: 'Home · State brief',       icon: Home },
-    { href: '/secretary/alerts',    label: 'Alerts',                   icon: AlertTriangle },
-    { href: '/secretary/approvals', label: 'Approvals',                icon: ClipboardCheck },
+  { header: 'section.daily', items: [
+    { href: '/secretary',           label: 'item.secretary_home',      icon: Home },
+    { href: '/secretary/alerts',    label: 'item.secretary_alerts',    icon: AlertTriangle },
+    { href: '/secretary/approvals', label: 'item.secretary_approvals', icon: ClipboardCheck },
   ] },
-  { header: 'State command', items: [
-    { href: '/secretary/ranking',      label: 'Map & district ranking',    icon: BarChart3 },
-    { href: '/secretary/mobilization', label: 'Inter-district mobilization', icon: ArrowLeftRight },
-    { href: '/secretary/beds',         label: 'State bed network',          icon: BedDouble },
-    { href: '/secretary/emergency',    label: 'Statewide emergency',        icon: Siren },
+  { header: 'section.state_command', items: [
+    { href: '/secretary/ranking',      label: 'item.secretary_ranking',      icon: BarChart3 },
+    { href: '/secretary/mobilization', label: 'item.secretary_mobilization', icon: ArrowLeftRight },
+    { href: '/secretary/beds',         label: 'item.secretary_beds',         icon: BedDouble },
+    { href: '/secretary/emergency',    label: 'item.secretary_emergency',    icon: Siren },
   ] },
-  { header: 'Network', items: [
-    { href: '/secretary/districts', label: '52 District cockpits', icon: Building2 },
-    { href: '/secretary/dme',       label: 'DME · 14 colleges',    icon: Stethoscope },
-    { href: '/secretary/ayush',     label: 'AYUSH facilities',     icon: HeartPulse },
+  { header: 'section.network', items: [
+    { href: '/secretary/districts', label: 'item.secretary_districts', icon: Building2 },
+    { href: '/secretary/dme',       label: 'item.secretary_dme',       icon: Stethoscope },
+    { href: '/secretary/ayush',     label: 'item.secretary_ayush',     icon: HeartPulse },
   ] },
-  { header: 'Public Health', items: [
-    { href: '/secretary/surveillance',     label: 'Surveillance & outbreaks', icon: Activity },
-    { href: '/secretary/mch',              label: 'MCH & immunization',      icon: Baby },
-    { href: '/secretary/disease-programs', label: 'Disease programs',         icon: Bug },
+  { header: 'section.public_health', items: [
+    { href: '/secretary/surveillance',     label: 'item.secretary_surveillance',     icon: Activity },
+    { href: '/secretary/mch',              label: 'item.secretary_mch',              icon: Baby },
+    { href: '/secretary/disease-programs', label: 'item.secretary_disease_programs', icon: Bug },
   ] },
-  { header: 'Schemes & Funds', items: [
-    { href: '/secretary/schemes', label: 'PM-JAY & state schemes', icon: ShieldCheck },
-    { href: '/secretary/fraud',   label: 'Fraud command',           icon: ShieldAlert },
+  { header: 'section.schemes_funds', items: [
+    { href: '/secretary/schemes', label: 'item.secretary_schemes', icon: ShieldCheck },
+    { href: '/secretary/fraud',   label: 'item.secretary_fraud',   icon: ShieldAlert },
   ] },
-  { header: 'Workforce & Supply', items: [
-    { href: '/secretary/workforce', label: 'Workforce & DME faculty',   icon: Users },
-    { href: '/secretary/supply',    label: 'Supply chain & MPPHSCL',    icon: Pill },
+  { header: 'section.workforce_supply', items: [
+    { href: '/secretary/workforce', label: 'item.secretary_workforce', icon: Users },
+    { href: '/secretary/supply',    label: 'item.secretary_supply',    icon: Pill },
   ] },
-  { header: 'Quality & Compliance', items: [
-    { href: '/secretary/quality',   label: 'Quality & incidents', icon: Star },
-    { href: '/secretary/cag-audit', label: 'CAG audit & RTI',     icon: FileText },
+  { header: 'section.quality_compliance', items: [
+    { href: '/secretary/quality',   label: 'item.secretary_quality',   icon: Star },
+    { href: '/secretary/cag-audit', label: 'item.secretary_cag_audit', icon: FileText },
   ] },
-  { header: 'Reports', items: [
-    { href: '/secretary/reports',   label: 'National reports & PIP', icon: ClipboardList },
-    { href: '/secretary/niti-abdm', label: 'NITI Aayog & ABDM',      icon: BarChart3 },
+  { header: 'section.reports', items: [
+    { href: '/secretary/reports',   label: 'item.secretary_reports',   icon: ClipboardList },
+    { href: '/secretary/niti-abdm', label: 'item.secretary_niti_abdm', icon: BarChart3 },
   ] },
-  { header: 'Policy & Centre', items: [
-    { href: '/secretary/cabinet',       label: 'Cabinet, Assembly, policy', icon: BookOpen },
-    { href: '/secretary/centre',        label: 'Centre · MoHFW & NHA',     icon: Building2 },
+  { header: 'section.policy_centre', items: [
+    { href: '/secretary/cabinet',       label: 'item.secretary_cabinet', icon: BookOpen },
+    { href: '/secretary/centre',        label: 'item.secretary_centre',  icon: Building2 },
   ] },
-  { header: 'Comms & AI', items: [
-    { href: '/secretary/communication', label: 'Communication & press', icon: MessageSquarePlus },
-    { href: '/secretary/ai-assistants', label: 'AI assistants',          icon: Sparkles },
+  { header: 'section.comms_ai', items: [
+    { href: '/secretary/communication', label: 'item.secretary_communication', icon: MessageSquarePlus },
+    { href: '/secretary/ai-assistants', label: 'item.secretary_ai_assistants', icon: Sparkles },
   ] },
-  { header: 'Admin', items: [
-    { href: '/secretary/settings',  label: 'Settings',  icon: Settings },
-    { href: '/secretary/audit-log', label: 'Audit log', icon: ClipboardList },
-    { href: '/secretary/profile',   label: 'Profile',   icon: UserCog },
+  { header: 'section.admin', items: [
+    { href: '/secretary/settings',  label: 'item.secretary_settings',  icon: Settings },
+    { href: '/secretary/audit-log', label: 'item.secretary_audit_log', icon: ClipboardList },
+    { href: '/secretary/profile',   label: 'item.secretary_profile',   icon: UserCog },
   ] },
 ]
 
@@ -256,158 +260,161 @@ const navByRole: Record<Role, NavItem[]> = {
   reception: RECEPTION_SECTIONS.flatMap(s => s.items),
   pharmacy: PHARMACY_SECTIONS.flatMap(s => s.items),
   admin: [
-    { href: '/admin/assistant',       label: 'AI Assistant',     icon: Sparkles },
-    { href: '/admin/command-center',  label: 'Command Center',   icon: Activity },
-    { href: '/admin/dashboard',       label: 'COO Dashboard',    icon: LayoutDashboard },
-    { href: '/admin/users',           label: 'Staff Management', icon: UserCog },
-    { href: '/admin/credentials',     label: 'Credentials',      icon: ShieldCheck },
-    { href: '/admin/operations',      label: 'Operations',       icon: Workflow },
-    { href: '/admin/analytics',       label: 'Analytics',        icon: BarChart3 },
-    { href: '/admin/roster',          label: 'HR Roster',        icon: Calendar },
-    { href: '/admin/duty',            label: 'Duty Assignment',  icon: ClipboardList },
-    { href: '/admin/hours',           label: 'Hours & OT',       icon: Activity },
-    { href: '/admin/on-call',         label: 'On-Call Rotation', icon: Bell },
-    { href: '/admin/coverage',        label: 'Coverage Rules',   icon: ShieldCheck },
-    { href: '/admin/staffing',        label: 'Staffing Overview',icon: Users },
-    { href: '/admin/doctor-activity', label: 'Doctor Activity',  icon: Stethoscope },
-    { href: '/admin/finance',         label: 'Hospital P&L',     icon: CreditCard },
-    { href: '/admin/payroll',         label: 'Payroll',          icon: Receipt },
-    { href: '/admin/vendors',         label: 'Vendors',          icon: Truck },
-    { href: '/admin/disputes',        label: 'Disputes',         icon: ShieldAlert },
-    { href: '/admin/compliance',      label: 'Compliance',       icon: ShieldCheck },
-    { href: '/admin/statutory',       label: 'Statutory',        icon: Calendar },
-    { href: '/admin/disha',           label: 'DISHA / DPDP',     icon: ShieldCheck },
-    { href: '/quality/dashboard',     label: 'Quality',          icon: ShieldCheck },
-    { href: '/quality/nabh',          label: 'NABH Cockpit',     icon: ShieldCheck },
-    { href: '/admin/ai-performance',  label: 'AI Performance',   icon: Sparkles },
+    { href: '/admin/assistant',       label: 'item.admin_assistant',       icon: Sparkles },
+    { href: '/admin/command-center',  label: 'item.admin_command_center',  icon: Activity },
+    { href: '/admin/dashboard',       label: 'item.admin_dashboard',       icon: LayoutDashboard },
+    { href: '/admin/coo',             label: 'item.admin_coo',             icon: Gauge },
+    { href: '/admin/users',           label: 'item.admin_users',           icon: UserCog },
+    { href: '/admin/credentials',     label: 'item.admin_credentials',     icon: ShieldCheck },
+    { href: '/admin/operations',      label: 'item.admin_operations',      icon: Workflow },
+    { href: '/admin/analytics',       label: 'item.admin_analytics',       icon: BarChart3 },
+    { href: '/admin/roster',          label: 'item.admin_roster',          icon: Calendar },
+    { href: '/admin/duty',            label: 'item.admin_duty',            icon: ClipboardList },
+    { href: '/admin/hours',           label: 'item.admin_hours',           icon: Activity },
+    { href: '/admin/on-call',         label: 'item.admin_on_call',         icon: Bell },
+    { href: '/admin/coverage',        label: 'item.admin_coverage',        icon: ShieldCheck },
+    { href: '/admin/staffing',        label: 'item.admin_staffing',        icon: Users },
+    { href: '/admin/doctor-activity', label: 'item.admin_doctor_activity', icon: Stethoscope },
+    { href: '/admin/finance',         label: 'item.admin_finance',         icon: CreditCard },
+    { href: '/admin/payroll',         label: 'item.admin_payroll',         icon: Receipt },
+    { href: '/admin/vendors',         label: 'item.admin_vendors',         icon: Truck },
+    { href: '/admin/disputes',        label: 'item.admin_disputes',        icon: ShieldAlert },
+    { href: '/admin/compliance',      label: 'item.admin_compliance',      icon: ShieldCheck },
+    { href: '/admin/statutory',       label: 'item.admin_statutory',       icon: Calendar },
+    { href: '/admin/disha',           label: 'item.admin_disha',           icon: ShieldCheck },
+    { href: '/quality/dashboard',     label: 'item.admin_quality',         icon: ShieldCheck },
+    { href: '/quality/nabh',          label: 'item.admin_nabh',            icon: ShieldCheck },
+    { href: '/admin/ai-performance',  label: 'item.admin_ai_performance',  icon: Sparkles },
   ],
   hr: [
-    { href: '/hr/dashboard',     label: 'HR Dashboard',          icon: LayoutDashboard },
-    { href: '/hr/employees',     label: 'Employees',             icon: Users },
-    { href: '/hr/leave',         label: 'Leave Management',      icon: Calendar },
-    { href: '/hr/attendance',    label: 'Attendance & Time',     icon: Activity },
-    { href: '/hr/recruitment',   label: 'Recruitment',           icon: Workflow },
-    { href: '/hr/onboarding',    label: 'Onboarding',            icon: ClipboardCheck },
-    { href: '/hr/appraisals',    label: 'Performance',           icon: BarChart3 },
+    { href: '/hr/dashboard',     label: 'item.hr_dashboard',   icon: LayoutDashboard },
+    { href: '/hr/employees',     label: 'item.hr_employees',   icon: Users },
+    { href: '/hr/leave',         label: 'item.hr_leave',       icon: Calendar },
+    { href: '/hr/attendance',    label: 'item.hr_attendance',  icon: Activity },
+    { href: '/hr/recruitment',   label: 'item.hr_recruitment', icon: Workflow },
+    { href: '/hr/onboarding',    label: 'item.hr_onboarding',  icon: ClipboardCheck },
+    { href: '/hr/appraisals',    label: 'item.hr_appraisals',  icon: BarChart3 },
   ],
   nurse: [
-    { href: '/nurse/dashboard',       label: 'Ward Dashboard',  icon: LayoutDashboard },
-    { href: '/nurse/vitals-requests', label: 'Vitals Requests', icon: HeartPulse },
-    { href: '/nurse/orders',          label: 'Doctor Orders',   icon: ClipboardCheck },
-    { href: '/nurse/patients',        label: 'My Ward',         icon: Users },
-    { href: '/nurse/rounds',     label: 'Doctor Rounds',   icon: Stethoscope },
-    { href: '/nurse/tasks',      label: 'Daily Tasks',     icon: ClipboardList },
-    { href: '/nurse/medication', label: 'Medication (MAR)', icon: Pill },
-    { href: '/nurse/fluid-balance', label: 'Fluid Balance', icon: Droplets },
-    { href: '/nurse/handover',   label: 'Handover Brief',  icon: FileText },
-    { href: '/nurse/ai-assistant', label: 'AI Assistant',  icon: Sparkles },
-    { href: '/nurse/messages',   label: 'Messages',        icon: MessageSquare },
+    { href: '/nurse/dashboard',       label: 'item.nurse_dashboard',       icon: LayoutDashboard },
+    { href: '/nurse/vitals-requests', label: 'item.nurse_vitals_requests', icon: HeartPulse },
+    { href: '/nurse/orders',          label: 'item.nurse_orders',          icon: ClipboardCheck },
+    { href: '/nurse/patients',        label: 'item.nurse_patients',        icon: Users },
+    { href: '/nurse/rounds',     label: 'item.nurse_rounds',        icon: Stethoscope },
+    { href: '/nurse/tasks',      label: 'item.nurse_tasks',         icon: ClipboardList },
+    { href: '/nurse/medication', label: 'item.nurse_medication',    icon: Pill },
+    { href: '/nurse/fluid-balance', label: 'item.nurse_fluid_balance', icon: Droplets },
+    { href: '/nurse/handover',   label: 'item.nurse_handover',      icon: FileText },
+    { href: '/nurse/ai-assistant', label: 'item.nurse_ai_assistant', icon: Sparkles },
+    { href: '/nurse/messages',   label: 'item.nurse_messages',      icon: MessageSquare },
   ],
   emergency: [
-    { href: '/emergency/triage',    label: 'Triage',        icon: Ambulance },
-    { href: '/emergency/floor',     label: 'ER Floor',      icon: Activity },
-    { href: '/emergency/dashboard', label: 'ER Overview',   icon: LayoutDashboard },
+    { href: '/emergency/triage',    label: 'item.emergency_triage',    icon: Ambulance },
+    { href: '/emergency/floor',     label: 'item.emergency_floor',     icon: Activity },
+    { href: '/emergency/dashboard', label: 'item.emergency_dashboard', icon: LayoutDashboard },
   ],
   lab: [
-    { href: '/lab/dashboard',       label: 'Lab Overview',     icon: LayoutDashboard },
-    { href: '/lab/phlebotomy',      label: 'Phlebotomy',       icon: Droplet },
-    { href: '/lab/inbox',           label: 'Sample Inbox',     icon: ClipboardList },
-    { href: '/lab/analyzer-feed',   label: 'Analyzer feed',    icon: Cpu },
-    { href: '/lab/verify',          label: 'Verification',     icon: ClipboardCheck },
-    { href: '/lab/benches',         label: 'Manual entries',   icon: Microscope },
-    { href: '/lab/microbiology',    label: 'Microbiology',     icon: Bug },
-    { href: '/lab/qc',              label: 'Quality Control',  icon: SlidersHorizontal },
-    { href: '/lab/reflex',          label: 'Reflex Tests',     icon: RefreshCw },
+    { href: '/lab/dashboard',       label: 'item.lab_dashboard',      icon: LayoutDashboard },
+    { href: '/lab/in-queue',        label: 'item.lab_in_queue',       icon: ClipboardList },
+    { href: '/lab/phlebotomy',      label: 'item.lab_phlebotomy',     icon: Droplet },
+    { href: '/lab/inbox',           label: 'item.lab_inbox',          icon: ClipboardList },
+    { href: '/lab/analyzer-feed',   label: 'item.lab_analyzer_feed',  icon: Cpu },
+    { href: '/lab/verify',          label: 'item.lab_verify',         icon: ClipboardCheck },
+    { href: '/lab/benches',         label: 'item.lab_benches',        icon: Microscope },
+    { href: '/lab/microbiology',    label: 'item.lab_microbiology',   icon: Bug },
+    { href: '/lab/qc',              label: 'item.lab_qc',             icon: SlidersHorizontal },
+    { href: '/lab/reflex',          label: 'item.lab_reflex',         icon: RefreshCw },
+    { href: '/lab/reports',         label: 'item.lab_reports',        icon: FileText },
   ],
   radiology: RADIOLOGY_SECTIONS.flatMap(s => s.items),
   insurance: [
-    { href: '/insurance/dashboard', label: 'TPA Overview',       icon: LayoutDashboard },
-    { href: '/insurance/pipeline',  label: 'Approval Pipeline',  icon: Workflow },
-    { href: '/insurance/claims',    label: 'Active Claims',      icon: FileText },
-    { href: '/insurance/preauth',   label: 'Pre-Auth',           icon: ShieldCheck },
-    { href: '/insurance/documents', label: 'Documents',          icon: Package },
+    { href: '/insurance/dashboard', label: 'item.insurance_dashboard', icon: LayoutDashboard },
+    { href: '/insurance/pipeline',  label: 'item.insurance_pipeline',  icon: Workflow },
+    { href: '/insurance/claims',    label: 'item.insurance_claims',    icon: FileText },
+    { href: '/insurance/preauth',   label: 'item.insurance_preauth',   icon: ShieldCheck },
+    { href: '/insurance/documents', label: 'item.insurance_documents', icon: Package },
   ],
   inventory: [
-    { href: '/inventory/dashboard', label: 'Asset Overview',     icon: LayoutDashboard },
-    { href: '/inventory/stock',     label: 'Stock Levels',       icon: Package },
-    { href: '/inventory/requests',  label: 'Pharmacy Requests',  icon: ShoppingCart },
+    { href: '/inventory/dashboard', label: 'item.inventory_dashboard', icon: LayoutDashboard },
+    { href: '/inventory/stock',     label: 'item.inventory_stock',     icon: Package },
+    { href: '/inventory/requests',  label: 'item.inventory_requests',  icon: ShoppingCart },
   ],
   bed_manager: [
-    { href: '/admission/dashboard', label: 'Admissions',   icon: BedDouble },
-    { href: '/admission/beds',      label: 'Bed Board',    icon: LayoutDashboard },
-    { href: '/admission/forecast',  label: 'Bed Forecast', icon: BarChart3 },
+    { href: '/admission/dashboard', label: 'item.bed_manager_dashboard', icon: BedDouble },
+    { href: '/admission/beds',      label: 'item.bed_manager_beds',      icon: LayoutDashboard },
+    { href: '/admission/forecast',  label: 'item.bed_manager_forecast',  icon: BarChart3 },
   ],
   discharge: [
-    { href: '/discharge/dashboard', label: 'Discharge Queue', icon: CheckCircle },
+    { href: '/discharge/dashboard', label: 'item.discharge_dashboard', icon: CheckCircle },
   ],
   billing: [
-    { href: '/billing/dashboard',   label: 'Billing Overview', icon: CreditCard },
-    { href: '/billing/packages',    label: 'Packages',         icon: Package },
-    { href: '/billing/refunds',     label: 'Refunds',          icon: Receipt },
-    { href: '/billing/discounts',   label: 'Discounts',        icon: Heart },
+    { href: '/billing/dashboard',   label: 'item.billing_dashboard', icon: CreditCard },
+    { href: '/billing/packages',    label: 'item.billing_packages',  icon: Package },
+    { href: '/billing/refunds',     label: 'item.billing_refunds',   icon: Receipt },
+    { href: '/billing/discounts',   label: 'item.billing_discounts', icon: Heart },
   ],
   ot: [
-    { href: '/ot/dashboard',    label: 'OT Live',          icon: Scissors },
-    { href: '/ot/schedule',     label: 'OT Schedule',      icon: Calendar },
-    { href: '/ot/checklist',    label: 'Pre-Op Checklist', icon: ClipboardList },
+    { href: '/ot/dashboard',    label: 'item.ot_dashboard',  icon: Scissors },
+    { href: '/ot/schedule',     label: 'item.ot_schedule',   icon: Calendar },
+    { href: '/ot/checklist',    label: 'item.ot_checklist',  icon: ClipboardList },
   ],
   housekeeping: [
-    { href: '/housekeeping/dashboard', label: 'Cleaning Queue', icon: Trash2 },
+    { href: '/housekeeping/dashboard', label: 'item.housekeeping_dashboard', icon: Trash2 },
   ],
   quality: [
-    { href: '/quality/dashboard',  label: 'QI Dashboard', icon: ShieldCheck },
-    { href: '/quality/incidents',  label: 'Incidents',    icon: Activity },
-    { href: '/quality/nabh',       label: 'NABH Cockpit', icon: ShieldCheck },
+    { href: '/quality/dashboard',  label: 'item.quality_dashboard', icon: ShieldCheck },
+    { href: '/quality/incidents',  label: 'item.quality_incidents', icon: Activity },
+    { href: '/quality/nabh',       label: 'item.quality_nabh',      icon: ShieldCheck },
   ],
   feedback_analyst: [
-    { href: '/feedback/dashboard',   label: 'Dashboard',   icon: Star },
-    { href: '/feedback/responses',   label: 'Responses',   icon: List },
-    { href: '/feedback/ai-insights', label: 'AI Insights', icon: Sparkles },
+    { href: '/feedback/dashboard',   label: 'item.feedback_dashboard',   icon: Star },
+    { href: '/feedback/responses',   label: 'item.feedback_responses',   icon: List },
+    { href: '/feedback/ai-insights', label: 'item.feedback_ai_insights', icon: Sparkles },
   ],
   blood_bank: [
-    { href: '/bloodbank/dashboard',  label: 'BB Dashboard',         icon: Droplets },
-    { href: '/bloodbank/inventory',  label: 'Inventory',            icon: Package },
-    { href: '/bloodbank/requests',   label: 'Cross-Match Requests', icon: ClipboardList },
-    { href: '/bloodbank/donors',     label: 'Donor Registry',       icon: Heart },
+    { href: '/bloodbank/dashboard',  label: 'item.bloodbank_dashboard', icon: Droplets },
+    { href: '/bloodbank/inventory',  label: 'item.bloodbank_inventory', icon: Package },
+    { href: '/bloodbank/requests',   label: 'item.bloodbank_requests',  icon: ClipboardList },
+    { href: '/bloodbank/donors',     label: 'item.bloodbank_donors',    icon: Heart },
   ],
   cssd: [
-    { href: '/cssd/dashboard',    label: 'CSSD Dashboard',       icon: LayoutDashboard },
-    { href: '/cssd/cycles',       label: 'Sterilization Cycles', icon: Activity },
-    { href: '/cssd/instruments',  label: 'Instruments',          icon: Package },
+    { href: '/cssd/dashboard',    label: 'item.cssd_dashboard',    icon: LayoutDashboard },
+    { href: '/cssd/cycles',       label: 'item.cssd_cycles',       icon: Activity },
+    { href: '/cssd/instruments',  label: 'item.cssd_instruments',  icon: Package },
   ],
   dietary: [
-    { href: '/dietary/dashboard', label: 'Dietary Dashboard', icon: Utensils },
-    { href: '/dietary/plans',     label: 'Diet Plans',        icon: BookOpen },
-    { href: '/dietary/orders',    label: 'Meal Orders',       icon: ClipboardList },
+    { href: '/dietary/dashboard', label: 'item.dietary_dashboard', icon: Utensils },
+    { href: '/dietary/plans',     label: 'item.dietary_plans',     icon: BookOpen },
+    { href: '/dietary/orders',    label: 'item.dietary_orders',    icon: ClipboardList },
   ],
   bmw: [
-    { href: '/bmw/dashboard', label: 'BMW Dashboard',      icon: AlertTriangle },
-    { href: '/bmw/log',       label: 'Waste Log',          icon: FileText },
-    { href: '/bmw/reports',   label: 'Compliance Reports', icon: BarChart3 },
+    { href: '/bmw/dashboard', label: 'item.bmw_dashboard', icon: AlertTriangle },
+    { href: '/bmw/log',       label: 'item.bmw_log',       icon: FileText },
+    { href: '/bmw/reports',   label: 'item.bmw_reports',   icon: BarChart3 },
   ],
   mortuary: [
-    { href: '/mortuary/dashboard',   label: 'Mortuary Dashboard', icon: LayoutDashboard },
-    { href: '/mortuary/records',     label: 'Deceased Records',   icon: FileText },
-    { href: '/mortuary/clearances',  label: 'Legal Clearances',   icon: CheckCircle },
+    { href: '/mortuary/dashboard',   label: 'item.mortuary_dashboard',   icon: LayoutDashboard },
+    { href: '/mortuary/records',     label: 'item.mortuary_records',     icon: FileText },
+    { href: '/mortuary/clearances',  label: 'item.mortuary_clearances',  icon: CheckCircle },
   ],
   ambulance: [
-    { href: '/ambulance/dashboard', label: 'Fleet Dashboard', icon: Truck },
-    { href: '/ambulance/dispatch',  label: 'Dispatch',        icon: Activity },
-    { href: '/ambulance/log',       label: 'Trip Log',        icon: FileText },
+    { href: '/ambulance/dashboard', label: 'item.ambulance_dashboard', icon: Truck },
+    { href: '/ambulance/dispatch',  label: 'item.ambulance_dispatch',  icon: Activity },
+    { href: '/ambulance/log',       label: 'item.ambulance_log',       icon: FileText },
   ],
   audit_officer: [
-    { href: '/audit/dashboard', label: 'Audit Dashboard',     icon: ShieldCheck },
-    { href: '/audit/log',       label: 'Audit Trail',         icon: FileText },
-    { href: '/audit/reports',   label: 'Compliance Reports',  icon: BarChart3 },
+    { href: '/audit/dashboard', label: 'item.audit_dashboard', icon: ShieldCheck },
+    { href: '/audit/log',       label: 'item.audit_log',       icon: FileText },
+    { href: '/audit/reports',   label: 'item.audit_reports',   icon: BarChart3 },
   ],
   vendor_manager: [
-    { href: '/vendor-manager/dashboard',       label: 'Dashboard',       icon: LayoutDashboard },
-    { href: '/vendor-manager/vendors',          label: 'Vendors',         icon: Truck },
-    { href: '/vendor-manager/contracts',        label: 'Contracts',       icon: FileText },
-    { href: '/vendor-manager/purchase-orders',  label: 'Purchase Orders', icon: ShoppingCart },
-    { href: '/vendor-manager/payments',         label: 'Payments',        icon: CreditCard },
-    { href: '/vendor-manager/performance',      label: 'Performance',     icon: BarChart3 },
-    { href: '/vendor-manager/ai-insights',      label: 'AI Insights',     icon: Sparkles },
+    { href: '/vendor-manager/dashboard',       label: 'item.vendor_manager_dashboard',        icon: LayoutDashboard },
+    { href: '/vendor-manager/vendors',          label: 'item.vendor_manager_vendors',         icon: Truck },
+    { href: '/vendor-manager/contracts',        label: 'item.vendor_manager_contracts',       icon: FileText },
+    { href: '/vendor-manager/purchase-orders',  label: 'item.vendor_manager_purchase_orders', icon: ShoppingCart },
+    { href: '/vendor-manager/payments',         label: 'item.vendor_manager_payments',        icon: CreditCard },
+    { href: '/vendor-manager/performance',      label: 'item.vendor_manager_performance',     icon: BarChart3 },
+    { href: '/vendor-manager/ai-insights',      label: 'item.vendor_manager_ai_insights',     icon: Sparkles },
   ],
   cmo:       CMO_SECTIONS.flatMap(s => s.items),
   secretary: SECRETARY_SECTIONS.flatMap(s => s.items),
@@ -416,18 +423,18 @@ const navByRole: Record<Role, NavItem[]> = {
 // Single disciplined deep-blue identity shared by every portal (uniform per design
 // direction). Roles are distinguished by label + icon only — never by color.
 const ROLE_LABELS: Record<Role, string> = {
-  patient: 'Patient Portal',      doctor: 'Doctor Portal',       reception: 'Reception',
-  admin: 'Admin Portal',          nurse: 'Nursing Station',      emergency: 'Emergency Room',
-  lab: 'Laboratory',              radiology: 'Radiology Dept',   insurance: 'TPA & Insurance',
-  inventory: 'Inventory Mgr',     pharmacy: 'Pharmacy',          bed_manager: 'Admission Desk',
-  discharge: 'Discharge Desk',    billing: 'Billing Dept',       ot: 'Operation Theater',
-  housekeeping: 'Housekeeping',   quality: 'Quality & Safety',   blood_bank: 'Blood Bank',
-  cssd: 'CSSD',                   dietary: 'Dietary Services',   bmw: 'Bio-Medical Waste',
-  mortuary: 'Mortuary',           ambulance: 'Ambulance Svc.',   audit_officer: 'Audit & Compliance',
-  hr: 'HR Portal',                vendor_manager: 'Vendor Mgmt',
-  feedback_analyst: 'Patient Feedback',
-  cmo:       'CMO Cockpit',
-  secretary: 'PS Health · MP',
+  patient: 'role.patient',      doctor: 'role.doctor',       reception: 'role.reception',
+  admin: 'role.admin',          nurse: 'role.nurse',         emergency: 'role.emergency',
+  lab: 'role.lab',              radiology: 'role.radiology', insurance: 'role.insurance',
+  inventory: 'role.inventory',  pharmacy: 'role.pharmacy',   bed_manager: 'role.bed_manager',
+  discharge: 'role.discharge',  billing: 'role.billing',     ot: 'role.ot',
+  housekeeping: 'role.housekeeping', quality: 'role.quality', blood_bank: 'role.blood_bank',
+  cssd: 'role.cssd',            dietary: 'role.dietary',     bmw: 'role.bmw',
+  mortuary: 'role.mortuary',    ambulance: 'role.ambulance', audit_officer: 'role.audit_officer',
+  hr: 'role.hr',                vendor_manager: 'role.vendor_manager',
+  feedback_analyst: 'role.feedback_analyst',
+  cmo:       'role.cmo',
+  secretary: 'role.secretary',
 }
 
 // Roles whose sidebar is rendered as grouped sections (with headers) instead of a flat list.
@@ -445,8 +452,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { currentUser, activeRole, logout } = useAuthStore()
   const pathname = usePathname()
   const router = useRouter()
+  const t = useTranslations('nav')
   const nav = navByRole[activeRole] ?? []
-  const roleLabel = ROLE_LABELS[activeRole]
+  const roleLabel = t(ROLE_LABELS[activeRole])
   const [collapsed, setCollapsed] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -532,23 +540,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       (pathname.startsWith(item.href + '/') &&
         !nav.some(other => other.href !== item.href && pathname.startsWith(other.href)))
     const Icon = item.icon
+    const label = t(item.label)
     return (
       <Link key={item.href} href={item.href}>
         <div
-          title={collapsed ? item.label : undefined}
+          title={collapsed ? label : undefined}
           aria-current={isActive ? 'page' : undefined}
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 cursor-pointer relative group",
             isActive
-              ? "font-semibold bg-accent-soft text-primary"
+              ? "font-semibold bg-accent-soft text-accent"
               : "font-medium text-foreground-lighter hover:text-foreground"
           )}
         >
           {isActive && <motion.div layoutId="active-nav-pill" className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-primary" />}
           {!isActive && <div className="absolute inset-0 rounded-xl bg-surface-sunken opacity-0 group-hover:opacity-100 transition-opacity duration-150" />}
-          <Icon className={cn("h-[18px] w-[18px] flex-shrink-0 relative z-10 transition-colors", isActive && "text-primary")} aria-hidden="true" />
-          {!collapsed && <span className="flex-1 truncate relative z-10">{item.label}</span>}
-          {isActive && !collapsed && <ChevronRight className="h-3.5 w-3.5 relative z-10 opacity-50 text-primary" />}
+          <Icon className={cn("h-[18px] w-[18px] flex-shrink-0 relative z-10 transition-colors", isActive && "text-accent")} aria-hidden="true" />
+          {!collapsed && <span className="flex-1 truncate relative z-10">{label}</span>}
+          {isActive && !collapsed && <ChevronRight className="h-3.5 w-3.5 relative z-10 opacity-50 text-accent" />}
         </div>
       </Link>
     )
@@ -556,7 +565,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <a href="#main-content" className="skip-link">Skip to main content</a>
+      <a href="#main-content" className="skip-link">{t('chrome.skipToContent')}</a>
 
       {/* Mobile drawer backdrop */}
       {mobileOpen && <div className="lg:hidden fixed inset-0 bg-foreground/40 backdrop-blur-[2px] z-40" onClick={() => setMobileOpen(false)} aria-hidden="true" />}
@@ -570,7 +579,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:w-64 max-lg:shadow-lg transition-transform",
           mobileOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-full",
         )}
-        aria-label="Main sidebar"
+        aria-label={t('chrome.mainSidebar')}
       >
         {/* Brand Header */}
         <div className="h-[68px] flex items-center px-4 flex-shrink-0 border-b border-border-light">
@@ -580,11 +589,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation */}
-        <nav aria-label="Main navigation" className="flex-1 px-2.5 py-4 overflow-y-auto">
+        <nav aria-label={t('chrome.mainNavigation')} className="flex-1 px-2.5 py-4 overflow-y-auto">
           {sectionsByRole[activeRole] ? (
             sectionsByRole[activeRole]!.map(section => (
               <div key={section.header} className="mb-1">
-                {!collapsed && <p className="px-3 pt-3 pb-1 t-overline text-foreground-placeholder">{section.header}</p>}
+                {!collapsed && <p className="px-3 pt-3 pb-1 t-overline text-foreground-placeholder">{t(section.header)}</p>}
                 <div className="space-y-0.5">{section.items.map(renderItem)}</div>
               </div>
             ))
@@ -598,15 +607,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* AI Status Chip */}
           {!collapsed && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-accent-soft border border-primary/15">
-              <Sparkles className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
-              <span className="text-[11px] font-semibold text-primary">AI Active</span>
+              <Sparkles className="h-3.5 w-3.5 flex-shrink-0 text-accent" />
+              <span className="text-[11px] font-semibold text-accent">{t('chrome.aiActive')}</span>
               <div className="ml-auto h-1.5 w-1.5 rounded-full bg-success" />
             </div>
           )}
 
           {/* User Row */}
           <div className={cn("flex items-center", collapsed ? "justify-center flex-col gap-2" : "gap-3 px-1")}>
-            <Avatar name={currentUser?.name ?? 'User'} size="sm" />
+            <Avatar name={currentUser?.name ?? t('chrome.userFallback')} size="sm" />
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-foreground truncate">{currentUser?.name}</p>
@@ -615,8 +624,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
             <button
               onClick={handleLogout}
-              aria-label="Log out"
-              title="Log out"
+              aria-label={t('chrome.logout')}
+              title={t('chrome.logout')}
               className="tap p-1.5 rounded-lg transition-colors flex-shrink-0 cursor-pointer text-foreground-placeholder hover:text-danger hover:bg-danger-bg"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -634,14 +643,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileOpen(true)}
-              aria-label="Open menu"
+              aria-label={t('chrome.openMenu')}
               className="lg:hidden tap p-2 -ml-2 rounded-xl transition-colors cursor-pointer text-foreground-lighter hover:bg-surface-sunken hover:text-foreground"
             >
               <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
             <button
               onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label={collapsed ? t('chrome.expandSidebar') : t('chrome.collapseSidebar')}
               className="hidden lg:block p-2 -ml-2 rounded-xl transition-colors cursor-pointer text-foreground-placeholder hover:text-foreground hover:bg-surface-sunken"
             >
               {collapsed
@@ -651,16 +660,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </button>
             <div>
               <h1 className="t-title text-foreground">
-                {pathname.startsWith('/doctor/settings') ? 'Profile & Settings' : nav.find(n => pathname.startsWith(n.href))?.label ?? 'Dashboard'}
+                {pathname.startsWith('/doctor/settings')
+                  ? t('chrome.profileSettings')
+                  : (() => { const active = nav.find(n => pathname.startsWith(n.href)); return active ? t(active.label) : t('chrome.defaultTitle') })()}
               </h1>
-              <nav aria-label="breadcrumb">
+              <nav aria-label={t('chrome.breadcrumb')}>
                 <ol className="flex items-center gap-1 text-xs font-medium text-foreground-placeholder">
                   <li>{roleLabel}</li>
                   {nav.find(n => pathname.startsWith(n.href)) && (
                     <>
                       <li aria-hidden="true">/</li>
-                      <li aria-current="page" className="font-semibold text-primary">
-                        {nav.find(n => pathname.startsWith(n.href))?.label}
+                      <li aria-current="page" className="font-semibold text-accent">
+                        {t(nav.find(n => pathname.startsWith(n.href))!.label)}
                       </li>
                     </>
                   )}
@@ -680,7 +691,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 if (typeof window === "undefined") return
                 window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, ctrlKey: true, bubbles: true }))
               }}
-              aria-label={activeRole === 'admin' ? "Ask Agentix HIMS AI" : "Search"}
+              aria-label={activeRole === 'admin' ? t('chrome.askAi') : t('chrome.search')}
               className="md:hidden tap inline-flex items-center justify-center p-2 rounded-xl text-foreground-muted hover:bg-surface-sunken transition-colors cursor-pointer"
             >
               {activeRole === 'admin' ? <Sparkles className="h-5 w-5" aria-hidden="true" /> : <Search className="h-5 w-5" aria-hidden="true" />}
@@ -695,10 +706,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => router.push('/admin/assistant')}
-                className="hidden md:inline-flex items-center gap-2 h-9 w-64 px-3 rounded-xl text-[13px] font-medium text-foreground-lighter bg-surface-sunken border border-border hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                className="hidden md:inline-flex items-center gap-2 h-9 w-64 px-3 rounded-xl text-[13px] font-medium text-foreground-lighter bg-surface-sunken border border-border hover:border-primary hover:text-accent transition-colors cursor-pointer"
               >
-                <Sparkles className="h-4 w-4 text-primary flex-shrink-0" aria-hidden="true" />
-                <span className="truncate">Ask Agentix HIMS AI anything…</span>
+                <Sparkles className="h-4 w-4 text-accent flex-shrink-0" aria-hidden="true" />
+                <span className="truncate">{t('chrome.askAiPlaceholder')}</span>
               </button>
             ) : (
             /* Global Search */
@@ -710,8 +721,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && searchResults[0]) gotoPatient(searchResults[0]); if (e.key === 'Escape') setQuery('') }}
                 onBlur={() => setTimeout(() => setQuery(''), 150)}
-                placeholder={activeRole === 'patient' ? "Search your records, doctors…" : "Search patients..."}
-                aria-label="Search"
+                placeholder={activeRole === 'patient' ? t('chrome.searchRecordsPlaceholder') : t('chrome.searchPatientsPlaceholder')}
+                aria-label={t('chrome.search')}
                 className="w-full h-9 pl-9 pr-4 rounded-xl text-sm text-foreground placeholder:text-foreground-placeholder bg-surface-sunken border border-border hover:border-border-hover focus:border-primary focus:bg-surface transition-colors"
               />
               {searchResults.length > 0 && (
@@ -732,12 +743,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="relative">
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                aria-label="Notifications"
+                aria-label={t('chrome.notifications')}
                 aria-expanded={notifOpen}
                 className="tap relative p-2 rounded-xl transition-colors cursor-pointer bg-surface-sunken border border-border text-foreground-lighter shadow-xs hover:bg-surface hover:text-foreground"
               >
                 <Bell className="h-4 w-4" aria-hidden="true" />
-                {unreadCount > 0 && <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-danger text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-surface" aria-label={`${unreadCount} new notifications`}>{unreadCount}</span>}
+                {unreadCount > 0 && <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-danger text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-surface" aria-label={t('chrome.unreadNotifications', { count: unreadCount })}>{unreadCount}</span>}
               </button>
               <AnimatePresence>
                 {notifOpen && (
@@ -749,18 +760,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     className="absolute right-0 top-12 w-72 bg-surface border border-border rounded-2xl z-50 overflow-hidden shadow-dropdown"
                   >
                     <div className="flex items-center gap-2 px-4 py-3 border-b border-border-light">
-                      <p className="text-sm font-bold text-foreground flex-1">Notifications{unreadCount > 0 ? ` · ${unreadCount}` : ''}</p>
+                      <p className="text-sm font-bold text-foreground flex-1">{t('chrome.notifications')}{unreadCount > 0 ? ` · ${unreadCount}` : ''}</p>
                       {unreadCount > 0 ? (
-                        <button onClick={() => activeRole && markAllRead(activeRole)} className="text-[10.5px] font-semibold text-primary px-2 py-1 rounded-md hover:bg-accent-soft cursor-pointer transition-colors">
-                          Mark all read
+                        <button onClick={() => activeRole && markAllRead(activeRole)} className="text-[10.5px] font-semibold text-accent px-2 py-1 rounded-md hover:bg-accent-soft cursor-pointer transition-colors">
+                          {t('chrome.markAllRead')}
                         </button>
                       ) : null}
-                      <button onClick={() => setNotifOpen(false)} aria-label="Close" className="p-1 rounded-lg hover:bg-surface-sunken cursor-pointer">
+                      <button onClick={() => setNotifOpen(false)} aria-label={t('chrome.close')} className="p-1 rounded-lg hover:bg-surface-sunken cursor-pointer">
                         <X className="h-4 w-4 text-foreground-placeholder" />
                       </button>
                     </div>
                     {roleNotifs.length === 0 ? (
-                      <div className="p-6 text-center text-sm text-foreground-lighter">All caught up — no new notifications</div>
+                      <div className="p-6 text-center text-sm text-foreground-lighter">{t('chrome.allCaughtUp')}</div>
                     ) : (
                       <div className="max-h-80 overflow-y-auto">
                         {roleNotifs.slice(0, 12).map(n => (
@@ -774,7 +785,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                               {n.patientName ? <span className="block text-[10px] font-mono text-foreground-placeholder mt-0.5">{n.patientName}</span> : null}
                             </span>
                             <button onClick={(e) => { e.stopPropagation(); dismissNotif(n.id) }}
-                              aria-label="Dismiss"
+                              aria-label={t('chrome.dismiss')}
                               className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-danger-bg text-foreground-placeholder hover:text-danger flex-shrink-0">
                               <X className="h-3 w-3" />
                             </button>
@@ -791,7 +802,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <Link href={activeRole === 'patient' ? '/patient/settings' : activeRole === 'reception' ? '/reception/setup' : activeRole === 'doctor' ? '/doctor/settings' : '/admin/analytics'}>
               <button
-                aria-label="Settings"
+                aria-label={t('chrome.settingsLabel')}
                 className="tap p-2 rounded-xl transition-colors cursor-pointer bg-surface-sunken border border-border text-foreground-lighter shadow-xs hover:bg-surface hover:text-foreground"
               >
                 <Settings className="h-4 w-4" aria-hidden="true" />

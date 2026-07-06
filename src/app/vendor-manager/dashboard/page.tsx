@@ -10,31 +10,33 @@ import {
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 const PRIORITY_STYLE = {
   urgent:   { ring: 'border-red-200 bg-red-50/60',   badge: 'bg-red-100 text-red-700',   dot: 'bg-red-500' },
   warning:  { ring: 'border-amber-200 bg-amber-50/60', badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
-  info:     { ring: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]/40',  badge: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]',  dot: 'bg-[rgba(8,145,178,0.07)]0' },
+  info:     { ring: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]/40',  badge: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]',  dot: 'bg-[rgba(238,107,38,0.07)]0' },
   positive: { ring: 'border-emerald-200 bg-emerald-50/40', badge: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
   Equipment: 'var(--color-primary)',
-  Pharma: '#0E7490',
-  Consumables: '#0891B2',
+  Pharma: '#C2481A',
+  Consumables: '#EE6B26',
   Services: '#D97706',
   Facility: '#059669',
 }
 
 const PO_STATUS_STYLE: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-600',
-  sent: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]',
-  acknowledged: 'bg-cyan-100 text-cyan-700',
+  sent: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]',
+  acknowledged: 'bg-accent-soft text-accent',
   delivered: 'bg-emerald-100 text-emerald-700',
   cancelled: 'bg-red-100 text-red-600',
 }
 
 export default function VendorDashboardPage() {
+  const t = useTranslations('vendorManager')
   const vendors = useVendorManagerStore(s => s.vendors)
   const contracts = useVendorManagerStore(s => s.contracts)
   const purchaseOrders = useVendorManagerStore(s => s.purchaseOrders)
@@ -74,10 +76,10 @@ export default function VendorDashboardPage() {
   useEffect(() => { fetchCopilot() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const kpis = [
-    { label: 'Active Vendors',      value: activeVendors,     icon: Truck,         bg: 'bg-[rgba(8,145,178,0.07)]',    ic: 'text-[var(--color-primary)]'   },
-    { label: 'Expiring Contracts',  value: expiringContracts, icon: FileText,      bg: 'bg-amber-50',   ic: 'text-amber-600'  },
-    { label: 'Overdue Payments',    value: overduePayments,   icon: CreditCard,    bg: 'bg-red-50',     ic: 'text-red-600'    },
-    { label: 'High-Risk Vendors',   value: highRiskVendors,   icon: AlertTriangle, bg: 'bg-orange-50',  ic: 'text-orange-600' },
+    { label: t('dashboard.kpiActiveVendors'),      value: activeVendors,     icon: Truck,         bg: 'bg-[rgba(238,107,38,0.07)]',    ic: 'text-[var(--color-accent)]'   },
+    { label: t('dashboard.kpiExpiringContracts'),  value: expiringContracts, icon: FileText,      bg: 'bg-amber-50',   ic: 'text-amber-600'  },
+    { label: t('dashboard.kpiOverduePayments'),    value: overduePayments,   icon: CreditCard,    bg: 'bg-red-50',     ic: 'text-red-600'    },
+    { label: t('dashboard.kpiHighRiskVendors'),   value: highRiskVendors,   icon: AlertTriangle, bg: 'bg-primary-soft',  ic: 'text-accent' },
   ]
 
   return (
@@ -85,8 +87,8 @@ export default function VendorDashboardPage() {
       {/* Page header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Vendor Management</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Procurement intelligence · contracts · payments · AI insights</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('dashboard.title')}</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{t('dashboard.subtitle')}</p>
         </div>
         <button
           onClick={fetchCopilot}
@@ -94,7 +96,7 @@ export default function VendorDashboardPage() {
           className="inline-flex items-center gap-2 h-9 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
         >
           <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-          Refresh AI
+          {t('dashboard.refreshAi')}
         </button>
       </div>
 
@@ -117,8 +119,8 @@ export default function VendorDashboardPage() {
         {/* AI Copilot panel */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
-            <Sparkles className="h-5 w-5 text-[var(--color-primary)]" />
-            <h2 className="font-bold text-slate-900">AI Vendor Copilot</h2>
+            <Sparkles className="h-5 w-5 text-[var(--color-accent)]" />
+            <h2 className="font-bold text-slate-900">{t('dashboard.copilotTitle')}</h2>
             {copilotData && (
               <div className="ml-auto flex gap-1.5">
                 {copilotData.chips.map(c => (
@@ -143,13 +145,13 @@ export default function VendorDashboardPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <p className="font-bold text-sm text-slate-800">{insight.data.title}</p>
-                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${s.badge}`}>{p}</span>
-                          <span className="text-[10px] text-slate-400 ml-auto">{Math.round(insight.confidence * 100)}% confidence</span>
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${s.badge}`}>{t.has(`priority.${p}`) ? t(`priority.${p}`) : p}</span>
+                          <span className="text-[10px] text-slate-400 ml-auto">{t('dashboard.confidence', { pct: Math.round(insight.confidence * 100) })}</span>
                         </div>
                         <p className="text-xs text-slate-600 leading-relaxed">{insight.data.body}</p>
                         {insight.data.actions && insight.data.actions[0] && (
                           <Link href={(insight.data.actions[0].payload as { path: string }).path}>
-                            <button className="mt-2 text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary)] flex items-center gap-1 cursor-pointer">
+                            <button className="mt-2 text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent)] flex items-center gap-1 cursor-pointer">
                               {insight.data.actions[0].label} <ChevronRight className="h-3 w-3" />
                             </button>
                           </Link>
@@ -160,12 +162,12 @@ export default function VendorDashboardPage() {
                 )
               })
             ) : (
-              <div className="flex items-center justify-center h-40 text-slate-400 text-sm">No insights available</div>
+              <div className="flex items-center justify-center h-40 text-slate-400 text-sm">{t('dashboard.noInsights')}</div>
             )}
             {copilotData && copilotData.insights.length > 4 && (
               <Link href="/vendor-manager/ai-insights">
-                <button className="w-full text-center text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary)] py-2 cursor-pointer">
-                  View all {copilotData.insights.length} insights →
+                <button className="w-full text-center text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent)] py-2 cursor-pointer">
+                  {t('dashboard.viewAllInsights', { count: copilotData.insights.length })}
                 </button>
               </Link>
             )}
@@ -175,8 +177,8 @@ export default function VendorDashboardPage() {
         {/* Spend by category donut */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
           <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[var(--color-primary)]" />
-            Spend by Category
+            <TrendingUp className="h-4 w-4 text-[var(--color-accent)]" />
+            {t('dashboard.spendByCategory')}
           </h2>
           {spendByCategory.length > 0 ? (
             <>
@@ -187,7 +189,7 @@ export default function VendorDashboardPage() {
                       <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] ?? '#94A3B8'} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v) => [`₹${(Number(v) / 100000).toFixed(1)}L`, 'Spend']} />
+                  <Tooltip formatter={(v) => [`₹${(Number(v) / 100000).toFixed(1)}L`, t('dashboard.spendTooltip')]} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-3 space-y-1.5">
@@ -195,7 +197,7 @@ export default function VendorDashboardPage() {
                   <div key={e.name} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
                       <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ background: CATEGORY_COLORS[e.name] ?? '#94A3B8' }} />
-                      <span className="text-slate-600">{e.name}</span>
+                      <span className="text-slate-600">{t.has(`category.${e.name}`) ? t(`category.${e.name}`) : e.name}</span>
                     </div>
                     <span className="font-semibold text-slate-800">₹{(e.value / 100000).toFixed(1)}L</span>
                   </div>
@@ -203,7 +205,7 @@ export default function VendorDashboardPage() {
               </div>
             </>
           ) : (
-            <div className="h-40 flex items-center justify-center text-slate-400 text-sm">No spend data</div>
+            <div className="h-40 flex items-center justify-center text-slate-400 text-sm">{t('dashboard.noSpendData')}</div>
           )}
         </div>
       </div>
@@ -212,22 +214,22 @@ export default function VendorDashboardPage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <h2 className="font-bold text-slate-900 flex items-center gap-2">
-            <Package className="h-4 w-4 text-[var(--color-primary)]" />
-            Recent Purchase Orders
+            <Package className="h-4 w-4 text-[var(--color-accent)]" />
+            {t('dashboard.recentPurchaseOrders')}
           </h2>
           <Link href="/vendor-manager/purchase-orders">
-            <button className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary)] cursor-pointer">View all →</button>
+            <button className="text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent)] cursor-pointer">{t('dashboard.viewAll')}</button>
           </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 border-b border-slate-100">
-                <th className="px-5 py-3">PO ID</th>
-                <th className="px-5 py-3">Vendor</th>
-                <th className="px-5 py-3">Amount</th>
-                <th className="px-5 py-3">Expected Delivery</th>
-                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">{t('dashboard.colPoId')}</th>
+                <th className="px-5 py-3">{t('dashboard.colVendor')}</th>
+                <th className="px-5 py-3">{t('dashboard.colAmount')}</th>
+                <th className="px-5 py-3">{t('dashboard.colExpectedDelivery')}</th>
+                <th className="px-5 py-3">{t('dashboard.colStatus')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -244,7 +246,7 @@ export default function VendorDashboardPage() {
                   </td>
                   <td className="px-5 py-3">
                     <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded-full", PO_STATUS_STYLE[po.status])}>
-                      {po.status}
+                      {t.has(`poStatus.${po.status}`) ? t(`poStatus.${po.status}`) : po.status}
                     </span>
                   </td>
                 </tr>

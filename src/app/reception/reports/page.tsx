@@ -1,15 +1,17 @@
 "use client"
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts"
+import { useTranslations } from "next-intl"
 import { usePatientStore, type TriageLevel } from "@/store/usePatientStore"
 import { useBillingStore } from "@/store/useBillingStore"
 import { Users, UserPlus, Wallet, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const TRIAGE_COLOR: Record<TriageLevel, string> = { Critical: '#ef4444', High: '#f97316', Medium: '#f59e0b', Low: '#22c55e' }
+const TRIAGE_COLOR: Record<TriageLevel, string> = { Critical: '#ef4444', High: '#EE6B26', Medium: '#f59e0b', Low: '#22c55e' }
 const CARD = "rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_4px_16px_rgba(15,23,42,0.04)]"
 
 export default function ReceptionReports() {
+  const t = useTranslations('reception')
   const patients = usePatientStore(s => s.patients)
   const appointments = usePatientStore(s => s.appointments)
   const bills = useBillingStore(s => s.bills)
@@ -32,16 +34,16 @@ export default function ReceptionReports() {
   const maxTriage = Math.max(1, ...byTriage.map(t => t.count))
 
   const tiles = [
-    { label: 'Registrations today', value: todayPatients.length, icon: Users, tint: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]' },
-    { label: 'Appointments today', value: apptsToday, icon: UserPlus, tint: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]' },
-    { label: 'In queue now', value: inQueue, icon: Activity, tint: 'bg-amber-50 text-amber-600' },
-    { label: 'Collected today', value: `₹${collected.toLocaleString('en-IN')}`, icon: Wallet, tint: 'bg-green-50 text-green-600' },
+    { label: t('reports.tileRegistrationsToday'), value: todayPatients.length, icon: Users, tint: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]' },
+    { label: t('reports.tileAppointmentsToday'), value: apptsToday, icon: UserPlus, tint: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]' },
+    { label: t('reports.tileInQueueNow'), value: inQueue, icon: Activity, tint: 'bg-amber-50 text-amber-600' },
+    { label: t('reports.tileCollectedToday'), value: `₹${collected.toLocaleString('en-IN')}`, icon: Wallet, tint: 'bg-green-50 text-green-600' },
   ]
 
   return (
     <div className="pb-6">
-      <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">Reports</h1>
-      <p className="text-[13px] text-slate-500 mt-0.5 mb-4">Front-desk registrations, footfall & collections</p>
+      <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">{t('reports.title')}</h1>
+      <p className="text-[13px] text-slate-500 mt-0.5 mb-4">{t('reports.subtitle')}</p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {tiles.map(t => (
@@ -56,14 +58,14 @@ export default function ReceptionReports() {
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Registrations by department */}
         <div className={cn(CARD, "p-5")}>
-          <h3 className="text-[15px] font-bold text-slate-900 mb-4">Registrations by department</h3>
+          <h3 className="text-[15px] font-bold text-slate-900 mb-4">{t('reports.registrationsByDept')}</h3>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byDept} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={0} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <Tooltip cursor={{ fill: 'rgba(8,145,178,0.25)' }} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]} fill="#2563eb" />
+                <Tooltip cursor={{ fill: 'rgba(238,107,38,0.25)' }} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]} fill="#16324A" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -71,7 +73,7 @@ export default function ReceptionReports() {
 
         {/* Triage distribution */}
         <div className={cn(CARD, "p-5")}>
-          <h3 className="text-[15px] font-bold text-slate-900 mb-4">Triage distribution</h3>
+          <h3 className="text-[15px] font-bold text-slate-900 mb-4">{t('reports.triageDistribution')}</h3>
           <div className="space-y-3">
             {byTriage.map(t => (
               <div key={t.level}>
@@ -85,7 +87,7 @@ export default function ReceptionReports() {
               </div>
             ))}
           </div>
-          <p className="text-[11.5px] text-slate-400 mt-4">Live snapshot of today&apos;s registered patients by clinical priority.</p>
+          <p className="text-[11.5px] text-slate-400 mt-4">{t('reports.triageSnapshot')}</p>
         </div>
       </div>
     </div>

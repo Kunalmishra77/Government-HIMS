@@ -29,11 +29,11 @@ export function InpatientRow({ ip, aiFlag, onPeek, onAction }: {
 }) {
   const dl = dueChip(ip)
   return (
-    <tr onClick={onPeek} className="border-b border-slate-50 last:border-0 hover:bg-[rgba(8,145,178,0.10)]/40 cursor-pointer transition">
+    <tr onClick={onPeek} className="border-b border-slate-50 last:border-0 hover:bg-[rgba(238,107,38,0.10)]/40 cursor-pointer transition">
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <span className={cn("h-9 w-9 rounded-xl text-white flex items-center justify-center font-bold text-[12.5px] flex-shrink-0",
-            ip.condition === 'Critical' ? 'bg-gradient-to-br from-red-500 to-rose-600' : ip.ward === 'ICU' ? 'bg-gradient-to-br from-rose-500 to-orange-500' : 'bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)]')}>{initials(ip.name)}</span>
+            ip.condition === 'Critical' ? 'bg-gradient-to-br from-red-500 to-rose-600' : ip.ward === 'ICU' ? 'bg-gradient-to-br from-rose-500 to-primary' : 'bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)]')}>{initials(ip.name)}</span>
           <div className="min-w-0">
             <p className="text-[13.5px] font-bold text-slate-900 truncate">{ip.name} <span className="text-[11.5px] font-medium text-slate-400">· {ip.age}y</span></p>
             <p className="text-[11.5px] text-slate-400 truncate">{ip.patientId} · admitted {admittedSince(ip.admittedAt)} ago</p>

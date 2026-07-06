@@ -16,9 +16,9 @@ const BP_TREND = [
 const HEALTH_SCORE = 78
 
 const TIMELINE = [
-  { icon: UserPlus, tint: 'bg-blue-50 text-blue-600', title: 'Registered at Agentix HIMS', sub: 'Permanent UHID issued · Dec 2025' },
-  { icon: Stethoscope, tint: 'bg-cyan-50 text-cyan-600', title: 'OPD consultation — General Medicine', sub: 'Dr. Priya Nair · Jan 2026' },
-  { icon: FlaskConical, tint: 'bg-cyan-50 text-cyan-600', title: 'Lab investigations', sub: 'CBC · Lipid profile · Feb 2026' },
+  { icon: UserPlus, tint: 'bg-surface-sunken text-accent', title: 'Registered at Agentix HIMS', sub: 'Permanent UHID issued · Dec 2025' },
+  { icon: Stethoscope, tint: 'bg-primary-soft text-accent', title: 'OPD consultation — General Medicine', sub: 'Dr. Priya Nair · Jan 2026' },
+  { icon: FlaskConical, tint: 'bg-primary-soft text-accent', title: 'Lab investigations', sub: 'CBC · Lipid profile · Feb 2026' },
   { icon: Pill, tint: 'bg-amber-50 text-amber-600', title: 'Prescription updated', sub: 'Antihypertensive started · Mar 2026' },
   { icon: CalendarCheck, tint: 'bg-green-50 text-green-600', title: 'Follow-up visit', sub: 'Blood pressure controlled · May 2026' },
 ]
@@ -50,8 +50,8 @@ export default function HealthStoryPage() {
 
       {/* AI summary + health score */}
       <div className="grid md:grid-cols-3 gap-5">
-        <div className="md:col-span-2 rounded-3xl bg-gradient-to-br from-[rgba(8,145,178,0.07)] to-[rgba(8,145,178,0.05)] border border-[rgba(8,145,178,0.15)] p-5">
-          <div className="flex items-center gap-2 mb-2"><Sparkles className="h-4.5 w-4.5 text-[var(--color-primary)]" /><span className="text-[13px] font-bold text-slate-900">AI summary of your health</span></div>
+        <div className="md:col-span-2 rounded-3xl bg-surface-sunken border border-[rgba(238,107,38,0.15)] p-5">
+          <div className="flex items-center gap-2 mb-2"><Sparkles className="h-4.5 w-4.5 text-[var(--color-accent)]" /><span className="text-[13px] font-bold text-slate-900">AI summary of your health</span></div>
           <p className="text-[14px] text-slate-700 leading-relaxed">
             Over the last 6 months your <b>blood pressure has steadily improved</b> (from 142/92 to 130/85) — your medication and lifestyle changes are working. Your <b>diabetes is borderline</b> and due for a 3-month check. Today&apos;s visit is for new chest symptoms, being treated as high priority. Keep up the BP routine and book your diabetes follow-up.
           </p>
@@ -65,7 +65,7 @@ export default function HealthStoryPage() {
 
       {/* BP trend */}
       <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-5">
-        <div className="flex items-center gap-2 mb-4"><Activity className="h-4.5 w-4.5 text-[var(--color-primary)]" /><h3 className="text-[15px] font-bold text-slate-900">Blood pressure trend</h3></div>
+        <div className="flex items-center gap-2 mb-4"><Activity className="h-4.5 w-4.5 text-[var(--color-accent)]" /><h3 className="text-[15px] font-bold text-slate-900">Blood pressure trend</h3></div>
         <div style={{ height: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={BP_TREND} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>

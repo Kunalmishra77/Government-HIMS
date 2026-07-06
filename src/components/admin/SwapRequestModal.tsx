@@ -122,7 +122,7 @@ export function SwapRequestModal({ open, onClose, defaults }: SwapRequestModalPr
               <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <ArrowLeftRight className="h-5 w-5 text-[var(--color-primary)]" />Swap Request
+                    <ArrowLeftRight className="h-5 w-5 text-[var(--color-accent)]" />Swap Request
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
                     {step === 'pick' && 'Step 1 · Pick shifts to swap'}
@@ -145,7 +145,7 @@ export function SwapRequestModal({ open, onClose, defaults }: SwapRequestModalPr
                         <div>
                           <p className="text-[10px] font-bold text-slate-500 mb-0.5">Staff (you)</p>
                           <Select value={requesterId} onChange={(e) => setRequesterId(e.target.value)}
-                            className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+                            className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25">
                             <option value="">— Pick —</option>
                             {staff.filter(s => s.status === 'active').map(s => (
                               <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
@@ -161,7 +161,7 @@ export function SwapRequestModal({ open, onClose, defaults }: SwapRequestModalPr
                                   onClick={() => { setRequesterDate(s.date); setRequesterShift(s.shift) }}
                                   className={cn('text-[11px] font-bold px-2 py-1 rounded-lg border cursor-pointer transition text-left',
                                     requesterDate === s.date && requesterShift === s.shift
-                                      ? 'border-[var(--color-primary-light)] bg-[rgba(8,145,178,0.07)]' : 'border-slate-200 hover:bg-slate-50')}>
+                                      ? 'border-[var(--color-primary-light)] bg-[rgba(238,107,38,0.07)]' : 'border-slate-200 hover:bg-slate-50')}>
                                   {fmtDate(s.date)} · {s.shift.slice(0, 3)}
                                 </button>
                               ))}
@@ -180,7 +180,7 @@ export function SwapRequestModal({ open, onClose, defaults }: SwapRequestModalPr
                         <div>
                           <p className="text-[10px] font-bold text-slate-500 mb-0.5">Colleague (same role)</p>
                           <Select value={targetId} onChange={(e) => setTargetId(e.target.value)}
-                            className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+                            className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25">
                             <option value="">— Pick —</option>
                             {eligibleTargets.map(s => (
                               <option key={s.id} value={s.id}>{s.name} ({s.department})</option>
@@ -196,7 +196,7 @@ export function SwapRequestModal({ open, onClose, defaults }: SwapRequestModalPr
                                   onClick={() => { setTargetDate(s.date); setTargetShift(s.shift) }}
                                   className={cn('text-[11px] font-bold px-2 py-1 rounded-lg border cursor-pointer transition text-left',
                                     targetDate === s.date && targetShift === s.shift
-                                      ? 'border-[var(--color-primary-light)] bg-[rgba(8,145,178,0.07)]' : 'border-slate-200 hover:bg-slate-50')}>
+                                      ? 'border-[var(--color-primary-light)] bg-[rgba(238,107,38,0.07)]' : 'border-slate-200 hover:bg-slate-50')}>
                                   {fmtDate(s.date)} · {s.shift.slice(0, 3)}
                                 </button>
                               ))}
@@ -212,16 +212,16 @@ export function SwapRequestModal({ open, onClose, defaults }: SwapRequestModalPr
                       <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Reason (optional)</p>
                       <input value={reason} onChange={(e) => setReason(e.target.value)}
                         placeholder="e.g., Family wedding"
-                        className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                        className="w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25" />
                     </div>
                   </>
                 )}
 
                 {step === 'review' && requester && target && (
                   <>
-                    <div className="rounded-xl border border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]/40 p-4 space-y-3">
+                    <div className="rounded-xl border border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]/40 p-4 space-y-3">
                       <div className="flex items-center gap-2">
-                        <span className="h-9 w-9 rounded-xl bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        <span className="h-9 w-9 rounded-xl bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] flex items-center justify-center text-sm font-bold flex-shrink-0">
                           {requester.name.replace('Dr. ', '').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                         </span>
                         <div className="flex-1 min-w-0">
@@ -230,10 +230,10 @@ export function SwapRequestModal({ open, onClose, defaults }: SwapRequestModalPr
                         </div>
                       </div>
                       <div className="flex justify-center">
-                        <ArrowLeftRight className="h-5 w-5 text-[var(--color-primary)]" />
+                        <ArrowLeftRight className="h-5 w-5 text-[var(--color-accent)]" />
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="h-9 w-9 rounded-xl bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        <span className="h-9 w-9 rounded-xl bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] flex items-center justify-center text-sm font-bold flex-shrink-0">
                           {target.name.replace('Dr. ', '').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                         </span>
                         <div className="flex-1 min-w-0">

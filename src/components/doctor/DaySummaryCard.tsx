@@ -66,11 +66,11 @@ export function DaySummaryCard({ doctorId, doctorName, className }: Props) {
 
   return (
     <div className={`rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-sm overflow-hidden ${className ?? ''}`}>
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-[rgba(8,145,178,0.06)] to-[rgba(8,145,178,0.06)]">
-        <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-surface-sunken">
+        <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
         <h3 className="text-[14px] font-semibold text-slate-900">Day in review</h3>
         <span className="text-[11px] text-slate-500">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
-        <span className="text-[10px] font-mono text-[var(--color-primary)] ml-auto">85% confidence</span>
+        <span className="text-[10px] font-mono text-[var(--color-accent)] ml-auto">85% confidence</span>
         <button
           type="button"
           onClick={() => setDismissed(true)}
@@ -104,7 +104,7 @@ export function DaySummaryCard({ doctorId, doctorName, className }: Props) {
           <ul className="space-y-1.5">
             {summary.recommendations.map((r, i) => (
               <li key={i} className="text-[12.5px] text-slate-700 flex gap-2">
-                <TrendingUp className="h-3 w-3 text-[var(--color-primary)] mt-0.5 flex-shrink-0" />
+                <TrendingUp className="h-3 w-3 text-[var(--color-accent)] mt-0.5 flex-shrink-0" />
                 <span>{r}</span>
               </li>
             ))}

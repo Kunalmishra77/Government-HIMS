@@ -13,6 +13,7 @@ import { StaffProfileDrawer } from "@/components/admin/StaffProfileDrawer"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { useDialogs } from "@/components/ui/ConfirmDialog"
+import { useTranslations } from "next-intl"
 
 const today = () => new Date().toISOString().split('T')[0]!
 const fmtDate = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -26,7 +27,7 @@ type CredentialRow = {
 
 const BUCKET_TINT: Record<CredentialRow['bucket'], string> = {
   expired:      'bg-red-50 text-red-700 ring-red-200 border-l-4 border-l-red-500',
-  this_week:    'bg-orange-50 text-orange-700 ring-orange-200 border-l-4 border-l-orange-500',
+  this_week:    'bg-primary-soft text-accent ring-primary/25 border-l-4 border-l-orange-500',
   this_month:   'bg-amber-50 text-amber-700 ring-amber-200 border-l-4 border-l-amber-500',
   this_quarter: 'bg-yellow-50 text-yellow-700 ring-yellow-200 border-l-4 border-l-yellow-400',
   valid:        'bg-emerald-50 text-emerald-700 ring-emerald-200 border-l-4 border-l-emerald-500',
@@ -58,6 +59,7 @@ function bucketize(days: number, isLifetime: boolean): CredentialRow['bucket'] {
 }
 
 export default function CredentialsPage() {
+  const t = useTranslations('admin')
   const currentUser = useAuthStore(s => s.currentUser)
   const staff = useHRStore(s => s.staff)
   const [filter, setFilter] = useState<CredentialRow['bucket'] | 'all'>('all')
@@ -70,32 +72,35 @@ export default function CredentialsPage() {
   const { prompt, view: dialogView } = useDialogs()
   const actorName = currentUser?.name ?? 'Administrator'
 
+  const bucketLabel = (bucket: CredentialRow['bucket']) =>
+    t.has(`credentials.bucket.${bucket}`) ? t(`credentials.bucket.${bucket}`) : BUCKET_LABEL[bucket]
+
   async function handleRenew(staffId: string, credentialId: string, label: string, currentExpiry: string, currentNumber: string) {
     const values = await prompt({
-      title: `Renew ${label}`,
-      body: 'Capture the new expiry date and (optional) replacement registration number. Audited.',
-      confirmLabel: 'Renew credential',
+      title: t('credentials.renewTitle', { label }),
+      body: t('credentials.renewBody'),
+      confirmLabel: t('credentials.renewCredential'),
       fields: [
-        { id: 'expiry', label: 'New expiry date (YYYY-MM-DD)', placeholder: '2027-12-31',
+        { id: 'expiry', label: t('credentials.newExpiry'), placeholder: '2027-12-31',
           defaultValue: addOneYear(currentExpiry), required: true },
-        { id: 'number', label: 'New registration number (optional)',
+        { id: 'number', label: t('credentials.newNumber'),
           defaultValue: currentNumber },
       ],
     })
     if (!values) return
     if (!/^\d{4}-\d{2}-\d{2}$/.test(values.expiry)) {
-      toast.error('Use date format YYYY-MM-DD'); return
+      toast.error(t('credentials.dateFormat')); return
     }
     renewCredential(staffId, credentialId, {
       newExpiry: values.expiry,
       newNumber: values.number?.trim() || undefined,
     }, actorName)
-    toast.success(`${label} renewed`)
+    toast.success(t('credentials.renewed', { label }))
   }
 
   // ── Build rows from every credential of every active staff ────────────
   const allRows = useMemo<CredentialRow[]>(() => {
-    const t = today()
+    const todayStr = today()
     const out: CredentialRow[] = []
     for (const member of staff) {
       if (member.status === 'terminated') continue
@@ -103,7 +108,7 @@ export default function CredentialsPage() {
         const isLifetime = cred.expiryDate.startsWith('2099')
         const days = isLifetime
           ? Number.MAX_SAFE_INTEGER
-          : Math.round((new Date(cred.expiryDate + 'T00:00:00').getTime() - new Date(t + 'T00:00:00').getTime()) / 86400000)
+          : Math.round((new Date(cred.expiryDate + 'T00:00:00').getTime() - new Date(todayStr + 'T00:00:00').getTime()) / 86400000)
         out.push({
           staff: member, credential: cred,
           daysUntilExpiry: days,
@@ -141,12 +146,12 @@ export default function CredentialsPage() {
       if (on) n.add(credId); else n.delete(credId)
       return n
     })
-    toast.success(`${on ? 'Enabled' : 'Disabled'} reminders for ${label}`)
+    toast.success(t(on ? 'credentials.remindersEnabled' : 'credentials.remindersDisabled', { label }))
   }
 
   const sendBatchReminders = () => {
     const dueSoon = allRows.filter(r => r.bucket === 'this_week' || r.bucket === 'this_month')
-    toast.success(`Reminder notifications queued for ${dueSoon.length} expiring credentials`)
+    toast.success(t('credentials.remindersQueued', { count: dueSoon.length }))
   }
 
   const exportCSV = () => {
@@ -171,7 +176,7 @@ export default function CredentialsPage() {
       a.click()
       URL.revokeObjectURL(url)
     }
-    toast.success(`Exported ${filtered.length} credentials`)
+    toast.success(t('credentials.exported', { count: filtered.length }))
   }
 
   return (
@@ -179,20 +184,20 @@ export default function CredentialsPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <BadgeCheck className="h-6 w-6 text-emerald-600" />Credentials &amp; Licences
+            <BadgeCheck className="h-6 w-6 text-emerald-600" />{t('credentials.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            License expiry tracker across {staff.length} staff · auto-reminders at 90 / 60 / 30 / 14 / 0 days · NABH IMS evidence
+            {t('credentials.subtitle', { count: staff.length })}
           </p>
         </div>
         <div className="flex gap-2">
           <button onClick={sendBatchReminders}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.14)] text-[var(--color-primary)] cursor-pointer">
-            <Bell className="h-3.5 w-3.5" />Send reminders
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.14)] text-[var(--color-accent)] cursor-pointer">
+            <Bell className="h-3.5 w-3.5" />{t('credentials.sendReminders')}
           </button>
           <button onClick={exportCSV}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
-            <Download className="h-3.5 w-3.5" />Export CSV
+            <Download className="h-3.5 w-3.5" />{t('credentials.exportCsv')}
           </button>
         </div>
       </div>
@@ -200,19 +205,19 @@ export default function CredentialsPage() {
       {/* KPI cards (clickable filter chips) */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {([
-          { key: 'expired',      label: 'Expired',       icon: ShieldAlert,   tint: 'bg-red-50 border-red-200 text-red-700',         num: 'text-red-600' },
-          { key: 'this_week',    label: 'Expiring ≤7d',  icon: AlertTriangle, tint: 'bg-orange-50 border-orange-200 text-orange-700', num: 'text-orange-600' },
-          { key: 'this_month',   label: 'Expiring ≤30d', icon: Calendar,      tint: 'bg-amber-50 border-amber-200 text-amber-700',    num: 'text-amber-600' },
-          { key: 'this_quarter', label: 'Expiring ≤90d', icon: Calendar,      tint: 'bg-yellow-50 border-yellow-200 text-yellow-700', num: 'text-yellow-600' },
-          { key: 'valid',        label: 'Valid >90d',    icon: ShieldCheck,   tint: 'bg-emerald-50 border-emerald-200 text-emerald-700', num: 'text-emerald-600' },
-        ] as const).map(({ key, label, icon: Icon, tint, num }) => (
+          { key: 'expired',      labelKey: 'credentials.kpiExpired',   icon: ShieldAlert,   tint: 'bg-red-50 border-red-200 text-red-700',         num: 'text-red-600' },
+          { key: 'this_week',    labelKey: 'credentials.kpiWeek',      icon: AlertTriangle, tint: 'bg-primary-soft border-primary/20 text-accent', num: 'text-accent' },
+          { key: 'this_month',   labelKey: 'credentials.kpiMonth',     icon: Calendar,      tint: 'bg-amber-50 border-amber-200 text-amber-700',    num: 'text-amber-600' },
+          { key: 'this_quarter', labelKey: 'credentials.kpiQuarter',   icon: Calendar,      tint: 'bg-yellow-50 border-yellow-200 text-yellow-700', num: 'text-yellow-600' },
+          { key: 'valid',        labelKey: 'credentials.kpiValid',     icon: ShieldCheck,   tint: 'bg-emerald-50 border-emerald-200 text-emerald-700', num: 'text-emerald-600' },
+        ] as const).map(({ key, labelKey, icon: Icon, tint, num }) => (
           <button key={key} onClick={() => setFilter(filter === key ? 'all' : key)}
             data-testid={`cred-kpi-${key}`}
             className={cn('rounded-xl border p-3 text-left cursor-pointer transition',
-              filter === key ? 'ring-2 ring-cyan-300 shadow-md' : '', tint)}>
+              filter === key ? 'ring-2 ring-primary/25 shadow-md' : '', tint)}>
             <div className="flex items-center gap-2 mb-1">
               <Icon className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-wide">{label}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide">{t(labelKey)}</span>
             </div>
             <p className={cn('text-2xl font-black', num)}>{kpis[key]}</p>
           </button>
@@ -224,13 +229,13 @@ export default function CredentialsPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search staff / credential / number"
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-300" />
+            placeholder={t('credentials.searchPlaceholder')}
+            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/25" />
         </div>
         {filter !== 'all' && (
           <button onClick={() => setFilter('all')}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
-            <Filter className="h-3.5 w-3.5" />Showing: {BUCKET_LABEL[filter]} · clear
+            <Filter className="h-3.5 w-3.5" />{t('credentials.showingFilter', { label: bucketLabel(filter) })}
           </button>
         )}
       </div>
@@ -239,7 +244,7 @@ export default function CredentialsPage() {
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {filtered.length === 0 ? (
           <p className="px-4 py-10 text-center text-sm text-slate-400 italic">
-            No credentials match these filters.
+            {t('credentials.noMatch')}
           </p>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -261,14 +266,14 @@ export default function CredentialsPage() {
                       {r.credential.label} · <span className="font-mono">{r.credential.number}</span>
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Issued {fmtDate(r.credential.issuedDate)} · Expires{' '}
-                      {r.credential.expiryDate.startsWith('2099') ? <b>Lifetime</b> : <b>{fmtDate(r.credential.expiryDate)}</b>}
+                      {t('credentials.issued', { date: fmtDate(r.credential.issuedDate) })} · {t('credentials.expires')}{' '}
+                      {r.credential.expiryDate.startsWith('2099') ? <b>{t('credentials.lifetime')}</b> : <b>{fmtDate(r.credential.expiryDate)}</b>}
                       {r.daysUntilExpiry !== Number.MAX_SAFE_INTEGER && (
                         <span className={cn('ml-2 font-bold',
                           r.bucket === 'expired' ? 'text-red-700'
-                          : r.bucket === 'this_week' ? 'text-orange-700'
+                          : r.bucket === 'this_week' ? 'text-accent'
                           : r.bucket === 'this_month' ? 'text-amber-700' : 'text-slate-500')}>
-                          ({r.daysUntilExpiry >= 0 ? `${r.daysUntilExpiry}d left` : `${Math.abs(r.daysUntilExpiry)}d overdue`})
+                          ({r.daysUntilExpiry >= 0 ? t('credentials.daysLeft', { days: r.daysUntilExpiry }) : t('credentials.daysOverdue', { days: Math.abs(r.daysUntilExpiry) })})
                         </span>
                       )}
                     </p>
@@ -279,12 +284,12 @@ export default function CredentialsPage() {
                         checked={reminderEnabled.has(r.credential.id)}
                         onChange={(e) => toggleReminder(r.credential.id, r.credential.label, e.target.checked)}
                         className="cursor-pointer" />
-                      Reminders
+                      {t('credentials.reminders')}
                     </label>
                     {(r.bucket === 'expired' || r.bucket === 'this_week' || r.bucket === 'this_month') && canWrite && (
                       <button onClick={() => handleRenew(r.staff.id, r.credential.id, r.credential.label, r.credential.expiryDate, r.credential.number)}
                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white cursor-pointer">
-                        <Mail className="h-3 w-3" />Renew
+                        <Mail className="h-3 w-3" />{t('credentials.renew')}
                       </button>
                     )}
                   </div>
@@ -296,7 +301,7 @@ export default function CredentialsPage() {
       </div>
 
       <p className="text-[11px] text-slate-400">
-        Showing {filtered.length} of {allRows.length} credentials · canonical source: <code>useHRStore.staff[].credentials</code>
+        {t('credentials.showingCount', { shown: filtered.length, total: allRows.length })} · <code>useHRStore.staff[].credentials</code>
       </p>
 
       {/* Profile drawer cross-link */}

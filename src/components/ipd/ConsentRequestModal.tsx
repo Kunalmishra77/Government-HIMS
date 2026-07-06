@@ -124,7 +124,7 @@ export function ConsentRequestModal({
           {/* ── Step: Form ── */}
           {step === 'form' && (
             <div className="space-y-4">
-              <p className="text-xs text-slate-500 leading-relaxed bg-[rgba(8,145,178,0.07)] rounded-xl p-3 border border-[rgba(8,145,178,0.15)]">
+              <p className="text-xs text-slate-500 leading-relaxed bg-[rgba(238,107,38,0.07)] rounded-xl p-3 border border-[rgba(238,107,38,0.15)]">
                 Enter the next-of-kin details. A secure consent link will be sent to their WhatsApp — they can sign remotely from their phone.
               </p>
 

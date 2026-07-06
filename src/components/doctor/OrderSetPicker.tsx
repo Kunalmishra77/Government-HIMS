@@ -43,11 +43,11 @@ export function OrderSetPicker({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/25"
       >
         <span className="flex items-center gap-2">
-          <span className="h-7 w-7 rounded-lg bg-[rgba(8,145,178,0.07)] flex items-center justify-center">
-            <Layers className="h-4 w-4 text-[var(--color-primary)]" aria-hidden="true" />
+          <span className="h-7 w-7 rounded-lg bg-[rgba(238,107,38,0.07)] flex items-center justify-center">
+            <Layers className="h-4 w-4 text-[var(--color-accent)]" aria-hidden="true" />
           </span>
           <span>
             <span className="block text-[13px] font-bold text-slate-900">Quick order sets</span>
@@ -70,7 +70,7 @@ export function OrderSetPicker({
               className={cn(
                 "group text-left rounded-xl border border-slate-200 p-3 transition-all",
                 "hover:border-slate-300 hover:shadow-sm active:scale-[0.99]",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25",
                 disabled && "opacity-50 cursor-not-allowed",
               )}
             >

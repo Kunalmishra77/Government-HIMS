@@ -14,13 +14,14 @@ import { OnShiftTeam } from "@/components/clinical/OnShiftTeam"
 import { notifyAndAudit, notifyAndAuditMany } from "@/lib/notifyAndAudit"
 import { useAuthStore } from "@/store/useAuthStore"
 import type { Role } from "@/types/roles"
+import { useTranslations } from "next-intl"
 
 const REQ_TYPE_ICONS: Record<string, React.ElementType> = {
   radiology: ScanLine, blood: Droplet, pharmacy: Pill, equipment: FlaskConical,
 }
 const REQ_STATUS_COLORS: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-700 border-amber-200',
-  dispatched: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] border-[rgba(8,145,178,0.20)]',
+  dispatched: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] border-[rgba(238,107,38,0.20)]',
   received: 'bg-green-50 text-green-700 border-green-200',
 }
 
@@ -29,6 +30,7 @@ const PREOP_TO_ROLE: Record<'radiology' | 'blood' | 'pharmacy' | 'equipment', Ro
 }
 
 function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
+  const t = useTranslations('ot')
   const { addPreOpRequirement } = useOTStore()
   const currentUser = useAuthStore(s => s.currentUser)
   const [reqType, setReqType] = useState<'radiology' | 'blood' | 'pharmacy' | 'equipment'>('pharmacy')
@@ -41,17 +43,17 @@ function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
   return (
     <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
       <div className="flex items-center gap-2">
-        <FileText className="h-4 w-4 text-[var(--color-primary)]" />
-        <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">IPD Brief from Ward</h4>
+        <FileText className="h-4 w-4 text-[var(--color-accent)]" />
+        <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--color-accent)]">{t('brief.heading')}</h4>
       </div>
 
       {/* Vitals */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'HR', value: `${brief.vitals.hr} bpm`, abnormal: brief.vitals.hr > 100 },
-          { label: 'BP', value: brief.vitals.bp, abnormal: false },
-          { label: 'Temp', value: `${brief.vitals.temp}°F`, abnormal: brief.vitals.temp > 100 },
-          { label: 'SpO2', value: `${brief.vitals.spo2}%`, abnormal: brief.vitals.spo2 < 95 },
+          { label: t('brief.hr'), value: t('brief.hrUnit', { value: brief.vitals.hr }), abnormal: brief.vitals.hr > 100 },
+          { label: t('brief.bp'), value: brief.vitals.bp, abnormal: false },
+          { label: t('brief.temp'), value: t('brief.tempUnit', { value: brief.vitals.temp }), abnormal: brief.vitals.temp > 100 },
+          { label: t('brief.spo2'), value: t('brief.spo2Unit', { value: brief.vitals.spo2 }), abnormal: brief.vitals.spo2 < 95 },
         ].map(v => (
           <div key={v.label} className="text-center py-2 px-3 rounded-xl" style={{ background: v.abnormal ? '#FEF2F2' : '#F8FAFC' }}>
             <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: '#94A3B8' }}>{v.label}</p>
@@ -62,7 +64,7 @@ function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
       {vitalsAbnormal && (
         <div className="flex items-center gap-2 p-2 rounded-lg bg-red-50 border border-red-200">
           <AlertTriangle className="h-3.5 w-3.5 text-red-600 flex-shrink-0" />
-          <p className="text-xs font-semibold text-red-700">Abnormal vitals detected — confirm with anaesthetist before proceeding</p>
+          <p className="text-xs font-semibold text-red-700">{t('brief.abnormalVitals')}</p>
         </div>
       )}
 
@@ -71,7 +73,7 @@ function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
         <div>
           {brief.activeMedications.length > 0 && (
             <div className="mb-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1"><Pill className="h-3 w-3" /> Active Meds</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1"><Pill className="h-3 w-3" /> {t('brief.activeMeds')}</p>
               <div className="space-y-1">
                 {brief.activeMedications.map((m, i) => (
                   <p key={i} className="text-xs text-slate-600 font-medium">• {m}</p>
@@ -81,10 +83,10 @@ function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
           )}
           {brief.ivDrips.length > 0 && (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1"><Droplets className="h-3 w-3" /> IV Drips</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1"><Droplets className="h-3 w-3" /> {t('brief.ivDrips')}</p>
               <div className="space-y-1">
                 {brief.ivDrips.map((d, i) => (
-                  <p key={i} className="text-xs text-[var(--color-primary)] font-medium">• {d}</p>
+                  <p key={i} className="text-xs text-[var(--color-accent)] font-medium">• {d}</p>
                 ))}
               </div>
             </div>
@@ -98,19 +100,19 @@ function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
               <div className="flex items-start gap-1.5">
                 <ShieldAlert className="h-3.5 w-3.5 text-red-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[10px] font-bold text-red-700">Allergies</p>
+                  <p className="text-[10px] font-bold text-red-700">{t('brief.allergies')}</p>
                   <p className="text-xs text-red-800">{brief.allergies}</p>
                 </div>
               </div>
             </div>
           )}
           <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
-            <p className="text-[10px] font-bold text-slate-500 mb-0.5">Blood Group</p>
+            <p className="text-[10px] font-bold text-slate-500 mb-0.5">{t('brief.bloodGroup')}</p>
             <p className="text-sm font-bold text-slate-900">{brief.bloodGroup}</p>
           </div>
           {(brief.pendingLabResults.length > 0 || brief.pendingRadiology.length > 0) && (
             <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-100">
-              <p className="text-[10px] font-bold text-amber-700 mb-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Pending</p>
+              <p className="text-[10px] font-bold text-amber-700 mb-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> {t('brief.pending')}</p>
               {[...brief.pendingLabResults, ...brief.pendingRadiology].map((item, i) => (
                 <p key={i} className="text-xs text-amber-800 font-medium">• {item}</p>
               ))}
@@ -121,22 +123,22 @@ function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
 
       {/* Nursing note */}
       {brief.lastNursingNote && (
-        <div className="p-3 rounded-xl bg-[rgba(8,145,178,0.07)] border border-cyan-100">
-          <p className="text-[10px] font-bold text-[var(--color-primary)] mb-1">Last Nursing Note</p>
+        <div className="p-3 rounded-xl bg-[rgba(238,107,38,0.07)] border border-primary/20">
+          <p className="text-[10px] font-bold text-[var(--color-accent)] mb-1">{t('brief.lastNursingNote')}</p>
           <p className="text-xs text-[var(--color-primary-dark)] font-medium italic">"{brief.lastNursingNote}"</p>
         </div>
       )}
 
       {/* Pre-Op Requirements */}
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1"><Send className="h-3 w-3" /> Coordinate Requirements</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1"><Send className="h-3 w-3" /> {t('brief.coordinateRequirements')}</p>
         {(proc.preOpRequirements ?? []).map(req => {
           const Icon = REQ_TYPE_ICONS[req.type] ?? FlaskConical
           return (
             <div key={req.id} className="flex items-center gap-2 py-1.5 text-xs">
               <Icon className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
               <span className="flex-1 text-slate-700 font-medium">{req.description}</span>
-              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", REQ_STATUS_COLORS[req.status])}>{req.status}</span>
+              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", REQ_STATUS_COLORS[req.status])}>{t.has(`reqStatus.${req.status}`) ? t(`reqStatus.${req.status}`) : req.status}</span>
             </div>
           )
         })}
@@ -146,16 +148,16 @@ function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
             onChange={e => setReqType(e.target.value as typeof reqType)}
             className="flex-shrink-0 rounded-lg px-2 py-1.5 text-xs text-slate-700 border border-slate-200 bg-slate-50 focus:outline-none"
           >
-            <option value="pharmacy">Pharmacy</option>
-            <option value="blood">Blood Bank</option>
-            <option value="radiology">Radiology</option>
-            <option value="equipment">Equipment</option>
+            <option value="pharmacy">{t('reqType.pharmacy')}</option>
+            <option value="blood">{t('reqType.blood')}</option>
+            <option value="radiology">{t('reqType.radiology')}</option>
+            <option value="equipment">{t('reqType.equipment')}</option>
           </Select>
           <input
             type="text"
             value={reqDesc}
             onChange={e => setReqDesc(e.target.value)}
-            placeholder="Describe requirement..."
+            placeholder={t('brief.describeRequirement')}
             className="flex-1 rounded-lg px-3 py-1.5 text-xs border border-slate-200 bg-slate-50 focus:outline-none"
           />
           <button
@@ -164,18 +166,18 @@ function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
               addPreOpRequirement(proc.id, { type: reqType, description: reqDesc })
               notifyAndAudit({
                 to: PREOP_TO_ROLE[reqType], type: 'system', priority: 'high',
-                title: `Pre-op requirement · ${proc.patientName}`,
-                body: `${reqDesc} — needed for ${proc.procedureName} at ${proc.scheduledTime} (${proc.otRoom}). Surgeon: ${proc.surgeon}.`,
+                title: t('brief.preOpTitle', { patient: proc.patientName }),
+                body: t('brief.preOpBody', { desc: reqDesc, procedure: proc.procedureName, time: proc.scheduledTime, room: proc.otRoom, surgeon: proc.surgeon }),
                 patientName: proc.patientName,
-                audit: { action: 'ot_clearance_set', resource: 'ot_procedure', resourceId: proc.id, detail: `Pre-op ${reqType} requirement: ${reqDesc}`, userName: currentUser?.name ?? 'OT Coordinator' },
+                audit: { action: 'ot_clearance_set', resource: 'ot_procedure', resourceId: proc.id, detail: t('brief.preOpDetail', { type: reqType, desc: reqDesc }), userName: currentUser?.name ?? 'OT Coordinator' },
               })
-              toast.success(`Requirement dispatched to ${reqType}`)
+              toast.success(t('brief.requirementDispatched', { type: t(`reqType.${reqType}`) }))
               setReqDesc('')
             }}
             className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white rounded-lg cursor-pointer transition-all"
             style={{ background: 'linear-gradient(135deg,var(--color-primary),var(--color-primary))' }}
           >
-            <Plus className="h-3.5 w-3.5" /> Dispatch
+            <Plus className="h-3.5 w-3.5" /> {t('brief.dispatch')}
           </button>
         </div>
       </div>
@@ -186,14 +188,14 @@ function IPDBriefPanel({ proc }: { proc: OTProcedure }) {
 const STATUS_COLOR: Record<string, string> = {
   Scheduled:     'bg-slate-100 text-slate-700 border-slate-200',
   'Pre-Op':      'bg-amber-50 text-amber-700 border-amber-200',
-  'In Progress': 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] border-[rgba(8,145,178,0.20)]',
-  Recovery:      'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] border-[rgba(8,145,178,0.20)]',
+  'In Progress': 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] border-[rgba(238,107,38,0.20)]',
+  Recovery:      'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] border-[rgba(238,107,38,0.20)]',
   Completed:     'bg-green-50 text-green-700 border-green-200',
 }
 
 const ROOM_COLOR: Record<string, string> = {
   Available:   'bg-green-50 border-green-200 text-green-700',
-  'In Use':    'bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]',
+  'In Use':    'bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]',
   Cleaning:    'bg-amber-50 border-amber-200 text-amber-700',
   Maintenance: 'bg-red-50 border-red-200 text-red-700',
 }
@@ -203,6 +205,7 @@ const STATUS_NEXT: Partial<Record<string, string>> = {
 }
 
 export default function OTDashboard() {
+  const t = useTranslations('ot')
   const { procedures, otRooms, updateStatus } = useOTStore()
   const currentUser = useAuthStore(s => s.currentUser)
   const [now, setNow] = useState(Date.now())
@@ -253,13 +256,13 @@ export default function OTDashboard() {
           <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 animate-pulse" />
           <div className="flex-1">
             <p className="text-sm font-bold text-red-900">
-              {criticalIncomplete.length} procedure(s) have incomplete critical pre-op checklist items
+              {t('dashboard.criticalWarning', { count: criticalIncomplete.length })}
             </p>
-            <p className="text-xs text-red-700 mt-0.5">Review checklists before advancing to In Progress.</p>
+            <p className="text-xs text-red-700 mt-0.5">{t('dashboard.criticalWarningSub')}</p>
           </div>
           <Link href="/ot/checklist">
             <button className="text-xs font-bold text-red-700 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
-              Review
+              {t('dashboard.review')}
             </button>
           </Link>
         </motion.div>
@@ -273,23 +276,23 @@ export default function OTDashboard() {
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-[var(--color-primary)]" />OT patient journey
+            <Activity className="h-4 w-4 text-[var(--color-accent)]" />{t('dashboard.journeyTitle')}
           </h2>
           <p className="text-[11px] text-slate-500">
-            Booking → PAC → Pre-op → WHO Sign-In → In progress → Sign-Out → Recovery → Ward
+            {t('dashboard.journeyFlow')}
           </p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 items-stretch">
           {[
-            { label: 'Scheduled',    sub: `${pacPending} need PAC`,  count: scheduled.length, color: 'border-amber-200 bg-amber-50',     icon: Calendar,         fg: 'text-amber-700',     href: '/ot/schedule',  cta: 'View schedule' },
-            { label: 'PAC done',     sub: 'ASA · M · NPO set',       count: pacDone,          color: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]',       icon: Stethoscope,      fg: 'text-[var(--color-primary)]',      href: '/ot/checklist', cta: 'Open PAC' },
-            { label: 'Pre-op',       sub: `${whoOpen} WHO pending`,  count: preOp.length,     color: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]',   icon: ClipboardCheck,   fg: 'text-[var(--color-primary)]',    href: '/ot/checklist', cta: 'Sign-In' },
-            { label: 'In progress',  sub: 'Time-Out → Sign-Out',     count: inProgress.length,color: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]',       icon: Heart,            fg: 'text-[var(--color-primary)]',      href: '/ot/checklist', cta: 'Track' },
-            { label: 'Recovery',     sub: 'PACU monitoring',         count: recovery.length,  color: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]',       icon: Wind,             fg: 'text-[var(--color-primary)]',      href: '/ot/checklist', cta: 'Debrief' },
-            { label: 'Completed',    sub: 'Ward transfer',           count: completed.length, color: 'border-emerald-200 bg-emerald-50', icon: LogOut,           fg: 'text-emerald-700',   href: '/ot/dashboard', cta: 'Archive' },
-            { label: 'Critical',     sub: 'Open checklist',          count: criticalIncomplete.length, color: criticalIncomplete.length > 0 ? 'border-red-300 bg-red-50 ring-2 ring-red-100' : 'border-slate-200 bg-white', icon: AlertTriangle, fg: criticalIncomplete.length > 0 ? 'text-red-700' : 'text-slate-400', href: '/ot/checklist', cta: 'Resolve' },
+            { key: 'scheduled',   label: t('dashboard.tileScheduled'),   sub: t('dashboard.tileScheduledSub', { count: pacPending }),  count: scheduled.length, color: 'border-amber-200 bg-amber-50',     icon: Calendar,         fg: 'text-amber-700',     href: '/ot/schedule',  cta: t('dashboard.tileScheduledCta') },
+            { key: 'pacDone',     label: t('dashboard.tilePacDone'),     sub: t('dashboard.tilePacDoneSub'),       count: pacDone,          color: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]',       icon: Stethoscope,      fg: 'text-[var(--color-accent)]',      href: '/ot/checklist', cta: t('dashboard.tilePacDoneCta') },
+            { key: 'preOp',       label: t('dashboard.tilePreOp'),       sub: t('dashboard.tilePreOpSub', { count: whoOpen }),  count: preOp.length,     color: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]',   icon: ClipboardCheck,   fg: 'text-[var(--color-accent)]',    href: '/ot/checklist', cta: t('dashboard.tilePreOpCta') },
+            { key: 'inProgress',  label: t('dashboard.tileInProgress'),  sub: t('dashboard.tileInProgressSub'),     count: inProgress.length,color: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]',       icon: Heart,            fg: 'text-[var(--color-accent)]',      href: '/ot/checklist', cta: t('dashboard.tileInProgressCta') },
+            { key: 'recovery',    label: t('dashboard.tileRecovery'),    sub: t('dashboard.tileRecoverySub'),         count: recovery.length,  color: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]',       icon: Wind,             fg: 'text-[var(--color-accent)]',      href: '/ot/checklist', cta: t('dashboard.tileRecoveryCta') },
+            { key: 'completed',   label: t('dashboard.tileCompleted'),   sub: t('dashboard.tileCompletedSub'),           count: completed.length, color: 'border-emerald-200 bg-emerald-50', icon: LogOut,           fg: 'text-emerald-700',   href: '/ot/dashboard', cta: t('dashboard.tileCompletedCta') },
+            { key: 'critical',    label: t('dashboard.tileCritical'),    sub: t('dashboard.tileCriticalSub'),          count: criticalIncomplete.length, color: criticalIncomplete.length > 0 ? 'border-red-300 bg-red-50 ring-2 ring-red-100' : 'border-slate-200 bg-white', icon: AlertTriangle, fg: criticalIncomplete.length > 0 ? 'text-red-700' : 'text-slate-400', href: '/ot/checklist', cta: t('dashboard.tileCriticalCta') },
           ].map((s, i, arr) => (
-            <Link key={s.label} href={s.href}
+            <Link key={s.key} href={s.href}
               className={cn("relative rounded-xl border p-3 hover:shadow-md transition flex flex-col gap-1 cursor-pointer group", s.color)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 min-w-0">
@@ -317,10 +320,15 @@ export default function OTDashboard() {
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />Pre-Anesthesia Clinic (PAC) status
+              <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />{t('dashboard.pacTitle')}
             </h2>
             <p className="text-[11px] text-slate-500">
-              <b className="text-[var(--color-primary)]">{pacDone}</b> ready · <b className="text-amber-700">{pacPending}</b> needs anesthesia review
+              {t.rich('dashboard.pacSummary', {
+                done: pacDone,
+                pending: pacPending,
+                b1: (chunks) => <b className="text-[var(--color-accent)]">{chunks}</b>,
+                b2: (chunks) => <b className="text-amber-700">{chunks}</b>,
+              })}
             </p>
           </div>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -337,23 +345,23 @@ export default function OTDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-900 truncate">
-                      {p.patientName} <span className="text-[11px] font-bold text-slate-400">{p.patientId} · {p.patientAge}y</span>
+                      {p.patientName} <span className="text-[11px] font-bold text-slate-400">{t('dashboard.patientMeta', { id: p.patientId, age: p.patientAge })}</span>
                     </p>
                     <p className="text-xs text-slate-600 truncate">
-                      {p.procedureName} · {p.scheduledTime} · {p.otRoom}
+                      {t('dashboard.caseMeta', { procedure: p.procedureName, time: p.scheduledTime, room: p.otRoom })}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap text-[11px]">
-                      <span className={cn("font-bold px-1.5 py-0.5 rounded border", a?.asa ? 'bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]' : 'bg-white border-slate-200 text-slate-400')}>
+                      <span className={cn("font-bold px-1.5 py-0.5 rounded border", a?.asa ? 'bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]' : 'bg-white border-slate-200 text-slate-400')}>
                         ASA {a?.asa ?? '—'}
                       </span>
-                      <span className={cn("font-bold px-1.5 py-0.5 rounded border", a?.mallampati ? 'bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]' : 'bg-white border-slate-200 text-slate-400')}>
+                      <span className={cn("font-bold px-1.5 py-0.5 rounded border", a?.mallampati ? 'bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]' : 'bg-white border-slate-200 text-slate-400')}>
                         M {a?.mallampati ?? '—'}
                       </span>
-                      <span className={cn("font-bold px-1.5 py-0.5 rounded border", a?.npoSince ? 'bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]' : 'bg-white border-slate-200 text-slate-400')}>
+                      <span className={cn("font-bold px-1.5 py-0.5 rounded border", a?.npoSince ? 'bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]' : 'bg-white border-slate-200 text-slate-400')}>
                         NPO {a?.npoSince ? new Date(a.npoSince).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}
                       </span>
-                      <span className={cn("font-bold px-1.5 py-0.5 rounded border", a?.technique ? 'bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[var(--color-primary)]' : 'bg-white border-slate-200 text-slate-400')}>
-                        {a?.technique ?? 'technique?'}
+                      <span className={cn("font-bold px-1.5 py-0.5 rounded border", a?.technique ? 'bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[var(--color-accent)]' : 'bg-white border-slate-200 text-slate-400')}>
+                        {a?.technique ?? t('dashboard.techniquePlaceholder')}
                       </span>
                     </div>
                   </div>
@@ -376,8 +384,8 @@ export default function OTDashboard() {
             if (h >= 14 && h < 22) return 'Evening'
             return 'Night'
           })()}
-          title="OT team currently on shift"
-          emptyMessage="No OT staff currently rostered — schedule elective cases for tomorrow or call on-call."
+          title={t('dashboard.otTeamTitle')}
+          emptyMessage={t('dashboard.otTeamEmpty')}
           roles={['ot', 'doctor', 'nurse']}
           compact
         />
@@ -385,7 +393,7 @@ export default function OTDashboard() {
 
       {/* OT Room Grid */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-3">OT Room Status</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-3">{t('dashboard.roomStatusHeading')}</h2>
         <div className="grid grid-cols-3 gap-3">
           {otRooms.map(room => {
             const proc = room.currentProcedureId
@@ -398,7 +406,7 @@ export default function OTDashboard() {
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-bold text-sm">{room.name}</h3>
                   <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", ROOM_COLOR[room.status])}>
-                    {room.status}
+                    {t.has(`room.${room.status}`) ? t(`room.${room.status}`) : room.status}
                   </span>
                 </div>
                 {proc ? (
@@ -408,14 +416,14 @@ export default function OTDashboard() {
                     {proc.startedAt && (
                       <div className="flex items-center gap-1 mt-2 text-[11px] font-bold" suppressHydrationWarning>
                         <Clock className="h-3 w-3" />
-                        {remaining > 0 ? `~${remaining}m remaining` : 'Overtime'}
+                        {remaining > 0 ? t('dashboard.remaining', { mins: remaining }) : t('dashboard.overtime')}
                       </div>
                     )}
                   </div>
                 ) : room.nextScheduledTime ? (
-                  <p className="text-xs opacity-70">Next: {room.nextScheduledTime}</p>
+                  <p className="text-xs opacity-70">{t('dashboard.next', { time: room.nextScheduledTime })}</p>
                 ) : (
-                  <p className="text-xs opacity-70">No scheduled procedures</p>
+                  <p className="text-xs opacity-70">{t('dashboard.noScheduled')}</p>
                 )}
               </Card>
             )
@@ -426,14 +434,14 @@ export default function OTDashboard() {
       {/* Summary stats */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'In Progress', count: inProgress.length, color: 'border-t-blue-500' },
-          { label: 'Pre-Op', count: preOp.length, color: 'border-t-amber-500' },
-          { label: 'Scheduled', count: scheduled.length, color: 'border-t-slate-400' },
-          { label: 'Completed', count: completed.length, color: 'border-t-green-500' },
-        ].map(({ label, count, color }) => (
-          <Card key={label} className={cn("p-4 text-center border-t-4", color)}>
+          { key: 'In Progress', count: inProgress.length, color: 'border-t-slate-400' },
+          { key: 'Pre-Op', count: preOp.length, color: 'border-t-amber-500' },
+          { key: 'Scheduled', count: scheduled.length, color: 'border-t-slate-400' },
+          { key: 'Completed', count: completed.length, color: 'border-t-green-500' },
+        ].map(({ key, count, color }) => (
+          <Card key={key} className={cn("p-4 text-center border-t-4", color)}>
             <h3 className="text-2xl font-bold text-slate-900">{count}</h3>
-            <p className="text-xs font-bold text-slate-500 mt-0.5">{label}</p>
+            <p className="text-xs font-bold text-slate-500 mt-0.5">{t.has(`status.${key}`) ? t(`status.${key}`) : key}</p>
           </Card>
         ))}
       </div>
@@ -441,10 +449,10 @@ export default function OTDashboard() {
       {/* Today's procedure timeline */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-slate-900">Today&apos;s Schedule</h2>
+          <h2 className="text-lg font-bold text-slate-900">{t('dashboard.scheduleHeading')}</h2>
           <Link href="/ot/schedule">
-            <button className="text-sm font-bold text-[var(--color-primary)] hover:text-[var(--color-primary)] flex items-center gap-1 cursor-pointer">
-              Full Schedule <ChevronRight className="h-4 w-4" />
+            <button className="text-sm font-bold text-[var(--color-accent)] hover:text-[var(--color-accent)] flex items-center gap-1 cursor-pointer">
+              {t('dashboard.fullSchedule')} <ChevronRight className="h-4 w-4" />
             </button>
           </Link>
         </div>
@@ -456,7 +464,7 @@ export default function OTDashboard() {
             return (
               <motion.div key={proc.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <Card className={cn("p-5",
-                  proc.status === 'In Progress' ? "border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]/20" :
+                  proc.status === 'In Progress' ? "border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]/20" :
                   proc.status === 'Pre-Op' && !checklistComplete ? "border-amber-200 bg-amber-50/20" : ""
                 )}>
                   <div className="flex items-start justify-between gap-4">
@@ -469,21 +477,21 @@ export default function OTDashboard() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-slate-900 text-sm">{proc.patientName}</p>
                           <NeonBadge variant="muted">{proc.id}</NeonBadge>
-                          {proc.bloodRequired && <NeonBadge variant="danger">Blood Required</NeonBadge>}
+                          {proc.bloodRequired && <NeonBadge variant="danger">{t('dashboard.bloodRequired')}</NeonBadge>}
                           {!checklistComplete && proc.status === 'Pre-Op' && (
-                            <NeonBadge variant="warning" dot pulse>Checklist Incomplete</NeonBadge>
+                            <NeonBadge variant="warning" dot pulse>{t('dashboard.checklistIncomplete')}</NeonBadge>
                           )}
                         </div>
                         <p className="text-sm text-slate-700 font-medium mt-0.5">{proc.procedureName}</p>
                         <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
                           <span>{proc.surgeon}</span>
-                          <span>Anaes: {proc.anaesthetist}</span>
-                          <span>{proc.durationMinutes}m</span>
+                          <span>{t('dashboard.anaesLabel', { name: proc.anaesthetist })}</span>
+                          <span>{t('dashboard.durationMins', { mins: proc.durationMinutes })}</span>
                         </div>
                         {proc.status === 'In Progress' && proc.startedAt && (
-                          <div className="flex items-center gap-1.5 mt-2 text-xs font-bold text-[var(--color-primary)]" suppressHydrationWarning>
+                          <div className="flex items-center gap-1.5 mt-2 text-xs font-bold text-[var(--color-accent)]" suppressHydrationWarning>
                             <Clock className="h-3.5 w-3.5" />
-                            {elapsed}m elapsed — ~{Math.max(proc.durationMinutes - elapsed, 0)}m remaining
+                            {t('dashboard.elapsedRemaining', { elapsed, remaining: Math.max(proc.durationMinutes - elapsed, 0) })}
                           </div>
                         )}
                       </div>
@@ -494,51 +502,53 @@ export default function OTDashboard() {
                           onClick={() => setExpandedBriefId(expandedBriefId === proc.id ? null : proc.id)}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer border"
                           style={{
-                            background: expandedBriefId === proc.id ? 'rgba(8,145,178,0.07)' : '#F8FAFC',
-                            borderColor: expandedBriefId === proc.id ? '#A5B4FC' : '#E2E8F0',
+                            background: expandedBriefId === proc.id ? 'rgba(238,107,38,0.07)' : '#F8FAFC',
+                            borderColor: expandedBriefId === proc.id ? '#64748D' : '#E2E8F0',
                             color: expandedBriefId === proc.id ? 'var(--color-primary)' : '#64748B',
                           }}
                         >
-                          <Activity className="h-3 w-3" /> IPD Brief
+                          <Activity className="h-3 w-3" /> {t('dashboard.ipdBrief')}
                           {expandedBriefId === proc.id ? <ChevronUp className="h-3 w-3 ml-0.5" /> : <ChevronDown className="h-3 w-3 ml-0.5" />}
                         </button>
                       )}
                       <span className={cn("text-xs font-bold px-3 py-1.5 rounded-lg border", STATUS_COLOR[proc.status])}>
-                        {proc.status}
+                        {t.has(`status.${proc.status}`) ? t(`status.${proc.status}`) : proc.status}
                       </span>
                       {next && (
                         <button
                           onClick={() => {
                             if (next === 'In Progress' && !checklistComplete) {
-                              toast.error('Complete all critical checklist items before starting')
+                              toast.error(t('dashboard.startBlocked'))
                               return
                             }
                             updateStatus(proc.id, next as typeof proc.status)
                             const priority = next === 'In Progress' ? 'critical' : 'high'
+                            const nextLabel = t.has(`status.${next}`) ? t(`status.${next}`) : next
+                            const fromLabel = t.has(`status.${proc.status}`) ? t(`status.${proc.status}`) : proc.status
                             notifyAndAuditMany(['ot', 'doctor', 'nurse'], {
                               type: 'system', priority,
-                              title: `${proc.id} → ${next} · ${proc.patientName}`,
-                              body: `${proc.procedureName} in ${proc.otRoom} moved to ${next}. Surgeon: ${proc.surgeon}, Anaes: ${proc.anaesthetist}.`,
+                              title: t('dashboard.advanceTitle', { id: proc.id, next: nextLabel, patient: proc.patientName }),
+                              body: t('dashboard.advanceBody', { procedure: proc.procedureName, room: proc.otRoom, next: nextLabel, surgeon: proc.surgeon, anaesthetist: proc.anaesthetist }),
                               patientName: proc.patientName,
-                              audit: { action: 'ot_clearance_set', resource: 'ot_procedure', resourceId: proc.id, detail: `OT status ${proc.status} → ${next}`, userName: currentUser?.name ?? 'OT Coordinator' },
+                              audit: { action: 'ot_clearance_set', resource: 'ot_procedure', resourceId: proc.id, detail: t('dashboard.advanceDetail', { from: fromLabel, next: nextLabel }), userName: currentUser?.name ?? 'OT Coordinator' },
                             })
-                            toast.success(`${proc.id} advanced to ${next}`)
+                            toast.success(t('dashboard.advanceToast', { id: proc.id, next: nextLabel }))
                           }}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer border border-slate-200"
                         >
-                          → {next}
+                          → {t.has(`status.${next}`) ? t(`status.${next}`) : next}
                         </button>
                       )}
                       {proc.status === 'Pre-Op' && (
                         <Link href="/ot/checklist">
                           <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold transition-colors cursor-pointer border border-amber-200">
-                            Checklist
+                            {t('dashboard.checklist')}
                           </button>
                         </Link>
                       )}
                       {proc.status === 'Completed' && (
                         <div className="flex items-center gap-1 text-xs font-bold text-green-600">
-                          <CheckCircle className="h-4 w-4" /> Done
+                          <CheckCircle className="h-4 w-4" /> {t('dashboard.done')}
                         </div>
                       )}
                     </div>

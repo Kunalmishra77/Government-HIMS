@@ -4,27 +4,20 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { Sparkles, Mic, Send, ArrowRight, Trash2, ShieldCheck } from "lucide-react"
 import { useAdminAssistantStore } from "@/store/useAdminAssistantStore"
-import { isSpeechSupported, startVoiceCommand, type Recognition } from "@/lib/voiceScribe"
+import { isSpeechSupported, unlockAudio } from "@/lib/voiceScribe"
+import { AdminVoiceConsole } from "@/components/admin/AdminVoiceConsole"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
-const VOICE_ERR: Record<string, string> = {
-  "not-allowed": "Microphone access is blocked. Allow mic access in your browser, then try again.",
-  "service-not-allowed": "Microphone access is blocked. Allow mic access in your browser, then try again.",
-  "no-speech": "I didn't catch that — tap the mic and speak again.",
-  "audio-capture": "No microphone found. Connect a mic and try again.",
-  "network": "Speech service is unreachable. Check your connection.",
-  "unsupported": "Voice isn't supported in this browser. Try Chrome.",
-}
-
-const SUGGESTIONS = [
-  "Give me a hospital snapshot",
-  "What's today's revenue?",
-  "ICU occupancy and free beds",
-  "Which licences expire this month?",
-  "Coverage gaps right now",
-  "High denial-risk claims",
-  "Overdue statutory filings",
-  "ER census and high-acuity load",
+const SUGGESTION_KEYS = [
+  "assistant.suggestion.snapshot",
+  "assistant.suggestion.revenue",
+  "assistant.suggestion.icu",
+  "assistant.suggestion.licences",
+  "assistant.suggestion.coverage",
+  "assistant.suggestion.denialRisk",
+  "assistant.suggestion.statutory",
+  "assistant.suggestion.erCensus",
 ]
 
 // Lightweight inline formatter: **bold** segments only (answers are plain text + bullets).
@@ -50,39 +43,23 @@ function AnswerText({ text }: { text: string }) {
 }
 
 export default function AdminAssistantPage() {
+  const t = useTranslations('admin')
   const router = useRouter()
   const { messages, ask, clear } = useAdminAssistantStore()
   const [input, setInput] = useState("")
   const [mounted, setMounted] = useState(false)
-  const [listening, setListening] = useState(false)
   const [voiceOk, setVoiceOk] = useState(false)
-  const [voiceErr, setVoiceErr] = useState<string | null>(null)
-  const recRef = useRef<Recognition | null>(null)
+  const [voiceOpen, setVoiceOpen] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setMounted(true); setVoiceOk(isSpeechSupported()) }, [])
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }) }, [messages.length])
-  useEffect(() => () => { recRef.current?.stop() }, [])
 
   const submit = (text: string) => {
     const q = text.trim()
     if (!q) return
     ask(q)
     setInput("")
-  }
-
-  // Voice-command search: tap → speak → live transcript fills the box → on stop
-  // it auto-submits the question. Errors (blocked mic, no speech) are surfaced.
-  const toggleMic = () => {
-    if (listening) { recRef.current?.stop(); recRef.current = null; setListening(false); return }
-    setVoiceErr(null)
-    const rec = startVoiceCommand({
-      onPartial: (t) => setInput(t),
-      onFinal: (t) => { setInput(""); submit(t) },
-      onError: (err) => { setVoiceErr(VOICE_ERR[err] ?? "Voice input failed — try again or type your question."); setListening(false) },
-      onEnd: () => setListening(false),
-    })
-    if (rec) { recRef.current = rec; setListening(true) }
   }
 
   const empty = mounted && messages.length === 0
@@ -92,42 +69,45 @@ export default function AdminAssistantPage() {
       {/* Header row */}
       <div className="flex items-center justify-between gap-3 pb-4">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="h-9 w-9 rounded-xl bg-accent-soft text-primary grid place-items-center flex-shrink-0">
+          <span className="h-9 w-9 rounded-xl bg-accent-soft text-accent grid place-items-center flex-shrink-0">
             <Sparkles className="h-5 w-5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <h2 className="t-title text-foreground leading-tight">Agentix HIMS AI</h2>
-            <p className="t-caption text-foreground-lighter">Ask anything about the hospital · grounded in live data</p>
+            <p className="t-caption text-foreground-lighter">{t('assistant.headerSubtitle')}</p>
           </div>
         </div>
         {mounted && messages.length > 0 && (
-          <button onClick={clear} className="inline-flex items-center gap-1.5 t-caption font-semibold text-foreground-lighter hover:text-danger transition-colors tap rounded-lg px-2 py-1" aria-label="Clear conversation">
-            <Trash2 className="h-4 w-4" aria-hidden="true" /> Clear
+          <button onClick={clear} className="inline-flex items-center gap-1.5 t-caption font-semibold text-foreground-lighter hover:text-danger transition-colors tap rounded-lg px-2 py-1" aria-label={t('assistant.clearConversation')}>
+            <Trash2 className="h-4 w-4" aria-hidden="true" /> {t('assistant.clear')}
           </button>
         )}
       </div>
 
       {/* Conversation */}
-      <div className="flex-1 overflow-y-auto -mx-1 px-1" aria-live="polite" aria-label="Assistant conversation">
+      <div className="flex-1 overflow-y-auto -mx-1 px-1" aria-live="polite" aria-label={t('assistant.conversation')}>
         {empty ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-4">
-            <span className="h-14 w-14 rounded-2xl bg-accent-soft text-primary grid place-items-center mb-4">
+            <span className="h-14 w-14 rounded-2xl bg-accent-soft text-accent grid place-items-center mb-4">
               <Sparkles className="h-7 w-7" aria-hidden="true" />
             </span>
-            <h3 className="t-h3 text-foreground">How can I help run the hospital?</h3>
+            <h3 className="t-h3 text-foreground">{t('assistant.emptyHeading')}</h3>
             <p className="t-body text-foreground-lighter mt-1.5 max-w-md">
-              I answer from live data across every department — beds, finance, staffing, claims, compliance and more. I never invent figures.
+              {t('assistant.emptyBody')}
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2 max-w-xl">
-              {SUGGESTIONS.map(s => (
-                <button
-                  key={s}
-                  onClick={() => submit(s)}
-                  className="rounded-full border border-border bg-surface px-3.5 py-1.5 t-caption font-semibold text-foreground-muted hover:border-primary hover:text-primary hover:bg-accent-soft transition-colors"
-                >
-                  {s}
-                </button>
-              ))}
+              {SUGGESTION_KEYS.map(key => {
+                const label = t(key)
+                return (
+                  <button
+                    key={key}
+                    onClick={() => submit(label)}
+                    className="rounded-full border border-border bg-surface px-3.5 py-1.5 t-caption font-semibold text-foreground-muted hover:border-primary hover:text-accent hover:bg-accent-soft transition-colors"
+                  >
+                    {label}
+                  </button>
+                )
+              })}
             </div>
           </div>
         ) : (
@@ -135,11 +115,11 @@ export default function AdminAssistantPage() {
             {messages.map((m, i) => (
               m.role === "user" ? (
                 <div key={i} className="flex justify-end">
-                  <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary text-white px-4 py-2.5 t-body">{m.text}</div>
+                  <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary text-[#0D2032] px-4 py-2.5 t-body">{m.text}</div>
                 </div>
               ) : (
                 <div key={i} className="flex gap-3">
-                  <span className="h-8 w-8 rounded-lg bg-accent-soft text-primary grid place-items-center flex-shrink-0 mt-0.5">
+                  <span className="h-8 w-8 rounded-lg bg-accent-soft text-accent grid place-items-center flex-shrink-0 mt-0.5">
                     <Sparkles className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-border bg-surface px-4 py-3 shadow-card">
@@ -150,7 +130,7 @@ export default function AdminAssistantPage() {
                           <button
                             key={l.route}
                             onClick={() => router.push(l.route)}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 t-caption font-semibold text-primary hover:bg-accent-soft hover:border-primary transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 t-caption font-semibold text-accent hover:bg-accent-soft hover:border-primary transition-colors"
                           >
                             {l.label} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                           </button>
@@ -160,7 +140,7 @@ export default function AdminAssistantPage() {
                     {m.sources && m.sources.length > 0 && (
                       <p className="mt-2.5 inline-flex items-center gap-1.5 t-caption text-foreground-lighter">
                         <ShieldCheck className="h-3.5 w-3.5 text-success" aria-hidden="true" />
-                        Grounded · {m.sources.join(", ")}{typeof m.confidence === "number" ? ` · ${Math.round(m.confidence * 100)}%` : ""}
+                        {t('assistant.grounded')} · {m.sources.join(", ")}{typeof m.confidence === "number" ? ` · ${Math.round(m.confidence * 100)}%` : ""}
                       </p>
                     )}
                   </div>
@@ -180,43 +160,35 @@ export default function AdminAssistantPage() {
         {voiceOk && (
           <button
             type="button"
-            onClick={toggleMic}
-            aria-label={listening ? "Stop voice input" : "Start voice input"}
-            aria-pressed={listening}
-            className={cn(
-              "tap grid place-items-center h-11 w-11 rounded-xl flex-shrink-0 transition-colors",
-              listening ? "bg-danger text-white animate-pulse" : "text-foreground-muted hover:bg-surface-sunken",
-            )}
+            onClick={() => { unlockAudio(); setVoiceOpen(true) }}
+            aria-label={t('assistant.voice.title')}
+            className="tap grid place-items-center h-11 w-11 rounded-xl flex-shrink-0 text-accent hover:bg-accent-soft transition-colors"
           >
             <Mic className="h-5 w-5" aria-hidden="true" />
           </button>
         )}
-        <label htmlFor="admin-ai-input" className="sr-only">Ask the assistant</label>
+        <label htmlFor="admin-ai-input" className="sr-only">{t('assistant.inputLabel')}</label>
         <input
           id="admin-ai-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={listening ? "Listening…" : "Ask anything — e.g. “ICU occupancy” or “today’s revenue”"}
+          placeholder={t('assistant.inputPlaceholder')}
           autoComplete="off"
           className="flex-1 bg-transparent px-2 py-2.5 t-body text-foreground placeholder:text-foreground-placeholder focus:outline-none"
         />
         <button
           type="submit"
           disabled={!input.trim()}
-          aria-label="Send"
-          className="tap grid place-items-center h-11 w-11 rounded-xl flex-shrink-0 bg-primary text-white hover:bg-primary-dark disabled:opacity-40 disabled:pointer-events-none transition-colors"
+          aria-label={t('assistant.send')}
+          className="tap grid place-items-center h-11 w-11 rounded-xl flex-shrink-0 bg-primary text-[#0D2032] hover:bg-primary-dark disabled:opacity-40 disabled:pointer-events-none transition-colors"
         >
           <Send className="h-5 w-5" aria-hidden="true" />
         </button>
       </form>
-      {voiceErr && (
-        <p role="alert" className="mt-2 t-caption font-semibold text-danger text-center">{voiceErr}</p>
-      )}
       <p className="mt-2 t-caption text-foreground-lighter text-center">
-        {listening
-          ? "Listening… speak your question, then pause."
-          : "Agentix HIMS AI reads live hospital data and never invents figures. Verify before acting on clinical or financial decisions."}
+        {t('assistant.disclaimer')}
       </p>
+      <AdminVoiceConsole open={voiceOpen} onClose={() => setVoiceOpen(false)} />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { useNotificationStore } from '@/store/useNotificationStore'
 import { useEmergencyStore } from '@/store/useEmergencyStore'
 import { useAuditStore } from '@/store/useAuditStore'
 import { usePatientProfileStore, emptyProfile } from '@/store/usePatientProfileStore'
+import { useJourneyStore, type JourneyState } from '@/store/useJourneyStore'
 import type { VitalsRecord } from '@/store/useInpatientStore'
 import { getSupabaseClient } from '@/lib/supabase/client'
 
@@ -32,6 +33,21 @@ const QUEUE_STATUS_TO_VISIT_STATUS: Record<QueueStatus, 'waiting' | 'vitals' | '
   pharmacy: 'pharmacy',
   billing: 'billing',
   done: 'completed',
+}
+
+// Mirror the OPD queue position into the monitoring/SLA journey store so the admin
+// cockpit tracks every patient regardless of how they registered. transition() is a
+// no-op for patients without a journey entry, so this is always safe to call.
+const JOURNEY_FOR_QUEUE: Partial<Record<QueueStatus, JourneyState>> = {
+  vitals: 'VITALS_IN_PROGRESS',
+  consulting: 'IN_CONSULT',
+  pharmacy: 'PHARMACY_QUEUED',
+  billing: 'BILLING_PENDING',
+  done: 'COMPLETED',
+}
+function syncJourneyStage(id: string, status: QueueStatus) {
+  const next = JOURNEY_FOR_QUEUE[status]
+  if (next) useJourneyStore.getState().transition(id, next)
 }
 
 export type FamilyViewableStatus = {
@@ -86,6 +102,7 @@ export type Patient = {
   latestBP?: string
   // Comprehensive OPD vitals recorded by the nurse (M2 form) + AI triage flag.
   opdVitals?: VitalsRecord
+  opdVitalsHistory?: VitalsRecord[]
   triageFlag?: { band: Band; label: string }
   // Phase 2 — set when this patient/visit was created through the real backend
   // (src/lib/api). Older/demo-seeded patients won't have this; the nurse-vitals
@@ -125,6 +142,7 @@ interface PatientState {
   selectedPatient: Patient | null
   setSelectedPatient: (patient: Patient | null) => void
   updateStatus: (id: string, status: QueueStatus) => Promise<void>
+  reassignPatient: (id: string, patch: { department?: string; doctor?: string }) => void
   /** Link a verified hospital identity (UHID/ABHA) onto a queued patient. */
   linkPatientIdentity: (id: string, patch: { uhid?: string; abhaId?: string; aadhaarVerified?: boolean }) => Promise<void>
   sendToEmergency: (id: string) => void
@@ -144,6 +162,15 @@ interface PatientState {
 const TODAY = new Date().toISOString().slice(0, 10)
 const YESTERDAY = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
 
+// Prior-visit OPD vitals so the Vitals Requests screen shows a real history.
+let _pastVitSeq = 0
+const pastVit = (daysAgo: number, v: Partial<Omit<VitalsRecord, 'id' | 'at' | 'by'>>): VitalsRecord => ({
+  id: `ov-${++_pastVitSeq}`,
+  at: new Date(Date.now() - daysAgo * 86400000).toISOString(),
+  by: 'Anjali Desai',
+  ...v,
+})
+
 const MOCK_PATIENTS: Patient[] = [
   {
     id: 'PT-20391', name: 'Meera Pillai', age: 34, gender: 'Female', phone: '9876543210', bloodGroup: 'A+', token: 1,
@@ -151,6 +178,11 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: { bp: '118/76', temp: '98.4°F', weight: '58 kg', spo2: '99%', pulse: '72 bpm' },
     symptoms: ['Headache for 2 days', 'Mild nausea'], history: ['Migraine history'], registeredAt: '09:10 AM', registeredDate: TODAY,
     triageLevel: 'Medium',
+    opdVitals: pastVit(0, { hr: 72, systolicBP: 118, diastolicBP: 76, rr: 16, spo2: 99, temp: 98.4, weight: 58, height: 162 }),
+    opdVitalsHistory: [
+      pastVit(40, { hr: 78, systolicBP: 122, diastolicBP: 80, rr: 17, spo2: 98, temp: 98.6, weight: 58 }),
+      pastVit(0, { hr: 72, systolicBP: 118, diastolicBP: 76, rr: 16, spo2: 99, temp: 98.4, weight: 58, height: 162 }),
+    ],
     familyAccessToken: 'demo-family-token-meera-001',
     familyPhones: ['9876543211'],
     dishaConsentGiven: true,
@@ -184,6 +216,11 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: { bp: '146/92', temp: '98.4°F', weight: '68 kg', spo2: '97%', pulse: '88 bpm' },
     symptoms: ['Palpitations', 'Breathlessness on exertion'], history: ['Hypertension'], registeredAt: '10:10 AM', registeredDate: TODAY,
     triageLevel: 'Medium', latestBP: '146/92',
+    opdVitals: pastVit(0, { hr: 88, systolicBP: 146, diastolicBP: 92, rr: 18, spo2: 97, temp: 98.4, weight: 68, height: 158 }),
+    opdVitalsHistory: [
+      pastVit(30, { hr: 84, systolicBP: 150, diastolicBP: 94, rr: 18, spo2: 97, temp: 98.6, weight: 68 }),
+      pastVit(0, { hr: 88, systolicBP: 146, diastolicBP: 92, rr: 18, spo2: 97, temp: 98.4, weight: 68, height: 158 }),
+    ],
   },
   {
     id: 'PT-20394', name: 'Kiran Patil', age: 55, gender: 'Male', phone: '9900112233', bloodGroup: 'AB+', token: 4,
@@ -199,6 +236,10 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Fever', 'Sore throat'], history: ['No known allergies'], registeredAt: '09:55 AM', registeredDate: TODAY,
     triageLevel: 'Low',
+    opdVitalsHistory: [
+      pastVit(96, { hr: 88, systolicBP: 118, diastolicBP: 74, rr: 16, spo2: 99, temp: 98.6, weight: 52, height: 160 }),
+      pastVit(20, { hr: 96, systolicBP: 116, diastolicBP: 72, rr: 18, spo2: 98, temp: 100.2, weight: 52 }),
+    ],
   },
   {
     id: 'PT-20396', name: 'Rakesh Verma', age: 61, gender: 'Male', phone: '9988776655', bloodGroup: 'A-', token: 6,
@@ -206,6 +247,11 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: { bp: '140/90', temp: '97.8°F', weight: '82 kg', spo2: '97%', pulse: '78 bpm' },
     symptoms: ['Joint pain', 'Swelling in knee'], history: ['Osteoarthritis', 'CKD stage 3'], registeredAt: '08:45 AM', registeredDate: TODAY,
     triageLevel: 'Low',
+    opdVitals: pastVit(0, { hr: 78, systolicBP: 140, diastolicBP: 90, rr: 17, spo2: 97, temp: 97.8, weight: 82, height: 174 }),
+    opdVitalsHistory: [
+      pastVit(60, { hr: 80, systolicBP: 138, diastolicBP: 88, rr: 16, spo2: 98, temp: 98.2, weight: 82 }),
+      pastVit(0, { hr: 78, systolicBP: 140, diastolicBP: 90, rr: 17, spo2: 97, temp: 97.8, weight: 82, height: 174 }),
+    ],
   },
   // M13.0 — OPD board expansion. Realistic mix: 22 patients across departments,
   // queue stages (waiting / vitals / consulting / pharmacy / billing / done),
@@ -216,6 +262,11 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: { bp: '132/86', temp: '98.6°F', weight: '78 kg', spo2: '98%', pulse: '82 bpm' },
     symptoms: ['Exertional chest discomfort', 'Family h/o CAD'], history: ['Dyslipidaemia'], registeredAt: '10:20 AM', registeredDate: TODAY,
     triageLevel: 'Medium', latestBP: '132/86',
+    opdVitals: pastVit(0, { hr: 82, systolicBP: 132, diastolicBP: 86, rr: 17, spo2: 98, temp: 98.6, weight: 78, height: 176 }),
+    opdVitalsHistory: [
+      pastVit(50, { hr: 84, systolicBP: 134, diastolicBP: 88, rr: 18, spo2: 98, temp: 98.4, weight: 78 }),
+      pastVit(0, { hr: 82, systolicBP: 132, diastolicBP: 86, rr: 17, spo2: 98, temp: 98.6, weight: 78, height: 176 }),
+    ],
   },
   {
     id: 'PT-20400', name: 'Priyanka Joshi', age: 26, gender: 'Female', phone: '9844556677', bloodGroup: 'O+', token: 9,
@@ -231,6 +282,11 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Breathlessness on exertion', 'Pedal oedema'], history: ['CAD post-PCI 2019', 'CKD III'], registeredAt: '10:30 AM', registeredDate: TODAY,
     triageLevel: 'High', latestBP: '152/96',
+    opdVitalsHistory: [
+      pastVit(120, { hr: 82, systolicBP: 148, diastolicBP: 90, rr: 18, spo2: 96, temp: 98.4, weight: 74, height: 170 }),
+      pastVit(45, { hr: 90, systolicBP: 150, diastolicBP: 94, rr: 20, spo2: 95, temp: 98.6, weight: 75 }),
+      pastVit(10, { hr: 98, systolicBP: 152, diastolicBP: 96, rr: 22, spo2: 93, temp: 98.8, weight: 76, o2Delivery: 'Room air' }),
+    ],
   },
   {
     id: 'PT-20402', name: 'Ananya Bose', age: 7, gender: 'Female', phone: '9899001122', bloodGroup: 'A+', token: 11,
@@ -238,6 +294,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Fever 102°F · 2 days', 'Throat pain'], history: ['Vaccinations up to date'], registeredAt: '10:35 AM', registeredDate: TODAY,
     triageLevel: 'Medium',
+    source: 'walk_in', uhid: 'PUH-2026-00031', abhaId: '14-3120-8845-2201', aadhaarVerified: true,
   },
   {
     id: 'PT-20403', name: 'Suresh Pillai', age: 58, gender: 'Male', phone: '9890112233', bloodGroup: 'O+', token: 12,
@@ -266,6 +323,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Hair loss', 'Scalp itching'], history: ['Anaemia'], registeredAt: '10:50 AM', registeredDate: TODAY,
     triageLevel: 'Low',
+    source: 'walk_in', uhid: 'PUH-2026-00032', abhaId: '14-4471-9930-5510', aadhaarVerified: true,
   },
   {
     id: 'PT-20407', name: 'Mohan Iyengar', age: 73, gender: 'Male', phone: '9866554433', bloodGroup: 'B+', token: 16,
@@ -273,6 +331,10 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Generalised weakness', 'Loss of appetite'], history: ['CKD IV', 'HTN'], registeredAt: '10:55 AM', registeredDate: TODAY,
     triageLevel: 'High', latestBP: '156/98',
+    opdVitalsHistory: [
+      pastVit(60, { hr: 78, systolicBP: 150, diastolicBP: 92, rr: 17, spo2: 97, temp: 98.2, bloodGlucose: 138, weight: 68, height: 168 }),
+      pastVit(14, { hr: 84, systolicBP: 156, diastolicBP: 98, rr: 18, spo2: 96, temp: 98.4, bloodGlucose: 162, weight: 67 }),
+    ],
   },
   {
     id: 'PT-20408', name: 'Kavita Bansal', age: 36, gender: 'Female', phone: '9876655443', bloodGroup: 'O+', token: 17,
@@ -280,6 +342,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Antenatal · 28 weeks', 'Routine review'], history: ['Gravida 2 Para 1'], registeredAt: '11:00 AM', registeredDate: TODAY,
     triageLevel: 'Low',
+    source: 'walk_in', uhid: 'PUH-2026-00033', abhaId: '14-5582-2214-7788', aadhaarVerified: true,
   },
   {
     id: 'PT-20409', name: 'Devansh Singh', age: 4, gender: 'Male', phone: '9890900011', bloodGroup: 'A+', token: 18,
@@ -294,6 +357,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Low back pain · radiating L leg', 'Numbness L foot'], history: ['Nil significant'], registeredAt: '11:10 AM', registeredDate: TODAY,
     triageLevel: 'Medium',
+    source: 'walk_in', uhid: 'PUH-2026-00034', abhaId: '14-6690-4471-9023', aadhaarVerified: true,
   },
   {
     id: 'PT-20411', name: 'Ishita Malhotra', age: 41, gender: 'Female', phone: '9876549988', bloodGroup: 'B+', token: 20,
@@ -309,6 +373,7 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Persistent dry cough · 3 weeks'], history: ['Ex-smoker'], registeredAt: '11:20 AM', registeredDate: TODAY,
     triageLevel: 'High',
+    source: 'walk_in', uhid: 'PUH-2026-00035', abhaId: '14-7712-6650-3341', aadhaarVerified: true,
   },
   {
     id: 'PT-20413', name: 'Geeta Sharma', age: 60, gender: 'Female', phone: '9866443322', bloodGroup: 'A+', token: 22,
@@ -316,6 +381,40 @@ const MOCK_PATIENTS: Patient[] = [
     vitals: undefined,
     symptoms: ['Routine BP review', 'Mild giddiness'], history: ['HTN', 'T2DM'], registeredAt: '11:25 AM', registeredDate: TODAY,
     triageLevel: 'Low', latestHbA1c: 6.9, latestBP: '142/88',
+    source: 'walk_in', uhid: 'PUH-2026-00036', abhaId: '14-8830-1129-4456', aadhaarVerified: true,
+  },
+  // Walk-ins without ABHA / Aadhaar linkage — surface under "Needs Aadhaar".
+  {
+    id: 'PT-20414', name: 'Ramesh Yadav', age: 44, gender: 'Male', phone: '9835551201', bloodGroup: 'B+', token: 23,
+    queueStatus: 'waiting', estimatedWait: 58, doctor: 'Dr. Priya Nair', department: 'General Medicine',
+    vitals: undefined,
+    symptoms: ['Fever · 3 days', 'Body ache'], history: ['No significant history'], registeredAt: '11:30 AM', registeredDate: TODAY,
+    triageLevel: 'Medium',
+    source: 'walk_in', aadhaarVerified: false,
+  },
+  {
+    id: 'PT-20415', name: 'Sunita Devi', age: 51, gender: 'Female', phone: '9812007745', bloodGroup: 'O+', token: 24,
+    queueStatus: 'waiting', estimatedWait: 62, doctor: 'Dr. Ananya Iyer', department: 'Dermatology',
+    vitals: undefined,
+    symptoms: ['Recurrent skin allergy'], history: ['Nil significant'], registeredAt: '11:35 AM', registeredDate: TODAY,
+    triageLevel: 'Low',
+    source: 'walk_in', uhid: 'PUH-2026-00037', abhaId: '14-9945-7781-6620', aadhaarVerified: true,
+  },
+  {
+    id: 'PT-20416', name: 'Mohd Aslam', age: 34, gender: 'Male', phone: '9899334417', bloodGroup: 'A+', token: 25,
+    queueStatus: 'waiting', estimatedWait: 66, doctor: 'Dr. Vikram Rathore', department: 'Orthopaedics',
+    vitals: undefined,
+    symptoms: ['Wrist pain after fall', 'Swelling'], history: ['No known allergies'], registeredAt: '11:40 AM', registeredDate: TODAY,
+    triageLevel: 'Medium',
+    source: 'walk_in', uhid: 'PUH-2026-00038', abhaId: '14-1057-3392-8874', aadhaarVerified: true,
+  },
+  {
+    id: 'PT-20417', name: 'Kamla Prasad', age: 68, gender: 'Female', phone: '9866120099', bloodGroup: 'B-', token: 26,
+    queueStatus: 'waiting', estimatedWait: 70, doctor: 'Dr. Rohan Mehta', department: 'Cardiology',
+    vitals: undefined,
+    symptoms: ['Giddiness', 'Fatigue'], history: ['HTN'], registeredAt: '11:45 AM', registeredDate: TODAY,
+    triageLevel: 'High', latestBP: '158/96',
+    source: 'walk_in', aadhaarVerified: false,
   },
   // Yesterday (Yesterday tab) — completed visits.
   {
@@ -397,6 +496,7 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
       }
     })
     const p = get().patients.find(x => x.id === id)
+    syncJourneyStage(id, status)
     // Reception sending a patient for vitals alerts the nursing station.
     if (status === 'vitals' && p) {
       useNotificationStore.getState().add({
@@ -444,6 +544,18 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
     } catch (err) {
       console.error('[usePatientStore] real backend status update failed (local queue still updated):', err)
     }
+  },
+
+  // Re-route a patient to a different department/doctor — used when a specialist
+  // referral is accepted and the patient is re-queued under the new specialty.
+  reassignPatient: (id, patch) => {
+    set((state) => {
+      const updated = state.patients.map(p => p.id === id ? { ...p, ...patch } : p)
+      return {
+        patients: updated,
+        queue: updated.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)),
+      }
+    })
   },
 
   // Aadhaar verification at the desk (or via the queue quick-action) establishes a
@@ -548,7 +660,7 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
     let updatedPatient: Patient | undefined
     set((state) => {
       const updated = state.patients.map(p =>
-        p.id === id ? { ...p, vitals: legacy, opdVitals: full, triageFlag, queueStatus: 'consulting' as QueueStatus } : p
+        p.id === id ? { ...p, vitals: legacy, opdVitals: full, opdVitalsHistory: [...(p.opdVitalsHistory ?? []), full], triageFlag, queueStatus: 'consulting' as QueueStatus } : p
       )
       updatedPatient = updated.find(p => p.id === id)
       return {
@@ -577,6 +689,8 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
         }
       }
     }
+
+    syncJourneyStage(id, 'consulting')
   },
 
   bookAppointment: (appt) => {
@@ -803,14 +917,16 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
   },
 }),
   {
-    name: 'agentix-patientstore', version: 3,
+    name: 'agentix-patientstore', version: 6,
     storage: createJSONStorage(() => localStorage),
     skipHydration: true,
     // v3 added identity fields (source / uhid / abhaId) and reseeded the demo board.
-    // Boards persisted before v3 predate them — reset to the fresh seed so the queue
-    // shows both verified ("UHID") and "Needs Aadhaar" rows out of the box.
+    // v4 seeds prior-visit OPD vitals (opdVitalsHistory) so the Vitals Requests
+    // screen shows a real history. v5 seeds recorded-today opdVitals so the Vitals
+    // Requests "Done" tab is populated. v6 appends the unlinked (Needs-Aadhaar)
+    // walk-ins onto whatever board is already persisted without wiping it.
     migrate: (persisted, version) => {
-      if (version < 3) {
+      if (version < 5) {
         return {
           ...(persisted as Record<string, unknown>),
           patients: MOCK_PATIENTS,
@@ -819,6 +935,20 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
           appointments: MOCK_APPOINTMENTS,
           selectedPatient: null,
         } as unknown as PatientState
+      }
+      if (version < 6) {
+        const prev = persisted as PatientState
+        const existingIds = new Set(prev.patients.map(p => p.id))
+        const maxToken = Math.max(0, ...prev.patients.map(p => p.token ?? 0))
+        const needsAadhaar = MOCK_PATIENTS
+          .filter(p => p.queueStatus === 'waiting' && !p.uhid && p.registeredDate === TODAY && !existingIds.has(p.id))
+          .map((p, i) => ({ ...p, token: maxToken + 1 + i }))
+        const patients = [...prev.patients, ...needsAadhaar]
+        return {
+          ...prev,
+          patients,
+          queue: patients.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)),
+        } as PatientState
       }
       return persisted as PatientState
     },

@@ -12,10 +12,10 @@ interface AvatarProps {
 // list legibility while staying within the single deep-blue/slate identity.
 const colors = [
   "bg-[#1E3A8A] text-white",
-  "bg-[#2563EB] text-white",
+  "bg-[#16324A] text-white",
   "bg-[#475467] text-white",
   "bg-[#334155] text-white",
-  "bg-[#1D4ED8] text-white",
+  "bg-[#16324A] text-white",
 ]
 
 function getColor(name: string) {

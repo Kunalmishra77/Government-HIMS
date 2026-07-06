@@ -1,0 +1,91 @@
+{
+  "dashboard": {
+    "title": "Bio-Medical Waste Dashboard",
+    "subtitle": "Daily waste management and compliance tracking",
+    "logCollection": "Log collection",
+    "totalToday": "Total Today (kg)",
+    "pendingCollection": "Pending Collection",
+    "nonCompliant": "Non-Compliant",
+    "disposedToday": "Disposed Today",
+    "todaysWasteByCategory": "Today's Waste by Category",
+    "kg": "kg",
+    "wasteLogToday": "Waste Log (Today)",
+    "treat": "Treat",
+    "handOver": "Hand over",
+    "flag": "Flag",
+    "flagNonCompliant": "Flag non-compliant"
+  },
+  "collectModal": {
+    "heading": "Log waste collection",
+    "close": "Close",
+    "ward": "Ward *",
+    "category": "Category *",
+    "weightKg": "Weight (kg) *",
+    "bags": "Bags *",
+    "cancel": "Cancel",
+    "logCollection": "Log collection"
+  },
+  "handoverModal": {
+    "heading": "Hand over to vendor",
+    "close": "Close",
+    "vendor": "Vendor *",
+    "manifest": "Manifest #",
+    "disposalCert": "Disposal certificate (optional)",
+    "dropCertHere": "Drop incineration cert PDF here",
+    "cancel": "Cancel",
+    "handOver": "Hand over"
+  },
+  "status": {
+    "pending": "Pending",
+    "collected": "Collected",
+    "treated": "Treated",
+    "disposed": "Disposed",
+    "nonCompliant": "Non-compliant"
+  },
+  "toast": {
+    "loggedWaste": "Logged {weight}kg {category} from {ward}",
+    "wasteTreated": "Waste marked treated",
+    "handedOverAdmin": "Handed over to {vendor} · admin notified",
+    "flaggedNonCompliant": "Flagged non-compliant · admin + quality notified",
+    "enterValidWeight": "Enter a valid weight (kg) and bag count",
+    "collected": "{category} · {weight}kg · {bags} bag(s) collected from {ward}",
+    "markedTreated": "Marked treated",
+    "handedOverManifest": "Handed over to {vendor} · manifest generated",
+    "reportGenerated": "CPCB report for {month} generated",
+    "exported": "Exported {count} log entries for {month}"
+  },
+  "log": {
+    "title": "Biomedical Waste Log",
+    "subtitle": "CPCB 2016 colour-coded segregation · vendor handover with manifest · NABH HIC evidence",
+    "logNewCollection": "Log a new collection",
+    "weightPlaceholder": "Weight (kg)",
+    "bagsPlaceholder": "Bags",
+    "logCollection": "Log collection",
+    "typesTreatment": "{types} · treatment: {treatment}",
+    "tabPipeline": "pipeline",
+    "tabToday": "today",
+    "tabHistory": "history",
+    "bagsSuffix": "{count} bag(s)",
+    "collectedAt": "Collected {time}",
+    "wasteType": "Waste type:",
+    "treatment": "Treatment:",
+    "markTreated": "Mark treated",
+    "handOverToVendor": "Hand over to {vendor}",
+    "disposedLine": "Manifest {manifest} · vendor {vendor} · disposed {time}"
+  },
+  "reports": {
+    "title": "CPCB Monthly Reports",
+    "subtitle": "Live summary of biomedical waste by category · CPCB 2016 compliant",
+    "generateReport": "Generate report",
+    "exportJson": "Export JSON",
+    "totalWaste": "Total waste",
+    "bags": "Bags",
+    "compliance": "Compliance",
+    "nonCompliant": "Non-compliant",
+    "kg": "kg",
+    "breakdownByColourCode": "Breakdown by colour code",
+    "reportSavedDraft": "Report saved as draft",
+    "reportSavedDetail": "{id} · total {total} kg · compliance {compliance}%",
+    "noWasteLogged": "No waste collection logged for {month}."
+  }
+}

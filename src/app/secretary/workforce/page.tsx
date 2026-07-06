@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Users, TrendingDown, AlertTriangle } from 'lucide-react'
 
 const CADRES = [
@@ -33,21 +34,22 @@ function VacancyBar({ pct, warn }: { pct: number; warn: boolean }) {
 }
 
 export default function WorkforcePage() {
+  const t = useTranslations('secretary')
   const totalVacancy = CADRES.reduce((s, c) => s + c.vacancy, 0)
   const avgVacancyPct = Math.round(CADRES.reduce((s, c) => s + c.vacancyPct, 0) / CADRES.length)
 
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">Workforce & DME Faculty</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">कार्यबल · Human resources for health state overview</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('workforce.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('workforce.subtitle')}</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total vacancies', value: totalVacancy.toLocaleString(), warn: true },
-          { label: 'Avg vacancy rate', value: `${avgVacancyPct}%`, warn: avgVacancyPct > 15 },
-          { label: 'Specialist shortage', value: '1,176', sub: 'Most critical', warn: true },
-          { label: 'Recruitments in progress', value: '2,400', warn: false },
+          { label: t('workforce.kpiTotalVacancies'), value: totalVacancy.toLocaleString(), warn: true },
+          { label: t('workforce.kpiAvgVacancy'), value: `${avgVacancyPct}%`, warn: avgVacancyPct > 15 },
+          { label: t('workforce.kpiSpecialistShortage'), value: '1,176', sub: t('workforce.kpiSpecialistShortageSub'), warn: true },
+          { label: t('workforce.kpiRecruitments'), value: '2,400', warn: false },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -61,7 +63,7 @@ export default function WorkforcePage() {
         {/* Health workforce */}
         <div className="bg-white border border-[var(--color-border)] rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
           <div className="px-5 py-3.5 border-b border-[var(--color-border)]">
-            <p className="text-sm font-semibold text-[var(--color-foreground)]">Health workforce vacancies</p>
+            <p className="text-sm font-semibold text-[var(--color-foreground)]">{t('workforce.healthVacancies')}</p>
           </div>
           <div className="divide-y divide-[var(--color-border)]">
             {CADRES.map(c => (
@@ -79,7 +81,7 @@ export default function WorkforcePage() {
         {/* DME faculty */}
         <div className="bg-white border border-[var(--color-border)] rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
           <div className="px-5 py-3.5 border-b border-[var(--color-border)]">
-            <p className="text-sm font-semibold text-[var(--color-foreground)]">DME faculty vacancies by specialty</p>
+            <p className="text-sm font-semibold text-[var(--color-foreground)]">{t('workforce.dmeVacancies')}</p>
           </div>
           <div className="divide-y divide-[var(--color-border)]">
             {DME_FACULTY.map(f => (
@@ -93,7 +95,7 @@ export default function WorkforcePage() {
             ))}
           </div>
           <div className="px-5 py-3 border-t border-[var(--color-border)] bg-amber-50">
-            <p className="text-xs text-amber-700 font-medium">⚠ NMC flagged Anaesthesia and Pathology — risk to PG seat retention in 4 colleges</p>
+            <p className="text-xs text-amber-700 font-medium">{t('workforce.dmeWarning')}</p>
           </div>
         </div>
       </div>

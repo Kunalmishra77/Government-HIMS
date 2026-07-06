@@ -1,6 +1,7 @@
 "use client"
 import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { useCmoAlertsStore } from '@/store/useCmoAlertsStore'
 import { CmoPageHeader }  from '@/components/cmo/layout/CmoPageHeader'
 import { SeverityDot }    from '@/components/shared/SeverityDot'
@@ -24,10 +25,11 @@ const TIME_LIMITS:    Record<TimeFilter, number> = { '24h': 1440, '7d': 10080, '
 const severityRowStyle: Record<AlertSeverity, string> = {
   critical: 'border-l-3 border-l-red-500',
   warning:  'border-l-3 border-l-amber-400',
-  info:     'border-l-3 border-l-blue-400',
+  info:     'border-l-3 border-l-slate-400',
 }
 
 export default function CmoAlertsPage() {
+  const t           = useTranslations('cmo')
   const alerts      = useCmoAlertsStore(s => s.alerts)
   const acknowledge = useCmoAlertsStore(s => s.acknowledge)
   const dismiss     = useCmoAlertsStore(s => s.dismiss)
@@ -61,29 +63,29 @@ export default function CmoAlertsPage() {
   const bulkAck = async () => {
     for (const id of selected) await acknowledge(id)
     setSelected(new Set())
-    toast.success(`${selected.size} alerts acknowledged`)
+    toast.success(t('alerts.bulkAcknowledged', { count: selected.size }))
   }
 
   const SEV_CHIPS = [
-    { value: 'all' as SevFilter,      label: 'All',      count: alerts.filter(a => !a.acknowledged).length },
-    { value: 'critical' as SevFilter, label: 'Critical', count: counts.critical },
-    { value: 'warning' as SevFilter,  label: 'Warning',  count: counts.warning },
-    { value: 'info' as SevFilter,     label: 'Info',     count: counts.info },
+    { value: 'all' as SevFilter,      label: t('alerts.all'),      count: alerts.filter(a => !a.acknowledged).length },
+    { value: 'critical' as SevFilter, label: t('alerts.critical'), count: counts.critical },
+    { value: 'warning' as SevFilter,  label: t('alerts.warning'),  count: counts.warning },
+    { value: 'info' as SevFilter,     label: t('alerts.info'),     count: counts.info },
   ]
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 cmo-fade-up">
       <CmoPageHeader
-        title="Alerts · अलर्ट"
-        titleHindi="सभी अलर्ट — 142 सुविधाएं"
-        subtitle={`${alerts.filter(a => !a.acknowledged).length} open alerts · ${alerts.filter(a => a.acknowledged).length} acknowledged`}
+        title={t('alerts.title')}
+        titleHindi={t('alerts.titleHindi')}
+        subtitle={t('alerts.subtitle', { open: alerts.filter(a => !a.acknowledged).length, ack: alerts.filter(a => a.acknowledged).length })}
       />
 
       {/* KPI strip */}
       <div className="grid grid-cols-3 gap-3">
-        <MetricTile label="Unacknowledged" value={alerts.filter(a => !a.acknowledged).length} variant="default" />
-        <MetricTile label="Critical"       value={counts.critical} variant="critical" />
-        <MetricTile label="Avg age"
+        <MetricTile label={t('alerts.unacknowledged')} value={alerts.filter(a => !a.acknowledged).length} variant="default" />
+        <MetricTile label={t('alerts.critical')}       value={counts.critical} variant="critical" />
+        <MetricTile label={t('alerts.avgAge')}
           value={`${Math.round(alerts.filter(a => !a.acknowledged).reduce((s, a) => s + a.ageMinutes, 0) / Math.max(1, alerts.filter(a => !a.acknowledged).length))}m`}
           variant="default" />
       </div>
@@ -94,7 +96,7 @@ export default function CmoAlertsPage() {
         <div className="relative">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-foreground-lighter)]" />
           <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search alerts..."
+            placeholder={t('alerts.searchPlaceholder')}
             className="pl-8 pr-3 py-1.5 text-[12px] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface)] w-44 placeholder:text-[var(--color-foreground-lighter)]" />
         </div>
 
@@ -116,7 +118,7 @@ export default function CmoAlertsPage() {
         {/* Source */}
         <select value={srcFilter} onChange={e => setSrcFilter(e.target.value)}
           className="text-[11px] border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none bg-[var(--color-surface)] text-[var(--color-foreground-muted)] capitalize">
-          {SOURCE_OPTIONS.map(s => <option key={s}>{s}</option>)}
+          {SOURCE_OPTIONS.map(s => <option key={s} value={s}>{s === 'All' ? t('alerts.all') : s}</option>)}
         </select>
 
         {/* Time */}
@@ -135,19 +137,19 @@ export default function CmoAlertsPage() {
         {/* Show ack toggle */}
         <label className="flex items-center gap-1.5 text-[11px] text-[var(--color-foreground-muted)] cursor-pointer ml-auto">
           <input type="checkbox" checked={showAck} onChange={e => setShowAck(e.target.checked)} className="rounded" />
-          Show acknowledged
+          {t('alerts.showAcknowledged')}
         </label>
       </div>
 
       {/* Bulk actions bar */}
       {selected.size > 0 && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-[var(--color-primary-soft)] border border-[rgba(8,145,178,0.18)] rounded-xl">
-          <span className="text-[12px] font-semibold text-[var(--color-primary)]">{selected.size} selected</span>
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-[var(--color-primary-soft)] border border-[rgba(238,107,38,0.18)] rounded-xl">
+          <span className="text-[12px] font-semibold text-[var(--color-accent)]">{t('alerts.selected', { count: selected.size })}</span>
           <button onClick={bulkAck}
             className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90">
-            <CheckSquare size={12} /> Acknowledge all
+            <CheckSquare size={12} /> {t('alerts.acknowledgeAll')}
           </button>
-          <button onClick={() => setSelected(new Set())} className="text-[11px] text-[var(--color-primary)] hover:opacity-70">Clear</button>
+          <button onClick={() => setSelected(new Set())} className="text-[11px] text-[var(--color-accent)] hover:opacity-70">{t('alerts.clear')}</button>
         </div>
       )}
 
@@ -156,7 +158,7 @@ export default function CmoAlertsPage() {
            style={{ boxShadow: 'var(--shadow-card)' }}>
         {/* Table header */}
         <div className="grid grid-cols-[32px_80px_1fr_140px_100px_80px_100px] gap-0 border-b border-[var(--color-border)] bg-[var(--color-surface-raised)]">
-          {['', 'Severity', 'Alert · detail', 'Facility', 'Owner', 'Age', 'Actions'].map((h, i) => (
+          {['', t('alerts.colSeverity'), t('alerts.colAlertDetail'), t('alerts.colFacility'), t('alerts.colOwner'), t('alerts.colAge'), t('alerts.colActions')].map((h, i) => (
             <div key={i} className={cn('px-3 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-[var(--color-foreground-lighter)]', i === 2 ? 'col-span-1' : '')}>
               {i === 0 ? (
                 <input type="checkbox"
@@ -171,9 +173,9 @@ export default function CmoAlertsPage() {
         {filtered.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-14 text-[var(--color-foreground-lighter)]">
             <Filter size={28} className="opacity-30" />
-            <p className="text-[13px] font-medium">No alerts match the current filters</p>
+            <p className="text-[13px] font-medium">{t('alerts.noMatch')}</p>
             <button onClick={() => { setSevFilter('all'); setSrcFilter('All'); setSearch('') }}
-              className="text-[11px] text-[var(--color-primary)] font-semibold hover:underline">Clear filters</button>
+              className="text-[11px] text-[var(--color-accent)] font-semibold hover:underline">{t('alerts.clearFilters')}</button>
           </div>
         )}
 
@@ -212,7 +214,7 @@ export default function CmoAlertsPage() {
             {/* Owner */}
             <div className="px-3 py-3 flex items-center">
               <span className="text-[11.5px] text-[var(--color-foreground-muted)] truncate">
-                {alert.owner?.name ?? <span className="text-[var(--color-foreground-lighter)] italic">Unassigned</span>}
+                {alert.owner?.name ?? <span className="text-[var(--color-foreground-lighter)] italic">{t('alerts.unassigned')}</span>}
               </span>
             </div>
 
@@ -225,13 +227,13 @@ export default function CmoAlertsPage() {
             <div className="px-3 py-3 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
               {!alert.acknowledged && (
                 <button
-                  onClick={async () => { await acknowledge(alert.id); toast.success('Acknowledged') }}
-                  className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-foreground-muted)] hover:border-[rgba(8,145,178,0.18)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] transition-all">
-                  Ack
+                  onClick={async () => { await acknowledge(alert.id); toast.success(t('alerts.acknowledgedToast')) }}
+                  className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-foreground-muted)] hover:border-[rgba(238,107,38,0.18)] hover:text-[var(--color-accent)] hover:bg-[var(--color-primary-soft)] transition-all">
+                  {t('alerts.ack')}
                 </button>
               )}
               <button
-                onClick={async () => { await dismiss(alert.id); toast.success('Dismissed') }}
+                onClick={async () => { await dismiss(alert.id); toast.success(t('alerts.dismissed')) }}
                 className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-red-200 text-red-500 bg-red-50 hover:bg-red-100 transition-colors">
                 ✕
               </button>
@@ -245,23 +247,23 @@ export default function CmoAlertsPage() {
         open={!!drill} onClose={() => setDrill(null)}
         title={drill?.title ?? ''} subtitle={`${drill?.facility} · ${drill?.source}`}
         tabs={[
-          { id: 'details', label: 'Details' },
-          { id: 'timeline', label: 'Timeline' },
-          { id: 'actions', label: 'Actions' },
-          { id: 'audit', label: 'Audit' },
+          { id: 'details', label: t('common.details') },
+          { id: 'timeline', label: t('common.timeline') },
+          { id: 'actions', label: t('common.actions') },
+          { id: 'audit', label: t('common.audit') },
         ]}
         activeTab={drillTab} onTabChange={setDrillTab}
         footer={
           <>
             {drill && !drill.acknowledged && (
-              <button onClick={async () => { await acknowledge(drill.id); toast.success('Acknowledged · audit log updated'); setDrill(null) }}
+              <button onClick={async () => { await acknowledge(drill.id); toast.success(t('alerts.acknowledgedAudit')); setDrill(null) }}
                 className="flex-1 text-[12.5px] font-semibold py-2.5 rounded-xl bg-[var(--color-primary)] text-white hover:opacity-90">
-                Acknowledge
+                {t('common.acknowledge')}
               </button>
             )}
-            <button onClick={() => { console.info('[CMO Demo] Escalate'); toast.success('Escalated to State PMU') }}
+            <button onClick={() => { console.info('[CMO Demo] Escalate'); toast.success(t('common.escalatedToStatePmu')) }}
               className="text-[12.5px] font-semibold px-4 py-2.5 rounded-xl border border-[var(--color-border)] hover:bg-slate-50">
-              Escalate to State
+              {t('common.escalateToState')}
             </button>
           </>
         }
@@ -269,7 +271,7 @@ export default function CmoAlertsPage() {
         {drillTab === 'details' && drill && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2 text-[12.5px]">
-              {[['Severity', drill.severity], ['Source', drill.source], ['Facility', drill.facility], ['Age', ageLabel(drill.ageMinutes)], ['Status', drill.acknowledged ? '✓ Acknowledged' : 'Open'], ['Owner', drill.owner?.name ?? 'Unassigned']].map(([k, v]) => (
+              {[[t('common.severity'), drill.severity], [t('common.source'), drill.source], [t('common.facility'), drill.facility], [t('common.age'), ageLabel(drill.ageMinutes)], [t('common.status'), drill.acknowledged ? `✓ ${t('common.acknowledged')}` : t('common.open')], [t('common.owner'), drill.owner?.name ?? t('common.unassigned')]].map(([k, v]) => (
                 <div key={k} className="bg-[var(--color-surface-raised)] rounded-lg px-3 py-2.5">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-foreground-lighter)] mb-0.5">{k}</p>
                   <p className="font-semibold text-[var(--color-foreground)] capitalize">{v}</p>
@@ -284,7 +286,7 @@ export default function CmoAlertsPage() {
             {drill.timeline.map((e, i) => (
               <div key={i} className="flex gap-3">
                 <div className="flex flex-col items-center">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-primary)] border-2 border-white ring-1 ring-[rgba(8,145,178,0.18)] flex-shrink-0 mt-1" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-primary)] border-2 border-white ring-1 ring-[rgba(238,107,38,0.18)] flex-shrink-0 mt-1" />
                   {i < drill.timeline.length - 1 && <span className="w-px flex-1 bg-[var(--color-border)] my-1" />}
                 </div>
                 <div className="pb-4">
@@ -298,9 +300,9 @@ export default function CmoAlertsPage() {
         {drillTab === 'actions' && drill && (
           <div className="space-y-2">
             {drill.recommendedActions.map((action, i) => (
-              <button key={i} onClick={() => toast.success('Action initiated')}
-                className="w-full text-left flex items-start gap-3 text-[12.5px] px-4 py-3 rounded-xl border border-[rgba(8,145,178,0.18)] bg-[var(--color-primary-soft)] text-[#1E40AF] hover:bg-blue-100/70 transition-colors">
-                <span className="font-bold text-[var(--color-primary)] flex-shrink-0">{i + 1}.</span>
+              <button key={i} onClick={() => toast.success(t('common.actionInitiated'))}
+                className="w-full text-left flex items-start gap-3 text-[12.5px] px-4 py-3 rounded-xl border border-[rgba(238,107,38,0.18)] bg-[var(--color-primary-soft)] text-[#0D2032] hover:bg-surface-sunken transition-colors">
+                <span className="font-bold text-[var(--color-accent)] flex-shrink-0">{i + 1}.</span>
                 {action}
               </button>
             ))}

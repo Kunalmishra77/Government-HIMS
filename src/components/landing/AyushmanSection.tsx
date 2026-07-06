@@ -1,6 +1,7 @@
 "use client"
 
 import { Heart, ShieldCheck, CheckCircle, Zap, ArrowRight } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { Reveal } from "./Reveal"
 import Link from "next/link"
 
@@ -35,11 +36,12 @@ const STATS = [
 ]
 
 export function AyushmanSection() {
+  const t = useTranslations("landing.ayushman")
   return (
     <section
       id="ayushman"
       className="scroll-mt-20 py-20 lg:py-28 relative overflow-hidden"
-      style={{ background: "linear-gradient(160deg,#F0FDF9 0%,#FFFFFF 45%,#F0F7FF 100%)" }}
+      style={{ background: "linear-gradient(160deg,#F0FDF9 0%,#FFFFFF 45%,#F6F9FC 100%)" }}
     >
       {/* Decorative blobs */}
       <div
@@ -55,19 +57,18 @@ export function AyushmanSection() {
 
       <div className="relative max-w-7xl mx-auto px-5 lg:px-10">
         {/* Header */}
-        <Reveal className="max-w-2xl">
+        <Reveal className="max-w-2xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-green-50 border border-green-200">
             <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
             <p className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-green-700">
-              Govt scheme · cashless ready
+              {t("eyebrow")}
             </p>
           </div>
           <h2 className="text-[30px] lg:text-[38px] font-bold text-[#101828] tracking-tight mt-3 leading-tight">
-            AB-PMJAY &amp; ABHA — native,<br className="hidden lg:block" /> not bolted on
+            {t("titleLine1")}<br className="hidden lg:block" /> {t("titleLine2")}
           </h2>
           <p className="text-[15.5px] text-[#475467] mt-3 leading-relaxed">
-            Every Ayushman beneficiary walks in, gets verified in seconds, and proceeds cashless
-            — with pre-auth auto-submitted to NHA. No staff effort. No billing friction. No re-entry anywhere.
+            {t("subtitle")}
           </p>
         </Reveal>
 
@@ -79,8 +80,8 @@ export function AyushmanSection() {
             <Reveal>
               {/* ABHA card */}
               <div
-                className="relative rounded-3xl overflow-hidden p-7 shadow-[0_8px_32px_rgba(8,145,178,0.18)]"
-                style={{ background: "linear-gradient(135deg,#0C617A 0%,var(--color-primary) 45%,var(--color-primary) 100%)" }}
+                className="relative rounded-3xl overflow-hidden p-7 shadow-[0_8px_32px_rgba(238,107,38,0.18)]"
+                style={{ background: "linear-gradient(135deg,#C2481A 0%,var(--color-primary) 45%,var(--color-primary) 100%)" }}
               >
                 <div
                   aria-hidden="true"
@@ -108,8 +109,8 @@ export function AyushmanSection() {
                   </div>
                   <div className="mt-5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-cyan-300 flex-shrink-0" />
-                      <p className="text-[12px] text-cyan-200 font-semibold">Digital health identity · ABDM registered</p>
+                      <CheckCircle className="h-4 w-4 text-primary-light flex-shrink-0" />
+                      <p className="text-[12px] text-primary-light font-semibold">Digital health identity · ABDM registered</p>
                     </div>
                     <Zap className="h-4 w-4 text-white/30" />
                   </div>
@@ -163,13 +164,13 @@ export function AyushmanSection() {
 
           {/* Right: steps */}
           <Reveal delay={0.1}>
-            <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--color-primary)] mb-6">How it works</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--color-accent)] mb-6">How it works</p>
             <div className="space-y-0">
               {STEPS.map((s, i) => (
                 <div key={s.n} className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <div className="h-9 w-9 rounded-2xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[11px] font-black text-[var(--color-primary)]">{s.n}</span>
+                      <span className="text-[11px] font-black text-[var(--color-accent)]">{s.n}</span>
                     </div>
                     {i < STEPS.length - 1 && (
                       <div className="w-px flex-1 min-h-[28px] bg-gradient-to-b from-[var(--color-primary)]/25 to-[var(--color-primary)]/05 mt-1.5 mb-1.5" />
@@ -186,7 +187,7 @@ export function AyushmanSection() {
             {/* CTA hint */}
             <Link
               href="/abha"
-              className="mt-8 inline-flex items-center gap-2 text-[13px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] group hover:underline cursor-pointer"
+              className="mt-8 inline-flex items-center gap-2 text-[13px] font-semibold text-[var(--color-accent)] hover:text-[var(--color-primary-dark)] group hover:underline cursor-pointer"
             >
               <span>Try the ABDM Sandbox &amp; Consent flow</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -203,7 +204,7 @@ export function AyushmanSection() {
                 key={i}
                 className="rounded-2xl border border-[#EAECF2] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
               >
-                <p className="text-[24px] lg:text-[28px] font-bold tracking-tight text-[var(--color-primary)]">{s.value}</p>
+                <p className="text-[24px] lg:text-[28px] font-bold tracking-tight text-[var(--color-accent)]">{s.value}</p>
                 <p className="text-[12.5px] text-[#475467] mt-1.5 leading-snug">{s.label}</p>
               </div>
             ))}

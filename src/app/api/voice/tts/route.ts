@@ -35,11 +35,12 @@ export async function POST(req: NextRequest) {
         text,
         model_id: MODEL_ID,
         language_code: lang,
-        // Calm, even, receptionist-like delivery. High stability + zero style
-        // keeps the pace consistent and prevents the erratic speed-ups, skipped
-        // words, and artifacts that lower stability / higher style introduce.
-        // speed 0.92 is a touch slower than default for clear, unhurried speech.
-        voice_settings: { stability: 0.7, similarity_boost: 0.85, style: 0, use_speaker_boost: true, speed: 0.92 },
+        // Warm, human receptionist delivery. Moderate stability + a little style
+        // gives natural intonation and warmth (instead of a flat, robotic read),
+        // while `speed` pins the pace so it stays even and consistent throughout —
+        // expressiveness and speed are controlled independently, so we get a human
+        // tone without the erratic speed-ups that lowering stability alone causes.
+        voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0.15, use_speaker_boost: true, speed: 0.96 },
       }),
     },
   )

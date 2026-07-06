@@ -28,7 +28,7 @@ export function ShiftBanner() {
   if (!a) return null
   const coveringOther = activeWard !== a.ward && activeWard !== ALL_WARDS
   return (
-    <div className="rounded-2xl p-5 text-white" style={{ background: "linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))", boxShadow: "0 8px 24px rgba(8,145,178,0.25)" }}>
+    <div className="rounded-2xl p-5 text-white" style={{ background: "linear-gradient(135deg,#0D2032,#16324A)", boxShadow: "0 8px 24px rgba(13,32,50,0.28)" }}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   ScanLine, Bed, Stethoscope, ChevronDown, ChevronRight, Hand, Camera, Upload,
   Image as ImageIcon, CheckCircle, X, Clock, ShieldCheck, Sparkles, Gauge, AlertTriangle,
@@ -18,40 +19,23 @@ import { EmptyState } from "@/components/ui/EmptyState"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
-const MODALITY_TABS: { code: Modality; label: string }[] = [
-  { code: "XR",    label: "X-Ray" },
-  { code: "CT",    label: "CT" },
-  { code: "MRI",   label: "MRI" },
-  { code: "US",    label: "Ultrasound" },
-  { code: "MAMMO", label: "Mammo" },
-]
+type TFn = ReturnType<typeof useTranslations<"radiology">>
+const MODALITY_TABS: Modality[] = ["XR", "CT", "MRI", "US", "MAMMO"]
 
 // Priority → triple-encoded clinical status (inline, not a colour map).
 const priorityStatus = (p: Priority): Status =>
   p === "STAT" || p === "Critical" || p === "Stroke" || p === "Trauma" ? "critical"
     : p === "Urgent" ? "urgent" : "neutral"
 
-const STATUS_LABEL: Record<StudyStatus, string> = {
-  ordered: "Ordered", scheduled: "Scheduled", arrived: "Arrived",
-  acquiring: "Acquiring", acquired: "Acquired",
-  reading: "In reading", reported: "Reported",
-  verified: "Verified", released: "Released", cancelled: "Cancelled",
-}
+const statusLabel = (t: TFn, s: StudyStatus) => t(`studyStatus.${s}`)
 const STATUS_SORT: Record<StudyStatus, number> = {
   acquiring: 0, arrived: 1, acquired: 2,
   reading: 3, reported: 4, scheduled: 5, ordered: 6,
   verified: 7, released: 8, cancelled: 9,
 }
 
-const timeAgo = (iso?: string) => {
-  if (!iso) return ""
-  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
-  if (mins < 1) return "just now"
-  if (mins < 60) return `${mins}m ago`
-  return `${Math.round(mins / 60)}h ago`
-}
-
 export default function ModalityBench() {
+  const t = useTranslations("radiology")
   const studies = useRadiologyStudiesStore(s => s.studies)
   const claimAcquisition = useRadiologyStudiesStore(s => s.claimAcquisition)
   const markAcquired = useRadiologyStudiesStore(s => s.markAcquired)
@@ -90,6 +74,31 @@ export default function ModalityBench() {
     toast.success(`${name} attached`)
   }
 
+  // Queue = patients who have arrived but no radiographer has started acquisition;
+  // processing = exams already being acquired / read.
+  const queueRows = rows.filter(s => s.status === "arrived")
+  const processingRows = rows.filter(s => s.status !== "arrived")
+
+  const renderBenchRow = (s: RadiologyStudy) => (
+    <BenchRow key={s.id} s={s} me={me}
+      expanded={expandedId === s.id}
+      filename={filename[s.id] ?? ""}
+      onFilenameChange={(v) => setFilename(prev => ({ ...prev, [s.id]: v }))}
+      onToggle={() => setExpandedId(id => id === s.id ? null : s.id)}
+      onClaim={() => { claimAcquisition(s.id, me); setExpandedId(s.id); toast.success(`${s.patientName} on your counter`) }}
+      onAcquire={() => {
+        if (s.attachments.length === 0) {
+          toast.error("Attach at least one image before marking acquired.")
+          return
+        }
+        markAcquired(s.id)
+        toast.success(`${s.name} acquired · sent to Reading Room`)
+      }}
+      onAttach={() => onAttach(s)}
+      onDose={(d) => { recordDose(s.id, { ...d, recordedBy: me.name }); toast.success("Dose recorded") }}
+      onFlagQuality={() => { const a = assessImageQuality(s).data; flagQuality(s.id, { motion: a.motion, incompleteCoverage: a.incompleteCoverage, note: a.note }); toast.warning("Quality issue flagged") }} />
+  )
+
   return (
     <div className="space-y-5">
       <p className="t-body text-foreground-lighter">
@@ -99,10 +108,10 @@ export default function ModalityBench() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex gap-1 p-1 rounded-xl bg-surface-sunken">
           {MODALITY_TABS.map(m => (
-            <button key={m.code} onClick={() => setModality(m.code)}
+            <button key={m} onClick={() => setModality(m)}
               className={cn("px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition-colors",
-                modality === m.code ? "bg-surface text-foreground shadow-xs" : "text-foreground-lighter hover:text-foreground")}>
-              {m.label} <span className="ml-1 text-[10px] font-bold text-foreground-placeholder">{counts[m.code]}</span>
+                modality === m ? "bg-surface text-foreground shadow-xs" : "text-foreground-lighter hover:text-foreground")}>
+              {t.has(`modality.${m}`) ? t(`modality.${m}`) : m} <span className="ml-1 text-[10px] font-bold text-foreground-placeholder">{counts[m]}</span>
             </button>
           ))}
         </div>
@@ -115,30 +124,34 @@ export default function ModalityBench() {
         </div>
       </div>
 
-      <div className="space-y-2">
-        {rows.length === 0 && (
-          <EmptyState icon={Camera} title="No patients on this modality right now" size="sm" />
-        )}
-        {rows.map(s => (
-          <BenchRow key={s.id} s={s} me={me}
-            expanded={expandedId === s.id}
-            filename={filename[s.id] ?? ""}
-            onFilenameChange={(v) => setFilename(prev => ({ ...prev, [s.id]: v }))}
-            onToggle={() => setExpandedId(id => id === s.id ? null : s.id)}
-            onClaim={() => { claimAcquisition(s.id, me); setExpandedId(s.id); toast.success(`${s.patientName} on your counter`) }}
-            onAcquire={() => {
-              if (s.attachments.length === 0) {
-                toast.error("Attach at least one image before marking acquired.")
-                return
-              }
-              markAcquired(s.id)
-              toast.success(`${s.name} acquired · sent to Reading Room`)
-            }}
-            onAttach={() => onAttach(s)}
-            onDose={(d) => { recordDose(s.id, { ...d, recordedBy: me.name }); toast.success("Dose recorded") }}
-            onFlagQuality={() => { const a = assessImageQuality(s).data; flagQuality(s.id, { motion: a.motion, incompleteCoverage: a.incompleteCoverage, note: a.note }); toast.warning("Quality issue flagged") }} />
-        ))}
-      </div>
+      {rows.length === 0 && (
+        <EmptyState icon={Camera} title="No patients on this modality right now" size="sm" />
+      )}
+
+      {/* Queue — arrived patients waiting for a radiographer to begin acquisition */}
+      {queueRows.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-warning" />
+            <h2 className="text-sm font-bold text-foreground">Queue — awaiting radiographer</h2>
+            <span className="text-[11px] font-bold text-warning bg-warning-soft rounded-full px-2 py-0.5">{queueRows.length}</span>
+            <span className="text-[11px] text-foreground-lighter">Accept a patient to begin the exam</span>
+          </div>
+          {queueRows.map(renderBenchRow)}
+        </div>
+      )}
+
+      {/* Processing — exams a radiographer has started acquiring */}
+      {processingRows.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <ScanLine className="h-4 w-4 text-accent" />
+            <h2 className="text-sm font-bold text-foreground">In exam — acquiring / reading</h2>
+            <span className="text-[11px] font-bold text-accent bg-accent-soft rounded-full px-2 py-0.5">{processingRows.length}</span>
+          </div>
+          {processingRows.map(renderBenchRow)}
+        </div>
+      )}
     </div>
   )
 }
@@ -156,6 +169,7 @@ function BenchRow(props: {
   onFlagQuality: () => void
 }) {
   const { s, me, expanded, filename } = props
+  const t = useTranslations("radiology")
   const cat = RADIOLOGY_CATALOG[s.code]
   const mine = s.acquiringBy?.id === me.id
   const minsElapsed = Math.round((Date.now() - new Date(s.orderedAt).getTime()) / 60000)
@@ -177,8 +191,8 @@ function BenchRow(props: {
             <span className="font-bold text-foreground truncate">{s.patientName}</span>
             <span className="text-[11px] font-bold text-foreground-placeholder">{s.patientId}</span>
             {s.wardBed && <span className="text-[11px] font-semibold text-foreground-lighter flex items-center gap-0.5"><Bed className="h-3 w-3" />{s.wardBed}</span>}
-            <span className="text-[12px] font-bold text-primary">{s.name}</span>
-            <StatusPill status={studyStatusToken(s.status).status} label={STATUS_LABEL[s.status]} dense />
+            <span className="text-[12px] font-bold text-accent">{s.name}</span>
+            <StatusPill status={studyStatusToken(s.status).status} label={statusLabel(t, s.status)} dense />
             {s.acquiringBy && <span className="text-[11px] font-semibold text-foreground-placeholder">· {mine ? "your counter" : `on ${s.acquiringBy.name}`}</span>}
             {needsContrast && (
               <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5",
@@ -204,7 +218,7 @@ function BenchRow(props: {
         <div className="flex-shrink-0 flex items-center gap-2">
           {s.status === "arrived" && !s.acquiringBy && (
             <button onClick={props.onClaim}
-              className="u-press flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark px-3 py-2 rounded-xl shadow-xs cursor-pointer transition-colors">
+              className="u-press flex items-center gap-1.5 text-xs font-bold text-[#0D2032] hover:text-[#0D2032] bg-primary hover:bg-primary-dark px-3 py-2 rounded-xl shadow-xs cursor-pointer transition-colors">
               <Hand className="h-3.5 w-3.5" />Accept
             </button>
           )}
@@ -215,7 +229,7 @@ function BenchRow(props: {
             </button>
           )}
           {(s.status === "acquired" || s.status === "reading" || s.status === "reported") && (
-            <span className="text-xs font-bold text-success-strong whitespace-nowrap">{STATUS_LABEL[s.status]}</span>
+            <span className="text-xs font-bold text-success-strong whitespace-nowrap">{statusLabel(t, s.status)}</span>
           )}
           <button onClick={props.onToggle} className="p-1.5 rounded-lg hover:bg-surface-sunken cursor-pointer text-foreground-placeholder">
             {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -253,7 +267,7 @@ function BenchRow(props: {
                   placeholder={`${s.modality}-${s.id.slice(-4)}-N.jpg`}
                   className="flex-1 h-8 px-2 text-xs rounded-md border border-border bg-surface focus:outline-none focus:border-primary transition-colors" />
                 <button onClick={props.onAttach}
-                  className="u-press flex items-center gap-1 text-xs font-bold text-primary bg-accent-soft hover:bg-accent-soft/70 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors">
+                  className="u-press flex items-center gap-1 text-xs font-bold text-accent bg-accent-soft hover:bg-accent-soft/70 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors">
                   <Upload className="h-3 w-3" />Attach
                 </button>
               </div>
@@ -261,7 +275,7 @@ function BenchRow(props: {
           </div>
 
           {s.aiPrelim && (
-            <p className="text-[11px] text-primary italic bg-accent-soft rounded-md px-2 py-1.5">{s.aiPrelim}</p>
+            <p className="text-[11px] text-accent italic bg-accent-soft rounded-md px-2 py-1.5">{s.aiPrelim}</p>
           )}
 
           {/* AI image-quality assessment */}
@@ -289,7 +303,7 @@ function BenchRow(props: {
                   <input value={dlp} onChange={e => setDlp(e.target.value)} placeholder="DLP (mGy·cm)" inputMode="decimal" className="h-8 w-32 px-2 text-xs rounded-md border border-border bg-surface focus:outline-none focus:border-primary transition-colors" />
                   <input value={mas} onChange={e => setMas(e.target.value)} placeholder="mAs" inputMode="decimal" className="h-8 w-20 px-2 text-xs rounded-md border border-border bg-surface focus:outline-none focus:border-primary transition-colors" />
                   <button onClick={() => { props.onDose({ dlp: dlp ? Number(dlp) : undefined, mas: mas ? Number(mas) : undefined }); setDlp(""); setMas("") }}
-                    className="u-press h-8 px-3 text-xs font-bold text-white bg-primary-dark hover:bg-primary rounded-lg cursor-pointer transition-colors">Record</button>
+                    className="u-press h-8 px-3 text-xs font-bold text-[#0D2032] bg-primary-dark hover:bg-primary rounded-lg cursor-pointer transition-colors">Record</button>
                 </div>
               ) : <p className="text-[11px] text-foreground-placeholder italic">Dose not yet recorded.</p>}
             </div>

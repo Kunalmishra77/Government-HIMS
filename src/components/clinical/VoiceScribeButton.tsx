@@ -140,7 +140,7 @@ export function VoiceScribeButton({ surface, context, onAccept, patientId, patie
       onClick={() => { setOpen(true); start() }}
       className={
         (compact
-          ? "inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11.5px] font-semibold bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] hover:bg-[rgba(8,145,178,0.14)] ring-1 ring-blue-200 "
+          ? "inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11.5px] font-semibold bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] hover:bg-[rgba(238,107,38,0.14)] ring-1 ring-primary/25 "
           : "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white shadow-sm ") +
         (className ?? '')
       }
@@ -158,19 +158,19 @@ export function VoiceScribeButton({ surface, context, onAccept, patientId, patie
   const previewSoap = transcript ? toSOAP(transcript, context ?? {}) : ''
 
   return (
-    <div className="rounded-xl bg-gradient-to-br from-[rgba(8,145,178,0.08)] to-[rgba(8,145,178,0.06)] ring-1 ring-[rgba(8,145,178,0.20)] overflow-hidden">
-      <header className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(8,145,178,0.15)]/60">
-        <Wand2 className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+    <div className="rounded-xl bg-surface-sunken ring-1 ring-[rgba(238,107,38,0.20)] overflow-hidden">
+      <header className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(238,107,38,0.15)]/60">
+        <Wand2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
         <h3 className="text-[12.5px] font-semibold text-[var(--color-primary-dark)]">Voice scribe · {SURFACE_LABEL[surface]}</h3>
         {!supported ? <ReasoningChip compact tone="warn" title="Demo mock — Web Speech unavailable" /> : null}
-        <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-primary)]">
+        <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-accent)]">
           <Sparkles className="h-3 w-3" /> AI-SOAP structuring
         </span>
       </header>
 
       <div className="p-3 space-y-2.5">
         {listening ? (
-          <div className="flex items-center gap-3 px-2 py-3 rounded-lg bg-white/60 ring-1 ring-blue-100">
+          <div className="flex items-center gap-3 px-2 py-3 rounded-lg bg-white/60 ring-1 ring-primary/20">
             <span className="relative inline-flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75 animate-ping" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
@@ -190,10 +190,10 @@ export function VoiceScribeButton({ surface, context, onAccept, patientId, patie
         ) : null}
 
         {showResult && previewSoap ? (
-          <div className="rounded-lg bg-white p-2.5 ring-1 ring-blue-200/70 space-y-1">
+          <div className="rounded-lg bg-white p-2.5 ring-1 ring-primary/25 space-y-1">
             <div className="flex items-center gap-1.5">
-              <FileText className="h-3 w-3 text-[var(--color-primary)]" />
-              <p className="text-[10.5px] font-semibold text-[var(--color-primary)] uppercase tracking-wide">AI-structured SOAP</p>
+              <FileText className="h-3 w-3 text-[var(--color-accent)]" />
+              <p className="text-[10.5px] font-semibold text-[var(--color-accent)] uppercase tracking-wide">AI-structured SOAP</p>
               <ReasoningChip compact tone="ok" title="80% confidence" />
             </div>
             <pre className="text-[12px] text-slate-800 leading-relaxed whitespace-pre-wrap font-sans">{previewSoap}</pre>
@@ -201,7 +201,7 @@ export function VoiceScribeButton({ surface, context, onAccept, patientId, patie
         ) : null}
       </div>
 
-      <footer className="flex items-center gap-2 border-t border-[rgba(8,145,178,0.15)]/60 px-3 py-2 bg-white/60">
+      <footer className="flex items-center gap-2 border-t border-[rgba(238,107,38,0.15)]/60 px-3 py-2 bg-white/60">
         <span className="text-[10.5px] text-slate-500 mr-auto">HITL — accept / reject. Decision audited.</span>
         <button type="button" onClick={reject} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold bg-white hover:bg-slate-50 text-slate-700 ring-1 ring-slate-200">
           <X className="h-3 w-3" /> Reject

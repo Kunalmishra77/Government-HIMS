@@ -12,8 +12,8 @@ const U = (id: string, w = 1400) =>
 export const PHOTOS = {
   // Doctor in warm conversation with a seated patient — reassuring (check-in).
   doctorPatient: {
-    src: U("photo-1584516150909-c43483ee7932"),
-    alt: "A doctor speaking warmly with a patient in a hospital room",
+    src: U("photo-1622253692010-333f2da6031d"),
+    alt: "An Indian doctor consulting with a patient in a clinic",
   },
   // Doctor reviewing results with an older patient — collaborative, gentle.
   consult: {

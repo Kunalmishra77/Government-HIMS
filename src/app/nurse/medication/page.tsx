@@ -16,20 +16,22 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { notifyAndAudit } from "@/lib/notifyAndAudit"
 import { useAuthStore } from "@/store/useAuthStore"
+import { useTranslations } from "next-intl"
 
-// MAR slot lifecycle → clinical status token + canonical label (inline, not a colour map).
-const MAR_STATUS: Record<MarStatus, { status: Status; label: string }> = {
-  given:     { status: "done",     label: "Given" },
-  held:      { status: "urgent",   label: "Held" },
-  missed:    { status: "critical", label: "Missed" },
-  due:       { status: "caution",  label: "Due" },
-  scheduled: { status: "pending",  label: "Scheduled" },
-  running:   { status: "info",     label: "Running" },
-  prn:       { status: "info",     label: "PRN" },
+// MAR slot lifecycle → clinical status token (label resolved via i18n key).
+const MAR_STATUS: Record<MarStatus, { status: Status; key: string }> = {
+  given:     { status: "done",     key: "given" },
+  held:      { status: "urgent",   key: "held" },
+  missed:    { status: "critical", key: "missed" },
+  due:       { status: "caution",  key: "due" },
+  scheduled: { status: "pending",  key: "scheduled" },
+  running:   { status: "info",     key: "running" },
+  prn:       { status: "info",     key: "prn" },
 }
 const ORDER: Record<MarStatus, number> = { missed: 0, due: 1, prn: 2, running: 3, scheduled: 4, held: 5, given: 6 }
 
 export default function MedicationMAR() {
+  const t = useTranslations('nurse')
   const { prescriptions, requestProcurement } = usePharmacyStore()
   const allInpatients = useInpatientStore(s => s.inpatients)
   const activeWard = useShiftStore(s => s.activeWard)
@@ -69,38 +71,38 @@ export default function MedicationMAR() {
     administerMed(admin.ip.patientId, { medName: admin.slot.medName, slot: admin.slot.slot, action: 'given', note })
     notifyAndAudit({
       to: 'doctor', type: 'system', priority: note ? 'high' : 'low',
-      title: `Med given · ${admin.slot.medName} · ${admin.slot.patientName}`,
-      body: `${admin.slot.medName} ${admin.slot.dose} ${admin.slot.route} administered to ${admin.slot.patientName} (${admin.slot.ward} ${admin.slot.bed}) at ${admin.slot.slot} by ${nurseName}${note ? ` — ${note}` : ''}.`,
+      title: t('medication.medGivenTitle', { med: admin.slot.medName, name: admin.slot.patientName }),
+      body: t('medication.medGivenBody', { med: admin.slot.medName, dose: admin.slot.dose, route: admin.slot.route, name: admin.slot.patientName, ward: admin.slot.ward, bed: admin.slot.bed, slot: admin.slot.slot, nurse: nurseName, note: note ? ` — ${note}` : '' }),
       patientName: admin.slot.patientName,
       audit: { action: 'nurse_med_administered', resource: 'mar_slot', resourceId: `${admin.ip.patientId}:${admin.slot.medName}:${admin.slot.slot}`, detail: `${admin.slot.medName} given to ${admin.slot.patientName}${note ? ` · ${note}` : ''}`, userName: nurseName },
     })
-    toast.success(`${admin.slot.medName} administered to ${admin.slot.patientName}${note ? ' (override logged)' : ''}`)
+    toast.success(note ? t('medication.medGivenToastOverride', { med: admin.slot.medName, name: admin.slot.patientName }) : t('medication.medGivenToast', { med: admin.slot.medName, name: admin.slot.patientName }))
   }
   const doHold = (note?: string) => {
     if (!admin) return
     administerMed(admin.ip.patientId, { medName: admin.slot.medName, slot: admin.slot.slot, action: 'held', note })
     notifyAndAudit({
       to: 'doctor', type: 'system', priority: 'medium',
-      title: `Med held · ${admin.slot.medName} · ${admin.slot.patientName}`,
-      body: `${admin.slot.medName} held for ${admin.slot.patientName} (${admin.slot.ward} ${admin.slot.bed}) at ${admin.slot.slot} by ${nurseName}${note ? ` — ${note}` : ''}.`,
+      title: t('medication.medHeldTitle', { med: admin.slot.medName, name: admin.slot.patientName }),
+      body: t('medication.medHeldBody', { med: admin.slot.medName, name: admin.slot.patientName, ward: admin.slot.ward, bed: admin.slot.bed, slot: admin.slot.slot, nurse: nurseName, note: note ? ` — ${note}` : '' }),
       patientName: admin.slot.patientName,
       audit: { action: 'nurse_med_administered', resource: 'mar_slot', resourceId: `${admin.ip.patientId}:${admin.slot.medName}:${admin.slot.slot}`, detail: `${admin.slot.medName} held for ${admin.slot.patientName}${note ? ` · ${note}` : ''}`, userName: nurseName },
     })
-    toast(`${admin.slot.medName} held for ${admin.slot.patientName}`)
+    toast(t('medication.medHeldToast', { med: admin.slot.medName, name: admin.slot.patientName }))
   }
 
   return (
     <div className="space-y-6 pt-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <p className="t-body text-foreground-lighter">{activeWard} · live MAR from the doctor&apos;s active orders</p>
+        <p className="t-body text-foreground-lighter">{t('medication.subtitle', { ward: activeWard })}</p>
         <WardSwitcher />
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 p-1 rounded-xl w-fit bg-surface-sunken">
         {[
-          { key: 'mar', label: 'MAR', count: dueCount + missedCount },
-          { key: 'ipd', label: 'IPD Procurement', count: ipdPending.length },
+          { key: 'mar', label: t('medication.tabMar'), count: dueCount + missedCount },
+          { key: 'ipd', label: t('medication.tabIpd'), count: ipdPending.length },
         ].map(tab => (
           <button
             key={tab.key}
@@ -126,18 +128,18 @@ export default function MedicationMAR() {
           {missedCount > 0 && (
             <div className="bg-danger-bg border border-danger/25 rounded-xl p-3 text-sm text-danger-strong font-semibold flex items-center gap-2" role="alert">
               <Sparkles className="h-4 w-4 flex-shrink-0 text-danger" />
-              AI alert: {missedCount} dose{missedCount > 1 ? 's' : ''} overdue / missed — administer or document a reason.
+              {t('medication.missedAlert', { count: missedCount, plural: missedCount > 1 ? 's' : '' })}
             </div>
           )}
           <div className="bg-warning-bg border border-warning/30 rounded-xl p-3 text-sm text-brand-amber-strong font-semibold flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-            5-rights and allergy/interaction checks run automatically at administration.
+            {t('medication.fiveRights')}
           </div>
 
           <div className="bg-surface rounded-xl border border-border overflow-hidden overflow-x-auto">
             <table className="w-full text-sm min-w-[760px]">
               <thead className="bg-surface-sunken border-b border-border">
-                <tr>{['Patient', 'Bed', 'Drug', 'Route', 'Time', 'Status', 'By', 'Action'].map(h => (
+                <tr>{[t('medication.colPatient'), t('medication.colBed'), t('medication.colDrug'), t('medication.colRoute'), t('medication.colTime'), t('medication.colStatus'), t('medication.colBy'), t('medication.colAction')].map(h => (
                   <th key={h} scope="col" className="text-left px-4 py-3 t-overline text-foreground-lighter">{h}</th>
                 ))}</tr>
               </thead>
@@ -153,7 +155,7 @@ export default function MedicationMAR() {
                       <td className="px-4 py-3 text-foreground-lighter">{slot.route}</td>
                       <td className="px-4 py-3 text-foreground-lighter whitespace-nowrap">{slot.slot}</td>
                       <td className="px-4 py-3">
-                        <StatusPill status={meta.status} label={meta.label} />
+                        <StatusPill status={meta.status} label={t(`medication.${meta.key}`)} />
                       </td>
                       <td className="px-4 py-3 text-xs text-foreground-lighter whitespace-nowrap">
                         {rec ? `${rec.by} @ ${new Date(rec.at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}` : '—'}
@@ -161,7 +163,7 @@ export default function MedicationMAR() {
                       <td className="px-4 py-3">
                         {actionable && (
                           <button onClick={() => setAdmin({ slot, ip })} className="u-press px-3 py-1.5 text-xs font-bold bg-success text-white rounded-lg hover:bg-success-strong cursor-pointer transition-colors">
-                            {status === 'prn' ? 'Give PRN' : 'Administer'}
+                            {status === 'prn' ? t('medication.givePrn') : t('medication.administer')}
                           </button>
                         )}
                       </td>
@@ -170,7 +172,7 @@ export default function MedicationMAR() {
                 })}
                 {rows.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-2">
-                    <EmptyState icon={Activity} title="No active medication orders on the ward." size="sm" />
+                    <EmptyState icon={Activity} title={t('medication.noOrders')} size="sm" />
                   </td></tr>
                 )}
               </tbody>
@@ -183,13 +185,13 @@ export default function MedicationMAR() {
         <div className="space-y-6">
           <div className="bg-accent-soft border border-primary/20 rounded-xl p-3 text-sm text-primary-dark font-semibold flex items-center gap-2">
             <ShoppingCart className="h-4 w-4 flex-shrink-0" />
-            IPD prescriptions are held until the ward nursing staff confirms the patient has arrived and procurement is required
+            {t('medication.ipdHeld')}
           </div>
 
           {ipdRequested.length > 0 && (
             <div>
               <h3 className="text-sm font-bold text-foreground-muted mb-3 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-warning" /> Requested — Pharmacy Preparing ({ipdRequested.length})
+                <Clock className="h-4 w-4 text-warning" /> {t('medication.requestedPreparing', { count: ipdRequested.length })}
               </h3>
               <div className="space-y-3">
                 {ipdRequested.map(rx => (
@@ -199,7 +201,7 @@ export default function MedicationMAR() {
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-bold text-foreground">{rx.patientName}</p>
                           {rx.wardBed && <span className="flex items-center gap-1 text-xs text-foreground-lighter"><Bed className="h-3 w-3" />{rx.wardBed}</span>}
-                          <NeonBadge variant="warning">Requested</NeonBadge>
+                          <NeonBadge variant="warning">{t('medication.requested')}</NeonBadge>
                         </div>
                         <div className="space-y-1 mt-2">
                           {rx.medicines.map((m, i) => (
@@ -221,7 +223,7 @@ export default function MedicationMAR() {
           {ipdPending.length > 0 && (
             <div>
               <h3 className="text-sm font-bold text-foreground-muted mb-3 flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4 text-primary" /> Pending Your Request ({ipdPending.length})
+                <ShoppingCart className="h-4 w-4 text-accent" /> {t('medication.pendingRequest', { count: ipdPending.length })}
               </h3>
               <div className="space-y-3">
                 {ipdPending.map(rx => (
@@ -237,7 +239,7 @@ export default function MedicationMAR() {
                         <div className="space-y-1">
                           {rx.medicines.map((m, i) => (
                             <div key={i} className="flex items-center gap-2 text-sm text-foreground-muted">
-                              <Package className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                              <Package className="h-3.5 w-3.5 text-accent flex-shrink-0" />
                               {m.name} — {m.dosage} · {m.frequency}
                             </div>
                           ))}
@@ -246,11 +248,11 @@ export default function MedicationMAR() {
                       <button
                         onClick={() => {
                           requestProcurement(rx.id)
-                          toast.success(`Procurement requested for ${rx.patientName} — pharmacy notified`)
+                          toast.success(t('medication.procurementRequested', { name: rx.patientName }))
                         }}
-                        className="u-press flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-dark rounded-xl shadow-xs cursor-pointer transition-colors"
+                        className="u-press flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-bold text-[#0D2032] hover:text-[#0D2032] bg-primary hover:bg-primary-dark rounded-xl shadow-xs cursor-pointer transition-colors"
                       >
-                        <ShoppingCart className="h-4 w-4" /> Request Procurement
+                        <ShoppingCart className="h-4 w-4" /> {t('medication.requestProcurement')}
                       </button>
                     </div>
                   </div>
@@ -260,7 +262,7 @@ export default function MedicationMAR() {
           )}
 
           {ipdPending.length === 0 && ipdRequested.length === 0 && (
-            <EmptyState icon={CheckCircle} title="No IPD procurement items" size="sm" />
+            <EmptyState icon={CheckCircle} title={t('medication.noIpdItems')} size="sm" />
           )}
         </div>
       )}

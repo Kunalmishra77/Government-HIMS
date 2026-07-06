@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { usePatientFeedbackStore } from "@/store/usePatientFeedbackStore"
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -11,7 +12,7 @@ import { cn } from "@/lib/utils"
 import type { FeedbackRecord } from "@/types/feedback"
 
 const SENTIMENT_COLORS = { positive: '#16a34a', neutral: '#d97706', negative: '#dc2626' }
-const RATING_COLORS = ['#dc2626', '#f97316', '#eab308', '#22c55e', '#16a34a']
+const RATING_COLORS = ['#dc2626', '#EE6B26', '#eab308', '#22c55e', '#16a34a']
 
 function KpiCard({ label, value, sub, icon: Icon, color }: {
   label: string; value: string | number; sub?: string; icon: React.ElementType; color: string
@@ -40,13 +41,14 @@ function StarRow({ rating }: { rating: number }) {
   )
 }
 
-function SentimentBadge({ sentiment }: { sentiment: string }) {
-  if (sentiment === 'positive') return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Positive</span>
-  if (sentiment === 'negative') return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Negative</span>
-  return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Neutral</span>
+function SentimentBadge({ sentiment, t }: { sentiment: string; t: ReturnType<typeof useTranslations> }) {
+  if (sentiment === 'positive') return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{t('sentimentPositive')}</span>
+  if (sentiment === 'negative') return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">{t('sentimentNegative')}</span>
+  return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('sentimentNeutral')}</span>
 }
 
 export default function FeedbackDashboardPage() {
+  const t = useTranslations('feedback')
   const getAnalytics = usePatientFeedbackStore(s => s.getAnalytics)
   const expireStale  = usePatientFeedbackStore(s => s.expireStale)
   const records      = usePatientFeedbackStore(s => s.records)
@@ -63,43 +65,43 @@ export default function FeedbackDashboardPage() {
     .slice(0, 5)
 
   const sentimentData = [
-    { name: 'Positive', value: analytics.sentimentBreakdown.positive, color: SENTIMENT_COLORS.positive },
-    { name: 'Neutral',  value: analytics.sentimentBreakdown.neutral,  color: SENTIMENT_COLORS.neutral },
-    { name: 'Negative', value: analytics.sentimentBreakdown.negative, color: SENTIMENT_COLORS.negative },
+    { name: t('sentimentPositive'), value: analytics.sentimentBreakdown.positive, color: SENTIMENT_COLORS.positive },
+    { name: t('sentimentNeutral'),  value: analytics.sentimentBreakdown.neutral,  color: SENTIMENT_COLORS.neutral },
+    { name: t('sentimentNegative'), value: analytics.sentimentBreakdown.negative, color: SENTIMENT_COLORS.negative },
   ].filter(d => d.value > 0)
 
-  const npsLabel = analytics.npsScore >= 50 ? 'Excellent' : analytics.npsScore >= 0 ? 'Good' : 'Needs Improvement'
+  const npsLabel = analytics.npsScore >= 50 ? t('npsExcellent') : analytics.npsScore >= 0 ? t('npsGood') : t('npsNeedsImprovement')
   const npsColor = analytics.npsScore >= 50 ? 'text-emerald-600' : analytics.npsScore >= 0 ? 'text-amber-600' : 'text-red-600'
 
   return (
     <div className="space-y-6 pb-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <BarChart2 className="h-6 w-6 text-[var(--color-primary)]" /> Feedback Dashboard
+          <BarChart2 className="h-6 w-6 text-[var(--color-accent)]" /> {t('dashboardTitle')}
         </h1>
-        <p className="text-sm text-slate-500 mt-0.5">Patient satisfaction insights across all visits.</p>
+        <p className="text-sm text-slate-500 mt-0.5">{t('dashboardSubtitle')}</p>
       </div>
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="Total Responses" value={analytics.totalFeedback} sub="All time" icon={Users} color="bg-[var(--color-primary)]" />
-        <KpiCard label="Avg Rating" value={`${analytics.avgRating}/5`} sub="Overall" icon={Star} color="bg-amber-500" />
-        <KpiCard label="NPS Score" value={analytics.npsScore}
+        <KpiCard label={t('kpiTotalResponses')} value={analytics.totalFeedback} sub={t('kpiTotalResponsesSub')} icon={Users} color="bg-[var(--color-primary)]" />
+        <KpiCard label={t('kpiAvgRating')} value={t('kpiAvgRatingValue', { value: analytics.avgRating })} sub={t('kpiAvgRatingSub')} icon={Star} color="bg-amber-500" />
+        <KpiCard label={t('kpiNpsScore')} value={analytics.npsScore}
           sub={<span className={npsColor}>{npsLabel}</span> as unknown as string} icon={TrendingUp} color="bg-emerald-600" />
-        <KpiCard label="Response Rate" value={`${analytics.responseRate}%`} sub="Of requests sent" icon={Heart} color="bg-cyan-600" />
+        <KpiCard label={t('kpiResponseRate')} value={t('kpiResponseRateValue', { value: analytics.responseRate })} sub={t('kpiResponseRateSub')} icon={Heart} color="bg-primary" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Rating distribution bar chart */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-          <h2 className="font-bold text-slate-800 mb-4">Rating Distribution</h2>
+          <h2 className="font-bold text-slate-800 mb-4">{t('ratingDistribution')}</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={analytics.ratingDistribution} barCategoryGap="30%">
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="rating" tickLine={false} axisLine={false} tick={{ fontSize: 12 }}
                 tickFormatter={v => `${v}★`} />
               <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} width={28} allowDecimals={false} />
-              <Tooltip formatter={(v) => [Number(v), 'Responses']} cursor={{ fill: '#f8fafc' }} />
+              <Tooltip formatter={(v) => [Number(v), t('responses')]} cursor={{ fill: '#f8fafc' }} />
               <Bar dataKey="count" radius={[6,6,0,0]}>
                 {analytics.ratingDistribution.map((_, i) => <Cell key={i} fill={RATING_COLORS[i]} />)}
               </Bar>
@@ -109,13 +111,13 @@ export default function FeedbackDashboardPage() {
 
         {/* Sentiment pie */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-          <h2 className="font-bold text-slate-800 mb-4">Sentiment Breakdown</h2>
+          <h2 className="font-bold text-slate-800 mb-4">{t('sentimentBreakdown')}</h2>
           <ResponsiveContainer width="100%" height={140}>
             <PieChart>
               <Pie data={sentimentData} cx="50%" cy="50%" innerRadius={35} outerRadius={58} dataKey="value" paddingAngle={3}>
                 {sentimentData.map(d => <Cell key={d.name} fill={d.color} />)}
               </Pie>
-              <Tooltip formatter={(v) => [Number(v), 'Responses']} />
+              <Tooltip formatter={(v) => [Number(v), t('responses')]} />
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-2 space-y-1">
@@ -134,14 +136,14 @@ export default function FeedbackDashboardPage() {
 
       {/* Monthly trend line chart */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-        <h2 className="font-bold text-slate-800 mb-4">Monthly Average Rating (6 months)</h2>
+        <h2 className="font-bold text-slate-800 mb-4">{t('monthlyAvgRating')}</h2>
         <ResponsiveContainer width="100%" height={180}>
           <LineChart data={analytics.monthlyTrend}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
             <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fontSize: 11 }} width={28} />
-            <Tooltip formatter={(v) => [Number(v), 'Avg Rating']} />
-            <Line type="monotone" dataKey="avg" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 4, fill: '#2563eb' }} />
+            <Tooltip formatter={(v) => [Number(v), t('avgRating')]} />
+            <Line type="monotone" dataKey="avg" stroke="#16324A" strokeWidth={2.5} dot={{ r: 4, fill: '#16324A' }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -149,29 +151,29 @@ export default function FeedbackDashboardPage() {
       {/* Top themes + category averages */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-          <h2 className="font-bold text-slate-800 mb-3">Top Themes</h2>
+          <h2 className="font-bold text-slate-800 mb-3">{t('topThemes')}</h2>
           <div className="flex flex-wrap gap-2">
             {analytics.topThemes.map((theme, i) => (
               <span key={theme} className={cn(
                 "text-xs font-semibold px-3 py-1.5 rounded-full",
-                i === 0 ? 'bg-[var(--color-primary)] text-white' : i === 1 ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]' : 'bg-slate-100 text-slate-600'
+                i === 0 ? 'bg-[var(--color-primary)] text-white' : i === 1 ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]' : 'bg-slate-100 text-slate-600'
               )}>
                 #{i+1} {theme}
               </span>
             ))}
-            {analytics.topThemes.length === 0 && <p className="text-sm text-slate-400">No themes extracted yet</p>}
+            {analytics.topThemes.length === 0 && <p className="text-sm text-slate-400">{t('noThemes')}</p>}
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-          <h2 className="font-bold text-slate-800 mb-3">Category Averages</h2>
+          <h2 className="font-bold text-slate-800 mb-3">{t('categoryAverages')}</h2>
           <div className="space-y-1.5">
             {(Object.entries(analytics.categoryAverages) as [string, number][])
               .sort((a, b) => b[1] - a[1])
               .map(([key, val]) => (
                 <div key={key} className="flex items-center gap-2">
                   <span className="text-xs text-slate-500 w-36 flex-shrink-0 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                    {t.has(`cat_${key}`) ? t(`cat_${key}`) : key.replace(/([A-Z])/g, ' $1').trim()}
                   </span>
                   <div className="flex-1 bg-slate-100 rounded-full h-1.5">
                     <div className="h-1.5 rounded-full transition-all" style={{
@@ -191,7 +193,7 @@ export default function FeedbackDashboardPage() {
       {/* Recent feedback */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
-          <h2 className="font-bold text-slate-800">Recent Feedback</h2>
+          <h2 className="font-bold text-slate-800">{t('recentFeedback')}</h2>
         </div>
         <div className="divide-y divide-slate-100">
           {recentRecords.map(rec => (
@@ -200,7 +202,7 @@ export default function FeedbackDashboardPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-slate-800">{rec.patientName}</span>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 uppercase">{rec.visitType}</span>
-                  <SentimentBadge sentiment={rec.sentiment} />
+                  <SentimentBadge sentiment={rec.sentiment} t={t} />
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">{rec.attendingDoctor} · {rec.department}</p>
               </div>

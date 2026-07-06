@@ -2,33 +2,42 @@
 
 import React from "react"
 import { QRCodeSVG } from "qrcode.react"
+import { ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Official NHA / ABHA card palette — deliberately NOT the app's teal brand.
 const ABHA_NAVY = "#1b2a80"
-const ABHA_LINK = "#1d4ed8"
+const ABHA_LINK = "#16324A"
 
 export interface AbhaCardData {
   name: string
   nameHindi?: string
+  fathersName?: string
   abhaNumber: string
   abhaAddress: string
   gender: string
   genderHindi?: string
   dob: string
   mobile: string
+  address?: string
+  district?: string
+  state?: string
+  pincode?: string
+  aadhaarVerified?: boolean
   photoUrl?: string
 }
 
 const DEFAULT_DATA: AbhaCardData = {
   name: "Mithlesh Mishra",
   nameHindi: "मिथलेश मिश्रा",
+  fathersName: "Ram Prasad Mishra",
   abhaNumber: "91-4110-1750-4142",
   abhaAddress: "mithlesh007@abdm",
   gender: "Male",
   genderHindi: "पुरुष",
   dob: "18-05-1999",
   mobile: "7985203818",
+  aadhaarVerified: true,
 }
 
 export interface AbhaCardProps {
@@ -102,10 +111,10 @@ function AbdmLogo({ className }: { className?: string }) {
         fill="#2e9e4f"
       />
       {/* Saffron figure forming a care/heart motif */}
-      <circle cx="56" cy="36" r="6.5" fill="#ff8f1f" />
+      <circle cx="56" cy="36" r="6.5" fill="#F58C4E" />
       <path
         d="M44 64 C44 50 52 44 58 44 C66 44 72 52 70 64 C62 60 52 60 44 64 Z"
-        fill="#ff8f1f"
+        fill="#F58C4E"
       />
       {/* Health cross */}
       <g fill="#ffffff">
@@ -176,16 +185,23 @@ function AbhaCardFront({ data }: { data: AbhaCardData }) {
       <div className="px-6 py-6">
         <div className="flex gap-6">
           {/* Photo */}
-          <div className="h-[136px] w-[112px] shrink-0 overflow-hidden rounded-sm border border-slate-300 bg-slate-100">
-            {data.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={data.photoUrl} alt={data.name} className="h-full w-full object-cover" />
-            ) : (
-              <svg viewBox="0 0 112 136" className="h-full w-full text-slate-300" aria-hidden="true">
-                <rect width="112" height="136" fill="#eef1f6" />
-                <circle cx="56" cy="52" r="24" fill="currentColor" />
-                <path d="M16 130 C16 100 40 88 56 88 C72 88 96 100 96 130 Z" fill="currentColor" />
-              </svg>
+          <div className="shrink-0">
+            <div className="h-[136px] w-[112px] overflow-hidden rounded-sm border border-slate-300 bg-slate-100">
+              {data.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={data.photoUrl} alt={data.name} className="h-full w-full object-cover" />
+              ) : (
+                <svg viewBox="0 0 112 136" className="h-full w-full text-slate-300" aria-hidden="true">
+                  <rect width="112" height="136" fill="#eef1f6" />
+                  <circle cx="56" cy="52" r="24" fill="currentColor" />
+                  <path d="M16 130 C16 100 40 88 56 88 C72 88 96 100 96 130 Z" fill="currentColor" />
+                </svg>
+              )}
+            </div>
+            {data.aadhaarVerified && (
+              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10.5px] font-bold text-green-700 border border-green-200">
+                <ShieldCheck className="h-3 w-3" /> Aadhaar verified
+              </span>
             )}
           </div>
 
@@ -235,6 +251,26 @@ function AbhaCardFront({ data }: { data: AbhaCardData }) {
             <p className="text-[17px] font-bold text-slate-900">{data.mobile}</p>
           </Field>
         </div>
+
+        {/* Guardian + address */}
+        {(data.fathersName || data.address) && (
+          <div className="mt-5 grid grid-cols-3 gap-4 border-t border-slate-100 pt-4">
+            {data.fathersName && (
+              <Field label="Father's Name" labelHindi="पिता का नाम">
+                <p className="text-[15px] font-bold text-slate-900">{data.fathersName}</p>
+              </Field>
+            )}
+            {data.address && (
+              <div className="col-span-2">
+                <Field label="Address" labelHindi="पता">
+                  <p className="text-[13.5px] font-semibold leading-snug text-slate-800">
+                    {[data.address, data.district, data.state].filter(Boolean).join(", ")}{data.pincode ? ` – ${data.pincode}` : ""}
+                  </p>
+                </Field>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

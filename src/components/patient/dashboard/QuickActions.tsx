@@ -6,7 +6,7 @@ import { CalendarPlus, Video, CreditCard, FileText, Salad, MessageSquareText } f
 const ACTIONS = [
   { icon: CalendarPlus, label: "Book visit", sub: "AI best slot", href: "/patient/appointments", tint: "from-[var(--color-primary)] to-[var(--color-primary-dark)]" },
   { icon: Video, label: "Teleconsult", sub: "Video visit", href: "/patient/teleconsult", tint: "from-[var(--color-primary)] to-[var(--color-primary-light)]" },
-  { icon: CreditCard, label: "Pay bill", sub: "View dues", href: "/patient/billing", tint: "from-amber-500 to-orange-500" },
+  { icon: CreditCard, label: "Pay bill", sub: "View dues", href: "/patient/billing", tint: "from-amber-500 to-primary" },
   { icon: FileText, label: "My reports", sub: "Results & docs", href: "/patient/records", tint: "from-[var(--color-primary)] to-[var(--color-primary-light)]" },
   { icon: Salad, label: "Diet plan", sub: "Personalized", href: "/patient/followup", tint: "from-green-500 to-emerald-500" },
   { icon: MessageSquareText, label: "Ask AI", sub: "Health companion", href: "/patient/assistant", tint: "from-[var(--color-primary)] to-[var(--color-primary-light)]" },

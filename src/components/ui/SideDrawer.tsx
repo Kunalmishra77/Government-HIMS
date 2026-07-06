@@ -25,7 +25,7 @@ const WIDTHS = {
 } as const
 
 const TONE = {
-  brand:  "bg-primary text-white",
+  brand:  "bg-primary text-[#0D2032]",
   danger: "bg-danger text-white",
 } as const
 
@@ -109,7 +109,7 @@ export function SideDrawer({
                 <div className="flex items-center gap-2">
                   <h2 id={titleId} className="t-title text-foreground truncate">{title}</h2>
                   {badge ? (
-                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-accent-soft px-1.5 text-[10px] font-bold text-primary">{badge}</span>
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-accent-soft px-1.5 text-[10px] font-bold text-accent">{badge}</span>
                   ) : null}
                 </div>
                 {description && <p id={descId} className="t-caption text-foreground-lighter truncate mt-0.5">{description}</p>}

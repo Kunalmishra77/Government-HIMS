@@ -17,6 +17,7 @@ import { toast } from "sonner"
 import { VoiceScribeButton } from "@/components/clinical/VoiceScribeButton"
 import { notifyAndAudit } from "@/lib/notifyAndAudit"
 import { ClinicalNotesCard } from "@/components/nurse/ClinicalNotesCard"
+import { useTranslations } from "next-intl"
 
 // ── Speech Recognition types ──────────────────────────────────────────────────
 type SpeechResultItem = { transcript: string }
@@ -39,10 +40,10 @@ declare global {
 }
 
 const CATEGORY_META = {
-  observation: { label: 'Observation',  icon: Activity,      color: 'text-primary',           bg: 'bg-accent-soft',  badge: 'blue'    as const },
-  medication:  { label: 'Medication',   icon: Pill,          color: 'text-primary',           bg: 'bg-accent-soft',  badge: 'muted'   as const },
-  test:        { label: 'Test Order',   icon: FlaskConical,  color: 'text-brand-amber-strong', bg: 'bg-warning-bg',  badge: 'warning' as const },
-  instruction: { label: 'Instruction',  icon: ClipboardList, color: 'text-primary',           bg: 'bg-accent-soft',  badge: 'teal'    as const },
+  observation: { labelKey: 'catObservation', icon: Activity,      color: 'text-accent',           bg: 'bg-accent-soft',  badge: 'blue'    as const },
+  medication:  { labelKey: 'catMedication',  icon: Pill,          color: 'text-accent',           bg: 'bg-accent-soft',  badge: 'muted'   as const },
+  test:        { labelKey: 'catTest',        icon: FlaskConical,  color: 'text-brand-amber-strong', bg: 'bg-warning-bg',  badge: 'warning' as const },
+  instruction: { labelKey: 'catInstruction', icon: ClipboardList, color: 'text-accent',           bg: 'bg-accent-soft',  badge: 'teal'    as const },
 }
 
 function inferCategory(text: string): RoundsNote['category'] {
@@ -55,16 +56,17 @@ function inferCategory(text: string): RoundsNote['category'] {
 
 // ── Quick-action inline forms ─────────────────────────────────────────────────
 function AddMedicineForm({ onAdd, onCancel }: { onAdd: (m: { name: string; dosage: string; frequency: string }) => void; onCancel: () => void }) {
+  const t = useTranslations('nurse')
   const [f, setF] = useState({ name: '', dosage: '', frequency: '' })
   return (
     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       className="bg-accent-soft rounded-xl p-4 space-y-3">
-      <p className="t-overline text-primary flex items-center gap-1.5"><Pill className="h-3.5 w-3.5" /> Add Medicine</p>
+      <p className="t-overline text-accent flex items-center gap-1.5"><Pill className="h-3.5 w-3.5" /> {t('rounds.addMedicine')}</p>
       <div className="grid grid-cols-3 gap-2">
         {[
-          { key: 'name', placeholder: 'Medicine name' },
-          { key: 'dosage', placeholder: 'Dosage (e.g. 500mg)' },
-          { key: 'frequency', placeholder: 'Frequency (e.g. TDS)' },
+          { key: 'name', placeholder: t('rounds.medicineName') },
+          { key: 'dosage', placeholder: t('rounds.dosagePlaceholder') },
+          { key: 'frequency', placeholder: t('rounds.frequencyPlaceholder') },
         ].map(({ key, placeholder }) => (
           <input key={key} placeholder={placeholder} value={f[key as keyof typeof f]}
             onChange={e => setF(p => ({ ...p, [key]: e.target.value }))}
@@ -72,10 +74,10 @@ function AddMedicineForm({ onAdd, onCancel }: { onAdd: (m: { name: string; dosag
         ))}
       </div>
       <div className="flex gap-2">
-        <button onClick={onCancel} className="flex-1 h-8 rounded-lg text-xs font-semibold text-foreground-lighter bg-surface shadow-xs hover:bg-surface-sunken cursor-pointer">Cancel</button>
+        <button onClick={onCancel} className="flex-1 h-8 rounded-lg text-xs font-semibold text-foreground-lighter bg-surface shadow-xs hover:bg-surface-sunken cursor-pointer">{t('common.cancel')}</button>
         <button onClick={() => { if (f.name) { onAdd(f); onCancel() } }} disabled={!f.name}
-          className="u-press flex-1 h-8 rounded-lg text-xs font-bold text-white bg-primary hover:bg-primary-dark disabled:opacity-50 cursor-pointer transition-colors">
-          Add Medicine
+          className="u-press flex-1 h-8 rounded-lg text-xs font-bold text-[#0D2032] hover:text-[#0D2032] bg-primary hover:bg-primary-dark disabled:opacity-50 cursor-pointer transition-colors">
+          {t('rounds.addMedicine')}
         </button>
       </div>
     </motion.div>
@@ -83,26 +85,27 @@ function AddMedicineForm({ onAdd, onCancel }: { onAdd: (m: { name: string; dosag
 }
 
 function AddTestForm({ onAdd, onCancel }: { onAdd: (t: { name: string; urgency: 'Routine' | 'Urgent' }) => void; onCancel: () => void }) {
+  const t = useTranslations('nurse')
   const [f, setF] = useState({ name: '', urgency: 'Routine' as 'Routine' | 'Urgent' })
   return (
     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       className="bg-warning-bg rounded-xl p-4 space-y-3">
-      <p className="t-overline text-brand-amber-strong flex items-center gap-1.5"><FlaskConical className="h-3.5 w-3.5" /> Add Test Order</p>
+      <p className="t-overline text-brand-amber-strong flex items-center gap-1.5"><FlaskConical className="h-3.5 w-3.5" /> {t('rounds.addTestOrder')}</p>
       <div className="flex gap-2">
-        <input placeholder="Test name (e.g. CBC, ECG, X-Ray)" value={f.name}
+        <input placeholder={t('rounds.testNamePlaceholder')} value={f.name}
           onChange={e => setF(p => ({ ...p, name: e.target.value }))}
           className="flex-1 h-9 px-3 rounded-lg bg-surface text-sm text-foreground placeholder:text-foreground-placeholder focus:outline-none focus:ring-2 focus:ring-warning/40 shadow-xs" />
         <Select value={f.urgency} onChange={e => setF(p => ({ ...p, urgency: e.target.value as any }))}
           className="h-9 px-3 rounded-lg bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-warning/40 shadow-xs">
-          <option>Routine</option>
-          <option>Urgent</option>
+          <option value="Routine">{t('rounds.routine')}</option>
+          <option value="Urgent">{t('rounds.urgent')}</option>
         </Select>
       </div>
       <div className="flex gap-2">
-        <button onClick={onCancel} className="flex-1 h-8 rounded-lg text-xs font-semibold text-foreground-lighter bg-surface shadow-xs hover:bg-surface-sunken cursor-pointer">Cancel</button>
+        <button onClick={onCancel} className="flex-1 h-8 rounded-lg text-xs font-semibold text-foreground-lighter bg-surface shadow-xs hover:bg-surface-sunken cursor-pointer">{t('common.cancel')}</button>
         <button onClick={() => { if (f.name) { onAdd(f); onCancel() } }} disabled={!f.name}
           className="u-press flex-1 h-8 rounded-lg text-xs font-bold text-white bg-warning hover:bg-brand-amber-strong disabled:opacity-50 cursor-pointer transition-colors">
-          Add Test
+          {t('rounds.addTest')}
         </button>
       </div>
     </motion.div>
@@ -110,18 +113,19 @@ function AddTestForm({ onAdd, onCancel }: { onAdd: (t: { name: string; urgency: 
 }
 
 function AddInstructionForm({ onAdd, onCancel }: { onAdd: (i: string) => void; onCancel: () => void }) {
+  const t = useTranslations('nurse')
   const [text, setText] = useState('')
   return (
     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       className="bg-accent-soft rounded-xl p-4 space-y-3">
-      <p className="t-overline text-primary flex items-center gap-1.5"><ClipboardList className="h-3.5 w-3.5" /> Add Instruction</p>
-      <textarea placeholder="Ward instruction for nursing staff..." value={text} onChange={e => setText(e.target.value)}
+      <p className="t-overline text-accent flex items-center gap-1.5"><ClipboardList className="h-3.5 w-3.5" /> {t('rounds.addInstruction')}</p>
+      <textarea placeholder={t('rounds.instructionPlaceholder')} value={text} onChange={e => setText(e.target.value)}
         className="w-full h-16 px-3 py-2 rounded-lg bg-surface text-sm text-foreground placeholder:text-foreground-placeholder resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 shadow-xs" />
       <div className="flex gap-2">
-        <button onClick={onCancel} className="flex-1 h-8 rounded-lg text-xs font-semibold text-foreground-lighter bg-surface shadow-xs hover:bg-surface-sunken cursor-pointer">Cancel</button>
+        <button onClick={onCancel} className="flex-1 h-8 rounded-lg text-xs font-semibold text-foreground-lighter bg-surface shadow-xs hover:bg-surface-sunken cursor-pointer">{t('common.cancel')}</button>
         <button onClick={() => { if (text.trim()) { onAdd(text.trim()); onCancel() } }} disabled={!text.trim()}
-          className="u-press flex-1 h-8 rounded-lg text-xs font-bold text-white bg-primary hover:bg-primary-dark disabled:opacity-50 cursor-pointer transition-colors">
-          Add Instruction
+          className="u-press flex-1 h-8 rounded-lg text-xs font-bold text-[#0D2032] hover:text-[#0D2032] bg-primary hover:bg-primary-dark disabled:opacity-50 cursor-pointer transition-colors">
+          {t('rounds.addInstruction')}
         </button>
       </div>
     </motion.div>
@@ -130,6 +134,7 @@ function AddInstructionForm({ onAdd, onCancel }: { onAdd: (i: string) => void; o
 
 // ── Notes Panel ───────────────────────────────────────────────────────────────
 function NotesPanel({ patient }: { patient: PatientBed }) {
+  const t = useTranslations('nurse')
   const { addRoundsNote } = useWard()
   const [noteText, setNoteText] = useState('')
   const [aiCategory, setAiCategory] = useState<RoundsNote['category'] | null>(null)
@@ -178,8 +183,8 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
     recognitionRef.current = rec
     rec.start()
     setRecording(true)
-    toast('Listening... Speak clearly in English or Hindi')
-  }, [])
+    toast(t('rounds.listening'))
+  }, [t])
 
   const stopRecording = useCallback(() => {
     recognitionRef.current?.stop()
@@ -200,13 +205,13 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
     })
     // Notify the doctor that rounds are complete + summarise what was added.
     const parts: string[] = []
-    if (pendingMedicines.length) parts.push(`${pendingMedicines.length} med${pendingMedicines.length === 1 ? '' : 's'} added`)
-    if (pendingTests.length) parts.push(`${pendingTests.length} test${pendingTests.length === 1 ? '' : 's'} requested`)
-    if (pendingInstructions.length) parts.push(`${pendingInstructions.length} instruction${pendingInstructions.length === 1 ? '' : 's'} captured`)
+    if (pendingMedicines.length) parts.push(t('rounds.medsAdded', { count: pendingMedicines.length, plural: pendingMedicines.length === 1 ? '' : 's' }))
+    if (pendingTests.length) parts.push(t('rounds.testsRequested', { count: pendingTests.length, plural: pendingTests.length === 1 ? '' : 's' }))
+    if (pendingInstructions.length) parts.push(t('rounds.instructionsCaptured', { count: pendingInstructions.length, plural: pendingInstructions.length === 1 ? '' : 's' }))
     notifyAndAudit({
       to: 'doctor', type: 'system', priority: 'medium',
-      title: `Rounds complete · ${patient.name}`,
-      body: `Nurse rounds saved for ${patient.name} (${patient.bedNumber})${parts.length ? ' — ' + parts.join(', ') : ''}.`,
+      title: t('rounds.roundsCompleteTitle', { name: patient.name }),
+      body: t('rounds.roundsBody', { name: patient.name, bed: patient.bedNumber, parts: parts.length ? ' — ' + parts.join(', ') : '' }),
       patientName: patient.name,
       audit: { action: 'nurse_handover', resource: 'rounds_note', resourceId: patient.id, detail: `Rounds note saved for ${patient.name} (${category})`, userName: 'Nurse' },
     })
@@ -215,7 +220,7 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
     setPendingMedicines([])
     setPendingTests([])
     setPendingInstructions([])
-    toast.success('Rounds note saved · Doctor notified')
+    toast.success(t('rounds.roundsSaved'))
   }
 
   const catMeta = aiCategory ? CATEGORY_META[aiCategory] : null
@@ -226,10 +231,10 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
       {/* Patient header */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-soft">
-          <Bed className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-primary">{ward}</span>
+          <Bed className="h-4 w-4 text-accent" />
+          <span className="text-sm font-bold text-accent">{ward}</span>
           <span className="text-foreground-placeholder">—</span>
-          <span className="text-sm font-bold text-primary">Bed {bed?.trim()}</span>
+          <span className="text-sm font-bold text-accent">{t('rounds.bed', { bed: bed?.trim() ?? '' })}</span>
         </div>
         <span className="text-base font-bold text-foreground">{patient.name}</span>
         <NeonBadge variant={patient.condition === 'Critical' ? 'danger' : patient.condition === 'Stable' ? 'success' : 'warning'}>
@@ -240,11 +245,11 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
       {/* Voice + text area */}
       <Card className="p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-bold text-foreground-muted">Doctor Rounds Note</p>
+          <p className="text-sm font-bold text-foreground-muted">{t('rounds.doctorRoundsNote')}</p>
           <div className="flex items-center gap-2">
             {isAiThinking && (
-              <span className="flex items-center gap-1.5 text-[11px] font-bold text-primary bg-accent-soft px-2.5 py-1 rounded-full">
-                <Sparkles className="h-3 w-3 animate-pulse" /> AI Categorizing...
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-accent bg-accent-soft px-2.5 py-1 rounded-full">
+                <Sparkles className="h-3 w-3 animate-pulse" /> {t('rounds.aiCategorizing')}
               </span>
             )}
             {catMeta && !isAiThinking && (
@@ -252,7 +257,7 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
                 initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                 className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full ${catMeta.bg} ${catMeta.color}`}
               >
-                <catMeta.icon className="h-3 w-3" /> {catMeta.label}
+                <catMeta.icon className="h-3 w-3" /> {t(`rounds.${catMeta.labelKey}`)}
               </motion.span>
             )}
           </div>
@@ -262,13 +267,13 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
           <textarea
             value={noteText}
             onChange={e => setNoteText(e.target.value)}
-            placeholder="Type doctor's instructions, observations, or use voice recording..."
+            placeholder={t('rounds.notePlaceholder')}
             className="w-full h-28 px-4 py-3 rounded-xl bg-surface-sunken text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground placeholder:text-foreground-placeholder"
           />
           {recording && (
             <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-danger-bg text-danger text-[11px] font-bold px-2 py-1 rounded-full animate-pulse">
               <span className="h-2 w-2 rounded-full bg-danger" />
-              Recording
+              {t('rounds.recording')}
             </div>
           )}
         </div>
@@ -284,31 +289,31 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
                   : 'bg-surface-sunken text-foreground-muted hover:bg-surface-sunken/70'
               }`}
             >
-              {recording ? <><MicOff className="h-4 w-4" /> Stop Voice</> : <><Mic className="h-4 w-4" /> Voice Note</>}
+              {recording ? <><MicOff className="h-4 w-4" /> {t('rounds.stopVoice')}</> : <><Mic className="h-4 w-4" /> {t('rounds.voiceNote')}</>}
             </button>
           ) : (
-            <span className="text-xs text-foreground-placeholder bg-surface-sunken px-3 py-2 rounded-xl">Voice not supported in this browser</span>
+            <span className="text-xs text-foreground-placeholder bg-surface-sunken px-3 py-2 rounded-xl">{t('rounds.voiceUnsupported')}</span>
           )}
           {/* M4-W2 — S5: AI-SOAP companion. Existing voice button appends raw
               transcript; this one structures into SOAP for the chart. */}
           <VoiceScribeButton
             surface="nurse_round"
-            onAccept={(soap) => { setNoteText((t) => (t ? t + '\n\n' : '') + soap); toast.success('AI-SOAP appended to note') }}
+            onAccept={(soap) => { setNoteText((prev) => (prev ? prev + '\n\n' : '') + soap); toast.success(t('rounds.soapAppended')) }}
             compact
           />
           <span className="flex-1" />
           <button
             onClick={handleSave}
             disabled={!noteText.trim() && pendingMedicines.length === 0 && pendingTests.length === 0 && pendingInstructions.length === 0}
-            className="u-press flex items-center gap-2 px-5 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-bold transition-colors cursor-pointer disabled:opacity-40 shadow-xs"
+            className="u-press flex items-center gap-2 px-5 py-2 rounded-xl bg-primary hover:bg-primary-dark text-[#0D2032] hover:text-[#0D2032] text-sm font-bold transition-colors cursor-pointer disabled:opacity-40 shadow-xs"
           >
-            <Save className="h-4 w-4" /> Save Note
+            <Save className="h-4 w-4" /> {t('rounds.saveNote')}
           </button>
         </div>
 
         {/* Quick actions */}
         <div className="pt-2 border-t border-border-light">
-          <p className="t-overline text-foreground-placeholder mb-3">Quick Actions</p>
+          <p className="t-overline text-foreground-placeholder mb-3">{t('rounds.quickActions')}</p>
           <AnimatePresence mode="wait">
             {quickAction === 'medicine' && (
               <AddMedicineForm
@@ -333,16 +338,16 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
           {!quickAction && (
             <div className="flex gap-2 flex-wrap">
               <button onClick={() => setQuickAction('medicine')}
-                className="u-press flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-primary bg-accent-soft hover:bg-accent-soft/70 cursor-pointer transition-colors">
-                <Plus className="h-3.5 w-3.5" /> Medicine
+                className="u-press flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-accent bg-accent-soft hover:bg-accent-soft/70 cursor-pointer transition-colors">
+                <Plus className="h-3.5 w-3.5" /> {t('rounds.medicine')}
               </button>
               <button onClick={() => setQuickAction('test')}
                 className="u-press flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-brand-amber-strong bg-warning-bg hover:bg-warning-bg/70 cursor-pointer transition-colors">
-                <Plus className="h-3.5 w-3.5" /> Test
+                <Plus className="h-3.5 w-3.5" /> {t('rounds.test')}
               </button>
               <button onClick={() => setQuickAction('instruction')}
-                className="u-press flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-primary bg-accent-soft hover:bg-accent-soft/70 cursor-pointer transition-colors">
-                <Plus className="h-3.5 w-3.5" /> Instruction
+                className="u-press flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-accent bg-accent-soft hover:bg-accent-soft/70 cursor-pointer transition-colors">
+                <Plus className="h-3.5 w-3.5" /> {t('rounds.instruction')}
               </button>
             </div>
           )}
@@ -352,20 +357,20 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
             <div className="mt-3 space-y-2">
               {pendingMedicines.map((m, i) => (
                 <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-accent-soft text-xs">
-                  <span className="font-bold text-primary"><Pill className="h-3 w-3 inline mr-1" />{m.name} {m.dosage} — {m.frequency}</span>
-                  <button onClick={() => setPendingMedicines(p => p.filter((_, j) => j !== i))} className="text-primary hover:text-danger cursor-pointer"><X className="h-3.5 w-3.5" /></button>
+                  <span className="font-bold text-accent"><Pill className="h-3 w-3 inline mr-1" />{m.name} {m.dosage} — {m.frequency}</span>
+                  <button onClick={() => setPendingMedicines(p => p.filter((_, j) => j !== i))} className="text-accent hover:text-danger cursor-pointer"><X className="h-3.5 w-3.5" /></button>
                 </div>
               ))}
-              {pendingTests.map((t, i) => (
+              {pendingTests.map((test, i) => (
                 <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-warning-bg text-xs">
-                  <span className="font-bold text-brand-amber-strong"><FlaskConical className="h-3 w-3 inline mr-1" />{t.name} — {t.urgency}</span>
+                  <span className="font-bold text-brand-amber-strong"><FlaskConical className="h-3 w-3 inline mr-1" />{test.name} — {test.urgency === 'Urgent' ? t('rounds.urgent') : t('rounds.routine')}</span>
                   <button onClick={() => setPendingTests(p => p.filter((_, j) => j !== i))} className="text-warning hover:text-danger cursor-pointer"><X className="h-3.5 w-3.5" /></button>
                 </div>
               ))}
               {pendingInstructions.map((inst, i) => (
                 <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-accent-soft text-xs">
-                  <span className="font-bold text-primary"><ClipboardList className="h-3 w-3 inline mr-1" />{inst}</span>
-                  <button onClick={() => setPendingInstructions(p => p.filter((_, j) => j !== i))} className="text-primary hover:text-danger cursor-pointer"><X className="h-3.5 w-3.5" /></button>
+                  <span className="font-bold text-accent"><ClipboardList className="h-3 w-3 inline mr-1" />{inst}</span>
+                  <button onClick={() => setPendingInstructions(p => p.filter((_, j) => j !== i))} className="text-accent hover:text-danger cursor-pointer"><X className="h-3.5 w-3.5" /></button>
                 </div>
               ))}
             </div>
@@ -383,14 +388,14 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
           className="flex items-center gap-2 text-sm font-bold text-foreground-lighter hover:text-foreground cursor-pointer mb-3 transition-colors"
         >
           {showHistory ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          Rounds History ({patient.rounds?.length ?? 0})
+          {t('rounds.roundsHistory', { count: patient.rounds?.length ?? 0 })}
         </button>
 
         <AnimatePresence>
           {showHistory && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
               {!patient.rounds?.length ? (
-                <p className="text-sm text-foreground-placeholder pl-4 py-3">No rounds notes yet for this patient.</p>
+                <p className="text-sm text-foreground-placeholder pl-4 py-3">{t('rounds.noRoundsNotes')}</p>
               ) : (
                 [...(patient.rounds ?? [])].reverse().map(note => {
                   const meta = CATEGORY_META[note.category]
@@ -399,7 +404,7 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <meta.icon className={`h-4 w-4 ${meta.color}`} />
-                          <NeonBadge variant={meta.badge}>{meta.label}</NeonBadge>
+                          <NeonBadge variant={meta.badge}>{t(`rounds.${meta.labelKey}`)}</NeonBadge>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-foreground-placeholder">
                           <Clock className="h-3 w-3" /> {note.timestamp}
@@ -408,13 +413,13 @@ function NotesPanel({ patient }: { patient: PatientBed }) {
                       </div>
                       {note.text && <p className="text-sm text-foreground font-medium">{note.text}</p>}
                       {note.medicines?.map((m, i) => (
-                        <p key={i} className="text-xs font-bold text-primary mt-1"><Pill className="h-3 w-3 inline mr-1" />{m.name} {m.dosage} — {m.frequency}</p>
+                        <p key={i} className="text-xs font-bold text-accent mt-1"><Pill className="h-3 w-3 inline mr-1" />{m.name} {m.dosage} — {m.frequency}</p>
                       ))}
-                      {note.tests?.map((t, i) => (
-                        <p key={i} className="text-xs font-bold text-brand-amber-strong mt-1"><FlaskConical className="h-3 w-3 inline mr-1" />{t.name} ({t.urgency})</p>
+                      {note.tests?.map((test, i) => (
+                        <p key={i} className="text-xs font-bold text-brand-amber-strong mt-1"><FlaskConical className="h-3 w-3 inline mr-1" />{test.name} ({test.urgency === 'Urgent' ? t('rounds.urgent') : t('rounds.routine')})</p>
                       ))}
                       {note.instructions?.map((inst, i) => (
-                        <p key={i} className="text-xs font-bold text-primary mt-1"><ClipboardList className="h-3 w-3 inline mr-1" />{inst}</p>
+                        <p key={i} className="text-xs font-bold text-accent mt-1"><ClipboardList className="h-3 w-3 inline mr-1" />{inst}</p>
                       ))}
                     </div>
                   )
@@ -434,6 +439,7 @@ function PatientListItem({ patient, selected, onClick }: {
   selected: boolean
   onClick: () => void
 }) {
+  const t = useTranslations('nurse')
   const [ward, bed] = patient.bedNumber.split(' - ')
   const roundsCount = patient.rounds?.length ?? 0
   const lastRound = patient.rounds?.at(-1)
@@ -452,9 +458,9 @@ function PatientListItem({ patient, selected, onClick }: {
           <p className="font-bold text-foreground text-sm">{patient.name}</p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <div className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md ${
-              selected ? 'bg-accent-soft text-primary' : 'bg-surface-sunken text-foreground-lighter'
+              selected ? 'bg-accent-soft text-accent' : 'bg-surface-sunken text-foreground-lighter'
             }`}>
-              <Bed className="h-3 w-3" /> {ward} · Bed {bed?.trim()}
+              <Bed className="h-3 w-3" /> {ward} · {t('rounds.bed', { bed: bed?.trim() ?? '' })}
             </div>
           </div>
         </div>
@@ -463,11 +469,11 @@ function PatientListItem({ patient, selected, onClick }: {
         </NeonBadge>
       </div>
       <div className="flex items-center justify-between text-xs text-foreground-placeholder">
-        <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {roundsCount} note{roundsCount !== 1 ? 's' : ''}</span>
+        <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {t('rounds.notesCount', { count: roundsCount, plural: roundsCount !== 1 ? 's' : '' })}</span>
         {lastRound ? (
-          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Last: {lastRound.timestamp}</span>
+          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {t('rounds.lastRound', { time: lastRound.timestamp })}</span>
         ) : (
-          <span className="text-brand-amber-strong font-medium">Rounds pending</span>
+          <span className="text-brand-amber-strong font-medium">{t('rounds.roundsPending')}</span>
         )}
       </div>
       {patient.aiAlert && (
@@ -481,6 +487,7 @@ function PatientListItem({ patient, selected, onClick }: {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function NurseRoundsPage() {
+  const t = useTranslations('nurse')
   const { patients } = useWard()
   const [selectedId, setSelectedId] = useState<string | null>(patients[0]?.id ?? null)
   const [search, setSearch] = useState('')
@@ -506,11 +513,11 @@ export default function NurseRoundsPage() {
       {/* Slim meta + action row — the shell already renders the page title. */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="t-body text-foreground-lighter">
-          Search by bed number or patient name to start adding rounds notes.
+          {t('rounds.searchHint')}
         </p>
         <div className="flex items-center gap-2">
           <NeonBadge variant="blue" dot pulse>
-            <Stethoscope className="h-3 w-3" /> {patients.length} patients
+            <Stethoscope className="h-3 w-3" /> {t('rounds.patientsCount', { count: patients.length })}
           </NeonBadge>
         </div>
       </div>
@@ -525,7 +532,7 @@ export default function NurseRoundsPage() {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search bed no. or patient name..."
+              placeholder={t('rounds.searchPlaceholder')}
               className="w-full h-10 pl-9 pr-9 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-foreground-placeholder focus:outline-none focus:ring-2 focus:ring-primary/40 shadow-xs"
             />
             {search && (
@@ -542,20 +549,20 @@ export default function NurseRoundsPage() {
           {search.trim() && (
             <p className="text-xs font-semibold text-foreground-placeholder px-1">
               {filteredPatients.length === 0
-                ? 'No patients found'
-                : `${filteredPatients.length} result${filteredPatients.length !== 1 ? 's' : ''} for "${search}"`}
+                ? t('rounds.noPatientsFound')
+                : t('rounds.resultsFor', { count: filteredPatients.length, plural: filteredPatients.length !== 1 ? 's' : '', query: search })}
             </p>
           )}
 
           {!search.trim() && (
-            <p className="t-overline tracking-widest text-foreground-placeholder px-1">Ward Patients</p>
+            <p className="t-overline tracking-widest text-foreground-placeholder px-1">{t('rounds.wardPatients')}</p>
           )}
 
           <div className="space-y-2">
             <AnimatePresence>
               {filteredPatients.length === 0 ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <EmptyState icon={Bed} title={`No beds match "${search}"`} size="sm" />
+                  <EmptyState icon={Bed} title={t('rounds.noBedsMatch', { query: search })} size="sm" />
                 </motion.div>
               ) : (
                 filteredPatients.map(p => (
@@ -595,8 +602,8 @@ export default function NurseRoundsPage() {
             ) : (
               <EmptyState
                 icon={Bed}
-                title="Search a bed number to begin rounds"
-                description={'e.g. "Ward A", "Bed 01", or patient name'}
+                title={t('rounds.searchToBegin')}
+                description={t('rounds.searchToBeginDesc')}
                 size="sm"
               />
             )}

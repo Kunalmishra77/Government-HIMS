@@ -10,7 +10,7 @@ const CONDITION_CONFIG = {
   Stable: { color: 'bg-green-100 border-green-300 text-green-800', icon: CheckCircle },
   Monitoring: { color: 'bg-amber-100 border-amber-300 text-amber-800', icon: Activity },
   Critical: { color: 'bg-red-100 border-red-300 text-red-800', icon: AlertTriangle },
-  Discharging: { color: 'bg-[rgba(8,145,178,0.12)] border-[rgba(8,145,178,0.30)] text-[var(--color-primary-dark)]', icon: CheckCircle },
+  Discharging: { color: 'bg-[rgba(238,107,38,0.12)] border-[rgba(238,107,38,0.30)] text-[var(--color-primary-dark)]', icon: CheckCircle },
 }
 
 function CameraFeedStub({ wardRoom }: { wardRoom: string }) {
@@ -154,8 +154,8 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Privacy banner */}
-      <div className="bg-[rgba(8,145,178,0.07)] border-b border-[rgba(8,145,178,0.15)] px-4 py-2.5 text-center">
-        <p className="text-xs text-[var(--color-primary)] font-medium flex items-center justify-center gap-1.5">
+      <div className="bg-[rgba(238,107,38,0.07)] border-b border-[rgba(238,107,38,0.15)] px-4 py-2.5 text-center">
+        <p className="text-xs text-[var(--color-accent)] font-medium flex items-center justify-center gap-1.5">
           <Shield className="h-3.5 w-3.5" />
           This page shows non-clinical journey information only. No medical data is shared.
         </p>
@@ -292,7 +292,7 @@ export default function FamilyTrackPage({ params }: { params: Promise<{ token: s
                 <p className="text-xs text-slate-500 mt-1">The nurse has declined the camera request at this time</p>
                 <button
                   onClick={handleRequestCamera}
-                  className="mt-3 text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-semibold transition-colors"
+                  className="mt-3 text-xs text-[var(--color-accent)] hover:text-[var(--color-primary-dark)] font-semibold transition-colors"
                 >
                   Request again
                 </button>

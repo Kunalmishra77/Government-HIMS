@@ -53,7 +53,7 @@ export function ERHandoverPanel({ patientId }: { patientId: string }) {
   const erDwellMins  = minsBetween(erRecord.arrivedAt, erRecord.dispositionAt)
 
   return (
-    <div className="rounded-xl border border-red-200 bg-gradient-to-br from-red-50/40 to-orange-50/30 overflow-hidden">
+    <div className="rounded-xl border border-red-200 bg-gradient-to-br from-red-50/40 to-primary-soft overflow-hidden">
       <div className="px-4 py-3 border-b border-red-100 bg-white/60 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Ambulance className="h-4 w-4 text-red-600" />
@@ -62,7 +62,7 @@ export function ERHandoverPanel({ patientId }: { patientId: string }) {
             ESI {erRecord.esi ?? '?'}
           </span>
           {erRecord.trauma && (
-            <span className="text-[10.5px] font-bold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">
+            <span className="text-[10.5px] font-bold text-accent bg-accent-soft px-1.5 py-0.5 rounded">
               TRAUMA
             </span>
           )}
@@ -125,7 +125,7 @@ export function ERHandoverPanel({ patientId }: { patientId: string }) {
                   </span>
                 )}
                 {qs?.positive && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent-soft text-accent">
                     qSOFA+ ({qs.criteria.join(', ')})
                   </span>
                 )}
@@ -179,8 +179,8 @@ export function ERHandoverPanel({ patientId }: { patientId: string }) {
                     <span className="font-bold text-slate-900 truncate flex-1">{t.name}</span>
                     <span className={cn("text-[9.5px] font-bold uppercase px-1.5 py-0.5 rounded",
                       t.status === 'released'   ? (crit ? 'bg-red-100 text-red-700' : flagged > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')
-                      : t.status === 'verified' ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
-                      : t.status === 'entered'  ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
+                      : t.status === 'verified' ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
+                      : t.status === 'entered'  ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
                       : 'bg-slate-100 text-slate-500')}>
                       {t.status.replace('_', ' ')}
                     </span>
@@ -190,12 +190,12 @@ export function ERHandoverPanel({ patientId }: { patientId: string }) {
               })}
               {radStudies.map(s2 => (
                 <li key={s2.id} className="flex items-center gap-2 text-[11px]">
-                  <ScanLine className="h-2.5 w-2.5 text-[var(--color-primary)] flex-shrink-0" />
+                  <ScanLine className="h-2.5 w-2.5 text-[var(--color-accent)] flex-shrink-0" />
                   <span className="font-bold text-slate-900 truncate flex-1">{s2.modality} {s2.name}</span>
                   <span className={cn("text-[9.5px] font-bold uppercase px-1.5 py-0.5 rounded",
                     s2.status === 'released' ? 'bg-emerald-100 text-emerald-700'
-                    : s2.status === 'verified' ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
-                    : s2.status === 'reported' ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'
+                    : s2.status === 'verified' ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
+                    : s2.status === 'reported' ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'
                     : 'bg-slate-100 text-slate-500')}>
                     {s2.status.replace('_', ' ')}
                   </span>

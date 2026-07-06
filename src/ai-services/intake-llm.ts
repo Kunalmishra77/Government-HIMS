@@ -4,13 +4,21 @@
 
 import type { IntakeForm } from '@/lib/intake/data'
 
-export type Expecting = 'name' | 'age' | 'gender' | 'phone' | 'symptoms' | 'duration' | 'other'
+export type Expecting =
+  | 'consultType' | 'method'
+  | 'name' | 'age' | 'gender' | 'phone' | 'symptoms' | 'duration'
+  | 'apptDate' | 'apptSlot' | 'other'
+
+// When the patient chooses to fill the form themselves or scan Aadhaar, the
+// assistant hands off: the voice UI stops and jumps into the typed flow.
+export type IntakeRoute = 'manual' | 'aadhaar'
 
 export interface LlmIntakeTurn {
   say: string
   done: boolean
   lang: 'en' | 'hi'
   expecting: Expecting
+  route: IntakeRoute | null
   patch: Partial<IntakeForm>
 }
 
@@ -35,6 +43,7 @@ export async function llmIntakeTurn(
       done: !!data.done,
       lang: data.lang === 'en' ? 'en' : 'hi',
       expecting: data.expecting ?? 'other',
+      route: data.route === 'manual' || data.route === 'aadhaar' ? data.route : null,
       patch: data.patch ?? {},
     }
   } catch {

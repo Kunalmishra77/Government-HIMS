@@ -1,0 +1,50 @@
+{
+  "bed_allocated": {
+    "title": "नया एडमिशन · बेड {bed}",
+    "body": "{patientName} को {bed} दिया गया है। वार्ड में रिसीव करें।"
+  },
+  "ot_confirmed": {
+    "title": "OT कन्फर्म · {procedure}",
+    "body": "{patientName} की सर्जरी {time} बजे {theatre} में कन्फर्म हो गई है।"
+  },
+  "medicines_ready": {
+    "title": "दवाइयां तैयार हैं",
+    "body": "{patientName} की दवाइयां फार्मेसी से लेने के लिए तैयार हैं।"
+  },
+  "discharge_initiated": {
+    "title": "डिस्चार्ज शुरू हुआ",
+    "body": "{patientName} का डिस्चार्ज प्रोसेस शुरू हो गया है।"
+  },
+  "discharge_ready": {
+    "title": "डिस्चार्ज के लिए तैयार",
+    "body": "{patientName} डिस्चार्ज के लिए तैयार हैं।"
+  },
+  "followup_reminder": {
+    "title": "फॉलो-अप रिमाइंडर",
+    "body": "रिमाइंडर: {patientName} का फॉलो-अप {date} को है।"
+  },
+  "critical_value": {
+    "title": "क्रिटिकल रिपोर्ट · {test}",
+    "body": "{patientName} की क्रिटिकल वैल्यू: {test} = {value}. कृपया अभी देखें।"
+  },
+  "lab_result": {
+    "title": "लैब रिपोर्ट तैयार",
+    "body": "{patientName} की {test} रिपोर्ट अब उपलब्ध है।"
+  },
+  "bed_request": {
+    "title": "बेड की रिक्वेस्ट",
+    "body": "{patientName} के लिए बेड की रिक्वेस्ट की गई है।"
+  },
+  "drug_interaction": {
+    "title": "ड्रग इंटरैक्शन अलर्ट",
+    "body": "{patientName} के लिए संभावित इंटरैक्शन मिला है। कृपया प्रिस्क्रिप्शन देखें।"
+  },
+  "allergy_alert": {
+    "title": "एलर्जी अलर्ट",
+    "body": "{patientName} की एक एलर्जी रिकॉर्ड में है जो इस ऑर्डर से टकरा सकती है।"
+  },
+  "appointment": {
+    "title": "अपॉइंटमेंट अपडेट",
+    "body": "{patientName} का अपॉइंटमेंट अपडेट हो गया है।"
+  }
+}

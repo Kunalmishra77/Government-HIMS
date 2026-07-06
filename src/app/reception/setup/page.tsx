@@ -2,6 +2,7 @@
 
 import { Select } from "@/components/ui/Select"
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 const STORE_KEY = 'reception-setup'
@@ -29,6 +30,7 @@ function Row({ icon: Icon, title, desc, on, onToggle }: { icon: React.ElementTyp
 }
 
 export default function ReceptionSetup() {
+  const t = useTranslations('reception')
   const [counter, setCounter] = useState('Counter 1')
   const [dept, setDept] = useState('General Medicine')
   const [autoAnnounce, setAutoAnnounce] = useState(true)
@@ -55,25 +57,25 @@ export default function ReceptionSetup() {
 
   const save = () => {
     try { localStorage.setItem(STORE_KEY, JSON.stringify({ counter, dept, autoAnnounce, printToken, whatsapp, sms, aiTriage })) } catch { /* ignore */ }
-    toast.success('Preferences saved')
+    toast.success(t('setup.preferencesSavedToast'))
   }
 
   return (
     <div className="max-w-2xl mx-auto pb-6">
-      <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">Setup</h1>
-      <p className="text-[13px] text-slate-500 mt-0.5 mb-4">Counter, department & front-desk preferences</p>
+      <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">{t('setup.title')}</h1>
+      <p className="text-[13px] text-slate-500 mt-0.5 mb-4">{t('setup.subtitle')}</p>
 
       <div className="space-y-4">
         <div className={CARD}>
-          <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><Building2 className="h-4.5 w-4.5 text-[var(--color-primary)]" /> This counter</h3>
+          <h3 className="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2"><Building2 className="h-4.5 w-4.5 text-[var(--color-accent)]" /> {t('setup.thisCounter')}</h3>
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Counter name</label>
-              <input value={counter} onChange={e => setCounter(e.target.value)} className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100" />
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{t('setup.counterName')}</label>
+              <input value={counter} onChange={e => setCounter(e.target.value)} className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Default department</label>
-              <Select value={dept} onChange={e => setDept(e.target.value)} className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100">
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{t('setup.defaultDepartment')}</label>
+              <Select value={dept} onChange={e => setDept(e.target.value)} className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-primary/20">
                 {DEPTS.map(d => <option key={d} value={d}>{d}</option>)}
               </Select>
             </div>
@@ -81,24 +83,24 @@ export default function ReceptionSetup() {
         </div>
 
         <div className={CARD}>
-          <h3 className="text-[15px] font-bold text-slate-900 mb-1 flex items-center gap-2"><Volume2 className="h-4.5 w-4.5 text-[var(--color-primary)]" /> Queue & announcements</h3>
+          <h3 className="text-[15px] font-bold text-slate-900 mb-1 flex items-center gap-2"><Volume2 className="h-4.5 w-4.5 text-[var(--color-accent)]" /> {t('setup.queueAndAnnouncements')}</h3>
           <div className="divide-y divide-slate-50">
-            <Row icon={Volume2} title="Auto-announce next token" desc="Call the next patient automatically over the speaker" on={autoAnnounce} onToggle={() => setAutoAnnounce(v => !v)} />
-            <Row icon={Settings} title="Print token slip on register" desc="Print a paper token when a walk-in is registered" on={printToken} onToggle={() => setPrintToken(v => !v)} />
-            <Row icon={Settings} title="AI triage suggestions" desc="Suggest priority & department from the chief complaint" on={aiTriage} onToggle={() => setAiTriage(v => !v)} />
+            <Row icon={Volume2} title={t('setup.autoAnnounceTitle')} desc={t('setup.autoAnnounceDesc')} on={autoAnnounce} onToggle={() => setAutoAnnounce(v => !v)} />
+            <Row icon={Settings} title={t('setup.printTokenTitle')} desc={t('setup.printTokenDesc')} on={printToken} onToggle={() => setPrintToken(v => !v)} />
+            <Row icon={Settings} title={t('setup.aiTriageTitle')} desc={t('setup.aiTriageDesc')} on={aiTriage} onToggle={() => setAiTriage(v => !v)} />
           </div>
         </div>
 
         <div className={CARD}>
-          <h3 className="text-[15px] font-bold text-slate-900 mb-1 flex items-center gap-2"><MessageSquare className="h-4.5 w-4.5 text-green-600" /> Patient communication</h3>
+          <h3 className="text-[15px] font-bold text-slate-900 mb-1 flex items-center gap-2"><MessageSquare className="h-4.5 w-4.5 text-green-600" /> {t('setup.patientCommunication')}</h3>
           <div className="divide-y divide-slate-50">
-            <Row icon={MessageSquare} title="WhatsApp updates" desc="Send queue & appointment updates on WhatsApp" on={whatsapp} onToggle={() => setWhatsapp(v => !v)} />
-            <Row icon={MessageSquare} title="SMS updates" desc="Fallback SMS for patients without WhatsApp" on={sms} onToggle={() => setSms(v => !v)} />
+            <Row icon={MessageSquare} title={t('setup.whatsappTitle')} desc={t('setup.whatsappDesc')} on={whatsapp} onToggle={() => setWhatsapp(v => !v)} />
+            <Row icon={MessageSquare} title={t('setup.smsTitle')} desc={t('setup.smsDesc')} on={sms} onToggle={() => setSms(v => !v)} />
           </div>
         </div>
 
         <button onClick={save} className="w-full h-11 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-bold text-[14px] flex items-center justify-center gap-2 active:scale-[0.99] transition">
-          <Save className="h-4.5 w-4.5" /> Save preferences
+          <Save className="h-4.5 w-4.5" /> {t('setup.savePreferences')}
         </button>
       </div>
     </div>

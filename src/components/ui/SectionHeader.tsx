@@ -28,7 +28,7 @@ export function SectionHeader({ title, eyebrow, count, icon: Icon, action, class
     <div className={cn("flex items-center justify-between gap-3", className)}>
       <div className="flex min-w-0 items-center gap-2.5">
         {Icon && (
-          <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-xl bg-accent-soft text-primary">
+          <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         )}

@@ -1,8 +1,10 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { PageContainer } from "@/components/ui/PageContainer"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { LocaleToggle } from "@/components/ui/LocaleToggle"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { NeonBadge } from "@/components/ui/neon-badge"
@@ -96,6 +98,7 @@ NDIzNDIzNDIzNDIzNDIzNDIzNDIzNDIzNDIzNDIzNDIzNDIzNDIzNDIzNDIzNDIz
 -----END ABDM SECURE DATA BLOCK-----`
 
 export default function AbhaSandboxPage() {
+  const t = useTranslations("abha")
   const [activeTab, setActiveTab] = useState<"onboarding" | "consent">("onboarding")
 
   // Onboarding creation state
@@ -174,42 +177,42 @@ export default function AbhaSandboxPage() {
   // Handle Mobile OTP request
   const handleSendMobileOtp = () => {
     if (!/^\d{10}$/.test(mobileNum)) {
-      toast.error("Please enter a valid 10-digit mobile number")
+      toast.error(t("toastInvalidMobile"))
       return
     }
     setTimer(30)
-    toast.success("OTP sent to your mobile: 483910")
+    toast.success(t("toastMobileOtpSent"))
     setMobileOtp("")
   }
 
   // Handle Mobile verification
   const handleVerifyMobile = async () => {
     if (mobileOtp !== "483910") {
-      toast.error("Invalid OTP. Try 483910 for the sandbox simulator.")
+      toast.error(t("toastInvalidMobileOtp"))
       return
     }
     setMobileVerifying(true)
     await new Promise(r => setTimeout(r, 1000))
     setMobileVerifying(false)
     setCreateStep("aadhaar")
-    toast.success("Mobile verified successfully!")
+    toast.success(t("toastMobileVerified"))
   }
 
   // Handle Aadhaar OTP request
   const handleSendAadhaarOtp = () => {
     if (!/^\d{12}$/.test(aadhaarNum)) {
-      toast.error("Please enter a valid 12-digit Aadhaar number")
+      toast.error(t("toastInvalidAadhaar"))
       return
     }
     setTimer(30)
-    toast.success("OTP sent to Aadhaar-linked mobile: 882941")
+    toast.success(t("toastAadhaarOtpSent"))
     setAadhaarOtp("")
   }
 
   // Handle Aadhaar verification
   const handleVerifyAadhaar = async () => {
     if (aadhaarOtp !== "882941") {
-      toast.error("Invalid OTP. Try 882941 for the sandbox simulator.")
+      toast.error(t("toastInvalidAadhaarOtp"))
       return
     }
     setAadhaarVerifying(true)
@@ -224,13 +227,13 @@ export default function AbhaSandboxPage() {
     })
     setCustomAddress("ramesh.kumar")
     setCreateStep("details")
-    toast.success("Aadhaar authenticated! Demographics retrieved.")
+    toast.success(t("toastAadhaarAuthenticated"))
   }
 
   // Handle final card creation
   const handleCreateAbhaCard = async () => {
     if (!customAddress.trim()) {
-      toast.error("Please enter an ABHA Address prefix")
+      toast.error(t("toastEnterAbhaPrefix"))
       return
     }
     const cleanPrefix = customAddress.toLowerCase().replace(/[^a-z0-9._-]/g, "")
@@ -241,25 +244,25 @@ export default function AbhaSandboxPage() {
     setCreatedAbhaAddress(fullAddress)
     setCreateStep("card")
     setTargetAbhaAddress(fullAddress)
-    toast.success("ABHA Card created successfully!")
+    toast.success(t("toastCardCreated"))
   }
 
   // Handle Login flow verify
   const handleSendLoginOtp = () => {
     if (!loginVal.trim()) {
-      toast.error("Please enter your Mobile number or ABHA Address")
+      toast.error(t("toastEnterLoginId"))
       return
     }
     setLoginStep("otp")
     setTimer(30)
-    toast.success("OTP sent to linked mobile: 554321")
+    toast.success(t("toastLoginOtpSent"))
     setLoginOtp("")
   }
 
   // Handle Login authentication
   const handleVerifyLogin = async () => {
     if (loginOtp !== "554321") {
-      toast.error("Invalid OTP. Try 554321 for the sandbox simulator.")
+      toast.error(t("toastInvalidLoginOtp"))
       return
     }
     setLoginVerifying(true)
@@ -275,17 +278,17 @@ export default function AbhaSandboxPage() {
       photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"
     })
     setLoginStep("success")
-    toast.success("Logged in successfully!")
+    toast.success(t("toastLoggedIn"))
   }
 
   // Handle consent creation
   const handleCreateConsentRequest = () => {
     if (!targetAbhaAddress.trim()) {
-      toast.error("Please enter patient ABHA address")
+      toast.error(t("toastEnterPatientAddress"))
       return
     }
     if (reqDataTypes.length === 0) {
-      toast.error("Select at least one health data type")
+      toast.error(t("toastSelectDataType"))
       return
     }
     const newId = `REQ-2026-00${consentRequests.length + 5}`
@@ -303,7 +306,7 @@ export default function AbhaSandboxPage() {
     setSelectedReqId(newId)
     setExchangeState("idle")
     setOtpSentForReqId(null)
-    toast.success(`Consent request ${newId} initiated!`)
+    toast.success(t("toastConsentInitiated", { id: newId }))
   }
 
   // Toggle checklist inside request creator
@@ -322,19 +325,19 @@ export default function AbhaSandboxPage() {
     if (status === "GRANTED") {
       setOtpSentForReqId(currentReq.id)
       setSmartphoneOtp("")
-      toast.info("Please enter verification PIN on the simulator device.")
+      toast.info(t("toastEnterPin"))
     } else {
       setConsentRequests(prev =>
         prev.map(r => (r.id === currentReq.id ? { ...r, status: "DENIED" } : r))
       )
-      toast.warning("Consent Request Denied by patient.")
+      toast.warning(t("toastConsentDenied"))
     }
   }
 
   // Submit secure PIN to grant consent
   const handleVerifySmartphoneOtp = async () => {
     if (smartphoneOtp !== "1234") {
-      toast.error("Incorrect PIN. Please enter '1234' to authorize.")
+      toast.error(t("toastIncorrectPin"))
       return
     }
     setSmartphoneVerifying(true)
@@ -344,7 +347,7 @@ export default function AbhaSandboxPage() {
       prev.map(r => (r.id === selectedReqId ? { ...r, status: "GRANTED" } : r))
     )
     setOtpSentForReqId(null)
-    toast.success("Consent Authorization GRANTED by Patient!")
+    toast.success(t("toastConsentGranted"))
   }
 
   // Run HIE Data Transfer animation
@@ -357,7 +360,7 @@ export default function AbhaSandboxPage() {
     setExchangeState("decrypting")
     await new Promise(r => setTimeout(r, 1800))
     setExchangeState("completed")
-    toast.success("Decryption complete! Health records successfully linked to patient profile.")
+    toast.success(t("toastDecryptionComplete"))
   }
 
   return (
@@ -365,20 +368,20 @@ export default function AbhaSandboxPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <PageHeader
-            title="ABDM Core Gateway Sandbox"
-            subtitle="Ayushman Bharat Digital Mission Developer Playground. Interactive simulation of ABHA Card onboarding, identity lookup, patient consent, and secure cryptographic health information exchange."
+            title={t("pageTitle")}
+            subtitle={t("pageSubtitle")}
             as="h1"
             className="mb-0"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button
             variant={activeTab === "onboarding" ? "primary" : "outline"}
             onClick={() => setActiveTab("onboarding")}
             className="rounded-full shadow-sm"
           >
             <User className="h-4 w-4 mr-1.5" />
-            ABHA Identity
+            {t("tabIdentity")}
           </Button>
           <Button
             variant={activeTab === "consent" ? "primary" : "outline"}
@@ -386,8 +389,9 @@ export default function AbhaSandboxPage() {
             className="rounded-full shadow-sm"
           >
             <ShieldCheck className="h-4 w-4 mr-1.5" />
-            Consent &amp; Exchange (HIE)
+            {t("tabConsent")}
           </Button>
+          <LocaleToggle />
         </div>
       </div>
 
@@ -414,26 +418,26 @@ export default function AbhaSandboxPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-cyan-500" />
-                  Create ABHA Number
+                  <Sparkles className="h-5 w-5 text-accent" />
+                  {t("createAbhaNumber")}
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">National health registry wizard</p>
+                <p className="text-xs text-slate-500 mt-0.5">{t("createAbhaSubtitle")}</p>
               </div>
               <button
                 onClick={handleResetOnboarding}
-                className="text-xs text-[var(--color-primary)] hover:underline font-semibold flex items-center gap-1"
+                className="text-xs text-[var(--color-accent)] hover:underline font-semibold flex items-center gap-1"
               >
-                <RefreshCw className="h-3 w-3" /> Reset Flow
+                <RefreshCw className="h-3 w-3" /> {t("resetFlow")}
               </button>
             </div>
 
             {/* Stepper indicators */}
             <div className="flex items-center gap-2">
               {[
-                { step: "mobile", label: "Mobile OTP" },
-                { step: "aadhaar", label: "Aadhaar OTP" },
-                { step: "details", label: "ABHA ID details" },
-                { step: "card", label: "Digital Card" }
+                { step: "mobile", label: t("stepMobileOtp") },
+                { step: "aadhaar", label: t("stepAadhaarOtp") },
+                { step: "details", label: t("stepAbhaDetails") },
+                { step: "card", label: t("stepDigitalCard") }
               ].map((s, idx) => {
                 const currentIdx = ["mobile", "aadhaar", "details", "card"].indexOf(createStep)
                 const active = idx <= currentIdx
@@ -444,20 +448,20 @@ export default function AbhaSandboxPage() {
                       <div
                         className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs border transition-all ${
                           isCurrent
-                            ? "bg-cyan-600 text-white border-cyan-600 shadow"
+                            ? "bg-primary text-white border-primary shadow"
                             : active
-                            ? "bg-cyan-50 text-cyan-700 border-cyan-200"
+                            ? "bg-primary-soft text-accent border-primary/20"
                             : "bg-slate-50 text-slate-400 border-slate-200"
                         }`}
                       >
                         {idx + 1}
                       </div>
-                      <span className={`text-[10px] font-semibold text-center hidden md:inline ${isCurrent ? "text-cyan-600 font-bold" : "text-slate-500"}`}>
+                      <span className={`text-[10px] font-semibold text-center hidden md:inline ${isCurrent ? "text-accent font-bold" : "text-slate-500"}`}>
                         {s.label}
                       </span>
                     </div>
                     {idx < 3 && (
-                      <div className={`h-0.5 flex-1 transition-all ${idx < currentIdx ? "bg-cyan-400" : "bg-slate-200"}`} />
+                      <div className={`h-0.5 flex-1 transition-all ${idx < currentIdx ? "bg-primary" : "bg-slate-200"}`} />
                     )}
                   </React.Fragment>
                 )
@@ -470,14 +474,14 @@ export default function AbhaSandboxPage() {
               {createStep === "mobile" && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Enter Mobile Number</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase">{t("enterMobileNumber")}</label>
                     <div className="flex gap-2">
                       <input
                         type="tel"
                         value={mobileNum}
                         onChange={e => setMobileNum(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                        placeholder="e.g. 9876543210"
-                        className="flex-1 h-11 px-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
+                        placeholder={t("mobilePlaceholder")}
+                        className="flex-1 h-11 px-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                       />
                       <Button
                         size="sm"
@@ -485,31 +489,31 @@ export default function AbhaSandboxPage() {
                         onClick={handleSendMobileOtp}
                         disabled={mobileNum.length !== 10 || timer > 0}
                       >
-                        {timer > 0 ? `Resend in ${timer}s` : "Send OTP"}
+                        {timer > 0 ? t("resendIn", { seconds: timer }) : t("sendOtp")}
                       </Button>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-1">OTP simulation bypass: enter code <strong>483910</strong></p>
+                    <p className="text-[11px] text-slate-400 mt-1">{t("mobileBypassHint", { code: "483910" })}</p>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase">Enter 6-Digit OTP</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase">{t("enter6DigitOtp")}</label>
                     <input
                       type="text"
                       value={mobileOtp}
                       onChange={e => setMobileOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="Enter 6-digit code"
-                      className="w-full h-11 px-3 rounded-xl border border-slate-200 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
+                      placeholder={t("otp6Placeholder")}
+                      className="w-full h-11 px-3 rounded-xl border border-slate-200 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                     />
                   </div>
 
                   <Button
                     variant="primary"
-                    className="w-full bg-cyan-600 hover:bg-cyan-700 h-11 rounded-xl text-sm"
+                    className="w-full bg-primary hover:bg-primary-dark h-11 rounded-xl text-sm"
                     onClick={handleVerifyMobile}
                     isLoading={mobileVerifying}
                     disabled={mobileOtp.length !== 6}
                   >
-                    Verify Mobile Number
+                    {t("verifyMobileNumber")}
                   </Button>
                 </div>
               )}
@@ -518,14 +522,14 @@ export default function AbhaSandboxPage() {
               {createStep === "aadhaar" && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Enter 12-Digit Aadhaar</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase">{t("enterAadhaar")}</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={aadhaarNum}
                         onChange={e => setAadhaarNum(e.target.value.replace(/\D/g, "").slice(0, 12))}
-                        placeholder="e.g. 123456789012"
-                        className="flex-1 h-11 px-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
+                        placeholder={t("aadhaarPlaceholder")}
+                        className="flex-1 h-11 px-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                       />
                       <Button
                         size="sm"
@@ -533,31 +537,31 @@ export default function AbhaSandboxPage() {
                         onClick={handleSendAadhaarOtp}
                         disabled={aadhaarNum.length !== 12 || timer > 0}
                       >
-                        {timer > 0 ? `Resend in ${timer}s` : "Send OTP"}
+                        {timer > 0 ? t("resendIn", { seconds: timer }) : t("sendOtp")}
                       </Button>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-1">OTP simulation bypass: enter code <strong>882941</strong></p>
+                    <p className="text-[11px] text-slate-400 mt-1">{t("aadhaarBypassHint", { code: "882941" })}</p>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase">Enter Aadhaar OTP</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase">{t("enterAadhaarOtp")}</label>
                     <input
                       type="text"
                       value={aadhaarOtp}
                       onChange={e => setAadhaarOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="Enter 6-digit code"
-                      className="w-full h-11 px-3 rounded-xl border border-slate-200 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
+                      placeholder={t("otp6Placeholder")}
+                      className="w-full h-11 px-3 rounded-xl border border-slate-200 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                     />
                   </div>
 
                   <Button
                     variant="primary"
-                    className="w-full bg-cyan-600 hover:bg-cyan-700 h-11 rounded-xl text-sm"
+                    className="w-full bg-primary hover:bg-primary-dark h-11 rounded-xl text-sm"
                     onClick={handleVerifyAadhaar}
                     isLoading={aadhaarVerifying}
                     disabled={aadhaarOtp.length !== 6}
                   >
-                    Authenticate Aadhaar
+                    {t("authenticateAadhaar")}
                   </Button>
                 </div>
               )}
@@ -566,38 +570,38 @@ export default function AbhaSandboxPage() {
               {createStep === "details" && createdCardData && (
                 <div className="space-y-4">
                   <div className="flex gap-4 items-center bg-white p-3 rounded-xl border border-slate-200">
-                    <img src={createdCardData.photo} alt="Aadhaar photo" className="h-12 w-12 rounded-xl object-cover border border-slate-100" />
+                    <img src={createdCardData.photo} alt={t("aadhaarPhotoAlt")} className="h-12 w-12 rounded-xl object-cover border border-slate-100" />
                     <div>
                       <p className="font-bold text-slate-800 text-sm">{createdCardData.name}</p>
-                      <p className="text-xs text-slate-500">Gender: {createdCardData.gender} · DOB: {createdCardData.dob}</p>
+                      <p className="text-xs text-slate-500">{t("genderDobLine", { gender: createdCardData.gender, dob: createdCardData.dob })}</p>
                       <p className="text-xs text-green-600 font-semibold flex items-center gap-1 mt-0.5">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Authenticated from Aadhaar Registry
+                        <CheckCircle2 className="h-3.5 w-3.5" /> {t("authenticatedFromAadhaar")}
                       </p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Set ABHA Address / PHR ID</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase">{t("setAbhaAddress")}</label>
                     <div className="relative flex items-center">
                       <input
                         type="text"
                         value={customAddress}
                         onChange={e => setCustomAddress(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))}
-                        placeholder="e.g. ramesh.kumar"
-                        className="w-full h-11 pl-3 pr-20 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
+                        placeholder={t("abhaAddressPlaceholder")}
+                        className="w-full h-11 pl-3 pr-20 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                       />
                       <span className="absolute right-3 text-xs font-bold text-slate-400">@abdm</span>
                     </div>
-                    <p className="text-[11.5px] text-slate-400 mt-1">This functions as a unified username for accessing and linking patient health records across India.</p>
+                    <p className="text-[11.5px] text-slate-400 mt-1">{t("abhaAddressHint")}</p>
                   </div>
 
                   <Button
                     variant="primary"
-                    className="w-full bg-cyan-600 hover:bg-cyan-700 h-11 rounded-xl text-sm"
+                    className="w-full bg-primary hover:bg-primary-dark h-11 rounded-xl text-sm"
                     onClick={handleCreateAbhaCard}
                     disabled={!customAddress.trim()}
                   >
-                    Confirm &amp; Create Card
+                    {t("confirmCreateCard")}
                   </Button>
                 </div>
               )}
@@ -609,29 +613,29 @@ export default function AbhaSandboxPage() {
                     <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 text-base">ABHA Account Generated Successfully!</p>
-                    <p className="text-xs text-slate-500 mt-1">Your new digital identity has been registered on the NHA gateway.</p>
+                    <p className="font-bold text-slate-900 text-base">{t("abhaGeneratedTitle")}</p>
+                    <p className="text-xs text-slate-500 mt-1">{t("abhaGeneratedSubtitle")}</p>
                   </div>
                   <div className="flex gap-2 justify-center">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        toast.success("Mock download triggered successfully")
+                        toast.success(t("toastMockDownload"))
                       }}
                     >
-                      <Download className="h-4 w-4 mr-1.5" /> Download PDF Card
+                      <Download className="h-4 w-4 mr-1.5" /> {t("downloadPdfCard")}
                     </Button>
                     <Button
                       variant="primary"
                       size="sm"
-                      className="bg-cyan-600 hover:bg-cyan-700"
+                      className="bg-primary hover:bg-primary-dark"
                       onClick={() => {
                         setActiveTab("consent")
                         setExchangeState("idle")
                       }}
                     >
-                      Test Consent Flow <ArrowRight className="h-4 w-4 ml-1.5" />
+                      {t("testConsentFlow")} <ArrowRight className="h-4 w-4 ml-1.5" />
                     </Button>
                   </div>
                 </div>
@@ -646,7 +650,7 @@ export default function AbhaSandboxPage() {
               <Card className="overflow-hidden border-none shadow-[0_8px_30px_rgb(12,97,122,0.18)]">
                 <div
                   className="p-6 text-white relative"
-                  style={{ background: "linear-gradient(135deg,#0C617A 0%,var(--color-primary) 45%,var(--color-primary) 100%)" }}
+                  style={{ background: "linear-gradient(135deg,#C2481A 0%,var(--color-primary) 45%,var(--color-primary) 100%)" }}
                 >
                   {/* Card Background Overlay pattern */}
                   <div
@@ -659,8 +663,8 @@ export default function AbhaSandboxPage() {
                     {/* Header */}
                     <div className="flex items-start justify-between border-b border-white/10 pb-3">
                       <div>
-                        <p className="text-[9px] font-black uppercase tracking-wider text-white/70">Ministry of Health &amp; Family Welfare</p>
-                        <p className="text-[14px] font-bold tracking-tight">Ayushman Bharat Health Account</p>
+                        <p className="text-[9px] font-black uppercase tracking-wider text-white/70">{t("cardMinistry")}</p>
+                        <p className="text-[14px] font-bold tracking-tight">{t("cardTitle")}</p>
                       </div>
                       <div className="h-9 w-9 rounded-xl bg-white/15 flex items-center justify-center">
                         <Heart className="h-5 w-5 text-rose-400 fill-rose-400" />
@@ -672,27 +676,27 @@ export default function AbhaSandboxPage() {
                       {/* Avatar */}
                       <img
                         src={createdCardData?.photo || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop"}
-                        alt="ABHA Avatar"
+                        alt={t("cardAvatarAlt")}
                         className="h-16 w-16 rounded-xl object-cover border-2 border-white/20"
                       />
                       <div className="space-y-1">
                         <p className="text-base font-bold leading-tight">{createdCardData?.name || "Ramesh Kumar"}</p>
-                        <p className="text-xs text-white/70">DOB: {createdCardData?.dob || "1984-04-12"}</p>
-                        <p className="text-xs text-white/70">Gender: {createdCardData?.gender || "Male"}</p>
+                        <p className="text-xs text-white/70">{t("cardDob", { dob: createdCardData?.dob || "1984-04-12" })}</p>
+                        <p className="text-xs text-white/70">{t("cardGender", { gender: createdCardData?.gender || "Male" })}</p>
                       </div>
                     </div>
 
                     {/* Identifiers */}
                     <div className="grid grid-cols-2 gap-2 bg-white/10 p-3 rounded-xl border border-white/10">
                       <div>
-                        <p className="text-[9px] text-white/50 uppercase font-black tracking-wider">ABHA Number</p>
-                        <p className="text-xs font-mono font-bold mt-0.5 text-cyan-200">
+                        <p className="text-[9px] text-white/50 uppercase font-black tracking-wider">{t("cardAbhaNumber")}</p>
+                        <p className="text-xs font-mono font-bold mt-0.5 text-primary-light">
                           {createdAbhaId || "14-8821-3341-7090"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-[9px] text-white/50 uppercase font-black tracking-wider">ABHA Address</p>
-                        <p className="text-xs font-semibold mt-0.5 truncate text-cyan-200">
+                        <p className="text-[9px] text-white/50 uppercase font-black tracking-wider">{t("cardAbhaAddress")}</p>
+                        <p className="text-xs font-semibold mt-0.5 truncate text-primary-light">
                           {createdAbhaAddress || "ramesh.kumar@abdm"}
                         </p>
                       </div>
@@ -701,7 +705,7 @@ export default function AbhaSandboxPage() {
                     {/* Footer */}
                     <div className="flex items-center justify-between text-[11px] text-white/70 pt-1">
                       <span className="flex items-center gap-1">
-                        <Shield className="h-3.5 w-3.5 text-cyan-300" /> ABDM Gateway Verified
+                        <Shield className="h-3.5 w-3.5 text-primary-light" /> {t("cardGatewayVerified")}
                       </span>
                       <span className="font-mono text-white/40">NHA-GOI</span>
                     </div>
@@ -713,10 +717,10 @@ export default function AbhaSandboxPage() {
               <Card className="p-5 border-slate-200 bg-white space-y-4 shadow-sm">
                 <div>
                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <Key className="h-4.5 w-4.5 text-[var(--color-primary)]" />
-                    Login / Look up ABHA
+                    <Key className="h-4.5 w-4.5 text-[var(--color-accent)]" />
+                    {t("loginTitle")}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Sign in to retrieve your registered digital health card</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{t("loginSubtitle")}</p>
                 </div>
 
                 <div className="flex gap-1 bg-slate-100 rounded-lg p-0.5 text-xs">
@@ -724,27 +728,27 @@ export default function AbhaSandboxPage() {
                     onClick={() => { setLoginMode("mobile"); setLoginStep("input"); setLoginVal("") }}
                     className={`flex-1 py-1.5 rounded font-semibold transition-all ${loginMode === "mobile" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}
                   >
-                    Mobile Number
+                    {t("loginTabMobile")}
                   </button>
                   <button
                     onClick={() => { setLoginMode("address"); setLoginStep("input"); setLoginVal("") }}
                     className={`flex-1 py-1.5 rounded font-semibold transition-all ${loginMode === "address" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}
                   >
-                    ABHA Address
+                    {t("loginTabAddress")}
                   </button>
                 </div>
 
                 {loginStep === "input" && (
                   <div className="space-y-3">
                     <label className="block text-xs font-bold text-slate-500 uppercase">
-                      {loginMode === "mobile" ? "Enter Linked Mobile" : "Enter ABHA Address Prefix"}
+                      {loginMode === "mobile" ? t("loginEnterMobile") : t("loginEnterAddress")}
                     </label>
                     <div className="relative flex items-center">
                       <input
                         type="text"
                         value={loginVal}
                         onChange={e => setLoginVal(e.target.value)}
-                        placeholder={loginMode === "mobile" ? "e.g. 9876543210" : "e.g. ramesh.kumar"}
+                        placeholder={loginMode === "mobile" ? t("mobilePlaceholder") : t("loginAddressPlaceholder")}
                         className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                       />
                       {loginMode === "address" && (
@@ -757,7 +761,7 @@ export default function AbhaSandboxPage() {
                       onClick={handleSendLoginOtp}
                       disabled={!loginVal.trim()}
                     >
-                      Login via OTP
+                      {t("loginViaOtp")}
                     </Button>
                   </div>
                 )}
@@ -765,13 +769,13 @@ export default function AbhaSandboxPage() {
                 {loginStep === "otp" && (
                   <div className="space-y-3">
                     <div>
-                      <p className="text-xs text-slate-500">OTP sent to linked mobile. Enter <strong>554321</strong> to login.</p>
+                      <p className="text-xs text-slate-500">{t("loginOtpHint", { code: "554321" })}</p>
                     </div>
                     <input
                       type="text"
                       value={loginOtp}
                       onChange={e => setLoginOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="Enter 6-digit OTP"
+                      placeholder={t("loginOtpPlaceholder")}
                       className="w-full h-10 px-3 rounded-lg border border-slate-200 text-center text-base font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     />
                     <Button
@@ -781,7 +785,7 @@ export default function AbhaSandboxPage() {
                       isLoading={loginVerifying}
                       disabled={loginOtp.length !== 6}
                     >
-                      Verify &amp; Load Profile
+                      {t("verifyLoadProfile")}
                     </Button>
                   </div>
                 )}
@@ -789,12 +793,12 @@ export default function AbhaSandboxPage() {
                 {loginStep === "success" && (
                   <div className="text-center py-2 space-y-2">
                     <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto" />
-                    <p className="text-xs font-bold text-slate-800">Profile Loaded!</p>
+                    <p className="text-xs font-bold text-slate-800">{t("profileLoaded")}</p>
                     <button
                       onClick={() => setLoginStep("input")}
-                      className="text-xs text-[var(--color-primary)] hover:underline"
+                      className="text-xs text-[var(--color-accent)] hover:underline"
                     >
-                      Sign Out
+                      {t("signOut")}
                     </button>
                   </div>
                 )}
@@ -805,14 +809,14 @@ export default function AbhaSandboxPage() {
             <Card className="p-4 border-slate-200 bg-slate-50/50 space-y-2.5">
               <h4 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                 <AlertCircle className="h-4 w-4 text-slate-400" />
-                ABDM Sandbox Guidelines
+                {t("sandboxGuidelines")}
               </h4>
               <p className="text-xs text-slate-500 leading-relaxed">
-                This environment mock-verifies authentication flows to match NHA specs.
+                {t("sandboxGuidelinesBody")}
               </p>
               <ul className="space-y-1 text-xs text-slate-500 list-disc pl-4">
-                <li>Aadhaar OTP is simulated for any 12-digit number (try 882941).</li>
-                <li>Registered ABHA Profiles are propagated instantly to the Consent Sandbox.</li>
+                <li>{t("sandboxGuideline1")}</li>
+                <li>{t("sandboxGuideline2")}</li>
               </ul>
             </Card>
           </div>
@@ -829,48 +833,48 @@ export default function AbhaSandboxPage() {
               <Card className="p-5 border-slate-200 bg-white space-y-4 shadow-sm">
                 <div>
                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                    <Send className="h-4 w-4 text-[var(--color-primary)]" />
-                    Create Consent Request
+                    <Send className="h-4 w-4 text-[var(--color-accent)]" />
+                    {t("createConsentRequest")}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Send a request to pull patient diagnostic records</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{t("createConsentSubtitle")}</p>
                 </div>
 
                 <div className="space-y-3">
                   {/* Patient ABHA address */}
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Patient ABHA Address</label>
+                    <label className="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">{t("patientAbhaAddress")}</label>
                     <input
                       type="text"
                       value={targetAbhaAddress}
                       onChange={e => setTargetAbhaAddress(e.target.value)}
-                      placeholder="e.g. ramesh.kumar@abdm"
+                      placeholder={t("patientAbhaPlaceholder")}
                       className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     />
                   </div>
 
                   {/* Purpose Dropdown */}
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Purpose of Request</label>
+                    <label className="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">{t("purposeOfRequest")}</label>
                     <select
                       value={reqPurpose}
                       onChange={e => setReqPurpose(e.target.value)}
                       className="w-full h-10 px-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white"
                     >
-                      <option>Care Management</option>
-                      <option>Emergency Care</option>
-                      <option>Referral Treatment</option>
-                      <option>Medical Research</option>
+                      <option value="Care Management">{t("purposeCareManagement")}</option>
+                      <option value="Emergency Care">{t("purposeEmergencyCare")}</option>
+                      <option value="Referral Treatment">{t("purposeReferralTreatment")}</option>
+                      <option value="Medical Research">{t("purposeMedicalResearch")}</option>
                     </select>
                   </div>
 
                   {/* Data types checkboxes */}
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Requested Data Types</label>
+                    <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("requestedDataTypes")}</label>
                     <div className="space-y-1.5">
                       {[
-                        { key: "DiagnosticReport", label: "Diagnostic / Lab Reports" },
-                        { key: "MedicationRequest", label: "Prescriptions (OPD/IPD)" },
-                        { key: "DischargeSummary", label: "Discharge Summaries" }
+                        { key: "DiagnosticReport", label: t("dataTypeDiagnostic") },
+                        { key: "MedicationRequest", label: t("dataTypePrescriptions") },
+                        { key: "DischargeSummary", label: t("dataTypeDischarge") }
                       ].map(type => {
                         const checked = reqDataTypes.includes(type.key)
                         return (
@@ -879,7 +883,7 @@ export default function AbhaSandboxPage() {
                               type="checkbox"
                               checked={checked}
                               onChange={() => toggleDataType(type.key)}
-                              className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                              className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-primary"
                             />
                             {type.label}
                           </label>
@@ -891,8 +895,8 @@ export default function AbhaSandboxPage() {
                   {/* Validity slider */}
                   <div>
                     <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      <span>Access Validity</span>
-                      <span className="text-cyan-600 font-bold">{reqValidity} Days</span>
+                      <span>{t("accessValidity")}</span>
+                      <span className="text-accent font-bold">{t("validityDays", { days: reqValidity })}</span>
                     </div>
                     <input
                       type="range"
@@ -900,7 +904,7 @@ export default function AbhaSandboxPage() {
                       max={90}
                       value={reqValidity}
                       onChange={e => setReqValidity(Number(e.target.value))}
-                      className="w-full accent-cyan-600 cursor-pointer"
+                      className="w-full accent-orange-600 cursor-pointer"
                     />
                   </div>
 
@@ -909,7 +913,7 @@ export default function AbhaSandboxPage() {
                     className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]"
                     onClick={handleCreateConsentRequest}
                   >
-                    Send Consent Request
+                    {t("sendConsentRequest")}
                   </Button>
                 </div>
               </Card>
@@ -917,8 +921,8 @@ export default function AbhaSandboxPage() {
               {/* Consent Requests Queue */}
               <Card className="p-5 border-slate-200 bg-white space-y-3 shadow-sm">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Active Requests</h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Click to view/interact with request status</p>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t("activeRequests")}</h4>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{t("activeRequestsHint")}</p>
                 </div>
                 <div className="space-y-2 max-h-[220px] overflow-y-auto">
                   {consentRequests.map(r => {
@@ -933,17 +937,17 @@ export default function AbhaSandboxPage() {
                           setOtpSentForReqId(null)
                         }}
                         className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                          active ? "border-cyan-400 bg-cyan-50/30" : "border-slate-100 bg-slate-50 hover:bg-slate-100"
+                          active ? "border-primary bg-primary-soft" : "border-slate-100 bg-slate-50 hover:bg-slate-100"
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-slate-800">{r.id}</span>
                           <NeonBadge variant={badgeType} className="text-[9px] px-1.5 py-0">
-                            {r.status}
+                            {t(`status${r.status}`)}
                           </NeonBadge>
                         </div>
-                        <p className="text-[11px] text-slate-500 truncate mt-1">Patient: {r.patientAddress}</p>
-                        <p className="text-[10px] text-slate-400">{r.purpose} · {r.validityDays}d validity</p>
+                        <p className="text-[11px] text-slate-500 truncate mt-1">{t("requestPatient", { address: r.patientAddress })}</p>
+                        <p className="text-[10px] text-slate-400">{t("requestPurposeValidity", { purpose: t.has(`purpose.${r.purpose}`) ? t(`purpose.${r.purpose}`) : r.purpose, days: r.validityDays })}</p>
                       </div>
                     )
                   })}
@@ -968,8 +972,8 @@ export default function AbhaSandboxPage() {
                       <Heart className="h-3.5 w-3.5 text-white" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-slate-900 leading-tight">ABDM Personal Health</p>
-                      <p className="text-[8px] text-slate-400 leading-none">NHA Personal Consent Manager</p>
+                      <p className="text-[10px] font-black text-slate-900 leading-tight">{t("personalHealthApp")}</p>
+                      <p className="text-[8px] text-slate-400 leading-none">{t("consentManager")}</p>
                     </div>
                   </div>
 
@@ -979,24 +983,24 @@ export default function AbhaSandboxPage() {
                       {currentReq.status === "PENDING" && !otpSentForReqId && (
                         <div className="space-y-4 flex-1">
                           <div className="text-center py-2">
-                            <div className="h-10 w-10 bg-cyan-50 border border-cyan-100 text-cyan-600 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
+                            <div className="h-10 w-10 bg-primary-soft border border-primary/20 text-accent rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
                               <ShieldCheck className="h-5 w-5" />
                             </div>
-                            <p className="text-xs font-bold text-slate-800">Consent Request Received</p>
+                            <p className="text-xs font-bold text-slate-800">{t("consentRequestReceived")}</p>
                           </div>
 
                           <div className="bg-white rounded-xl border border-slate-200 p-3 text-[11px] space-y-2">
-                            <p className="font-semibold text-slate-700">Requesting Entity:</p>
+                            <p className="font-semibold text-slate-700">{t("requestingEntity")}</p>
                             <p className="font-bold text-slate-900 leading-snug">{currentReq.hiuName}</p>
-                            
-                            <div className="h-px bg-slate-100 my-1" />
-
-                            <p className="font-semibold text-slate-700">Purpose of Access:</p>
-                            <p className="font-bold text-slate-900">{currentReq.purpose}</p>
 
                             <div className="h-px bg-slate-100 my-1" />
 
-                            <p className="font-semibold text-slate-700">Requested Records:</p>
+                            <p className="font-semibold text-slate-700">{t("purposeOfAccess")}</p>
+                            <p className="font-bold text-slate-900">{t.has(`purpose.${currentReq.purpose}`) ? t(`purpose.${currentReq.purpose}`) : currentReq.purpose}</p>
+
+                            <div className="h-px bg-slate-100 my-1" />
+
+                            <p className="font-semibold text-slate-700">{t("requestedRecords")}</p>
                             <div className="flex flex-wrap gap-1 mt-0.5">
                               {currentReq.dataTypes.map(t => (
                                 <span key={t} className="text-[9px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
@@ -1007,7 +1011,7 @@ export default function AbhaSandboxPage() {
                           </div>
 
                           <p className="text-[10px] text-slate-400 text-center">
-                            Authorized details will be sent encrypted. Under DPDP, you have the right to revoke consent at any time.
+                            {t("dpdpNotice")}
                           </p>
                         </div>
                       )}
@@ -1016,9 +1020,9 @@ export default function AbhaSandboxPage() {
                       {currentReq.status === "PENDING" && otpSentForReqId && (
                         <div className="space-y-4 flex-1 flex flex-col justify-center">
                           <div className="text-center space-y-1">
-                            <Lock className="h-8 w-8 text-cyan-500 mx-auto" />
-                            <p className="text-xs font-bold text-slate-800">Confirm Authorization</p>
-                            <p className="text-[9.5px] text-slate-400">Enter secure 4-digit PIN to sign consent (use &quot;1234&quot;)</p>
+                            <Lock className="h-8 w-8 text-accent mx-auto" />
+                            <p className="text-xs font-bold text-slate-800">{t("confirmAuthorization")}</p>
+                            <p className="text-[9.5px] text-slate-400">{t("enterPinHint")}</p>
                           </div>
 
                           <input
@@ -1027,24 +1031,24 @@ export default function AbhaSandboxPage() {
                             value={smartphoneOtp}
                             onChange={e => setSmartphoneOtp(e.target.value.replace(/\D/g, "").slice(0, 4))}
                             placeholder="••••"
-                            className="w-full h-11 border border-slate-200 rounded-xl text-center text-xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
+                            className="w-full h-11 border border-slate-200 rounded-xl text-center text-xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                           />
 
                           <Button
                             variant="primary"
-                            className="w-full bg-cyan-600 hover:bg-cyan-700 text-xs h-10"
+                            className="w-full bg-primary hover:bg-primary-dark text-xs h-10"
                             onClick={handleVerifySmartphoneOtp}
                             isLoading={smartphoneVerifying}
                             disabled={smartphoneOtp.length !== 4}
                           >
-                            Sign &amp; Approve
+                            {t("signApprove")}
                           </Button>
-                          
+
                           <button
                             onClick={() => setOtpSentForReqId(null)}
                             className="text-[10px] text-slate-400 text-center hover:underline cursor-pointer"
                           >
-                            Back
+                            {t("back")}
                           </button>
                         </div>
                       )}
@@ -1056,16 +1060,16 @@ export default function AbhaSandboxPage() {
                             <CheckCircle2 className="h-6 w-6" />
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-slate-900">Consent Granted</p>
+                            <p className="text-xs font-bold text-slate-900">{t("consentGranted")}</p>
                             <p className="text-[9px] text-slate-500 mt-1 max-w-[180px] mx-auto">
-                              Authorized cryptographic keys have been uploaded to the ABDM gateway.
+                              {t("consentGrantedBody")}
                             </p>
                           </div>
                           <div className="bg-white border border-slate-200 rounded-xl p-3 text-[10px] text-left w-full space-y-1">
-                            <p className="text-slate-400 font-semibold mb-1">STATUS LOG</p>
-                            <p className="text-slate-800 font-bold">Granted To: {currentReq.hiuName}</p>
-                            <p className="text-slate-500">Validity: {currentReq.validityDays} Days</p>
-                            <p className="text-slate-500">Transferred: Secure Key Package</p>
+                            <p className="text-slate-400 font-semibold mb-1">{t("statusLog")}</p>
+                            <p className="text-slate-800 font-bold">{t("grantedTo", { entity: currentReq.hiuName })}</p>
+                            <p className="text-slate-500">{t("logValidity", { days: currentReq.validityDays })}</p>
+                            <p className="text-slate-500">{t("logTransferred")}</p>
                           </div>
                         </div>
                       )}
@@ -1077,9 +1081,9 @@ export default function AbhaSandboxPage() {
                             <X className="h-6 w-6" />
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-slate-950">Consent Request Denied</p>
+                            <p className="text-xs font-bold text-slate-950">{t("consentDenied")}</p>
                             <p className="text-[9px] text-slate-400 mt-1 max-w-[160px] mx-auto">
-                              No health data was exchanged. Access remains restricted.
+                              {t("consentDeniedBody")}
                             </p>
                           </div>
                         </div>
@@ -1093,21 +1097,21 @@ export default function AbhaSandboxPage() {
                             className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-xs h-10 rounded-xl"
                             onClick={() => handlePatientConsent("GRANTED")}
                           >
-                            Grant Access
+                            {t("grantAccess")}
                           </Button>
                           <Button
                             variant="outline"
                             className="w-full text-red-600 hover:bg-red-50 text-xs h-10 rounded-xl"
                             onClick={() => handlePatientConsent("DENIED")}
                           >
-                            Deny Access
+                            {t("denyAccess")}
                           </Button>
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="flex-grow flex items-center justify-center text-center">
-                      <p className="text-xs text-slate-400">No active consent request. Create one on the left panel to test.</p>
+                      <p className="text-xs text-slate-400">{t("noActiveRequest")}</p>
                     </div>
                   )}
                 </div>
@@ -1120,21 +1124,21 @@ export default function AbhaSandboxPage() {
               <Card className="p-5 border-slate-200 bg-white space-y-4 shadow-sm flex-1">
                 <div>
                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                    <Database className="h-4.5 w-4.5 text-[var(--color-primary)]" />
-                    Data Transfer &amp; Crypto Pipeline
+                    <Database className="h-4.5 w-4.5 text-[var(--color-accent)]" />
+                    {t("cryptoPipeline")}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Simulate HIPAA/DISHA data push from lab to hospital</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{t("cryptoPipelineSubtitle")}</p>
                 </div>
 
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Selected Consent ID</span>
+                    <span className="text-slate-500">{t("selectedConsentId")}</span>
                     <span className="font-bold text-slate-800">{selectedReqId}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Authorization Status</span>
+                    <span className="text-slate-500">{t("authorizationStatus")}</span>
                     <span className={`font-bold flex items-center gap-1 ${currentReq?.status === "GRANTED" ? "text-green-600" : "text-amber-500"}`}>
-                      {currentReq?.status || "NONE"}
+                      {currentReq?.status ? t(`status${currentReq.status}`) : t("statusNone")}
                     </span>
                   </div>
                   {currentReq?.status === "GRANTED" && (
@@ -1144,7 +1148,7 @@ export default function AbhaSandboxPage() {
                       onClick={handleTriggerDataExchange}
                       disabled={exchangeState !== "idle" && exchangeState !== "completed"}
                     >
-                      Trigger HIE Data Transfer
+                      {t("triggerDataTransfer")}
                     </Button>
                   )}
                 </div>
@@ -1153,32 +1157,32 @@ export default function AbhaSandboxPage() {
                 {exchangeState !== "idle" && (
                   <div className="space-y-3 p-3 bg-slate-900 text-slate-100 rounded-xl font-mono text-[10.5px]">
                     <div className="flex items-center justify-between text-[9px] border-b border-slate-800 pb-1.5 text-slate-400">
-                      <span>GATEWAY LOGS</span>
-                      <span className="animate-pulse text-green-500">● LIVE</span>
+                      <span>{t("gatewayLogs")}</span>
+                      <span className="animate-pulse text-green-500">● {t("live")}</span>
                     </div>
 
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         <span className="text-green-400">[✓]</span>
-                        <span>HIU requests records using key</span>
+                        <span>{t("logHiuRequests")}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={["encrypting", "decrypting", "completed"].includes(exchangeState) ? "text-green-400 animate-pulse" : "text-slate-500"}>
                           {exchangeState === "requesting" ? "[…]" : "[✓]"}
                         </span>
-                        <span>HIP loads FHIR bundle &amp; encrypts payload</span>
+                        <span>{t("logHipEncrypts")}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={["decrypting", "completed"].includes(exchangeState) ? "text-green-400 animate-pulse" : "text-slate-500"}>
                           {exchangeState === "encrypting" ? "[…]" : exchangeState === "requesting" ? "[ ]" : "[✓]"}
                         </span>
-                        <span>Data transferred via secure channel</span>
+                        <span>{t("logDataTransferred")}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={exchangeState === "completed" ? "text-green-400" : "text-slate-500"}>
                           {exchangeState === "decrypting" ? "[…]" : exchangeState === "completed" ? "[✓]" : "[ ]"}
                         </span>
-                        <span>HIU decrypts data using Private Key</span>
+                        <span>{t("logHiuDecrypts")}</span>
                       </div>
                     </div>
                   </div>
@@ -1189,10 +1193,10 @@ export default function AbhaSandboxPage() {
               <Card className="p-4 border-slate-200 bg-slate-50/50 space-y-2.5">
                 <h4 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <Shield className="h-4 w-4 text-slate-400" />
-                  DISHA Security Framework
+                  {t("dishaFramework")}
                 </h4>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Encryption safeguards clinical data at-rest and in-transit.
+                  {t("dishaFrameworkBody")}
                 </p>
               </Card>
             </div>
@@ -1203,25 +1207,25 @@ export default function AbhaSandboxPage() {
             <Card className="p-6 border-slate-200 bg-slate-950 text-slate-100 space-y-4 shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
                 <div>
-                  <h4 className="text-sm font-bold flex items-center gap-2 text-cyan-400">
+                  <h4 className="text-sm font-bold flex items-center gap-2 text-primary-light">
                     <Lock className="h-4.5 w-4.5" />
-                    Cryptographic Payload Viewer
+                    {t("payloadViewer")}
                   </h4>
-                  <p className="text-[11px] text-slate-500">Live view of network payload during transmission</p>
+                  <p className="text-[11px] text-slate-500">{t("payloadViewerSubtitle")}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowEncryptedCode(true)}
-                    className={`text-xs px-3 py-1.5 rounded font-semibold cursor-pointer ${showEncryptedCode ? "bg-cyan-900 text-cyan-200" : "text-slate-400 hover:text-slate-200"}`}
+                    className={`text-xs px-3 py-1.5 rounded font-semibold cursor-pointer ${showEncryptedCode ? "bg-primary-dark text-primary-light" : "text-slate-400 hover:text-slate-200"}`}
                   >
-                    Encrypted Payload (Transit)
+                    {t("encryptedPayloadTab")}
                   </button>
                   <button
                     onClick={() => setShowEncryptedCode(false)}
-                    className={`text-xs px-3 py-1.5 rounded font-semibold cursor-pointer ${!showEncryptedCode ? "bg-cyan-900 text-cyan-200" : "text-slate-400 hover:text-slate-200"}`}
+                    className={`text-xs px-3 py-1.5 rounded font-semibold cursor-pointer ${!showEncryptedCode ? "bg-primary-dark text-primary-light" : "text-slate-400 hover:text-slate-200"}`}
                     disabled={exchangeState !== "completed" && exchangeState !== "decrypting"}
                   >
-                    Decrypted FHIR Bundle
+                    {t("decryptedBundleTab")}
                   </button>
                 </div>
               </div>
@@ -1240,31 +1244,31 @@ export default function AbhaSandboxPage() {
                 <div className="bg-slate-900 rounded-xl p-5 border border-slate-800 mt-4 space-y-4 text-left">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                     <span className="text-xs font-bold text-green-400 flex items-center gap-1.5">
-                      <CheckCircle2 className="h-4 w-4" /> Decrypted Records successfully imported into HIMS
+                      <CheckCircle2 className="h-4 w-4" /> {t("recordsImported")}
                     </span>
-                    <span className="text-[10px] text-slate-500">Ramesh Kumar · Male, 42y</span>
+                    <span className="text-[10px] text-slate-500">{t("patientSummary")}</span>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
                     {/* Clinical Lab findings */}
                     <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                      <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Mithlesh Labs, Lucknow</p>
-                      <p className="text-xs font-bold text-slate-200">Complete Blood Count (CBC) · 2026-05-10</p>
+                      <p className="text-[10px] text-primary-light font-bold uppercase tracking-wider">{t("labLocation")}</p>
+                      <p className="text-xs font-bold text-slate-200">{t("labReportLine")}</p>
                       <div className="space-y-1.5 pt-2 border-t border-slate-900 text-xs">
-                        <p className="text-slate-400">Haemoglobin: <span className="text-slate-200 font-semibold">14.2 g/dL</span> <span className="text-green-500 font-bold">✓ Normal</span></p>
-                        <p className="text-slate-400">WBC Count: <span className="text-slate-200 font-semibold">6,800 /mcL</span> <span className="text-green-500 font-bold">✓ Normal</span></p>
-                        <p className="text-slate-400">Platelets: <span className="text-slate-200 font-semibold">210,000 /mcL</span> <span className="text-green-500 font-bold">✓ Normal</span></p>
+                        <p className="text-slate-400">Haemoglobin: <span className="text-slate-200 font-semibold">14.2 g/dL</span> <span className="text-green-500 font-bold">✓ {t("resultNormal")}</span></p>
+                        <p className="text-slate-400">WBC Count: <span className="text-slate-200 font-semibold">6,800 /mcL</span> <span className="text-green-500 font-bold">✓ {t("resultNormal")}</span></p>
+                        <p className="text-slate-400">Platelets: <span className="text-slate-200 font-semibold">210,000 /mcL</span> <span className="text-green-500 font-bold">✓ {t("resultNormal")}</span></p>
                       </div>
                     </div>
 
                     {/* Prescription details */}
                     <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                      <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">District Hospital Lucknow</p>
-                      <p className="text-xs font-bold text-slate-200">Prescription · Dr. Alok Verma, Cardiologist</p>
+                      <p className="text-[10px] text-primary-light font-bold uppercase tracking-wider">{t("hospitalLocation")}</p>
+                      <p className="text-xs font-bold text-slate-200">{t("prescriptionLine")}</p>
                       <div className="space-y-1 pt-2 border-t border-slate-900 text-xs">
                         <p className="text-slate-200 font-bold">Amlodipine 5mg OD</p>
-                        <p className="text-slate-400">Once daily in the morning for 30 days</p>
-                        <p className="text-[10px] text-slate-500 mt-1">Authored on 2026-05-10</p>
+                        <p className="text-slate-400">{t("prescriptionDosage")}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">{t("authoredOn")}</p>
                       </div>
                     </div>
                   </div>

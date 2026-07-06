@@ -1,0 +1,154 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "approve": "Approve",
+    "reject": "Reject",
+    "employee": "Employee",
+    "department": "Department",
+    "designation": "Designation",
+    "status": "Status",
+    "select": "Select…",
+    "open": "Open",
+    "in": "In",
+    "out": "Out",
+    "dash": "—"
+  },
+  "attendanceStatus": {
+    "present": "present",
+    "late": "late",
+    "absent": "absent",
+    "leave": "leave",
+    "half_day": "half day"
+  },
+  "staffStatus": {
+    "active": "active",
+    "on_leave": "on leave",
+    "suspended": "suspended",
+    "terminated": "terminated",
+    "inactive": "inactive"
+  },
+  "leaveStatus": {
+    "Pending": "Pending",
+    "Approved": "Approved",
+    "Rejected": "Rejected"
+  },
+  "openingStatus": {
+    "Open": "Open",
+    "On hold": "On hold",
+    "Closed": "Closed"
+  },
+  "reviewStatus": {
+    "draft": "draft",
+    "submitted": "submitted",
+    "acknowledged": "acknowledged"
+  },
+  "stage": {
+    "Applied": "Applied",
+    "Screening": "Screening",
+    "Interview": "Interview",
+    "Offer": "Offer",
+    "Hired": "Hired",
+    "Rejected": "Rejected"
+  },
+  "dashboard": {
+    "title": "HR Dashboard",
+    "subtitle": "People operations across {depts} departments · {count} staff on record.",
+    "kpiEmployees": "Employees",
+    "kpiEmployeesSub": "{count} on record",
+    "kpiPendingLeave": "Pending leave",
+    "kpiPendingLeaveSub": "Awaiting decision",
+    "kpiAttendanceToday": "Attendance today",
+    "kpiAttendanceTodaySub": "{present}/{total} present · {onLeave} on leave",
+    "kpiOpenPositions": "Open positions",
+    "kpiOpenPositionsSub": "{count} in pipeline",
+    "kpiOnboarding": "Onboarding",
+    "kpiOnboardingSub": "In progress",
+    "kpiAppraisals": "Appraisals",
+    "kpiAppraisalsSub": "Open reviews",
+    "pendingLeaveApprovals": "Pending leave approvals",
+    "noPendingLeave": "No pending leave requests",
+    "recruitmentPipeline": "Recruitment pipeline",
+    "credentialsExpiring": "Credentials expiring within 60 days ({count})"
+  },
+  "employees": {
+    "title": "Employees",
+    "count": "{shown} of {total} staff",
+    "addEmployee": "Add employee",
+    "searchPlaceholder": "Search name, ID, designation…",
+    "allDepartments": "All",
+    "allStatuses": "All statuses",
+    "colContract": "Contract",
+    "noMatch": "No employees match your filters"
+  },
+  "attendance": {
+    "title": "Attendance & Time",
+    "subtitle": "Daily register · {date}",
+    "tilePresent": "Present",
+    "tileLate": "Late",
+    "tileOnLeave": "On leave",
+    "tileAbsent": "Absent",
+    "tileAttendance": "Attendance",
+    "colDept": "Dept",
+    "colIn": "In",
+    "colOut": "Out",
+    "colActions": "Actions"
+  },
+  "leave": {
+    "title": "Leave Management",
+    "subtitle": "{pending} pending · {onLeave} on leave today",
+    "applyLeave": "Apply leave",
+    "from": "From",
+    "to": "To",
+    "reasonPlaceholder": "Reason",
+    "defaultReason": "Personal",
+    "leaveRequests": "Leave requests",
+    "noRequests": "No leave requests",
+    "balance": "Balance: {remaining}/{total} days",
+    "selectEmployeeError": "Select an employee",
+    "appliedToast": "Leave applied for {name}",
+    "decisionApproved": "Leave approved",
+    "decisionRejected": "Leave rejected",
+    "notifyTitleApproved": "Leave approved — {name}",
+    "notifyTitleRejected": "Leave rejected — {name}",
+    "notifyBodyApproved": "Your leave ({from} → {to}) was approved by HR.",
+    "notifyBodyRejected": "Your leave ({from} → {to}) was rejected by HR."
+  },
+  "onboarding": {
+    "title": "Onboarding",
+    "subtitle": "{count} new hires in progress",
+    "emptyTitle": "No onboarding in progress",
+    "emptySub": "Hire a candidate in Recruitment to start a checklist.",
+    "started": "{role} · started {date}",
+    "complete": "Complete"
+  },
+  "recruitment": {
+    "title": "Recruitment",
+    "subtitle": "{open} open positions · {pipeline} candidates in pipeline",
+    "onboarding": "Onboarding",
+    "jobOpenings": "Job openings",
+    "openingsCount": "{department} · {type} · {count, plural, one {# opening} other {# openings}}",
+    "movedToast": "Moved to {stage}",
+    "hiredToast": "{name} hired — onboarding checklist created",
+    "moveNext": "→ {stage}"
+  },
+  "appraisals": {
+    "title": "Performance & Appraisals",
+    "subtitle": "{count} reviews · avg rating {avg}/5",
+    "newReview": "New review",
+    "rating": "Rating",
+    "goals": "Goals / KPIs",
+    "strengths": "Strengths / notes",
+    "saveReview": "Save review",
+    "noReviews": "No reviews in this cycle yet",
+    "reviewedBy": "reviewed by {name}",
+    "goalsLabel": "Goals:",
+    "notesLabel": "Notes:",
+    "submit": "Submit",
+    "acknowledge": "Acknowledge",
+    "selectEmployeeError": "Select an employee",
+    "savedToast": "Review saved for {name}",
+    "submittedToast": "Review submitted",
+    "acknowledgedToast": "Acknowledged"
+  }
+}

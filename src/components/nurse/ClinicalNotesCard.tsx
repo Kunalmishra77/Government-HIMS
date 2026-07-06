@@ -132,8 +132,8 @@ export function ClinicalNotesCard({ patientId, patientName }: { patientId: strin
 
   return (
     <section className="rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-sm overflow-hidden">
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-[rgba(8,145,178,0.06)] to-[rgba(8,145,178,0.04)]">
-        <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-surface-sunken">
+        <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
         <h3 className="text-[14px] font-semibold text-slate-900">Clinical notes · {patientName}</h3>
         <span className="ml-auto text-[10.5px] text-slate-500">{counts.wound} wound · {counts.fall} fall-risk · {counts.careplan} care plan</span>
       </header>
@@ -250,7 +250,7 @@ export function ClinicalNotesCard({ patientId, patientName }: { patientId: strin
         <div>
           <button onClick={() => setOpenSection(openSection === 'careplan' ? null : 'careplan')}
             className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 cursor-pointer">
-            <ClipboardList className="h-4 w-4 text-[var(--color-primary)]" />
+            <ClipboardList className="h-4 w-4 text-[var(--color-accent)]" />
             <span className="text-[13px] font-semibold text-slate-900">Care plan</span>
             <span className="ml-auto text-[10px] text-slate-400">{counts.careplan}</span>
             {openSection === 'careplan' ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}

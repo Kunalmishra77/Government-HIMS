@@ -22,7 +22,7 @@ import { ReasoningChip } from "@/components/clinical/ReasoningChip"
 const PRESENCE_STYLES: Record<PresenceStatus, { dot: string; ring: string; label: string }> = {
   on_shift:         { dot: "bg-emerald-500",  ring: "ring-emerald-300",  label: "On shift" },
   handover_pending: { dot: "bg-amber-500",     ring: "ring-amber-300 animate-pulse", label: "Handover near" },
-  on_call:          { dot: "bg-sky-400",        ring: "ring-sky-300",      label: "On call" },
+  on_call:          { dot: "bg-surface-sunken",        ring: "ring-primary/25",      label: "On call" },
   off:              { dot: "bg-slate-300",      ring: "ring-slate-200",    label: "Off" },
 }
 
@@ -121,10 +121,10 @@ export function CareTeamPresenceCard({ ward = "Cardiac Care", department, classN
 
   return (
     <section className={`rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-sm overflow-hidden ${className ?? ''}`}>
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-[rgba(8,145,178,0.06)] to-[rgba(8,145,178,0.04)]">
-        <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-surface-sunken">
+        <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
         <h3 className="text-[14px] font-semibold text-slate-900">Care-Team Presence · {ward}</h3>
-        <span className="ml-auto inline-flex items-center gap-1.5 text-[10.5px] font-mono font-semibold text-[var(--color-primary)]">
+        <span className="ml-auto inline-flex items-center gap-1.5 text-[10.5px] font-mono font-semibold text-[var(--color-accent)]">
           <Users className="h-3 w-3" /> {onShiftCount} on shift · {handoverPendingCount} near handover
         </span>
       </header>
@@ -143,7 +143,7 @@ export function CareTeamPresenceCard({ ward = "Cardiac Care", department, classN
                 title={`${m.name} · ${m.role}${m.shiftHours ? ' · ' + m.shiftHours : ''}`}
               >
                 <span className="relative">
-                  <span className="h-6 w-6 rounded-full bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)] flex items-center justify-center text-[10.5px] font-bold">{m.initials}</span>
+                  <span className="h-6 w-6 rounded-full bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)] flex items-center justify-center text-[10.5px] font-bold">{m.initials}</span>
                   <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-white ${s.dot}`} />
                 </span>
                 <span className="text-[11.5px] font-semibold text-slate-800 max-w-[110px] truncate">{m.name}</span>
@@ -194,11 +194,11 @@ export function CareTeamPresenceCard({ ward = "Cardiac Care", department, classN
 
       {/* Compose dialog (inline panel, not modal — keeps page state visible) */}
       {composeOpen ? (
-        <div className="border-t border-[rgba(8,145,178,0.15)]/60 p-3 bg-gradient-to-br from-[rgba(8,145,178,0.04)] to-[rgba(8,145,178,0.03)] space-y-2">
+        <div className="border-t border-[rgba(238,107,38,0.15)]/60 p-3 bg-surface-sunken space-y-2">
           <div className="flex items-center gap-2">
-            <Wand2 className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+            <Wand2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
             <p className="text-[11.5px] font-semibold text-[var(--color-primary-dark)]">SBAR draft · AI-skeleton, editable</p>
-            <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-primary)]">
+            <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-accent)]">
               <Sparkles className="h-3 w-3" /> 82% confidence
             </span>
           </div>

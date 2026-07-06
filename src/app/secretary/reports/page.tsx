@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { FileText, Download, CheckCircle, Clock } from 'lucide-react'
 
 const REPORTS = [
@@ -14,28 +15,29 @@ const REPORTS = [
 
 const STATUS_BADGE = {
   'Submitted': 'bg-emerald-100 text-emerald-700',
-  'Under review': 'bg-blue-100 text-blue-700',
+  'Under review': 'bg-surface-sunken text-accent',
   'In preparation': 'bg-amber-100 text-amber-700',
-  'Draft ready': 'bg-teal-100 text-teal-700',
-  'Data entry pending': 'bg-orange-100 text-orange-700',
-  'CMO uploads pending': 'bg-orange-100 text-orange-700',
+  'Draft ready': 'bg-accent-soft text-accent',
+  'Data entry pending': 'bg-accent-soft text-accent',
+  'CMO uploads pending': 'bg-accent-soft text-accent',
   'Urgent — 15 days left': 'bg-rose-100 text-rose-700',
 }
 
 export default function ReportsPage() {
+  const t = useTranslations('secretary')
   const submitted = REPORTS.filter(r => r.status === 'Submitted').length
 
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">National Reports & PIP</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">राष्ट्रीय रिपोर्ट · HMIS returns, NHM PIP, annual reporting</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('reports.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('reports.subtitle')}</p>
       </div>
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Reports tracked', value: String(REPORTS.length) },
-          { label: 'Submitted', value: String(submitted) },
-          { label: 'Pending / Urgent', value: String(REPORTS.length - submitted), warn: true },
+          { label: t('reports.tracked'), value: String(REPORTS.length) },
+          { label: t('reports.submitted'), value: String(submitted) },
+          { label: t('reports.pendingUrgent'), value: String(REPORTS.length - submitted), warn: true },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -56,11 +58,11 @@ export default function ReportsPage() {
                   </div>
                   <p className="text-sm font-semibold text-[var(--color-foreground)]">{r.name}</p>
                   <p className="text-[10px] text-[var(--color-foreground-lighter)]" style={{ fontFamily: 'Noto Sans Devanagari' }}>{r.hi}</p>
-                  <p className="text-xs text-[var(--color-foreground-muted)] mt-0.5">Due: {r.due}</p>
+                  <p className="text-xs text-[var(--color-foreground-muted)] mt-0.5">{t('reports.due', { date: r.due })}</p>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                  {r.progress === 100 && <button className="flex items-center gap-1 text-xs text-[var(--color-primary)] hover:underline"><Download className="h-3 w-3" /> Download</button>}
-                  <button className="px-3 py-1.5 border border-[var(--color-border)] text-xs rounded-lg hover:bg-[var(--color-surface-raised)]">View</button>
+                  {r.progress === 100 && <button className="flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline"><Download className="h-3 w-3" /> {t('reports.download')}</button>}
+                  <button className="px-3 py-1.5 border border-[var(--color-border)] text-xs rounded-lg hover:bg-[var(--color-surface-raised)]">{t('reports.view')}</button>
                 </div>
               </div>
               <div className="flex items-center gap-2">

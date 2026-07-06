@@ -25,11 +25,11 @@ const PHASES: { code: MicroPhase; label: string; icon: typeof Activity; emptyHin
 const DEFAULT_AST_DRUGS = ["Ceftriaxone", "Ciprofloxacin", "Amoxicillin", "Gentamicin", "Vancomycin", "Meropenem"]
 
 const SOURCE_STYLE: Record<string, string> = {
-  OPD: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]",
-  IPD: "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]",
+  OPD: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]",
+  IPD: "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]",
   ICU: "bg-red-50 text-red-700",
-  OT:  "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]",
-  ER:  "bg-orange-50 text-orange-700",
+  OT:  "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]",
+  ER:  "bg-primary-soft text-accent",
 }
 
 const timeAgo = (iso?: string) => {
@@ -76,7 +76,7 @@ export default function LabMicrobiology() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-[#0F172A] flex items-center gap-2">
-          <Activity className="h-6 w-6 text-[var(--color-primary)]" /> Microbiology
+          <Activity className="h-6 w-6 text-[var(--color-accent)]" /> Microbiology
         </h1>
         <p className="text-sm text-[#64748B] mt-1">Multi-day culture · Inoculated → Growth check → Identified → AST → Final · final report releases the test</p>
       </div>
@@ -85,7 +85,7 @@ export default function LabMicrobiology() {
         {PHASES.map(p => (
           <div key={p.code} className="rounded-xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
             <div className="px-3 py-2.5 border-b border-slate-100 flex items-center gap-2 bg-slate-50/60">
-              <p.icon className="h-4 w-4 text-[var(--color-primary)]" />
+              <p.icon className="h-4 w-4 text-[var(--color-accent)]" />
               <h2 className="text-sm font-bold text-slate-800">{p.label}</h2>
               <span className="text-xs text-slate-400">{grouped[p.code].length}</span>
             </div>
@@ -129,7 +129,7 @@ function MicroCard(props: {
         <Stethoscope className="h-3 w-3" />{order.doctorName}
         {order.wardBed && <><span className="text-slate-300">·</span><Bed className="h-3 w-3" />{order.wardBed}</>}
       </p>
-      <p className="text-[12px] font-semibold text-[var(--color-primary)] mt-1">{test.name}</p>
+      <p className="text-[12px] font-semibold text-[var(--color-accent)] mt-1">{test.name}</p>
       <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
         <Clock className="h-3 w-3" />Day {micro.day} · {timeAgo(test.orderedAt)}
       </p>
@@ -161,9 +161,9 @@ function GrowthCheckActions({ onAdvance, onFinalize, day }: { onAdvance: (p: Par
   const [organism, setOrganism] = useState("")
   return (
     <div className="space-y-1.5">
-      <p className="text-[11px] font-semibold text-[var(--color-primary)]">Growth detected — identify organism</p>
+      <p className="text-[11px] font-semibold text-[var(--color-accent)]">Growth detected — identify organism</p>
       <input value={organism} onChange={e => setOrganism(e.target.value)} placeholder="e.g. E. coli"
-        className="w-full h-7 px-2 text-[11px] rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-200" />
+        className="w-full h-7 px-2 text-[11px] rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/25" />
       <div className="flex gap-1.5">
         <button onClick={() => {
             if (!organism.trim()) return
@@ -249,7 +249,7 @@ function ASTActions({ micro, onAdvance, onFinalize }: { micro: MicrobioResult; o
         })}
       </div>
       <textarea value={report} onChange={e => setReport(e.target.value)} rows={3}
-        className="w-full text-[11px] rounded-md border border-slate-200 p-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        className="w-full text-[11px] rounded-md border border-slate-200 p-1.5 focus:outline-none focus:ring-2 focus:ring-primary/25"
         placeholder="Final report" />
       <button onClick={() => onFinalize(report || `${org.name} isolated, AST as documented`)}
         className="w-full text-[11px] font-bold text-white px-2.5 py-1 rounded-lg cursor-pointer flex items-center justify-center gap-1"

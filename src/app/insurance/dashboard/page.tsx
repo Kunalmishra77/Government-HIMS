@@ -69,8 +69,8 @@ function VerificationPanel() {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-[rgba(8,145,178,0.07)]/80 flex items-center justify-center">
-            <ShieldCheck className="h-5 w-5 text-[var(--color-primary)]" />
+          <div className="h-10 w-10 rounded-xl bg-[rgba(238,107,38,0.07)]/80 flex items-center justify-center">
+            <ShieldCheck className="h-5 w-5 text-[var(--color-accent)]" />
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-900">Insurance Card Verification</h2>
@@ -172,7 +172,7 @@ function VerificationPanel() {
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                    <Sparkles className="h-3 w-3 text-[var(--color-primary)]" /> AI Approval Probability
+                    <Sparkles className="h-3 w-3 text-[var(--color-accent)]" /> AI Approval Probability
                   </p>
                   <span className={`text-sm font-black ${result.aiProbability > 75 ? 'text-green-700' : result.aiProbability > 50 ? 'text-amber-700' : 'text-red-700'}`}>
                     {result.aiProbability}%
@@ -243,18 +243,18 @@ export default function InsuranceDashboard() {
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-[var(--color-primary)]" />Cashless claim lifecycle
+            <Activity className="h-4 w-4 text-[var(--color-accent)]" />Cashless claim lifecycle
           </h2>
-          <Link href="/insurance/claims" className="text-[11px] font-bold text-[var(--color-primary)] hover:underline flex items-center gap-0.5">
+          <Link href="/insurance/claims" className="text-[11px] font-bold text-[var(--color-accent)] hover:underline flex items-center gap-0.5">
             All claims <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 items-stretch">
           {[
             { label: 'Cashless',     sub: 'Registered (intake)',  count: cashlessWalkIns + cashlessInpatients, color: 'border-amber-200 bg-amber-50',     icon: User,         fg: 'text-amber-700',   href: '/insurance/dashboard#monitor', cta: 'Monitor' },
-            { label: 'Pre-auth',     sub: 'Pending insurer',      count: preAuthPending,                       color: 'border-orange-200 bg-orange-50',   icon: Hourglass,    fg: 'text-orange-700',  href: '/insurance/preauth',           cta: 'Draft' },
-            { label: 'Approved',     sub: 'In stay · claim soon', count: preAuthApproved,                      color: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]',       icon: ShieldCheck,  fg: 'text-[var(--color-primary)]',    href: '/insurance/claims',            cta: 'Submit' },
-            { label: 'Submitted',    sub: 'Awaiting settlement',  count: claimSubmitted,                       color: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]',   icon: Send,         fg: 'text-[var(--color-primary)]',  href: '/insurance/claims',            cta: 'Track' },
+            { label: 'Pre-auth',     sub: 'Pending insurer',      count: preAuthPending,                       color: 'border-primary/20 bg-primary-soft',   icon: Hourglass,    fg: 'text-accent',  href: '/insurance/preauth',           cta: 'Draft' },
+            { label: 'Approved',     sub: 'In stay · claim soon', count: preAuthApproved,                      color: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]',       icon: ShieldCheck,  fg: 'text-[var(--color-accent)]',    href: '/insurance/claims',            cta: 'Submit' },
+            { label: 'Submitted',    sub: 'Awaiting settlement',  count: claimSubmitted,                       color: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]',   icon: Send,         fg: 'text-[var(--color-accent)]',  href: '/insurance/claims',            cta: 'Track' },
             { label: 'Settled',      sub: 'Paid by insurer',      count: settled,                              color: 'border-emerald-200 bg-emerald-50', icon: CheckCircle2, fg: 'text-emerald-700', href: '/insurance/claims',            cta: 'Reconcile' },
             { label: 'Query',        sub: 'Insurer queries',      count: claims.filter(c => c.aiDenialRisk && c.aiDenialRisk.score >= 70 && c.status === 'In Process').length, color: 'border-red-200 bg-red-50', icon: AlertTriangle, fg: 'text-red-700', href: '/insurance/claims', cta: 'Reply' },
             { label: 'Denied',       sub: 'Claim rejected',       count: denied,                               color: 'border-slate-200 bg-slate-50',     icon: ShieldAlert,  fg: 'text-slate-600',   href: '/insurance/claims',            cta: 'Appeal' },
@@ -291,9 +291,9 @@ export default function InsuranceDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total Claims Value',    value: `₹${(totalClaimsValue / 100000).toFixed(2)}L`, icon: IndianRupee, cardBg: 'bg-[rgba(8,145,178,0.07)]/70',   ib: 'text-[var(--color-primary)]',   lb: 'text-[var(--color-primary-dark)]/60' },
+          { label: 'Total Claims Value',    value: `₹${(totalClaimsValue / 100000).toFixed(2)}L`, icon: IndianRupee, cardBg: 'bg-[rgba(238,107,38,0.07)]/70',   ib: 'text-[var(--color-accent)]',   lb: 'text-[var(--color-primary-dark)]/60' },
           { label: 'Pending Pre-Auth',      value: pendingApprovals,                               icon: FileText,    cardBg: 'bg-amber-50/70',  ib: 'text-amber-600',  lb: 'text-amber-800/60' },
-          { label: 'Active Cashless Patients', value: claims.filter(c => c.status !== 'Approved' && c.status !== 'Rejected').length, icon: ShieldCheck, cardBg: 'bg-[rgba(8,145,178,0.07)]/70', ib: 'text-[var(--color-primary)]', lb: 'text-[var(--color-primary-dark)]/60' },
+          { label: 'Active Cashless Patients', value: claims.filter(c => c.status !== 'Approved' && c.status !== 'Rejected').length, icon: ShieldCheck, cardBg: 'bg-[rgba(238,107,38,0.07)]/70', ib: 'text-[var(--color-accent)]', lb: 'text-[var(--color-primary-dark)]/60' },
         ].map(({ label, value, icon: Icon, cardBg, ib, lb }) => (
           <div key={label} className={`rounded-xl ${cardBg} p-4 flex items-center gap-4`}>
             <div className="p-3 rounded-xl bg-white shadow-sm flex-shrink-0">
@@ -335,7 +335,7 @@ export default function InsuranceDashboard() {
                       claim.status === 'Approved' ? 'bg-green-100 text-green-800' :
                       claim.status === 'Pending Pre-Auth' ? 'bg-amber-50 text-amber-800' :
                       claim.status === 'Rejected' ? 'bg-red-50 text-red-800' :
-                      'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary-dark)]'
+                      'bg-[rgba(238,107,38,0.07)] text-[var(--color-primary-dark)]'
                     }`}>
                       {claim.status}
                     </span>

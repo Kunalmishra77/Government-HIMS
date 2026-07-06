@@ -4,8 +4,8 @@
 
 import { usePatientProfileStore, emptyProfile } from '@/store/usePatientProfileStore'
 import { useAuthStore } from '@/store/useAuthStore'
-import { usePatientLiveStore } from '@/store/usePatientLiveStore'
 import { useJourneyStore } from '@/store/useJourneyStore'
+import { usePatientLiveStore } from '@/store/usePatientLiveStore'
 import { notifyAndAuditMany } from '@/lib/notifyAndAudit'
 import type { Patient } from '@/store/usePatientStore'
 import { effectiveTriage, type IntakeForm, type Gender } from '@/lib/intake/data'
@@ -136,8 +136,9 @@ export async function registerPatientFromIntake(form: IntakeForm, deps: Register
   // hospital visit (findUhidByAbha), reusing it is safe — that UHID was
   // established by reception's real Aadhaar flow at that prior visit, this
   // is just Decision Point #2's returning-patient shortcut, unchanged. A
-  // brand-new patient (no match) gets NO uhid and `aadhaarVerified: false`,
-  // so they correctly land in reception's "Needs Aadhaar" queue
+  // brand-new patient (no match) gets NO uhid (undefined, never ''), so the
+  // real patients.uhid column stays NULL until reception's Aadhaar flow
+  // stamps it — they correctly land in reception's "Needs Aadhaar" queue
   // (opd/page.tsx's matchesStatusFilter: status==='waiting' && !hasUhid) —
   // reception's own Aadhaar/ABHA/UHID flow (linkPatientIdentity) is what
   // stamps their permanent UHID, matching the intent already documented in
@@ -152,7 +153,8 @@ export async function registerPatientFromIntake(form: IntakeForm, deps: Register
   await addPatient({
     id: newId,
     uhid,
-    aadhaarVerified: false,
+    aadhaarVerified: !!uhid,
+    source: 'appointment',
     name: form.name,
     age: parseInt(form.age, 10),
     gender: (form.gender || 'Male') as Gender,
@@ -193,6 +195,10 @@ export async function registerPatientFromIntake(form: IntakeForm, deps: Register
     )
   }
 
+  // Register the patient in the monitoring/SLA journey view so the admin cockpit
+  // tracks self/voice check-ins the same as desk registrations.
+  useJourneyStore.getState().addPatient(newId, form.name, mode === 'video' ? (form.slotDoctor || 'Dr. Priya Nair') : 'Dr. Priya Nair')
+
   let familyToken: string | null = null
   if (form.dishaConsent && form.familyPhone.trim()) {
     familyToken = generateFamilyToken(newId, [form.familyPhone.trim()], true)
@@ -201,7 +207,8 @@ export async function registerPatientFromIntake(form: IntakeForm, deps: Register
   const auth = useAuthStore.getState()
   auth.setRole('patient')
   auth.setUser({ id: newId, name: form.name, role: 'patient' })
-  usePatientLiveStore.getState().startVisit(newToken, mode)
+  const apptDoctor = mode === 'video' ? (form.slotDoctor || 'Dr. Priya Nair') : 'Dr. Priya Nair'
+  usePatientLiveStore.getState().startVisit(newToken, mode, form.apptDate, form.apptTime, apptDoctor)
 
   const uhidClause = uhid ? `UHID ${uhid}` : 'Aadhaar/UHID pending — verify at reception'
   notifyAndAuditMany(['reception', 'doctor'], {

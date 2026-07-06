@@ -84,7 +84,7 @@ export default function PatientDischarge() {
       {/* Status banner */}
       <div className={cn('rounded-2xl p-5 ring-1',
         mine.exitClearanceIssued ? 'bg-emerald-50 ring-emerald-200'
-          : allCleared ? 'bg-[rgba(8,145,178,0.07)] ring-blue-200'
+          : allCleared ? 'bg-[rgba(238,107,38,0.07)] ring-primary/25'
           : 'bg-amber-50 ring-amber-200')}>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
@@ -97,7 +97,7 @@ export default function PatientDischarge() {
             </p>
             <p className={cn('text-[12px] mt-0.5',
               mine.exitClearanceIssued ? 'text-emerald-700'
-                : allCleared ? 'text-[var(--color-primary)]' : 'text-amber-700')}>
+                : allCleared ? 'text-[var(--color-accent)]' : 'text-amber-700')}>
               {mine.attendingDoctor} · {mine.diagnosis} · Ward {mine.wardBed} · Expected: {dateTimeOf(mine.expectedDischarge)}
             </p>
           </div>
@@ -150,8 +150,8 @@ export default function PatientDischarge() {
           <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5 space-y-2">
             {mine.ttoMeds!.map((m, i) => (
               <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
-                <span className="h-9 w-9 rounded-2xl bg-[rgba(8,145,178,0.07)] flex items-center justify-center flex-shrink-0">
-                  <Pill className="h-4.5 w-4.5 text-[var(--color-primary)]" />
+                <span className="h-9 w-9 rounded-2xl bg-[rgba(238,107,38,0.07)] flex items-center justify-center flex-shrink-0">
+                  <Pill className="h-4.5 w-4.5 text-[var(--color-accent)]" />
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-bold text-slate-900">{m.name}</p>
@@ -171,10 +171,10 @@ export default function PatientDischarge() {
       {mine.dischargeInstructions && (
         <div>
           <h3 className="text-[15px] font-bold text-slate-900 px-1 mb-3">What to do at home</h3>
-          <div className="rounded-3xl bg-[rgba(8,145,178,0.07)] ring-1 ring-blue-100 p-5 flex items-start gap-3">
-            <Sparkles className="h-5 w-5 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
+          <div className="rounded-3xl bg-[rgba(238,107,38,0.07)] ring-1 ring-primary/20 p-5 flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-[var(--color-accent)] flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-[11px] font-bold text-[var(--color-primary)] uppercase tracking-wide">Recovery instructions</p>
+              <p className="text-[11px] font-bold text-[var(--color-accent)] uppercase tracking-wide">Recovery instructions</p>
               <p className="text-[13px] text-[var(--color-primary-dark)] mt-1 leading-relaxed whitespace-pre-wrap">{mine.dischargeInstructions}</p>
             </div>
           </div>
@@ -186,8 +186,8 @@ export default function PatientDischarge() {
         <div>
           <h3 className="text-[15px] font-bold text-slate-900 px-1 mb-3">Follow-up appointment</h3>
           <div className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.05)] p-5 flex items-center gap-3">
-            <span className="h-10 w-10 rounded-2xl bg-[rgba(8,145,178,0.07)] flex items-center justify-center flex-shrink-0">
-              <CalendarCheck className="h-5 w-5 text-[var(--color-primary)]" />
+            <span className="h-10 w-10 rounded-2xl bg-[rgba(238,107,38,0.07)] flex items-center justify-center flex-shrink-0">
+              <CalendarCheck className="h-5 w-5 text-[var(--color-accent)]" />
             </span>
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-bold text-slate-900">{dateOf(mine.followUpDate)}</p>
@@ -210,7 +210,7 @@ export default function PatientDischarge() {
                 </span>}
               </p>
               <button onClick={() => toast.success('Discharge summary downloaded as PDF (mock)')}
-                className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.14)] px-2.5 py-1 rounded-lg cursor-pointer">
+                className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.14)] px-2.5 py-1 rounded-lg cursor-pointer">
                 <Download className="h-3 w-3" />Download
               </button>
             </div>

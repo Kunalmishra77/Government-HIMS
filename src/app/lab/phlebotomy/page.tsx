@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   Volume2, FlaskConical, User, Clock, Droplet, AlertTriangle, CheckCircle2,
   Barcode, X, ChevronRight, Activity, Phone, RefreshCw,
@@ -13,11 +14,11 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 const SOURCE_TINT: Record<LabSource, string> = {
-  OPD: 'bg-blue-50 text-blue-700 border-blue-200',
-  IPD: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  OPD: 'bg-surface-sunken text-accent border-border',
+  IPD: 'bg-primary-soft text-accent border-primary/20',
   ICU: 'bg-red-50 text-red-700 border-red-200',
-  OT:  'bg-cyan-50 text-cyan-700 border-cyan-200',
-  ER:  'bg-orange-50 text-orange-700 border-orange-200',
+  OT:  'bg-primary-soft text-accent border-primary/20',
+  ER:  'bg-primary-soft text-accent border-primary/20',
 }
 const PRIORITY_RANK: Record<Priority, number> = { STAT: 0, Urgent: 1, Routine: 2 }
 const PRIORITY_TINT: Record<Priority, string> = {
@@ -29,6 +30,7 @@ const PRIORITY_TINT: Record<Priority, string> = {
 const minsAgo = (iso: string) => Math.round((Date.now() - new Date(iso).getTime()) / 60000)
 
 export default function PhlebotomyBench() {
+  const t = useTranslations('lab')
   const orders = useLabOrdersStore(s => s.orders)
   const collectOrder = useLabOrdersStore(s => s.collectOrder)
   const currentUser = useAuthStore(s => s.currentUser)
@@ -80,25 +82,25 @@ export default function PhlebotomyBench() {
   const manualRefresh = () => {
     useLabOrdersStore.persist.rehydrate()
     setLastSync(new Date())
-    toast.success('Queue refreshed from latest data')
+    toast.success(t('phlebotomy.refreshed'))
   }
 
   const announceNext = () => {
     const next = queue[0]
     if (!next) {
-      toast('Queue empty — all samples collected.')
+      toast(t('phlebotomy.queueEmpty'))
       return
     }
     setCalledOrderId(next.id)
     try {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel()
-        const u = new SpeechSynthesisUtterance(`${next.patientName}, please proceed to phlebotomy.`)
+        const u = new SpeechSynthesisUtterance(t('phlebotomy.announceSpeech', { name: next.patientName }))
         window.speechSynthesis.speak(u)
       }
     } catch { /* optional */ }
-    toast.success(`Calling ${next.patientName}`, {
-      description: `${next.source} · ${next.tests.length} test${next.tests.length !== 1 ? 's' : ''}`,
+    toast.success(t('phlebotomy.callingName', { name: next.patientName }), {
+      description: t('phlebotomy.callingDesc', { source: next.source, count: next.tests.length }),
     })
   }
 
@@ -114,17 +116,17 @@ export default function PhlebotomyBench() {
 
   const confirmCollect = () => {
     if (!collectingOrder) return
-    if (!allTubesCollected) { toast.error('Tick every tube as drawn before saving.'); return }
-    if (!barcode.trim())   { toast.error('Scan or enter a barcode.'); return }
+    if (!allTubesCollected) { toast.error(t('phlebotomy.tickEveryTube')); return }
+    if (!barcode.trim())   { toast.error(t('phlebotomy.scanOrEnterBarcode')); return }
     collectOrder(collectingOrder.id, meName)
     notifyAndAudit({
       to: 'lab', type: 'system', priority: 'medium',
-      title: `Sample collected · ${collectingOrder.patientName}`,
-      body: `${collectingOrder.specimens.length} tube${collectingOrder.specimens.length !== 1 ? 's' : ''} drawn (${barcode}). ${collectingOrder.tests.length} test${collectingOrder.tests.length !== 1 ? 's' : ''} routed to bench.`,
+      title: t('phlebotomy.sampleCollectedTitle', { name: collectingOrder.patientName }),
+      body: t('phlebotomy.sampleCollectedBody', { tubes: collectingOrder.specimens.length, barcode, tests: collectingOrder.tests.length }),
       patientName: collectingOrder.patientName,
       audit: { action: 'lab_order', resource: 'lab_specimen', resourceId: collectingOrder.id, detail: `Collected by ${meName} · barcode ${barcode}`, userName: meName },
     })
-    toast.success(`${collectingOrder.patientName} — samples drawn · routed to bench`)
+    toast.success(t('phlebotomy.samplesDrawnToast', { name: collectingOrder.patientName }))
     setCollectingOrder(null)
     setCalledOrderId(null)
   }
@@ -136,25 +138,25 @@ export default function PhlebotomyBench() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <FlaskConical className="h-6 w-6 text-amber-600" />Phlebotomy queue
+            <FlaskConical className="h-6 w-6 text-amber-600" />{t('phlebotomy.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Call patient · draw samples · barcode + route to bench
+            {t('phlebotomy.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button onClick={manualRefresh}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
             <RefreshCw className="h-3.5 w-3.5" />
-            Refresh
+            {t('phlebotomy.refresh')}
           </button>
           <button onClick={announceNext} disabled={queue.length === 0}
             className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white cursor-pointer disabled:opacity-50 transition-all"
             style={{ background: 'linear-gradient(135deg,#F59E0B,#DC2626)', boxShadow: '0 4px 12px rgba(245,158,11,0.35)' }}>
-            <Volume2 className="h-4 w-4" />Next patient please
+            <Volume2 className="h-4 w-4" />{t('phlebotomy.nextPatient')}
             {statCount > 0 && (
               <span className="ml-1 bg-white/30 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                {statCount} STAT
+                {t('phlebotomy.statBadge', { count: statCount })}
               </span>
             )}
           </button>
@@ -164,10 +166,10 @@ export default function PhlebotomyBench() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'In queue',          val: queue.length,  tint: 'bg-amber-50 text-amber-700 border-amber-200' },
-          { label: 'STAT priority',     val: statCount,     tint: 'bg-red-50 text-red-700 border-red-200' },
-          { label: 'Urgent priority',   val: urgentCount,   tint: 'bg-orange-50 text-orange-700 border-orange-200' },
-          { label: 'My collections today',
+          { label: t('phlebotomy.kpiInQueue'),          val: queue.length,  tint: 'bg-amber-50 text-amber-700 border-amber-200' },
+          { label: t('phlebotomy.kpiStatPriority'),     val: statCount,     tint: 'bg-red-50 text-red-700 border-red-200' },
+          { label: t('phlebotomy.kpiUrgentPriority'),   val: urgentCount,   tint: 'bg-primary-soft text-accent border-primary/20' },
+          { label: t('phlebotomy.kpiMyCollections'),
             val: orders.flatMap(o => o.specimens).filter(s => s.collectedBy === meName).length,
             tint: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
         ].map(s => (
@@ -181,13 +183,13 @@ export default function PhlebotomyBench() {
       {/* Last sync notice */}
       <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
         <Clock className="h-3 w-3" />
-        Queue auto-syncs when doctor places new orders · last synced {lastSync.toLocaleTimeString()}
+        {t('phlebotomy.lastSync', { time: lastSync.toLocaleTimeString() })}
       </p>
 
       {/* Queue list */}
       <div>
         <h2 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-          Awaiting collection
+          {t('phlebotomy.awaitingCollection')}
           {queue.length > 0 && (
             <span className="text-[10.5px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
               {queue.length}
@@ -198,9 +200,9 @@ export default function PhlebotomyBench() {
         {queue.length === 0 ? (
           <div className="bg-white rounded-xl border border-slate-200 p-10 text-center">
             <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto mb-2" />
-            <p className="text-sm font-bold text-slate-700">Queue is clear</p>
+            <p className="text-sm font-bold text-slate-700">{t('phlebotomy.queueClear')}</p>
             <p className="text-xs text-slate-400 mt-1">
-              Every ordered sample has been drawn. Orders placed by doctors appear here automatically.
+              {t('phlebotomy.queueClearHint')}
             </p>
           </div>
         ) : (
@@ -221,7 +223,7 @@ export default function PhlebotomyBench() {
                   key={o.id}
                   className={cn(
                     "rounded-xl bg-white border p-4 flex items-start gap-3 flex-wrap transition-shadow",
-                    isCalled ? 'border-blue-300 ring-2 ring-blue-100 shadow-md'
+                    isCalled ? 'border-border ring-2 ring-primary/20 shadow-md'
                     : isTop  ? 'border-amber-300 ring-2 ring-amber-100 shadow-sm'
                     :          'border-slate-200 hover:shadow-sm',
                   )}
@@ -230,7 +232,7 @@ export default function PhlebotomyBench() {
                   <div className={cn(
                     "h-12 w-12 rounded-2xl flex items-center justify-center font-bold text-sm flex-shrink-0 text-white",
                     priority === 'STAT'   ? 'bg-gradient-to-br from-red-500 to-red-700' :
-                    priority === 'Urgent' ? 'bg-gradient-to-br from-amber-500 to-orange-600' :
+                    priority === 'Urgent' ? 'bg-gradient-to-br from-amber-500 to-primary' :
                                             'bg-gradient-to-br from-slate-400 to-slate-600',
                   )}>
                     {idx + 1}
@@ -240,17 +242,17 @@ export default function PhlebotomyBench() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-base font-bold text-slate-900">{o.patientName}</p>
-                      <span className="text-[11px] font-semibold text-slate-400">{o.patientId}</span>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{o.uhid}</span>
                       <span className={cn("text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border", SOURCE_TINT[o.source])}>
                         {o.source}
                       </span>
                       {o.wardBed && <span className="text-[11px] text-slate-500">· {o.wardBed}</span>}
                       <span className={cn("text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border", PRIORITY_TINT[priority])}>
-                        {priority}
+                        {t(`priority.${priority}`)}
                       </span>
                       {isCalled && (
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-700 flex items-center gap-1">
-                          <Volume2 className="h-2.5 w-2.5" />Called
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-surface-sunken text-accent flex items-center gap-1">
+                          <Volume2 className="h-2.5 w-2.5" />{t('phlebotomy.called')}
                         </span>
                       )}
                     </div>
@@ -260,10 +262,10 @@ export default function PhlebotomyBench() {
                       {o.doctorName}
                       <span className="text-slate-300">·</span>
                       <Clock className="h-3 w-3" />
-                      {minsOld < 1 ? 'just now' : `${minsOld}m ago`}
+                      {minsOld < 1 ? t('time.justNow') : t('time.minsAgo', { mins: minsOld })}
                       {isUrgent && minsOld > 20 && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-red-600">
-                          <AlertTriangle className="h-3 w-3" />{minsOld}m waiting
+                          <AlertTriangle className="h-3 w-3" />{t('phlebotomy.waitingMins', { mins: minsOld })}
                         </span>
                       )}
                     </p>
@@ -295,12 +297,12 @@ export default function PhlebotomyBench() {
                           ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700',
                       )}>
-                      <Activity className="h-3.5 w-3.5" />Collect
+                      <Activity className="h-3.5 w-3.5" />{t('phlebotomy.collect')}
                     </button>
                     {isTop && !isCalled && (
                       <button onClick={() => setCalledOrderId(o.id)}
                         className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10.5px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 cursor-pointer transition-colors whitespace-nowrap">
-                        <Volume2 className="h-3 w-3" />Call patient
+                        <Volume2 className="h-3 w-3" />{t('phlebotomy.callPatient')}
                       </button>
                     )}
                   </div>
@@ -312,13 +314,12 @@ export default function PhlebotomyBench() {
       </div>
 
       {/* Pipeline tip */}
-      <div className="bg-[rgba(8,145,178,0.06)] border border-[rgba(8,145,178,0.18)] rounded-xl p-4">
+      <div className="bg-[rgba(238,107,38,0.06)] border border-[rgba(238,107,38,0.18)] rounded-xl p-4">
         <p className="text-xs font-bold text-[var(--color-primary-dark)] flex items-center gap-1.5">
-          <ChevronRight className="h-3 w-3" />Pipeline downstream
+          <ChevronRight className="h-3 w-3" />{t('phlebotomy.pipelineDownstream')}
         </p>
-        <p className="text-[11px] text-[var(--color-primary)] mt-1">
-          After collection, samples auto-route to their section bench (Biochem · Hema · Immuno · Urine · Micro).
-          Section tech claims → enters values → pathologist verifies → result released to doctor.
+        <p className="text-[11px] text-[var(--color-accent)] mt-1">
+          {t('phlebotomy.pipelineDownstreamBody')}
         </p>
       </div>
 
@@ -336,7 +337,7 @@ export default function PhlebotomyBench() {
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Draw samples · {collectingOrder.patientName}</h2>
+                <h2 className="text-base font-bold text-slate-900">{t('phlebotomy.drawSamples', { name: collectingOrder.patientName })}</h2>
                 <p className="text-xs text-slate-500">
                   {collectingOrder.patientId} · {collectingOrder.source}
                   {collectingOrder.wardBed ? ` · ${collectingOrder.wardBed}` : ''}
@@ -350,7 +351,7 @@ export default function PhlebotomyBench() {
             <div className="p-5 space-y-4">
               {/* Tests ordered */}
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">Tests ordered</p>
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">{t('phlebotomy.testsOrdered')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {collectingOrder.tests.filter(t => t.status === 'awaiting_collection').map(t => (
                     <span key={t.id} className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
@@ -362,9 +363,9 @@ export default function PhlebotomyBench() {
 
               {/* Tubes to draw */}
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">Tubes to draw</p>
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">{t('phlebotomy.tubesToDraw')}</p>
                 {collectingOrder.specimens.length === 0 ? (
-                  <p className="text-xs text-slate-400">No specimens defined for this order.</p>
+                  <p className="text-xs text-slate-400">{t('phlebotomy.noSpecimens')}</p>
                 ) : (
                   <div className="space-y-1.5">
                     {collectingOrder.specimens.map(s => (
@@ -387,19 +388,19 @@ export default function PhlebotomyBench() {
               {/* Barcode */}
               <div>
                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                  <Barcode className="h-3 w-3" />Sample barcode
+                  <Barcode className="h-3 w-3" />{t('phlebotomy.sampleBarcode')}
                 </label>
                 <input
                   value={barcode}
                   onChange={e => setBarcode(e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-slate-50"
-                  placeholder="Scan barcode…"
+                  placeholder={t('phlebotomy.scanBarcodePlaceholder')}
                 />
               </div>
 
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-[11px] text-amber-800 flex items-start gap-1.5">
                 <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-                Verify identity (name + DOB), tube colours, and adequate volume before saving.
+                {t('phlebotomy.verifyIdentity')}
               </div>
             </div>
 
@@ -408,14 +409,14 @@ export default function PhlebotomyBench() {
                 onClick={() => setCollectingOrder(null)}
                 className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={confirmCollect}
                 disabled={!allTubesCollected || !barcode.trim()}
                 className="flex-1 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold cursor-pointer disabled:opacity-50 transition-colors"
               >
-                Save &amp; route to bench
+                {t('phlebotomy.saveAndRoute')}
               </button>
             </div>
           </div>

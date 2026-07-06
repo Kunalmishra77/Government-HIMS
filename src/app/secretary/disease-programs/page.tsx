@@ -1,14 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 type TabId = 'tb' | 'malaria' | 'sickle' | 'ncd'
 
-const TABS: { id: TabId; label: string; hi: string }[] = [
-  { id: 'tb', label: 'TB / RNTCP', hi: 'क्षय रोग' },
-  { id: 'malaria', label: 'Malaria & Vector', hi: 'मलेरिया' },
-  { id: 'sickle', label: 'Sickle Cell Mission', hi: 'सिकल सेल मिशन' },
-  { id: 'ncd', label: 'NCD Programs', hi: 'गैर-संचारी रोग' },
+const TAB_META: { id: TabId; labelKey: string }[] = [
+  { id: 'tb', labelKey: 'diseasePrograms.tabTb' },
+  { id: 'malaria', labelKey: 'diseasePrograms.tabMalaria' },
+  { id: 'sickle', labelKey: 'diseasePrograms.tabSickle' },
+  { id: 'ncd', labelKey: 'diseasePrograms.tabNcd' },
 ]
 
 function ProgressBar({ label, value, total, pct }: { label: string; value: string; total?: string; pct: number }) {
@@ -26,14 +27,15 @@ function ProgressBar({ label, value, total, pct }: { label: string; value: strin
 }
 
 function TbTab() {
+  const t = useTranslations('secretary')
   return (
     <div className="p-5 space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Notified cases (FY24)', value: '78,412', sub: 'Public + private' },
-          { label: 'Treatment success rate', value: '88%', sub: 'NTEP target: 90%' },
-          { label: 'Lost-to-follow-up', value: '5.2%', sub: 'NTEP target: <5%' },
-          { label: 'Nikshay Poshan Yojana', value: '91%', sub: 'Beneficiaries paid' },
+          { label: t('diseasePrograms.tbNotified'), value: '78,412', sub: t('diseasePrograms.tbNotifiedSub') },
+          { label: t('diseasePrograms.tbSuccess'), value: '88%', sub: t('diseasePrograms.tbSuccessSub') },
+          { label: t('diseasePrograms.tbLtfu'), value: '5.2%', sub: t('diseasePrograms.tbLtfuSub') },
+          { label: t('diseasePrograms.tbNikshay'), value: '91%', sub: t('diseasePrograms.tbNikshaySub') },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -43,7 +45,7 @@ function TbTab() {
         ))}
       </div>
       <div className="bg-white border border-[var(--color-border)] rounded-xl p-4 space-y-3" style={{ boxShadow: 'var(--shadow-card)' }}>
-        <p className="text-sm font-semibold text-[var(--color-foreground)]">District performance — bottom 5</p>
+        <p className="text-sm font-semibold text-[var(--color-foreground)]">{t('diseasePrograms.tbBottom5')}</p>
         {[
           { label: 'Singrauli', value: '76%', total: '90%', pct: 76 },
           { label: 'Shahdol', value: '78%', total: '90%', pct: 78 },
@@ -57,14 +59,15 @@ function TbTab() {
 }
 
 function MalariaTab() {
+  const t = useTranslations('secretary')
   return (
     <div className="p-5 space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'API (Annual Parasite Index)', value: '2.8', sub: 'Target <1 by 2027' },
-          { label: 'Pf proportion', value: '38%', sub: 'Falciparum cases' },
-          { label: 'High-burden districts', value: '8', sub: 'API > 5' },
-          { label: 'IRS coverage', value: '74%', sub: 'Completed' },
+          { label: t('diseasePrograms.malariaApi'), value: '2.8', sub: t('diseasePrograms.malariaApiSub') },
+          { label: t('diseasePrograms.malariaPf'), value: '38%', sub: t('diseasePrograms.malariaPfSub') },
+          { label: t('diseasePrograms.malariaHighBurden'), value: '8', sub: t('diseasePrograms.malariaHighBurdenSub') },
+          { label: t('diseasePrograms.malariaIrs'), value: '74%', sub: t('diseasePrograms.malariaIrsSub') },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -74,22 +77,23 @@ function MalariaTab() {
         ))}
       </div>
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <p className="text-sm font-semibold text-amber-800">⚠ Balaghat, Mandla, Dindori high alert — Pf cases rising this week</p>
-        <p className="text-xs text-amber-700 mt-1">Deploy rapid response team + ACT drug replenishment required within 48 hours</p>
+        <p className="text-sm font-semibold text-amber-800">{t('diseasePrograms.malariaAlert')}</p>
+        <p className="text-xs text-amber-700 mt-1">{t('diseasePrograms.malariaAlertSub')}</p>
       </div>
     </div>
   )
 }
 
 function SickleCellTab() {
+  const t = useTranslations('secretary')
   return (
     <div className="p-5 space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Screened (FY24)', value: '3.1L', sub: 'Q1+Q2' },
-          { label: 'Positive (trait)', value: '21,800', sub: '7% prevalence' },
-          { label: 'On hydroxyurea', value: '980', sub: '+340 vs Q1' },
-          { label: 'Tribal districts covered', value: '21/21', sub: '100% coverage' },
+          { label: t('diseasePrograms.sickleScreened'), value: '3.1L', sub: t('diseasePrograms.sickleScreenedSub') },
+          { label: t('diseasePrograms.sicklePositive'), value: '21,800', sub: t('diseasePrograms.sicklePositiveSub') },
+          { label: t('diseasePrograms.sickleHydroxyurea'), value: '980', sub: t('diseasePrograms.sickleHydroxyureaSub') },
+          { label: t('diseasePrograms.sickleTribal'), value: '21/21', sub: t('diseasePrograms.sickleTribalSub') },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -98,23 +102,24 @@ function SickleCellTab() {
           </div>
         ))}
       </div>
-      <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
-        <p className="text-sm font-semibold text-teal-800">Q3 target: screen 2L more · Mandla + Balaghat + Seoni prioritized</p>
-        <p className="text-xs text-teal-700 mt-1">Newborn screening pilot launched in 3 GMCs — results expected August 2024</p>
+      <div className="bg-primary-soft border border-primary/20 rounded-xl p-4">
+        <p className="text-sm font-semibold text-accent">{t('diseasePrograms.sickleTarget')}</p>
+        <p className="text-xs text-accent mt-1">{t('diseasePrograms.sickleTargetSub')}</p>
       </div>
     </div>
   )
 }
 
 function NcdTab() {
+  const t = useTranslations('secretary')
   return (
     <div className="p-5 space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Hypertension screened', value: '68L', sub: '30+ years' },
-          { label: 'On treatment (HT)', value: '42%', sub: 'Of diagnosed' },
-          { label: 'Diabetes screened', value: '55L', sub: '30+ years' },
-          { label: 'Cancer early detection', value: '3.2L', sub: 'Oral+Cervical+Breast' },
+          { label: t('diseasePrograms.ncdHtScreened'), value: '68L', sub: t('diseasePrograms.ncdHtScreenedSub') },
+          { label: t('diseasePrograms.ncdHtTreatment'), value: '42%', sub: t('diseasePrograms.ncdHtTreatmentSub') },
+          { label: t('diseasePrograms.ncdDiabetes'), value: '55L', sub: t('diseasePrograms.ncdDiabetesSub') },
+          { label: t('diseasePrograms.ncdCancer'), value: '3.2L', sub: t('diseasePrograms.ncdCancerSub') },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -128,18 +133,19 @@ function NcdTab() {
 }
 
 export default function DiseaseProgramsPage() {
+  const t = useTranslations('secretary')
   const [tab, setTab] = useState<TabId>('tb')
   return (
     <div className="p-6 space-y-4 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">Disease Programs</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">रोग कार्यक्रम · National and state vertical programs</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('diseasePrograms.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('diseasePrograms.subtitle')}</p>
       </div>
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-lg text-sm transition-all ${tab === t.id ? 'bg-white text-[var(--color-primary)] font-semibold shadow' : 'font-medium text-slate-500 hover:text-slate-700'}`}>
-            {t.label}
+        {TAB_META.map(tb => (
+          <button key={tb.id} onClick={() => setTab(tb.id)}
+            className={`px-4 py-2 rounded-lg text-sm transition-all ${tab === tb.id ? 'bg-white text-[var(--color-accent)] font-semibold shadow' : 'font-medium text-slate-500 hover:text-slate-700'}`}>
+            {t(tb.labelKey)}
           </button>
         ))}
       </div>

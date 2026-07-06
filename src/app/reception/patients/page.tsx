@@ -4,35 +4,47 @@ import { Select } from "@/components/ui/Select"
 import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Search, X, Volume2, ArrowRight, Phone, Calendar, Stethoscope, Activity,
-  Clock, Droplet, FileText, ShieldCheck, ChevronRight, Users as UsersIcon,
+  X, Volume2, ArrowRight, Phone, Calendar, Stethoscope, Activity,
+  Clock, Droplet, ShieldCheck, ChevronRight, Users as UsersIcon,
 } from "lucide-react"
 import { usePatientStore, type Patient, type QueueStatus, type TriageLevel } from "@/store/usePatientStore"
 import { useAuthStore } from "@/store/useAuthStore"
 import { notifyAndAudit } from "@/lib/notifyAndAudit"
 import type { Role } from "@/types/roles"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 import { toast } from "sonner"
 import { PatientJourneyTimeline } from "@/components/clinical/PatientJourneyTimeline"
+import { DataTablePro, type ProColumn } from "@/components/ui/DataTablePro"
+import { StatusPill, type Status } from "@/components/ui/StatusPill"
+import { PatientAvatar } from "@/components/ui/PatientAvatar"
 
-const STATUS_LABEL: Record<QueueStatus, string> = {
-  waiting: 'Waiting', vitals: 'Vitals', consulting: 'Consulting', pharmacy: 'Pharmacy', billing: 'Billing', done: 'Completed',
+const STATUS_TOKEN: Record<QueueStatus, Status> = {
+  waiting: 'pending', vitals: 'caution', consulting: 'info', pharmacy: 'info', billing: 'neutral', done: 'done',
+}
+const triageToken = (lvl?: TriageLevel): Status =>
+  lvl === 'Critical' ? 'critical' : lvl === 'High' ? 'urgent' : lvl === 'Medium' ? 'caution' : 'stable'
+
+const STATUS_KEY: Record<QueueStatus, string> = {
+  waiting: 'statusWaiting', vitals: 'statusVitals', consulting: 'statusConsulting', pharmacy: 'statusPharmacy', billing: 'statusBilling', done: 'statusCompleted',
 }
 const STATUS_TINT: Record<QueueStatus, string> = {
-  waiting: 'bg-amber-50 text-amber-700', vitals: 'bg-sky-50 text-sky-700', consulting: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  pharmacy: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]', billing: 'bg-orange-50 text-orange-700', done: 'bg-green-50 text-green-700',
+  waiting: 'bg-amber-50 text-amber-700', vitals: 'bg-surface-sunken text-accent', consulting: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  pharmacy: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]', billing: 'bg-primary-soft text-accent', done: 'bg-green-50 text-green-700',
 }
 const TRIAGE_TINT: Record<TriageLevel, string> = {
-  Critical: 'bg-red-50 text-red-700', High: 'bg-orange-50 text-orange-700', Medium: 'bg-amber-50 text-amber-700', Low: 'bg-green-50 text-green-700',
+  Critical: 'bg-red-50 text-red-700', High: 'bg-primary-soft text-accent', Medium: 'bg-amber-50 text-amber-700', Low: 'bg-green-50 text-green-700',
 }
-const NEXT_STATUS: Partial<Record<QueueStatus, { next: QueueStatus; label: string }>> = {
-  waiting: { next: 'vitals', label: 'Send to Vitals' }, vitals: { next: 'consulting', label: 'Send to Doctor' },
-  consulting: { next: 'pharmacy', label: 'Send to Pharmacy' }, pharmacy: { next: 'billing', label: 'Send to Billing' },
-  billing: { next: 'done', label: 'Mark Done' },
+const NEXT_STATUS: Partial<Record<QueueStatus, { next: QueueStatus; labelKey: string }>> = {
+  waiting: { next: 'vitals', labelKey: 'nextSendToVitals' }, vitals: { next: 'consulting', labelKey: 'nextSendToDoctor' },
+  consulting: { next: 'pharmacy', labelKey: 'nextSendToPharmacy' }, pharmacy: { next: 'billing', labelKey: 'nextSendToBilling' },
+  billing: { next: 'done', labelKey: 'nextMarkDone' },
 }
 const DEPARTMENTS = ['All', 'General Medicine', 'Cardiology', 'Orthopaedics', 'Gynaecology', 'ENT', 'Ophthalmology', 'Dermatology', 'Paediatrics']
 const TABS = ['Today', 'Yesterday', 'Upcoming', 'All'] as const
 type Tab = typeof TABS[number]
+const TAB_KEY: Record<Tab, string> = { Today: 'tabToday', Yesterday: 'tabYesterday', Upcoming: 'tabUpcoming', All: 'tabAll' }
 
 const initials = (n: string) => n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
@@ -41,16 +53,16 @@ const NOTIFY_ROLE_BY_NEXT: Partial<Record<QueueStatus, Role>> = {
 }
 
 export default function ReceptionPatients() {
+  const t = useTranslations('reception')
   const { patients, visits, appointments, updateStatus } = usePatientStore()
   const currentUser = useAuthStore(s => s.currentUser)
   const [tab, setTab] = useState<Tab>('Today')
-  const [search, setSearch] = useState('')
   const [dept, setDept] = useState('All')
   const [triage, setTriage] = useState('All')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const todayISO = new Date().toISOString().slice(0, 10)
-  const yesterdayISO = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const yesterdayISO = new Date(new Date().getTime() - 86400000).toISOString().slice(0, 10)
   const upcomingIds = useMemo(
     () => new Set(appointments.filter(a => a.status !== 'cancelled' && a.date > todayISO).map(a => a.patientId)),
     [appointments, todayISO],
@@ -66,11 +78,9 @@ export default function ReceptionPatients() {
   const counts = Object.fromEntries(TABS.map(t => [t, bucket(t).length])) as Record<Tab, number>
 
   const rows = bucket(tab).filter(p => {
-    const q = search.trim().toLowerCase()
-    const matchSearch = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.phone.includes(q)
     const matchDept = dept === 'All' || p.department === dept
     const matchTriage = triage === 'All' || p.triageLevel === triage
-    return matchSearch && matchDept && matchTriage
+    return matchDept && matchTriage
   })
 
   const selected = patients.find(p => p.id === selectedId) ?? null
@@ -89,7 +99,7 @@ export default function ReceptionPatients() {
         window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Token number ${p.token}, ${p.name}, please proceed.`))
       }
     } catch { /* optional */ }
-    toast.success(`Announced token #${p.token}`, { description: p.name })
+    toast.success(t('patients.announcedToast', { token: p.token }), { description: p.name })
   }
 
   const advance = (p: Patient) => {
@@ -97,93 +107,108 @@ export default function ReceptionPatients() {
     if (!n) return
     updateStatus(p.id, n.next)
     const targetRole = NOTIFY_ROLE_BY_NEXT[n.next]
+    const nextLabel = t(`patients.${STATUS_KEY[n.next]}`)
     if (targetRole) {
       notifyAndAudit({
         to: targetRole, type: 'system', priority: 'medium',
-        title: `${p.name} → ${STATUS_LABEL[n.next]}`,
-        body: `${p.name} (${p.id}, token #${p.token}) routed from ${STATUS_LABEL[p.queueStatus]} to ${STATUS_LABEL[n.next]}. Department: ${p.department}.`,
+        title: t('patients.routedTitle', { name: p.name, status: nextLabel }),
+        body: t('patients.routedBody', { name: p.name, id: p.id, token: p.token, from: t(`patients.${STATUS_KEY[p.queueStatus]}`), to: nextLabel, department: p.department }),
         patientName: p.name,
         audit: { action: 'reception_queue_advance', resource: 'patient_queue', resourceId: p.id, detail: `Queue advance ${p.queueStatus} → ${n.next}`, userName: currentUser?.name ?? 'Reception' },
       })
     }
-    toast.success(`${p.name} → ${STATUS_LABEL[n.next]}`)
+    toast.success(t('patients.advancedToast', { name: p.name, status: nextLabel }))
   }
+
+  const columns: ProColumn<Patient>[] = [
+    {
+      key: 'name', label: t('patients.colPatient'), primary: true, sortable: true, lockedVisible: true,
+      render: p => (
+        <div className="flex items-center gap-3 min-w-0">
+          <PatientAvatar name={p.name} photoUrl={p.photoUrl} size="sm" />
+          <div className="min-w-0">
+            <p className="font-bold text-foreground truncate flex items-center gap-1.5">{p.name}<span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5">{p.uhid ?? deriveUhid(p.id)}</span></p>
+            <p className="t-caption text-foreground-lighter">{p.id} · {p.age}y · {p.gender}</p>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'department', label: t('patients.colDepartment'), sortable: true },
+    {
+      key: 'queueStatus', label: t('patients.colStatus'), sortable: true,
+      render: p => <StatusPill status={STATUS_TOKEN[p.queueStatus]} label={t(`patients.${STATUS_KEY[p.queueStatus]}`)} dense />,
+    },
+    {
+      key: 'triageLevel', label: t('patients.colTriage'), sortable: true,
+      render: p => p.triageLevel ? <StatusPill status={triageToken(p.triageLevel)} label={p.triageLevel} dense /> : <span className="text-foreground-placeholder">—</span>,
+    },
+    { key: 'token', label: t('patients.colToken'), sortable: true, sortAccessor: p => p.token, render: p => <span className="tabular-nums">#{p.token}</span> },
+    { key: 'registeredAt', label: t('patients.colRegistered'), hideOnMobile: true, render: p => <span className="inline-flex items-center gap-1.5 text-foreground-lighter"><Clock className="h-3.5 w-3.5" />{p.registeredAt}</span> },
+    { key: 'chevron', label: '', align: 'right', lockedVisible: true, render: () => <ChevronRight className="h-4 w-4 text-foreground-placeholder inline" /> },
+  ]
+
+  const chips: { label: string; onRemove?: () => void }[] = []
+  if (tab !== 'All') chips.push({ label: t(`patients.${TAB_KEY[tab]}`) })
+  if (dept !== 'All') chips.push({ label: dept, onRemove: () => setDept('All') })
+  if (triage !== 'All') chips.push({ label: t('patients.acuityChip', { level: triage }), onRemove: () => setTriage('All') })
+  const clearAll = () => { setDept('All'); setTriage('All'); setTab('All') }
 
   return (
     <div className="pb-6">
-      {/* Header + search */}
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">Patients</h1>
-          <p className="text-[13px] text-slate-500 mt-0.5">Front-desk patient directory</p>
-        </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, ID or phone…"
-            className="w-full h-10 pl-9 pr-3 rounded-xl bg-white border border-slate-200 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-[rgba(8,145,178,0.30)] focus:ring-2 focus:ring-blue-100" />
+          <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">{t('patients.pageTitle')}</h1>
+          <p className="text-[13px] text-slate-500 mt-0.5">{t('patients.pageSubtitle')}</p>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 w-fit mb-3">
-        {TABS.map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={cn("flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition", tab === t ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
-            {t} <span className={cn("text-[11px] font-bold px-1.5 rounded-full", tab === t ? "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]" : "bg-slate-200 text-slate-500")}>{counts[t]}</span>
+        {TABS.map(tb => (
+          <button key={tb} onClick={() => setTab(tb)}
+            className={cn("flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition", tab === tb ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
+            {t(`patients.${TAB_KEY[tb]}`)} <span className={cn("text-[11px] font-bold px-1.5 rounded-full", tab === tb ? "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]" : "bg-slate-200 text-slate-500")}>{counts[tb]}</span>
           </button>
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <Select value={dept} onChange={e => setDept(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-[12.5px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100">
-          {DEPARTMENTS.map(d => <option key={d} value={d}>{d === 'All' ? 'All departments' : d}</option>)}
-        </Select>
-        <div className="flex gap-1">
-          {['All', 'Critical', 'High', 'Medium', 'Low'].map(t => (
-            <button key={t} onClick={() => setTriage(t)}
-              className={cn("text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition", triage === t ? "bg-[var(--color-primary)] text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}>{t}</button>
-          ))}
-        </div>
-        <span className="text-[12px] text-slate-400 ml-auto">{rows.length} patient{rows.length !== 1 ? 's' : ''}</span>
-      </div>
-
-      {/* Rows */}
-      {rows.length === 0 ? (
-        <div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-12 flex flex-col items-center text-center">
-          <span className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3"><UsersIcon className="h-6 w-6 text-slate-400" /></span>
-          <p className="text-[14px] font-semibold text-slate-700">No patients in this view</p>
-          <p className="text-[12.5px] text-slate-500 mt-0.5">Try a different tab or clear the filters.</p>
-        </div>
-      ) : (
-        <div className="grid sm:grid-cols-2 gap-3">
-          {rows.map(p => {
-            const appt = appointments.find(a => a.patientId === p.id && a.date >= todayISO && a.status !== 'cancelled')
-            return (
-              <button key={p.id} onClick={() => setSelectedId(p.id)}
-                className="text-left rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_4px_16px_rgba(15,23,42,0.04)] p-4 hover:shadow-md transition group">
-                <div className="flex items-start gap-3">
-                  <span className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] text-white flex items-center justify-center font-bold text-[14px] flex-shrink-0">{initials(p.name)}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[14.5px] font-bold text-slate-900 truncate">{p.name}</p>
-                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0", STATUS_TINT[p.queueStatus])}>{STATUS_LABEL[p.queueStatus]}</span>
-                    </div>
-                    <p className="text-[12px] text-slate-500">{p.id} · {p.age}y · {p.gender} · {p.department}</p>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      {p.triageLevel && <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider", TRIAGE_TINT[p.triageLevel])}>{p.triageLevel}</span>}
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1"><Clock className="h-3 w-3" /> {p.registeredAt}</span>
-                      {tab === 'Upcoming' && appt && <span className="text-[11px] font-semibold text-[var(--color-primary)] flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(appt.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} {appt.time}</span>}
-                      {tab === 'Yesterday' && <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1"><FileText className="h-3 w-3" /> Seen yesterday</span>}
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 flex-shrink-0 mt-1" />
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      )}
+      <DataTablePro
+        title={t('patients.tableTitle')}
+        itemNoun={t('patients.itemNoun')}
+        columns={columns}
+        data={rows}
+        keyField="id"
+        onRowClick={p => setSelectedId(p.id)}
+        searchKeys={['name', 'id', 'phone']}
+        searchPlaceholder={t('patients.searchPlaceholder')}
+        selectable
+        filterChips={chips}
+        onClearFilters={chips.length ? clearAll : undefined}
+        bulkActions={(sel) => (
+          <button onClick={() => { sel.forEach(announce) }}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[var(--color-primary)] text-white text-[13px] font-semibold hover:bg-[var(--color-primary-dark)] cursor-pointer transition-colors">
+            <Volume2 className="h-4 w-4" /> {t('patients.announce')}
+          </button>
+        )}
+        toolbarLeft={
+          <>
+            <Select value={dept} onChange={e => setDept(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-[12.5px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20">
+              {DEPARTMENTS.map(d => <option key={d} value={d}>{d === 'All' ? t('patients.allDepartments') : d}</option>)}
+            </Select>
+            <Select value={triage} onChange={e => setTriage(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-[12.5px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20">
+              {['All', 'Critical', 'High', 'Medium', 'Low'].map(lvl => <option key={lvl} value={lvl}>{lvl === 'All' ? t('patients.allAcuity') : lvl}</option>)}
+            </Select>
+          </>
+        }
+        emptyState={
+          <div className="flex flex-col items-center text-center py-6">
+            <span className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3"><UsersIcon className="h-6 w-6 text-slate-400" /></span>
+            <p className="text-[14px] font-semibold text-slate-700">{t('patients.emptyTitle')}</p>
+            <p className="text-[12.5px] text-slate-500 mt-0.5">{t('patients.emptySubtitle')}</p>
+          </div>
+        }
+      />
 
       {/* Detail drawer */}
       <AnimatePresence>
@@ -194,7 +219,7 @@ export default function ReceptionPatients() {
             <motion.div
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl overflow-y-auto"
-              role="dialog" aria-modal="true" aria-label="Patient details">
+              role="dialog" aria-modal="true" aria-label={t('patients.patientDetails')}>
               <PatientDrawer patient={selected} visits={visits.filter(v => v.patientId === selected.id)}
                 appointments={appointments.filter(a => a.patientId === selected.id)}
                 onClose={() => setSelectedId(null)} onAnnounce={() => announce(selected)} onAdvance={() => advance(selected)} />
@@ -212,68 +237,75 @@ function PatientDrawer({ patient: p, visits, appointments, onClose, onAnnounce, 
   appointments: ReturnType<typeof usePatientStore.getState>['appointments']
   onClose: () => void; onAnnounce: () => void; onAdvance: () => void
 }) {
+  const t = useTranslations('reception')
   const next = NEXT_STATUS[p.queueStatus]
   return (
     <div>
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-slate-100 px-5 py-4 flex items-start justify-between gap-3 z-10">
         <div className="flex items-center gap-3">
-          <span className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] text-white flex items-center justify-center font-bold text-[16px]">{initials(p.name)}</span>
+          {p.photoUrl
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={p.photoUrl} alt={p.name} className="h-12 w-12 rounded-2xl object-cover border border-slate-200" />
+            : <span className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] text-white flex items-center justify-center font-bold text-[16px]">{initials(p.name)}</span>}
           <div>
-            <p className="text-[17px] font-bold text-slate-900 leading-tight">{p.name}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-[17px] font-bold text-slate-900 leading-tight">{p.name}</p>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{p.uhid ?? deriveUhid(p.id)}</span>
+            </div>
             <p className="text-[12.5px] text-slate-500">{p.id} · {p.age}y · {p.gender}</p>
           </div>
         </div>
-        <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg hover:bg-slate-100"><X className="h-4.5 w-4.5 text-slate-500" /></button>
+        <button onClick={onClose} aria-label={t('patients.close')} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="h-4.5 w-4.5 text-slate-500" /></button>
       </div>
 
       <div className="p-5 space-y-5">
         {/* Badges + token */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-full", STATUS_TINT[p.queueStatus])}>{STATUS_LABEL[p.queueStatus]}</span>
+          <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-full", STATUS_TINT[p.queueStatus])}>{t(`patients.${STATUS_KEY[p.queueStatus]}`)}</span>
           {p.triageLevel && <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider", TRIAGE_TINT[p.triageLevel])}>{p.triageLevel}</span>}
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">Token #{p.token}</span>
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">{t('patients.tokenLabel', { token: p.token })}</span>
           <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1"><Droplet className="h-3 w-3 text-red-400" /> {p.bloodGroup}</span>
         </div>
 
         {/* Quick facts */}
         <div className="grid grid-cols-2 gap-2.5">
-          <Fact icon={Phone} label="Phone" value={p.phone} />
-          <Fact icon={Stethoscope} label="Doctor" value={p.doctor} />
-          <Fact icon={Clock} label="Registered" value={p.registeredAt} />
-          <Fact icon={Calendar} label="Department" value={p.department} />
+          <Fact icon={Phone} label={t('patients.factPhone')} value={p.phone} />
+          <Fact icon={Stethoscope} label={t('patients.factDoctor')} value={p.doctor} />
+          <Fact icon={Clock} label={t('patients.factRegistered')} value={p.registeredAt} />
+          <Fact icon={Calendar} label={t('patients.factDepartment')} value={p.department} />
         </div>
 
         {/* Vitals */}
-        <Section title="Vitals">
+        <Section title={t('patients.sectionVitals')}>
           {p.vitals ? (
             <div className="grid grid-cols-3 gap-2">
-              {[['BP', p.vitals.bp], ['Temp', p.vitals.temp], ['SpO₂', p.vitals.spo2], ['Pulse', p.vitals.pulse], ['Weight', p.vitals.weight]].map(([k, v]) => (
+              {[[t('patients.vitalBp'), p.vitals.bp], [t('patients.vitalTemp'), p.vitals.temp], [t('patients.vitalSpo2'), p.vitals.spo2], [t('patients.vitalPulse'), p.vitals.pulse], [t('patients.vitalWeight'), p.vitals.weight]].map(([k, v]) => (
                 <div key={k} className="rounded-xl bg-slate-50 p-2.5"><p className="text-[10.5px] font-semibold text-slate-400">{k}</p><p className="text-[13px] font-bold text-slate-900">{v}</p></div>
               ))}
             </div>
-          ) : <p className="text-[12.5px] text-amber-600 flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Vitals not recorded yet</p>}
+          ) : <p className="text-[12.5px] text-amber-600 flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> {t('patients.vitalsNotRecorded')}</p>}
         </Section>
 
         {/* Symptoms + history */}
-        <Section title="Chief complaint">
-          {p.symptoms.length ? <div className="flex flex-wrap gap-1.5">{p.symptoms.map(s => <span key={s} className="text-[12px] font-medium bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] px-2.5 py-1 rounded-full">{s}</span>)}</div> : <p className="text-[12.5px] text-slate-400">None recorded</p>}
+        <Section title={t('patients.sectionChiefComplaint')}>
+          {p.symptoms.length ? <div className="flex flex-wrap gap-1.5">{p.symptoms.map(s => <span key={s} className="text-[12px] font-medium bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] px-2.5 py-1 rounded-full">{s}</span>)}</div> : <p className="text-[12.5px] text-slate-400">{t('patients.noneRecorded')}</p>}
         </Section>
         {p.history.length > 0 && (
-          <Section title="Medical history">
+          <Section title={t('patients.sectionMedicalHistory')}>
             <div className="flex flex-wrap gap-1.5">{p.history.map(h => <span key={h} className="text-[12px] font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">{h}</span>)}</div>
           </Section>
         )}
 
         {/* Appointments */}
         {appointments.length > 0 && (
-          <Section title="Appointments">
+          <Section title={t('patients.sectionAppointments')}>
             <div className="space-y-2">
               {appointments.map(a => (
                 <div key={a.id} className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
-                  <Calendar className="h-4 w-4 text-[var(--color-primary)] flex-shrink-0" />
+                  <Calendar className="h-4 w-4 text-[var(--color-accent)] flex-shrink-0" />
                   <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-slate-800 truncate">{a.doctorName} · {a.specialty}</p><p className="text-[11px] text-slate-500">{new Date(a.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · {a.time}</p></div>
-                  <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full capitalize", a.status === 'cancelled' ? 'bg-red-50 text-red-600' : a.status === 'confirmed' ? 'bg-green-50 text-green-700' : 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]')}>{a.status}</span>
+                  <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full capitalize", a.status === 'cancelled' ? 'bg-red-50 text-red-600' : a.status === 'confirmed' ? 'bg-green-50 text-green-700' : 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]')}>{a.status}</span>
                 </div>
               ))}
             </div>
@@ -282,12 +314,12 @@ function PatientDrawer({ patient: p, visits, appointments, onClose, onAnnounce, 
 
         {/* Past visits */}
         {visits.length > 0 && (
-          <Section title="Past visits">
+          <Section title={t('patients.sectionPastVisits')}>
             <div className="space-y-2">
               {visits.map(v => (
                 <div key={v.id} className="rounded-xl bg-slate-50 p-3">
                   <div className="flex items-center justify-between"><p className="text-[13px] font-bold text-slate-900">{v.diagnosis}</p><span className="text-[11px] text-slate-400">{new Date(v.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>
-                  <p className="text-[11.5px] text-slate-500 mt-0.5">{v.doctor} · {v.prescriptions.length} medicine{v.prescriptions.length !== 1 ? 's' : ''}</p>
+                  <p className="text-[11.5px] text-slate-500 mt-0.5">{v.doctor} · {t(v.prescriptions.length !== 1 ? 'patients.medicineCountPlural' : 'patients.medicineCount', { count: v.prescriptions.length })}</p>
                 </div>
               ))}
             </div>
@@ -295,26 +327,26 @@ function PatientDrawer({ patient: p, visits, appointments, onClose, onAnnounce, 
         )}
 
         {/* Family tracking */}
-        <Section title="Family tracking">
+        <Section title={t('patients.sectionFamilyTracking')}>
           {p.familyAccessToken ? (
-            <p className="text-[12.5px] text-green-700 flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Family link active{p.dishaConsentGiven ? ' · DISHA consent given' : ''}</p>
-          ) : <p className="text-[12.5px] text-slate-400">No family tracking link issued</p>}
+            <p className="text-[12.5px] text-green-700 flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> {t('patients.familyLinkActive')}{p.dishaConsentGiven ? t('patients.dishaConsent') : ''}</p>
+          ) : <p className="text-[12.5px] text-slate-400">{t('patients.noFamilyLink')}</p>}
         </Section>
 
         {/* Cross-department journey timeline */}
-        <Section title="Patient journey">
+        <Section title={t('patients.sectionPatientJourney')}>
           <PatientJourneyTimeline patientId={p.id} patientName={p.name} variant="compact" />
           <a href={`/journey/${p.id}`} target="_blank" rel="noreferrer"
-            className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-[var(--color-primary)] hover:underline">
-            Open full journey →
+            className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-[var(--color-accent)] hover:underline">
+            {t('patients.openFullJourney')}
           </a>
         </Section>
       </div>
 
       {/* Sticky actions */}
       <div className="sticky bottom-0 bg-white border-t border-slate-100 p-4 flex gap-2">
-        <button onClick={onAnnounce} className="flex-1 h-11 rounded-xl bg-slate-100 text-slate-700 font-bold text-[13.5px] flex items-center justify-center gap-2 hover:bg-slate-200 transition"><Volume2 className="h-4.5 w-4.5" /> Announce</button>
-        {next && <button onClick={onAdvance} className="flex-1 h-11 rounded-xl bg-[var(--color-primary)] text-white font-bold text-[13.5px] flex items-center justify-center gap-2 hover:bg-[var(--color-primary-dark)] transition">{next.label} <ArrowRight className="h-4 w-4" /></button>}
+        <button onClick={onAnnounce} className="flex-1 h-11 rounded-xl bg-slate-100 text-slate-700 font-bold text-[13.5px] flex items-center justify-center gap-2 hover:bg-slate-200 transition"><Volume2 className="h-4.5 w-4.5" /> {t('patients.announceAction')}</button>
+        {next && <button onClick={onAdvance} className="flex-1 h-11 rounded-xl bg-[var(--color-primary)] text-white font-bold text-[13.5px] flex items-center justify-center gap-2 hover:bg-[var(--color-primary-dark)] transition">{t(`patients.${next.labelKey}`)} <ArrowRight className="h-4 w-4" /></button>}
       </div>
     </div>
   )

@@ -62,8 +62,8 @@ export default function InsurancePreAuthPage() {
         {PENDING_ADMISSIONS.map((adm) => (
           <div key={adm.id} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-[rgba(8,145,178,0.07)] flex items-center justify-center flex-shrink-0">
-                <ShieldCheck className="h-5 w-5 text-[var(--color-primary)]" />
+              <div className="h-10 w-10 rounded-xl bg-[rgba(238,107,38,0.07)] flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="h-5 w-5 text-[var(--color-accent)]" />
               </div>
               <div>
                 <p className="font-bold text-slate-900 text-sm">{adm.patient}</p>
@@ -94,27 +94,27 @@ export default function InsurancePreAuthPage() {
         <p className="text-slate-500 text-sm mb-4">AB-PMJAY and CMHIS-UP patients awaiting NHA pre-authorisation</p>
         <div className="space-y-3">
           {PENDING_AYUSHMAN.map((adm) => (
-            <div key={adm.id} className="bg-white rounded-xl border border-teal-200 p-4 flex items-center justify-between gap-3">
+            <div key={adm.id} className="bg-white rounded-xl border border-primary/20 p-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
-                  <ShieldCheck className="h-5 w-5 text-teal-600" />
+                <div className="h-10 w-10 rounded-xl bg-primary-soft flex items-center justify-center flex-shrink-0">
+                  <ShieldCheck className="h-5 w-5 text-accent" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-bold text-slate-900 text-sm">{adm.patient}</p>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary-soft text-accent border border-primary/20">
                       {adm.schemeName}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500">{adm.id} · ABHA: {adm.abhaId}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{adm.diagnosis}</p>
-                  <p className="text-xs text-teal-600 mt-0.5 font-medium">{adm.coverage}</p>
+                  <p className="text-xs text-accent mt-0.5 font-medium">{adm.coverage}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {ayushmanSubmitted.includes(adm.id) ? (
                   <div className="text-right">
-                    <span className="text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-1 rounded-full">Submitted</span>
+                    <span className="text-xs font-bold text-accent bg-primary-soft border border-primary/20 px-2 py-1 rounded-full">Submitted</span>
                     <p className="text-[10px] text-slate-400 mt-1">Ref: {adm.preAuthRef}</p>
                   </div>
                 ) : (
@@ -139,7 +139,7 @@ export default function InsurancePreAuthPage() {
                       toast.success(`Pre-auth submitted · ref ${adm.preAuthRef}`)
                     }}
                     disabled={ayushmanLoading === adm.id}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-60 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-60 transition-colors"
                   >
                     {ayushmanLoading === adm.id
                       ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -175,7 +175,7 @@ export default function InsurancePreAuthPage() {
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">ICD-10 Diagnosis Codes</p>
                 <div className="flex flex-wrap gap-1.5">
                   {d.diagnosisCodes.map((c, i) => (
-                    <span key={i} className="text-xs bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] px-2 py-0.5 rounded border border-[rgba(8,145,178,0.20)] font-mono">{c}</span>
+                    <span key={i} className="text-xs bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] px-2 py-0.5 rounded border border-[rgba(238,107,38,0.20)] font-mono">{c}</span>
                   ))}
                 </div>
               </div>

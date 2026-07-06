@@ -48,11 +48,11 @@ function ValidationPanel({ claim, onClose }: { claim: InsuranceClaim; onClose: (
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-      className="mt-3 rounded-xl border border-[rgba(8,145,178,0.20)] overflow-hidden"
+      className="mt-3 rounded-xl border border-[rgba(238,107,38,0.20)] overflow-hidden"
     >
       <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark)12,var(--color-primary)0A)' }}>
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+          <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
           <span className="text-sm font-bold text-slate-900">AI Claim Validation</span>
           {errorCount > 0 && <span className="text-[11px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">{errorCount} error{errorCount > 1 ? 's' : ''}</span>}
           {warnCount > 0 && <span className="text-[11px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">{warnCount} warning{warnCount > 1 ? 's' : ''}</span>}
@@ -104,7 +104,7 @@ function ValidationPanel({ claim, onClose }: { claim: InsuranceClaim; onClose: (
           <button
             onClick={handleSubmit}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white cursor-pointer"
-            style={{ background: 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))', boxShadow: '0 2px 8px rgba(8,145,178,0.25)' }}
+            style={{ background: 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))', boxShadow: '0 2px 8px rgba(238,107,38,0.25)' }}
           >
             <Send className="h-4 w-4" /> Submit to TPA
           </button>
@@ -229,7 +229,7 @@ export default function InsuranceClaimsPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl bg-[rgba(8,145,178,0.07)]/70 p-4">
+        <div className="rounded-xl bg-[rgba(238,107,38,0.07)]/70 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-primary-dark)]/60 mb-1">Total Claims Value</p>
           <p className="text-xl font-black text-[#0F172A]">₹{(totalValue / 100000).toFixed(1)}L</p>
         </div>
@@ -270,15 +270,15 @@ export default function InsuranceClaimsPage() {
             <Card key={claim.id} className="p-5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-[rgba(8,145,178,0.07)]/80 flex items-center justify-center flex-shrink-0">
-                    <FileText className="h-5 w-5 text-[var(--color-primary)]" />
+                  <div className="h-10 w-10 rounded-xl bg-[rgba(238,107,38,0.07)]/80 flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-5 w-5 text-[var(--color-accent)]" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-bold text-[#0F172A] text-sm">{claim.id}</p>
                       <NeonBadge variant={STATUS_COLOR[claim.status] as any}>{claim.status}</NeonBadge>
                       {claim.submissionStatus === 'submitted' && (
-                        <span className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] px-2 py-0.5 rounded-full border border-[rgba(8,145,178,0.20)]">
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] px-2 py-0.5 rounded-full border border-[rgba(238,107,38,0.20)]">
                           <Send className="h-2.5 w-2.5" /> Submitted
                         </span>
                       )}
@@ -339,7 +339,7 @@ export default function InsuranceClaimsPage() {
                       }}
                       disabled={validatingId === claim.id}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white cursor-pointer disabled:opacity-60 transition-all"
-                      style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 2px 8px rgba(8,145,178,0.25)' }}
+                      style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 2px 8px rgba(238,107,38,0.25)' }}
                     >
                       {validatingId === claim.id
                         ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Validating…</>
@@ -353,7 +353,7 @@ export default function InsuranceClaimsPage() {
                   {(claim.status === 'Pending Pre-Auth' || claim.status === 'In Process') && (
                     <button
                       onClick={() => setReviewing(claim)}
-                      className="px-4 py-2 rounded-xl bg-[rgba(8,145,178,0.07)]/80 hover:bg-[rgba(8,145,178,0.14)] text-[var(--color-primary)] text-sm font-bold transition-colors cursor-pointer shadow-sm"
+                      className="px-4 py-2 rounded-xl bg-[rgba(238,107,38,0.07)]/80 hover:bg-[rgba(238,107,38,0.14)] text-[var(--color-accent)] text-sm font-bold transition-colors cursor-pointer shadow-sm"
                     >
                       Review
                     </button>
@@ -429,7 +429,7 @@ export default function InsuranceClaimsPage() {
                                 })
                                 toast.success(`${d.name} uploaded`)
                               }}
-                              className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.12)] px-2 py-1 rounded-lg cursor-pointer"
+                              className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.12)] px-2 py-1 rounded-lg cursor-pointer"
                             >
                               <Upload className="h-3 w-3" />Upload
                             </button>
@@ -438,11 +438,11 @@ export default function InsuranceClaimsPage() {
                       ))}
                     </div>
                     {claim.aiDenialRisk && (
-                      <div className="px-4 py-3 bg-[rgba(8,145,178,0.07)]/40 border-t border-[rgba(8,145,178,0.15)] text-xs">
+                      <div className="px-4 py-3 bg-[rgba(238,107,38,0.07)]/40 border-t border-[rgba(238,107,38,0.15)] text-xs">
                         <p className="font-bold text-[var(--color-primary-dark)] flex items-center gap-1.5">
                           <ShieldAlert className="h-3.5 w-3.5" />AI denial-risk · {claim.aiDenialRisk.score}/100
                         </p>
-                        <ul className="mt-1 ml-5 list-disc text-[var(--color-primary)] space-y-0.5">
+                        <ul className="mt-1 ml-5 list-disc text-[var(--color-accent)] space-y-0.5">
                           {claim.aiDenialRisk.reasons.map((r, i) => <li key={i}>{r}</li>)}
                         </ul>
                       </div>

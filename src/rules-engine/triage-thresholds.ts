@@ -19,7 +19,7 @@ export interface TriageResult {
 
 const ESI_META: Record<ESILevel, Omit<TriageResult, 'esiLevel' | 'triggeringCriteria'>> = {
   1: { label: 'Resuscitation',    color: '#DC2626', maxWaitMinutes: 0 },
-  2: { label: 'Emergent',         color: '#F97316', maxWaitMinutes: 10 },
+  2: { label: 'Emergent',         color: '#EE6B26', maxWaitMinutes: 10 },
   3: { label: 'Urgent',           color: '#EAB308', maxWaitMinutes: 30 },
   4: { label: 'Less Urgent',      color: '#22C55E', maxWaitMinutes: 60 },
   5: { label: 'Non-Urgent',       color: '#338AF0', maxWaitMinutes: 120 },

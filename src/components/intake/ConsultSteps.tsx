@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, Video, Stethoscope, CalendarDays, Clock, Wallet, ShieldCheck, Smartphone, CreditCard, Store, CheckCircle, Loader2, User, FileText, Heart, HelpCircle, XCircle } from "lucide-react"
+import { Stethoscope, CalendarDays, Clock, Wallet, ShieldCheck, Smartphone, CreditCard, Store, CheckCircle, Loader2, User, FileText, Heart, HelpCircle, XCircle } from "lucide-react"
 import { ChoiceStep } from "./ChoiceStep"
 import { DOCTORS, SLOT_TIMES, INSURERS, upcomingDays, consultFee, type IntakeForm } from "@/lib/intake/data"
 import { cn } from "@/lib/utils"
@@ -9,37 +9,6 @@ import { checkAbhaEligibility } from "@/lib/intake/abha-mock"
 import type { AbhaEligibilityResult } from "@/lib/intake/abha-mock"
 
 type Update = (patch: Partial<IntakeForm>) => void
-
-// ── Consultation type ───────────────────────────────────────────────
-const TYPES = [
-  { value: 'in_person' as const, label: 'In-person visit', desc: 'Come to the hospital — vitals, doctor & pharmacy on-site', icon: Building2 },
-  { value: 'video' as const, label: 'Online video consult', desc: 'Talk to a doctor from home over a video call', icon: Video },
-]
-
-export function ConsultTypeStep({ form, update }: { form: IntakeForm; update: Update }) {
-  return (
-    <div className="pt-2 space-y-3">
-      {TYPES.map(t => {
-        const Icon = t.icon
-        const sel = form.consultationType === t.value
-        return (
-          <button key={t.value} onClick={() => update({ consultationType: t.value })} aria-pressed={sel}
-            className={cn("w-full flex items-center gap-4 p-5 rounded-[24px] border text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2]",
-              sel ? "bg-[#0891B2] border-[#0891B2] shadow-[0_8px_24px_rgba(8,145,178,0.3)] scale-[0.99]" : "bg-white border-slate-200 shadow-[0_2px_12px_rgba(0,0,0,0.03)] active:scale-[0.98]")}>
-            <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors", sel ? "bg-white/20" : "bg-[rgba(8,145,178,0.07)]")}>
-              <Icon className={cn("h-7 w-7", sel ? "text-white" : "text-[#0891B2]")} aria-hidden="true" />
-            </div>
-            <div>
-              <p className={cn("text-[18px] font-semibold tracking-tight", sel ? "text-white" : "text-slate-900")}>{t.label}</p>
-              <p className={cn("text-[14px]", sel ? "text-[rgba(255,255,255,0.75)]" : "text-slate-400")}>{t.desc}</p>
-            </div>
-          </button>
-        )
-      })}
-      <p className="text-[13px] text-slate-400 text-center pt-1">You can pay the consultation fee in the next steps.</p>
-    </div>
-  )
-}
 
 // ── Slot picker (video only) ────────────────────────────────────────
 export function SlotStep({ form, update }: { form: IntakeForm; update: Update }) {
@@ -53,15 +22,15 @@ export function SlotStep({ form, update }: { form: IntakeForm; update: Update })
             const sel = form.slotDoctor === d.name
             return (
               <button key={d.id} onClick={() => update({ slotDoctor: d.name })} aria-pressed={sel}
-                className={cn("w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition-all active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2]",
-                  sel ? "bg-[rgba(8,145,178,0.07)] border-[#06B6D4] ring-1 ring-blue-300" : "bg-white border-slate-200")}>
-                <span className="h-10 w-10 rounded-full bg-[rgba(8,145,178,0.12)] flex items-center justify-center flex-shrink-0"><Stethoscope className="h-5 w-5 text-[#0891B2]" /></span>
+                className={cn("w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition-all active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26]",
+                  sel ? "bg-[rgba(238,107,38,0.07)] border-[#F58C4E] ring-1 ring-primary/25" : "bg-white border-slate-200")}>
+                <span className="h-10 w-10 rounded-full bg-[rgba(238,107,38,0.12)] flex items-center justify-center flex-shrink-0"><Stethoscope className="h-5 w-5 text-[#B84A16]" /></span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-[14px] font-semibold text-slate-900">{d.name}</span>
                   <span className="block text-[12.5px] text-slate-500">{d.specialty}</span>
                 </span>
                 <span className="text-[13px] font-bold text-slate-700">₹{d.fee}</span>
-                {sel && <CheckCircle className="h-5 w-5 text-[#0891B2] flex-shrink-0" />}
+                {sel && <CheckCircle className="h-5 w-5 text-[#B84A16] flex-shrink-0" />}
               </button>
             )
           })}
@@ -75,8 +44,8 @@ export function SlotStep({ form, update }: { form: IntakeForm; update: Update })
             <div className="flex overflow-x-auto gap-2.5 pb-2 -mx-2 px-2 snap-x scrollbar-hide">
               {days.map(d => (
                 <button key={d.value} onClick={() => update({ slotDate: d.value })} aria-pressed={form.slotDate === d.value}
-                  className={cn("snap-start flex-shrink-0 px-5 py-3 rounded-[16px] text-[15px] font-semibold border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2]",
-                    form.slotDate === d.value ? "bg-[#0891B2] border-[#0891B2] text-white shadow-[0_4px_12px_rgba(8,145,178,0.25)]" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50")}>{d.label}</button>
+                  className={cn("snap-start flex-shrink-0 px-5 py-3 rounded-[16px] text-[15px] font-semibold border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26]",
+                    form.slotDate === d.value ? "bg-[#EE6B26] border-[#EE6B26] text-[#0D2032] shadow-[0_4px_12px_rgba(238,107,38,0.25)]" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50")}>{d.label}</button>
               ))}
             </div>
           </div>
@@ -85,8 +54,8 @@ export function SlotStep({ form, update }: { form: IntakeForm; update: Update })
             <div className="flex overflow-x-auto gap-2.5 pb-2 -mx-2 px-2 snap-x scrollbar-hide">
               {SLOT_TIMES.map(t => (
                 <button key={t} onClick={() => update({ slotTime: t })} aria-pressed={form.slotTime === t}
-                  className={cn("snap-start flex-shrink-0 px-5 py-3 rounded-[16px] text-[15px] font-semibold border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2]",
-                    form.slotTime === t ? "bg-[#0891B2] border-[#0891B2] text-white shadow-[0_4px_12px_rgba(8,145,178,0.25)]" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50")}>{t}</button>
+                  className={cn("snap-start flex-shrink-0 px-5 py-3 rounded-[16px] text-[15px] font-semibold border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26]",
+                    form.slotTime === t ? "bg-[#EE6B26] border-[#EE6B26] text-[#0D2032] shadow-[0_4px_12px_rgba(238,107,38,0.25)]" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50")}>{t}</button>
               ))}
             </div>
           </div>
@@ -141,17 +110,17 @@ export function PaymentStep({ form, update }: { form: IntakeForm; update: Update
     setGovtChecking(false)
   }
 
-  const fieldCard = "bg-white rounded-[14px] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center gap-3 px-4 h-[50px] focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 transition-shadow"
+  const fieldCard = "bg-white rounded-[14px] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center gap-3 px-4 h-[50px] focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary/25 transition-shadow"
   const fieldInput = "intake-input w-full h-full bg-transparent border-none text-slate-900 text-[15px] placeholder:text-slate-400"
 
   return (
     <div className="h-full overflow-y-auto pr-1 pt-1 space-y-4">
       {/* Fee card - Wallet Style */}
-      <div className="relative rounded-[24px] bg-gradient-to-br from-[#0891B2] to-[#0E7490] p-6 flex items-center justify-between shadow-[0_12px_30px_rgba(8,145,178,0.3)] overflow-hidden mb-2">
+      <div className="relative rounded-[24px] bg-gradient-to-br from-[#EE6B26] to-[#C2481A] p-6 flex items-center justify-between shadow-[0_12px_30px_rgba(238,107,38,0.3)] overflow-hidden mb-2">
         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-300/10 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none" />
         <div className="relative z-10">
-          <p className="text-[13px] uppercase text-cyan-100 font-bold tracking-wide">Consultation fee</p>
+          <p className="text-[13px] uppercase text-primary-light font-bold tracking-wide">Consultation fee</p>
           <p className="text-[15px] font-medium text-white/90 mt-1">{isVideo ? `${form.slotDoctor || 'Video consult'}` : `${form.departments[0] ?? 'OPD'} · in-person`}</p>
         </div>
         <p className="relative z-10 text-[32px] font-bold text-white tracking-tight">
@@ -186,13 +155,13 @@ export function PaymentStep({ form, update }: { form: IntakeForm; update: Update
                 }}
                 aria-pressed={sel}
                 className={cn(
-                  "flex flex-col items-center gap-1.5 py-3 rounded-2xl border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2]",
+                  "flex flex-col items-center gap-1.5 py-3 rounded-2xl border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26]",
                   sel
-                    ? isGovt ? "bg-green-600 border-green-600 text-white" : "bg-[#0891B2] border-[#0891B2] text-white"
+                    ? isGovt ? "bg-green-600 border-green-600 text-white" : "bg-[#EE6B26] border-[#EE6B26] text-[#0D2032]"
                     : "bg-white border-slate-200 text-slate-700",
                 )}
               >
-                <Icon className={cn("h-5 w-5", sel ? "text-white" : isGovt ? "text-green-600" : "text-[#0891B2]")} />
+                <Icon className={cn("h-5 w-5", sel ? "text-white" : isGovt ? "text-green-600" : "text-[#B84A16]")} />
                 <span className="text-[12px] font-semibold text-center leading-tight">{label}</span>
               </button>
             )
@@ -211,7 +180,7 @@ export function PaymentStep({ form, update }: { form: IntakeForm; update: Update
               return (
                 <button key={m.value} onClick={() => update({ payMethod: m.value })} aria-pressed={sel}
                   className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium border transition-all active:scale-95",
-                    sel ? "bg-[#0891B2] border-[#0891B2] text-white" : "bg-white border-slate-200 text-slate-700")}>
+                    sel ? "bg-[#EE6B26] border-[#EE6B26] text-[#0D2032]" : "bg-white border-slate-200 text-slate-700")}>
                   <Icon className="h-4 w-4" /> {m.label}
                 </button>
               )
@@ -235,7 +204,7 @@ export function PaymentStep({ form, update }: { form: IntakeForm; update: Update
             <User className="h-5 w-5 text-slate-400 flex-shrink-0" aria-hidden="true" />
             <input className={fieldInput} placeholder="Policyholder name" aria-label="Policyholder name" value={form.policyHolder} onChange={e => update({ policyHolder: e.target.value, insuranceVerified: false })} />
             {form.name && form.policyHolder !== form.name && (
-              <button onClick={() => update({ policyHolder: form.name, insuranceVerified: false })} className="text-[11px] font-semibold text-[#0891B2] whitespace-nowrap flex-shrink-0">Same as me</button>
+              <button onClick={() => update({ policyHolder: form.name, insuranceVerified: false })} className="text-[11px] font-semibold text-[#B84A16] whitespace-nowrap flex-shrink-0">Same as me</button>
             )}
           </div>
 
@@ -251,7 +220,7 @@ export function PaymentStep({ form, update }: { form: IntakeForm; update: Update
             <>
               <button onClick={verify} disabled={!canVerify || checking}
                 className={cn("w-full h-12 rounded-2xl font-semibold text-[15px] flex items-center justify-center gap-2 transition-all active:scale-[0.98]",
-                  (!canVerify || checking) ? "bg-slate-200 text-slate-400" : "bg-[#0891B2] text-white")}>
+                  (!canVerify || checking) ? "bg-slate-200 text-slate-400" : "bg-[#EE6B26] text-[#0D2032]")}>
                 {checking ? <><Loader2 className="h-5 w-5 animate-spin" /> Checking with {form.insurer || 'insurer'}…</> : <><ShieldCheck className="h-5 w-5" /> Verify policy</>}
               </button>
               <p className="text-[12px] text-slate-400 ml-1">We confirm your policy is active &amp; cashless-eligible before you continue.</p>
@@ -382,7 +351,7 @@ export function PaymentStep({ form, update }: { form: IntakeForm; update: Update
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setShowAadhaarFallback(true)}
-                  className="text-[12px] font-semibold text-[#0891B2] underline underline-offset-2"
+                  className="text-[12px] font-semibold text-[#B84A16] underline underline-offset-2"
                 >
                   Try Aadhaar-linked search
                 </button>

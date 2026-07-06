@@ -15,7 +15,7 @@ const TITLES: Record<Exclude<IpdModalKind, null>, string> = {
   refer: 'Refer to specialist', icu: 'Shift to ICU', ot: 'Book OT / Plan surgery', diet: 'Change diet',
 }
 
-const field = "w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100"
+const field = "w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-primary/20"
 const label = "block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5"
 
 export function IpdActionModal({ kind, patient, onClose }: { kind: IpdModalKind; patient: Inpatient; onClose: () => void }) {

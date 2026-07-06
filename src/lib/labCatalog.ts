@@ -1,6 +1,15 @@
 // Central laboratory catalog. Drives ordering, specimen routing, bench
 // assignment, result entry forms, auto-flagging against reference ranges, and
 // TAT clocks. Codes are stable IDs; names are user-facing.
+//
+// i18n: This is a plain data module (no React hooks), so the English `name`
+// and `analyte` strings below stay as the canonical values. Components that
+// display them should localize at render time via the `labs` namespace:
+//   const t = useTranslations('labs')
+//   t(`test.${entry.code}`)            // localized test name
+//   t(`analyte.${a.analyte}`)          // localized analyte name
+// Both keys are guaranteed to exist for every catalog entry/analyte here.
+// See messages/{en,hi}/labs.json.
 
 export type Bench = 'HEMA' | 'BIOCHEM' | 'IMMUNO' | 'URINE' | 'MICRO' | 'HISTO'
 export type SpecimenType = 'EDTA' | 'serum' | 'urine_cup' | 'blood_culture' | 'swab' | 'sputum' | 'tissue'

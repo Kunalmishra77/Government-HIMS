@@ -1,0 +1,154 @@
+{
+  "common": {
+    "cancel": "कैंसल करें",
+    "submit": "सबमिट करें",
+    "approve": "अप्रूव करें",
+    "reject": "रिजेक्ट करें",
+    "employee": "एम्प्लॉई",
+    "department": "डिपार्टमेंट",
+    "designation": "डेज़िग्नेशन",
+    "status": "स्टेटस",
+    "select": "चुनें…",
+    "open": "खोलें",
+    "in": "इन",
+    "out": "आउट",
+    "dash": "—"
+  },
+  "attendanceStatus": {
+    "present": "प्रेजेंट",
+    "late": "लेट",
+    "absent": "अनुपस्थित",
+    "leave": "लीव",
+    "half_day": "हाफ डे"
+  },
+  "staffStatus": {
+    "active": "एक्टिव",
+    "on_leave": "लीव पर",
+    "suspended": "सस्पेंडेड",
+    "terminated": "टर्मिनेटेड",
+    "inactive": "इनएक्टिव"
+  },
+  "leaveStatus": {
+    "Pending": "पेंडिंग",
+    "Approved": "अप्रूव्ड",
+    "Rejected": "रिजेक्टेड"
+  },
+  "openingStatus": {
+    "Open": "ओपन",
+    "On hold": "होल्ड पर",
+    "Closed": "क्लोज़्ड"
+  },
+  "reviewStatus": {
+    "draft": "ड्राफ्ट",
+    "submitted": "सबमिटेड",
+    "acknowledged": "एक्नॉलेज्ड"
+  },
+  "stage": {
+    "Applied": "अप्लाई किया",
+    "Screening": "स्क्रीनिंग",
+    "Interview": "इंटरव्यू",
+    "Offer": "ऑफर",
+    "Hired": "हायर्ड",
+    "Rejected": "रिजेक्टेड"
+  },
+  "dashboard": {
+    "title": "HR डैशबोर्ड",
+    "subtitle": "{depts} डिपार्टमेंट में पीपल ऑपरेशंस · रिकॉर्ड पर {count} स्टाफ।",
+    "kpiEmployees": "एम्प्लॉई",
+    "kpiEmployeesSub": "रिकॉर्ड पर {count}",
+    "kpiPendingLeave": "पेंडिंग लीव",
+    "kpiPendingLeaveSub": "डिसीज़न बाकी",
+    "kpiAttendanceToday": "आज की अटेंडेंस",
+    "kpiAttendanceTodaySub": "{present}/{total} प्रेजेंट · {onLeave} लीव पर",
+    "kpiOpenPositions": "ओपन पोज़िशन",
+    "kpiOpenPositionsSub": "पाइपलाइन में {count}",
+    "kpiOnboarding": "ऑनबोर्डिंग",
+    "kpiOnboardingSub": "चल रहा है",
+    "kpiAppraisals": "अप्रेज़ल",
+    "kpiAppraisalsSub": "ओपन रिव्यू",
+    "pendingLeaveApprovals": "पेंडिंग लीव अप्रूवल",
+    "noPendingLeave": "कोई पेंडिंग लीव रिक्वेस्ट नहीं",
+    "recruitmentPipeline": "रिक्रूटमेंट पाइपलाइन",
+    "credentialsExpiring": "60 दिनों में एक्सपायर होने वाले क्रेडेंशियल ({count})"
+  },
+  "employees": {
+    "title": "एम्प्लॉई",
+    "count": "{total} में से {shown} स्टाफ",
+    "addEmployee": "एम्प्लॉई ऐड करें",
+    "searchPlaceholder": "नाम, ID, डेज़िग्नेशन सर्च करें…",
+    "allDepartments": "सभी",
+    "allStatuses": "सभी स्टेटस",
+    "colContract": "कॉन्ट्रैक्ट",
+    "noMatch": "आपके फिल्टर से कोई एम्प्लॉई मैच नहीं हुआ"
+  },
+  "attendance": {
+    "title": "अटेंडेंस और टाइम",
+    "subtitle": "डेली रजिस्टर · {date}",
+    "tilePresent": "प्रेजेंट",
+    "tileLate": "लेट",
+    "tileOnLeave": "लीव पर",
+    "tileAbsent": "अनुपस्थित",
+    "tileAttendance": "अटेंडेंस",
+    "colDept": "डिपार्टमेंट",
+    "colIn": "इन",
+    "colOut": "आउट",
+    "colActions": "एक्शन"
+  },
+  "leave": {
+    "title": "लीव मैनेजमेंट",
+    "subtitle": "{pending} पेंडिंग · आज {onLeave} लीव पर",
+    "applyLeave": "लीव अप्लाई करें",
+    "from": "से",
+    "to": "तक",
+    "reasonPlaceholder": "कारण",
+    "defaultReason": "पर्सनल",
+    "leaveRequests": "लीव रिक्वेस्ट",
+    "noRequests": "कोई लीव रिक्वेस्ट नहीं",
+    "balance": "बैलेंस: {remaining}/{total} दिन",
+    "selectEmployeeError": "एक एम्प्लॉई चुनें",
+    "appliedToast": "{name} के लिए लीव अप्लाई की गई",
+    "decisionApproved": "लीव अप्रूव्ड",
+    "decisionRejected": "लीव रिजेक्टेड",
+    "notifyTitleApproved": "लीव अप्रूव्ड — {name}",
+    "notifyTitleRejected": "लीव रिजेक्टेड — {name}",
+    "notifyBodyApproved": "आपकी लीव ({from} → {to}) HR ने अप्रूव कर दी।",
+    "notifyBodyRejected": "आपकी लीव ({from} → {to}) HR ने रिजेक्ट कर दी।"
+  },
+  "onboarding": {
+    "title": "ऑनबोर्डिंग",
+    "subtitle": "{count} नए हायर चल रहे हैं",
+    "emptyTitle": "कोई ऑनबोर्डिंग नहीं चल रही",
+    "emptySub": "चेकलिस्ट शुरू करने के लिए रिक्रूटमेंट में कैंडिडेट को हायर करें।",
+    "started": "{role} · {date} को शुरू हुआ",
+    "complete": "कंप्लीट"
+  },
+  "recruitment": {
+    "title": "रिक्रूटमेंट",
+    "subtitle": "{open} ओपन पोज़िशन · पाइपलाइन में {pipeline} कैंडिडेट",
+    "onboarding": "ऑनबोर्डिंग",
+    "jobOpenings": "जॉब ओपनिंग",
+    "openingsCount": "{department} · {type} · {count, plural, one {# ओपनिंग} other {# ओपनिंग}}",
+    "movedToast": "{stage} पर मूव किया",
+    "hiredToast": "{name} हायर हुआ — ऑनबोर्डिंग चेकलिस्ट बन गई",
+    "moveNext": "→ {stage}"
+  },
+  "appraisals": {
+    "title": "परफॉर्मेंस और अप्रेज़ल",
+    "subtitle": "{count} रिव्यू · एवरेज रेटिंग {avg}/5",
+    "newReview": "नया रिव्यू",
+    "rating": "रेटिंग",
+    "goals": "गोल्स / KPIs",
+    "strengths": "स्ट्रेंथ्स / नोट्स",
+    "saveReview": "रिव्यू सेव करें",
+    "noReviews": "इस साइकिल में अभी कोई रिव्यू नहीं",
+    "reviewedBy": "{name} ने रिव्यू किया",
+    "goalsLabel": "गोल्स:",
+    "notesLabel": "नोट्स:",
+    "submit": "सबमिट करें",
+    "acknowledge": "एक्नॉलेज करें",
+    "selectEmployeeError": "एक एम्प्लॉई चुनें",
+    "savedToast": "{name} के लिए रिव्यू सेव हुआ",
+    "submittedToast": "रिव्यू सबमिट हुआ",
+    "acknowledgedToast": "एक्नॉलेज किया गया"
+  }
+}

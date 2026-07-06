@@ -284,15 +284,15 @@ export function CommandPalette() {
                 onMouseEnter={() => setCursor(i)}
                 className={cn(
                   "w-full px-4 py-2 flex items-center gap-3 text-left transition-colors",
-                  cursor === i ? "bg-[rgba(8,145,178,0.07)]/70" : "hover:bg-slate-50/70",
+                  cursor === i ? "bg-primary-soft" : "hover:bg-surface-sunken",
                 )}
               >
                 <span className={cn(
                   "h-6 w-6 rounded-md flex items-center justify-center flex-shrink-0",
-                  it.kind === "patient" ? "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]"
+                  it.kind === "patient" ? "bg-accent-soft text-[var(--color-accent)]"
                 : it.kind === "intent"  ? "bg-amber-100 text-amber-700"
                 : it.kind === "staff"   ? "bg-emerald-100 text-emerald-700"
-                                         : "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]"
+                                         : "bg-accent-soft text-[var(--color-accent)]"
                 )}>
                   <Icon className="h-3.5 w-3.5" />
                 </span>

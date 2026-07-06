@@ -1,5 +1,6 @@
 "use client"
 import { useState, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { useCmoFacilitiesStore } from '@/store/useCmoFacilitiesStore'
 import { CmoPageHeader } from '@/components/cmo/layout/CmoPageHeader'
 import { FacilityRow } from '@/components/shared/FacilityRow'
@@ -14,6 +15,7 @@ const TYPES: Array<'All' | FacilityType> = ['All', 'DH', 'CH', 'CHC', 'PHC', 'SH
 const STATUSES: Array<'All' | FacilityStatus> = ['All', 'ok', 'watch', 'warning', 'critical']
 
 export default function CmoFacilitiesPage() {
+  const t = useTranslations('cmo')
   const { facilities, loaded, fetchFacilities } = useCmoFacilitiesStore()
   const [typeFilter, setTypeFilter] = useState<'All' | FacilityType>('All')
   const [blockFilter, setBlockFilter] = useState('All')
@@ -34,48 +36,48 @@ export default function CmoFacilitiesPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      <CmoPageHeader title="Facilities & map" titleHindi="सुविधाएं और मानचित्र" subtitle="142 facilities in Bhopal district" />
+      <CmoPageHeader title={t('facilities.title')} titleHindi={t('facilities.titleHindi')} subtitle={t('facilities.subtitle')} />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 items-center">
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name..."
-          className="border border-slate-200 rounded-lg px-3 py-1.5 text-[12px] focus:outline-none focus:ring-1 focus:ring-blue-400 w-48" />
-        {[{label:'Type', val:typeFilter, set:setTypeFilter, opts:TYPES},
-          {label:'Block', val:blockFilter, set:setBlockFilter, opts:BLOCKS},
-          {label:'Status', val:statusFilter, set:setStatusFilter, opts:STATUSES}
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('facilities.searchPlaceholder')}
+          className="border border-slate-200 rounded-lg px-3 py-1.5 text-[12px] focus:outline-none focus:ring-1 focus:ring-primary/25 w-48" />
+        {[{label:'type', val:typeFilter, set:setTypeFilter, opts:TYPES},
+          {label:'block', val:blockFilter, set:setBlockFilter, opts:BLOCKS},
+          {label:'status', val:statusFilter, set:setStatusFilter, opts:STATUSES}
         ].map(({label, val, set, opts}) => (
-          <select key={label} value={val} onChange={e => set(e.target.value as never)}
+          <select key={label} value={val} onChange={e => set(e.target.value as never)} aria-label={t(`facilities.filters.${label}`)}
             className="border border-slate-200 rounded-lg px-2 py-1.5 text-[12px] focus:outline-none bg-white">
-            {opts.map(o => <option key={o}>{o}</option>)}
+            {opts.map(o => <option key={o} value={o}>{o === 'All' ? t('home.all') : o}</option>)}
           </select>
         ))}
-        <span className="text-[11px] text-slate-500 ml-auto">{filtered.length} of {facilities.length}</span>
+        <span className="text-[11px] text-slate-500 ml-auto">{t('facilities.ofTotal', { shown: filtered.length, total: facilities.length })}</span>
       </div>
 
       {/* List */}
       <div className="space-y-2">
         {filtered.slice(0, 50).map(f => (
           <FacilityRow key={f.id} name={f.name} type={f.type} block={f.block} status={f.status}
-            summary={`${f.beds.used}/${f.beds.total} beds · OPD ${f.opdToday} · IPD ${f.ipdCensusToday}`}
+            summary={t('facilities.bedsSummary', { used: f.beds.used, total: f.beds.total, opd: f.opdToday, ipd: f.ipdCensusToday })}
             alertCount={f.alertsCount} onClick={() => { setDrill(f); setDrillTab('overview') }} />
         ))}
-        {filtered.length > 50 && <p className="text-center text-[12px] text-slate-400 py-2">Showing 50 of {filtered.length} — use filters to narrow down</p>}
+        {filtered.length > 50 && <p className="text-center text-[12px] text-slate-400 py-2">{t('facilities.showing50', { total: filtered.length })}</p>}
       </div>
 
       <DrillCard open={!!drill} onClose={() => setDrill(null)} title={drill?.name ?? ''} subtitle={`${drill?.type} · ${drill?.block}`}
-        tabs={[{id:'overview',label:'Overview'},{id:'beds',label:'Beds'},{id:'stock',label:'Stock'},{id:'staff',label:'Staff'}]}
+        tabs={[{id:'overview',label:t('common.overview')},{id:'beds',label:t('common.beds')},{id:'stock',label:t('common.stock')},{id:'staff',label:t('common.staff')}]}
         activeTab={drillTab} onTabChange={setDrillTab}>
         {drill && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <MetricTile label="Beds" value={`${drill.beds.used}/${drill.beds.total}`} />
-              <MetricTile label="OPD today" value={drill.opdToday} />
-              <MetricTile label="IPD census" value={drill.ipdCensusToday} />
-              <MetricTile label="Alerts" value={drill.alertsCount} variant={drill.alertsCount > 0 ? 'critical' : 'success'} />
+              <MetricTile label={t('facilities.beds')} value={`${drill.beds.used}/${drill.beds.total}`} />
+              <MetricTile label={t('facilities.opdToday')} value={drill.opdToday} />
+              <MetricTile label={t('facilities.ipdCensus')} value={drill.ipdCensusToday} />
+              <MetricTile label={t('facilities.alerts')} value={drill.alertsCount} variant={drill.alertsCount > 0 ? 'critical' : 'success'} />
             </div>
             <div className="text-[12px] text-slate-600 space-y-1 bg-slate-50 rounded-lg p-3">
-              <p>Staff: <b>{drill.staffCount}</b> · Population: <b>{drill.population.toLocaleString()}</b></p>
-              <p>NQAS: <b>{drill.nqasScore ?? 'N/A'}</b> · Last visited: <b>{drill.lastVisited ?? 'Not on record'}</b></p>
+              <p>{t('facilities.staffPopulation', { staff: drill.staffCount, population: drill.population.toLocaleString() })}</p>
+              <p>{t('facilities.nqasLastVisited', { nqas: drill.nqasScore ?? t('common.notApplicable'), lastVisited: drill.lastVisited ?? t('common.notOnRecord') })}</p>
             </div>
           </div>
         )}

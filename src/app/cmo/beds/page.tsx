@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { useCmoBedsStore } from '@/store/useCmoBedsStore'
 import { CmoPageHeader } from '@/components/cmo/layout/CmoPageHeader'
 import { MetricTile }    from '@/components/shared/MetricTile'
@@ -21,15 +22,16 @@ function CellColor(used: number, total: number): { bg: string; text: string; rin
   return { bg: 'bg-emerald-50', text: 'text-emerald-800' }
 }
 
-const BED_STATUS_STYLES: Record<Bed['status'], { bg: string; label: string }> = {
-  free:             { bg: 'bg-emerald-400', label: 'Free' },
-  occupied:         { bg: 'bg-red-400',     label: 'Occupied' },
-  cleaning:         { bg: 'bg-amber-300',   label: 'Cleaning' },
-  reserved:         { bg: 'bg-blue-400',    label: 'Reserved' },
-  'out-of-service': { bg: 'bg-slate-300',   label: 'OOS' },
+const BED_STATUS_STYLES: Record<Bed['status'], { bg: string }> = {
+  free:             { bg: 'bg-emerald-400' },
+  occupied:         { bg: 'bg-red-400' },
+  cleaning:         { bg: 'bg-amber-300' },
+  reserved:         { bg: 'bg-surface-sunken' },
+  'out-of-service': { bg: 'bg-slate-300' },
 }
 
 export default function CmoBedsPage() {
+  const t = useTranslations('cmo')
   const { bedNetwork, loaded, fetchBedNetwork, reserveBed, tick } = useCmoBedsStore()
 
   const [drillFacId, setDrillFacId]     = useState<string | null>(null)
@@ -50,13 +52,13 @@ export default function CmoBedsPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-5 cmo-fade-up">
       <CmoPageHeader
-        title="Bed network · बेड नेटवर्क"
-        titleHindi="142 सुविधाओं में लाइव बेड स्थिति"
-        subtitle="Live bed status across 142 facilities · auto-refreshes every 30s"
+        title={t('beds.title')}
+        titleHindi={t('beds.titleHindi')}
+        subtitle={t('beds.subtitle')}
         actions={
           <button onClick={() => fetchBedNetwork()}
-            className="flex items-center gap-1.5 text-[12px] font-semibold px-3.5 py-2 rounded-lg border border-[var(--color-border)] text-[var(--color-foreground-muted)] hover:border-[rgba(8,145,178,0.18)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] transition-all">
-            <RefreshCw size={12} /> Refresh
+            className="flex items-center gap-1.5 text-[12px] font-semibold px-3.5 py-2 rounded-lg border border-[var(--color-border)] text-[var(--color-foreground-muted)] hover:border-[rgba(238,107,38,0.18)] hover:text-[var(--color-accent)] hover:bg-[var(--color-primary-soft)] transition-all">
+            <RefreshCw size={12} /> {t('common.refresh')}
           </button>
         }
       />
@@ -64,13 +66,13 @@ export default function CmoBedsPage() {
       {/* Summary strip */}
       {bedNetwork && (
         <div className="grid grid-cols-5 gap-3">
-          <MetricTile label="Total beds"  value={bedNetwork.totalBeds.toLocaleString('en-IN')} />
-          <MetricTile label="Occupied"    value={`${bedNetwork.occupied.toLocaleString('en-IN')} (${pct(bedNetwork.occupied, bedNetwork.totalBeds)}%)`}
+          <MetricTile label={t('beds.totalBeds')}  value={bedNetwork.totalBeds.toLocaleString('en-IN')} />
+          <MetricTile label={t('beds.occupied')}    value={`${bedNetwork.occupied.toLocaleString('en-IN')} (${pct(bedNetwork.occupied, bedNetwork.totalBeds)}%)`}
             variant={pct(bedNetwork.occupied, bedNetwork.totalBeds) > 85 ? 'warning' : 'default'} />
-          <MetricTile label="ICU"         value={`${bedNetwork.byType.ICU.used}/${bedNetwork.byType.ICU.total}`}
+          <MetricTile label={t('beds.icu')}         value={`${bedNetwork.byType.ICU.used}/${bedNetwork.byType.ICU.total}`}
             variant={pct(bedNetwork.byType.ICU.used, bedNetwork.byType.ICU.total) >= 90 ? 'critical' : 'default'} />
-          <MetricTile label="Ventilators" value={`${bedNetwork.byType.Ventilator.used}/${bedNetwork.byType.Ventilator.total}`} />
-          <MetricTile label="Isolation"   value={`${bedNetwork.byType.Isolation.used}/${bedNetwork.byType.Isolation.total}`} />
+          <MetricTile label={t('beds.ventilators')} value={`${bedNetwork.byType.Ventilator.used}/${bedNetwork.byType.Ventilator.total}`} />
+          <MetricTile label={t('beds.isolation')}   value={`${bedNetwork.byType.Isolation.used}/${bedNetwork.byType.Isolation.total}`} />
         </div>
       )}
 
@@ -78,7 +80,7 @@ export default function CmoBedsPage() {
       {showAiBanner && bedNetwork?.aiSuggestion && (
         <div
           className="relative flex items-start gap-4 px-5 py-4 rounded-2xl border"
-          style={{ background: 'linear-gradient(135deg,var(--color-primary-soft),#EFF6FF)', borderColor: 'rgba(8,145,178,0.18)' }}
+          style={{ background: 'linear-gradient(135deg,var(--color-primary-soft),#F6F9FC)', borderColor: 'rgba(238,107,38,0.18)' }}
         >
           <div className="h-9 w-9 rounded-xl bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0">
             <Bot size={16} className="text-white" />
@@ -86,17 +88,17 @@ export default function CmoBedsPage() {
           <div className="flex-1">
             <p className="text-[13px] font-bold text-[var(--color-foreground)]"
                style={{ fontFamily: 'var(--font-heading)' }}>
-              AI suggestion — {bedNetwork.aiSuggestion.from} at high capacity
+              {t('beds.aiSuggestionTitle', { facility: bedNetwork.aiSuggestion.from })}
             </p>
             <p className="text-[12px] text-[var(--color-foreground-muted)] mt-0.5">{bedNetwork.aiSuggestion.reason}</p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <button onClick={() => setShowAiDrill(true)}
               className="text-[11.5px] font-semibold px-3 py-1.5 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity">
-              Review suggestion
+              {t('beds.reviewSuggestion')}
             </button>
             <button onClick={() => setAiDismissed(true)}
-              className="h-8 w-8 flex items-center justify-center rounded-lg border border-[rgba(8,145,178,0.18)] text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)]">
+              className="h-8 w-8 flex items-center justify-center rounded-lg border border-[rgba(238,107,38,0.18)] text-[var(--color-accent)] hover:bg-[var(--color-primary-soft)]">
               <X size={13} />
             </button>
           </div>
@@ -109,8 +111,8 @@ export default function CmoBedsPage() {
         <div className="px-5 py-3.5 border-b border-[var(--color-border)] flex items-center justify-between">
           <div>
             <p className="text-[13px] font-bold text-[var(--color-foreground)]"
-               style={{ fontFamily: 'var(--font-heading)' }}>Facility bed matrix</p>
-            <p className="text-[11px] text-[var(--color-foreground-lighter)] mt-0.5">Click any cell to see bed-level detail · colors indicate occupancy</p>
+               style={{ fontFamily: 'var(--font-heading)' }}>{t('beds.matrixTitle')}</p>
+            <p className="text-[11px] text-[var(--color-foreground-lighter)] mt-0.5">{t('beds.matrixSubtitle')}</p>
           </div>
           <div className="flex gap-3 text-[10px] font-medium text-[var(--color-foreground-lighter)]">
             <span className="flex items-center gap-1"><span className="h-3 w-3 rounded bg-emerald-50 border border-emerald-200" />&lt;70%</span>
@@ -123,9 +125,9 @@ export default function CmoBedsPage() {
           <table className="w-full text-[11px]">
             <thead>
               <tr className="bg-[var(--color-surface-raised)] border-b border-[var(--color-border)]">
-                <th className="px-4 py-2.5 text-left font-semibold text-[var(--color-foreground-lighter)] min-w-[160px]">Facility</th>
+                <th className="px-4 py-2.5 text-left font-semibold text-[var(--color-foreground-lighter)] min-w-[160px]">{t('beds.colFacility')}</th>
                 {WARD_TYPES.map(w => (
-                  <th key={w} className="px-2 py-2.5 text-center font-semibold text-[var(--color-foreground-lighter)] min-w-[80px]">{w}</th>
+                  <th key={w} className="px-2 py-2.5 text-center font-semibold text-[var(--color-foreground-lighter)] min-w-[80px]">{t(`beds.wards.${w}`)}</th>
                 ))}
               </tr>
             </thead>
@@ -164,7 +166,7 @@ export default function CmoBedsPage() {
              style={{ boxShadow: 'var(--shadow-card)' }}>
           <div className="px-5 py-3.5 border-b border-[var(--color-border)]">
             <p className="text-[13px] font-bold text-[var(--color-foreground)]"
-               style={{ fontFamily: 'var(--font-heading)' }}>Recent inter-facility transfers</p>
+               style={{ fontFamily: 'var(--font-heading)' }}>{t('beds.recentTransfers')}</p>
           </div>
           {bedNetwork.recentTransfers.map((t, i) => (
             <div key={t.id} className={cn('flex items-center gap-4 px-5 py-3 border-b border-[var(--color-border)] last:border-0 text-[12px]',
@@ -187,8 +189,8 @@ export default function CmoBedsPage() {
       {/* Bed drill card */}
       <DrillCard
         open={!!(drillFacId && drillWard)} onClose={() => { setDrillFacId(null); setDrillWard(null); setSelectedBed(null) }}
-        title={`${drillFac?.facilityName ?? ''} — ${drillWard}`}
-        subtitle={drillWardData ? `${drillWardData.used}/${drillWardData.total} occupied · ${pct(drillWardData.used, drillWardData.total)}%` : ''}
+        title={`${drillFac?.facilityName ?? ''} — ${drillWard ? t(`beds.wards.${drillWard}`) : ''}`}
+        subtitle={drillWardData ? t('beds.occupiedPct', { used: drillWardData.used, total: drillWardData.total, pct: pct(drillWardData.used, drillWardData.total) }) : ''}
         width="wide"
       >
         {drillWardData && (
@@ -216,7 +218,7 @@ export default function CmoBedsPage() {
               {Object.entries(BED_STATUS_STYLES).map(([status, s]) => (
                 <span key={status} className="flex items-center gap-1.5 text-[var(--color-foreground-muted)]">
                   <span className={cn('h-3 w-3 rounded-md', s.bg)} />
-                  {s.label}
+                  {t(`beds.bedStatus.${status}`)}
                 </span>
               ))}
             </div>
@@ -226,22 +228,22 @@ export default function CmoBedsPage() {
               <div className="bg-[var(--color-surface-raised)] rounded-xl border border-[var(--color-border)] p-4 space-y-2 text-[12.5px]">
                 <div className="flex items-center justify-between">
                   <p className="font-bold text-[var(--color-foreground)]" style={{ fontFamily: 'var(--font-heading)' }}>
-                    Bed {selectedBed.number}
+                    {t('beds.bed', { number: selectedBed.number })}
                   </p>
                   <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full', BED_STATUS_STYLES[selectedBed.status].bg, 'text-white')}>
-                    {BED_STATUS_STYLES[selectedBed.status].label}
+                    {t(`beds.bedStatus.${selectedBed.status}`)}
                   </span>
                 </div>
                 {selectedBed.patientName && (
-                  <p className="text-[var(--color-foreground-muted)]">Patient: <strong>{selectedBed.patientName}</strong></p>
+                  <p className="text-[var(--color-foreground-muted)]">{t('beds.patient')} <strong>{selectedBed.patientName}</strong></p>
                 )}
                 {selectedBed.admittedAt && (
-                  <p className="text-[var(--color-foreground-lighter)]">Admitted: {new Date(selectedBed.admittedAt).toLocaleString('en-IN')}</p>
+                  <p className="text-[var(--color-foreground-lighter)]">{t('beds.admitted')} {new Date(selectedBed.admittedAt).toLocaleString('en-IN')}</p>
                 )}
                 {selectedBed.status === 'free' && (
                   <div className="flex gap-2 pt-2">
                     <input value={reservePatient} onChange={e => setReservePatient(e.target.value)}
-                      placeholder="Patient name to reserve"
+                      placeholder={t('beds.reservePlaceholder')}
                       className="flex-1 border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:text-[var(--color-foreground-lighter)]" />
                     <button
                       disabled={!reservePatient.trim()}
@@ -249,11 +251,11 @@ export default function CmoBedsPage() {
                         if (drillFacId && drillWard) {
                           await reserveBed(drillFacId, drillWard, selectedBed.id, reservePatient)
                           setReservePatient(''); setSelectedBed(null)
-                          toast.success('Bed reserved · audit log updated')
+                          toast.success(t('beds.bedReservedAudit'))
                         }
                       }}
                       className="text-[11.5px] font-semibold px-3 py-1.5 rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-40 hover:opacity-90 whitespace-nowrap">
-                      Reserve
+                      {t('beds.reserve')}
                     </button>
                   </div>
                 )}
@@ -265,23 +267,23 @@ export default function CmoBedsPage() {
 
       {/* AI Suggestion DrillCard */}
       <DrillCard open={showAiDrill} onClose={() => setShowAiDrill(false)}
-        title="AI Transfer Suggestion" subtitle="Hamidia DH ICU → JK Hospital"
+        title={t('beds.aiTransferTitle')} subtitle={t('beds.aiTransferSubtitle')}
         footer={
           <>
-            <button onClick={() => { setShowAiDrill(false); toast.success('Transfer plan approved · audit log updated') }}
+            <button onClick={() => { setShowAiDrill(false); toast.success(t('beds.transferApprovedAudit')) }}
               className="flex-1 text-[12.5px] font-semibold py-2.5 rounded-xl bg-[var(--color-primary)] text-white hover:opacity-90">
-              Approve transfers
+              {t('beds.approveTransfers')}
             </button>
             <button onClick={() => { setShowAiDrill(false); setAiDismissed(true) }}
               className="text-[12.5px] font-semibold px-4 py-2.5 rounded-xl border border-[var(--color-border)] hover:bg-slate-50">
-              Dismiss
+              {t('common.dismiss')}
             </button>
           </>
         }
       >
         {bedNetwork?.aiSuggestion && (
           <div className="space-y-4 text-[12.5px]">
-            <div className="bg-[var(--color-primary-soft)] border border-[rgba(8,145,178,0.18)] rounded-xl p-4">
+            <div className="bg-[var(--color-primary-soft)] border border-[rgba(238,107,38,0.18)] rounded-xl p-4">
               <p className="font-bold text-[var(--color-foreground)]"
                  style={{ fontFamily: 'var(--font-heading)' }}>
                 {bedNetwork.aiSuggestion.from} → {bedNetwork.aiSuggestion.to}
@@ -290,10 +292,10 @@ export default function CmoBedsPage() {
             </div>
             <div>
               <p className="text-[10.5px] font-semibold text-[var(--color-foreground-lighter)] uppercase tracking-wide mb-2">
-                Proposed patients ({bedNetwork.aiSuggestion.patients})
+                {t('beds.proposedPatients', { count: bedNetwork.aiSuggestion.patients })}
               </p>
               <div className="space-y-2">
-                {['Patient A — stable post-op, day 3', 'Patient B — observation, vitals normal', 'Patient C — recovery, ready for step-down'].map((p, i) => (
+                {[t('beds.proposedPatient1'), t('beds.proposedPatient2'), t('beds.proposedPatient3')].map((p, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-[var(--color-foreground-muted)] bg-[var(--color-surface-raised)] rounded-lg px-3 py-2.5">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />{p}
                   </div>

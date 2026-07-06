@@ -82,10 +82,44 @@ export function extractName(text: string): string | undefined {
   return undefined
 }
 
+// Spoken number-words → digits, English + Hindi, plus the "double"/"triple"
+// grouping patients use dictating a number ("double nine one…" → "991…"). STT
+// for en-IN/hi-IN usually returns digits, but not always — normalizing first
+// lets a word-y transcript still yield the number on the first attempt.
+const DIGIT_WORDS: Record<string, string> = {
+  zero: '0', oh: '0', nought: '0', one: '1', two: '2', three: '3', four: '4',
+  five: '5', six: '6', seven: '7', eight: '8', nine: '9',
+  'शून्य': '0', 'एक': '1', 'दो': '2', 'तीन': '3', 'चार': '4', 'पाँच': '5',
+  'पांच': '5', 'छह': '6', 'छः': '6', 'सात': '7', 'आठ': '8', 'नौ': '9',
+}
+const MULTIPLIER_WORDS: Record<string, number> = { double: 2, triple: 3, 'डबल': 2, 'ट्रिपल': 3 }
+
+export function normalizeSpokenDigits(text: string): string {
+  let out = ''
+  let repeat = 1
+  for (const tok of text.toLowerCase().split(/[\s,]+/)) {
+    // Keep combining marks (\p{M}) — stripping them mangles Devanagari digit
+    // words ("पाँच" → "पच", "छः" → "छ") so Hindi numbers would stop matching.
+    const word = tok.replace(/[^\p{L}\p{N}\p{M}]/gu, '')
+    if (!word) continue
+    if (word in MULTIPLIER_WORDS) { repeat = MULTIPLIER_WORDS[word]; continue }
+    const d = word in DIGIT_WORDS ? DIGIT_WORDS[word] : (/^\d+$/.test(word) ? word : null)
+    // A non-number word (or a stray multiplier) breaks the run so two separate
+    // numbers — e.g. an age and a phone in one breath — never fuse into one.
+    out += d !== null ? d.repeat(repeat) : ' '
+    repeat = 1
+  }
+  return out
+}
+
 // First 10-digit Indian mobile (starts 6–9), tolerant of +91, spaces, hyphens.
+// Falls back to spoken number-words ("nine eight seven…", "double five…") so a
+// word-y transcript still resolves without asking the patient to repeat.
 export function extractPhone(text: string): string | undefined {
   const m = text.match(/(?:\+?91[\s-]?)?([6-9](?:[\s-]?\d){9})\b/)
-  return m ? m[1].replace(/\D/g, '') : undefined
+  if (m) return m[1].replace(/\D/g, '')
+  const spoken = normalizeSpokenDigits(text).match(/[6-9]\d{9}/)
+  return spoken ? spoken[0] : undefined
 }
 
 export function extractAge(text: string): number | undefined {

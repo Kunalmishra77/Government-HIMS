@@ -56,9 +56,9 @@ const STAGE_META: Record<CashlessStage, {
   label: string; tint: string; icon: React.ElementType; order: number; sub: string
 }> = {
   registered:        { label: 'Registered',       tint: 'border-amber-200 bg-amber-50 text-amber-700',       icon: User,        order: 1, sub: 'Awaiting pre-auth draft' },
-  pre_auth_pending:  { label: 'Pre-auth pending', tint: 'border-orange-200 bg-orange-50 text-orange-700',    icon: Hourglass,   order: 2, sub: 'Drafted, awaiting insurer' },
-  pre_auth_approved: { label: 'Pre-auth approved',tint: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',          icon: ShieldCheck, order: 3, sub: 'In stay · final claim pending' },
-  claim_submitted:   { label: 'Claim submitted',  tint: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',    icon: Send,        order: 4, sub: 'Awaiting settlement' },
+  pre_auth_pending:  { label: 'Pre-auth pending', tint: 'border-primary/20 bg-primary-soft text-accent',    icon: Hourglass,   order: 2, sub: 'Drafted, awaiting insurer' },
+  pre_auth_approved: { label: 'Pre-auth approved',tint: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',          icon: ShieldCheck, order: 3, sub: 'In stay · final claim pending' },
+  claim_submitted:   { label: 'Claim submitted',  tint: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',    icon: Send,        order: 4, sub: 'Awaiting settlement' },
   queried:           { label: 'Query',            tint: 'border-red-200 bg-red-50 text-red-700',             icon: AlertTriangle,order: 5,sub: 'Insurer needs reply' },
   settled:           { label: 'Settled',          tint: 'border-emerald-200 bg-emerald-50 text-emerald-700', icon: CheckCircle2, order: 6, sub: 'Paid by insurer' },
   denied:            { label: 'Denied',           tint: 'border-slate-300 bg-slate-100 text-slate-700',      icon: ShieldAlert, order: 7, sub: 'Claim rejected' },
@@ -200,7 +200,7 @@ export function LiveCashlessMonitor() {
     <div className="rounded-xl bg-white border border-slate-200 overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4 text-[var(--color-primary)]" />
+          <Activity className="h-4 w-4 text-[var(--color-accent)]" />
           <h2 className="text-sm font-bold text-slate-900">Live cashless monitor</h2>
           <span className="text-[11px] font-bold text-slate-500">{cases.length} active</span>
           {breachCount > 0 && (
@@ -209,7 +209,7 @@ export function LiveCashlessMonitor() {
             </span>
           )}
         </div>
-        <Link href="/insurance/claims" className="text-[11px] font-bold text-[var(--color-primary)] hover:underline flex items-center gap-0.5">
+        <Link href="/insurance/claims" className="text-[11px] font-bold text-[var(--color-accent)] hover:underline flex items-center gap-0.5">
           Open claims <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
@@ -262,7 +262,7 @@ export function LiveCashlessMonitor() {
                   <span className="text-[11px] font-bold text-slate-400">{c.patientId}</span>
                   <span className={cn("text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border", meta.tint)}>{meta.label}</span>
                   {c.claimId && <span className="text-[10px] text-slate-500 font-mono">{c.claimId}</span>}
-                  {c.tpaRef && <span className="text-[10px] text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] px-1.5 py-0.5 rounded">TPA {c.tpaRef}</span>}
+                  {c.tpaRef && <span className="text-[10px] text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] px-1.5 py-0.5 rounded">TPA {c.tpaRef}</span>}
                   {c.denialRisk != null && c.denialRisk >= 60 && (
                     <span className="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded flex items-center gap-0.5">
                       <ShieldAlert className="h-2.5 w-2.5" />Risk {c.denialRisk}
@@ -270,7 +270,7 @@ export function LiveCashlessMonitor() {
                   )}
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  <ShieldCheck className="inline h-3 w-3 text-[var(--color-primary)] mr-1" />
+                  <ShieldCheck className="inline h-3 w-3 text-[var(--color-accent)] mr-1" />
                   <b>{c.insurer}</b>
                   {c.policyNumber && <span className="text-slate-400 font-mono"> · {c.policyNumber}</span>}
                 </p>

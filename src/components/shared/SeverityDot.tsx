@@ -4,7 +4,7 @@ import type { AlertSeverity } from '@/types/cmo'
 const config: Record<AlertSeverity, { dot: string; label: string; badge: string }> = {
   critical: { dot: 'bg-[var(--color-danger)]',    label: 'Critical', badge: 'bg-[var(--color-danger-bg)] text-red-700 border-red-200' },
   warning:  { dot: 'bg-[var(--color-warning)]',   label: 'Warning',  badge: 'bg-[var(--color-warning-bg)] text-amber-700 border-amber-200' },
-  info:     { dot: 'bg-[var(--color-info)]',       label: 'Info',     badge: 'bg-[var(--color-info-bg)] text-blue-700 border-blue-200' },
+  info:     { dot: 'bg-[var(--color-info)]',       label: 'Info',     badge: 'bg-[var(--color-info-bg)] text-accent border-border' },
 }
 
 interface Props { severity: AlertSeverity; showLabel?: boolean }

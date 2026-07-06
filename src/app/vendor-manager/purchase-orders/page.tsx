@@ -11,38 +11,38 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const PO_STATUS_STYLE: Record<string, { card: string; badge: string }> = {
   draft:        { card: 'border-slate-200 bg-slate-50',      badge: 'bg-slate-100 text-slate-600'    },
-  sent:         { card: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]/40',     badge: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]'      },
-  acknowledged: { card: 'border-cyan-200 bg-cyan-50/30', badge: 'bg-cyan-100 text-cyan-700'  },
+  sent:         { card: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]/40',     badge: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]'      },
+  acknowledged: { card: 'border-primary/20 bg-primary-soft', badge: 'bg-accent-soft text-accent'  },
   delivered:    { card: 'border-emerald-200 bg-emerald-50/30',badge: 'bg-emerald-100 text-emerald-700'},
   cancelled:    { card: 'border-red-100 bg-red-50/20',       badge: 'bg-red-100 text-red-600'        },
 }
 
 // ─── Create PO schema ─────────────────────────────────────────────────────────
 
-const POItemSchema = z.object({
-  name:      z.string().min(1, 'Item name required'),
-  qty:       z.coerce.number().min(1, 'Qty ≥ 1'),
-  unitPrice: z.coerce.number().min(1, 'Price > 0'),
+const makeCreatePOSchema = (t: (k: string) => string) => z.object({
+  vendorId:         z.string().min(1, t('purchaseOrders.errSelectVendor')),
+  items:            z.array(z.object({
+    name:      z.string().min(1, t('purchaseOrders.errItemName')),
+    qty:       z.coerce.number().min(1, t('purchaseOrders.errQty')),
+    unitPrice: z.coerce.number().min(1, t('purchaseOrders.errPrice')),
+  })).min(1, t('purchaseOrders.errAtLeastOne')),
+  expectedDelivery: z.string().min(1, t('purchaseOrders.errExpectedDelivery')),
 })
-
-const CreatePOSchema = z.object({
-  vendorId:         z.string().min(1, 'Select a vendor'),
-  items:            z.array(POItemSchema).min(1, 'Add at least one item'),
-  expectedDelivery: z.string().min(1, 'Expected delivery required'),
-})
-type CreatePOForm = z.infer<typeof CreatePOSchema>
+type CreatePOForm = z.infer<ReturnType<typeof makeCreatePOSchema>>
 
 function CreatePOModal({ onClose }: { onClose: () => void }) {
+  const t = useTranslations('vendorManager')
   const vendors  = useVendorManagerStore(s => s.vendors)
   const createPO = useVendorManagerStore(s => s.createPO)
 
   const { register, handleSubmit, watch, control, formState: { errors } } = useForm<CreatePOForm>({
-    resolver: zodResolver(CreatePOSchema) as Resolver<CreatePOForm>,
+    resolver: zodResolver(makeCreatePOSchema(t)) as Resolver<CreatePOForm>,
     defaultValues: { items: [{ name: '', qty: 1, unitPrice: 0 }] },
   })
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
@@ -65,7 +65,7 @@ function CreatePOModal({ onClose }: { onClose: () => void }) {
       status:           'draft',
       expectedDelivery: data.expectedDelivery,
     })
-    toast.success('Purchase order created')
+    toast.success(t('purchaseOrders.createdToast'))
     onClose()
   }
 
@@ -78,18 +78,18 @@ function CreatePOModal({ onClose }: { onClose: () => void }) {
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <h2 className="font-bold text-slate-900 flex items-center gap-2">
-            <Plus className="h-4 w-4 text-[var(--color-primary)]" /> Create Purchase Order
+            <Plus className="h-4 w-4 text-[var(--color-accent)]" /> {t('purchaseOrders.modalTitle')}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 cursor-pointer"><X className="h-4 w-4" /></button>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
           {/* Vendor */}
           <div>
-            <label className="text-xs font-semibold text-slate-600 mb-1 block">Vendor *</label>
+            <label className="text-xs font-semibold text-slate-600 mb-1 block">{t('purchaseOrders.vendorLabel')}</label>
             <select {...register('vendorId')} className={selectCls}>
-              <option value="">Select vendor…</option>
+              <option value="">{t('purchaseOrders.selectVendor')}</option>
               {vendors.filter(v => v.status === 'active').map(v => (
-                <option key={v.id} value={v.id}>{v.name} ({v.category})</option>
+                <option key={v.id} value={v.id}>{v.name} ({t.has(`category.${v.category}`) ? t(`category.${v.category}`) : v.category})</option>
               ))}
             </select>
             {errors.vendorId && <p className="text-[10px] text-red-500 mt-0.5">{errors.vendorId.message}</p>}
@@ -99,13 +99,13 @@ function CreatePOModal({ onClose }: { onClose: () => void }) {
           {showDeliveryWarning && selectedVendor && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
               <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-              <span><strong>{selectedVendor.name}</strong> has a delivery score of <strong>{vendorDeliveryScore}/100</strong>. Consider identifying a backup supplier.</span>
+              <span>{t('purchaseOrders.deliveryWarning', { vendor: selectedVendor.name, score: vendorDeliveryScore })}</span>
             </div>
           )}
 
           {/* Expected delivery */}
           <div>
-            <label className="text-xs font-semibold text-slate-600 mb-1 block">Expected Delivery *</label>
+            <label className="text-xs font-semibold text-slate-600 mb-1 block">{t('purchaseOrders.expectedDeliveryLabel')}</label>
             <input {...register('expectedDelivery')} type="date" className={inputCls} />
             {errors.expectedDelivery && <p className="text-[10px] text-red-500 mt-0.5">{errors.expectedDelivery.message}</p>}
           </div>
@@ -113,26 +113,26 @@ function CreatePOModal({ onClose }: { onClose: () => void }) {
           {/* Line items */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-slate-600">Line Items *</label>
+              <label className="text-xs font-semibold text-slate-600">{t('purchaseOrders.lineItemsLabel')}</label>
               <button
                 type="button"
                 onClick={() => append({ name: '', qty: 1, unitPrice: 0 })}
-                className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary)] flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent)] flex items-center gap-1 cursor-pointer"
               >
-                <Plus className="h-3 w-3" /> Add item
+                <Plus className="h-3 w-3" /> {t('purchaseOrders.addItem')}
               </button>
             </div>
             <div className="space-y-2">
               {fields.map((field, idx) => (
                 <div key={field.id} className="grid grid-cols-12 gap-2 items-start">
                   <div className="col-span-6">
-                    <input {...register(`items.${idx}.name`)} className={inputCls} placeholder="Item name" />
+                    <input {...register(`items.${idx}.name`)} className={inputCls} placeholder={t('purchaseOrders.itemNamePlaceholder')} />
                   </div>
                   <div className="col-span-2">
-                    <input {...register(`items.${idx}.qty`)} type="number" min={1} className={inputCls} placeholder="Qty" />
+                    <input {...register(`items.${idx}.qty`)} type="number" min={1} className={inputCls} placeholder={t('purchaseOrders.qtyPlaceholder')} />
                   </div>
                   <div className="col-span-3">
-                    <input {...register(`items.${idx}.unitPrice`)} type="number" min={0} className={inputCls} placeholder="Unit ₹" />
+                    <input {...register(`items.${idx}.unitPrice`)} type="number" min={0} className={inputCls} placeholder={t('purchaseOrders.unitPricePlaceholder')} />
                   </div>
                   <div className="col-span-1 flex items-center justify-center pt-1">
                     {fields.length > 1 && (
@@ -144,19 +144,19 @@ function CreatePOModal({ onClose }: { onClose: () => void }) {
                 </div>
               ))}
             </div>
-            {errors.items && <p className="text-[10px] text-red-500 mt-1">Please add valid line items</p>}
+            {errors.items && <p className="text-[10px] text-red-500 mt-1">{t('purchaseOrders.invalidLineItems')}</p>}
           </div>
 
           {/* Total */}
           <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-            <span className="text-sm font-semibold text-slate-600">Total Amount</span>
+            <span className="text-sm font-semibold text-slate-600">{t('purchaseOrders.totalAmount')}</span>
             <span className="text-lg font-bold text-slate-900">₹{totalAmount.toLocaleString('en-IN')}</span>
           </div>
 
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
+            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">{t('purchaseOrders.cancel')}</button>
             <button type="submit" className="flex-1 h-10 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-bold flex items-center justify-center gap-2 cursor-pointer">
-              <CheckCircle className="h-4 w-4" /> Create PO
+              <CheckCircle className="h-4 w-4" /> {t('purchaseOrders.createPoConfirm')}
             </button>
           </div>
         </form>
@@ -168,6 +168,7 @@ function CreatePOModal({ onClose }: { onClose: () => void }) {
 // ─── PO detail drawer ─────────────────────────────────────────────────────────
 
 function PODetailDrawer({ po, onClose }: { po: VMPurchaseOrder; onClose: () => void }) {
+  const t = useTranslations('vendorManager')
   const updatePOStatus = useVendorManagerStore(s => s.updatePOStatus)
   const vendors        = useVendorManagerStore(s => s.vendors)
   const vendor         = vendors.find(v => v.id === po.vendorId)
@@ -176,11 +177,12 @@ function PODetailDrawer({ po, onClose }: { po: VMPurchaseOrder; onClose: () => v
     draft: 'sent', sent: 'acknowledged', acknowledged: 'delivered', delivered: null, cancelled: null,
   }
   const next = NEXT_STATUS[po.status]
+  const statusLabel = (s: VMPOStatus) => t.has(`poStatus.${s}`) ? t(`poStatus.${s}`) : s
 
   const advance = () => {
     if (!next) return
     updatePOStatus(po.id, next, next === 'delivered' ? new Date().toISOString().slice(0, 10) : undefined)
-    toast.success(`PO status updated to ${next}`)
+    toast.success(t('purchaseOrders.statusUpdatedToast', { status: statusLabel(next) }))
   }
 
   return (
@@ -205,7 +207,7 @@ function PODetailDrawer({ po, onClose }: { po: VMPurchaseOrder; onClose: () => v
                   (['draft','sent','acknowledged','delivered'].indexOf(po.status) > i) ? 'bg-emerald-100 text-emerald-700' :
                   'bg-slate-100 text-slate-400'
                 )}>
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                  {statusLabel(s)}
                 </span>
                 {i < arr.length - 1 && <ChevronRight className="h-3 w-3 text-slate-300" />}
               </div>
@@ -216,35 +218,35 @@ function PODetailDrawer({ po, onClose }: { po: VMPurchaseOrder; onClose: () => v
           {vendor && vendor.deliveryScore < 70 && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
               <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-              <span>{vendor.name} delivery score: <strong>{vendor.deliveryScore}/100</strong>. Monitor closely.</span>
+              <span>{t('purchaseOrders.detailDeliveryWarning', { vendor: vendor.name, score: vendor.deliveryScore })}</span>
             </div>
           )}
 
           {/* Dates */}
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="rounded-xl bg-slate-50 p-3">
-              <p className="text-[10px] uppercase font-bold text-slate-400">Expected Delivery</p>
+              <p className="text-[10px] uppercase font-bold text-slate-400">{t('purchaseOrders.expectedDeliveryDetail')}</p>
               <p className="font-semibold text-slate-800 mt-1 flex items-center gap-1.5">
                 <Clock className="h-3 w-3 text-slate-400" />{po.expectedDelivery}
               </p>
             </div>
             <div className="rounded-xl bg-slate-50 p-3">
-              <p className="text-[10px] uppercase font-bold text-slate-400">Actual Delivery</p>
+              <p className="text-[10px] uppercase font-bold text-slate-400">{t('purchaseOrders.actualDelivery')}</p>
               <p className="font-semibold text-slate-800 mt-1">{po.actualDelivery ?? '—'}</p>
             </div>
           </div>
 
           {/* Line items */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-2">Line Items</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-2">{t('purchaseOrders.lineItems')}</p>
             <div className="rounded-xl border border-slate-100 overflow-hidden">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-500">
-                    <th className="px-3 py-2 text-left">Item</th>
-                    <th className="px-3 py-2 text-right">Qty</th>
-                    <th className="px-3 py-2 text-right">Unit ₹</th>
-                    <th className="px-3 py-2 text-right">Total</th>
+                    <th className="px-3 py-2 text-left">{t('purchaseOrders.colItem')}</th>
+                    <th className="px-3 py-2 text-right">{t('purchaseOrders.colQty')}</th>
+                    <th className="px-3 py-2 text-right">{t('purchaseOrders.colUnit')}</th>
+                    <th className="px-3 py-2 text-right">{t('purchaseOrders.colTotal')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -259,7 +261,7 @@ function PODetailDrawer({ po, onClose }: { po: VMPurchaseOrder; onClose: () => v
                 </tbody>
                 <tfoot>
                   <tr className="bg-slate-50 font-bold">
-                    <td colSpan={3} className="px-3 py-2 text-slate-600">Total</td>
+                    <td colSpan={3} className="px-3 py-2 text-slate-600">{t('purchaseOrders.total')}</td>
                     <td className="px-3 py-2 text-right text-slate-900">₹{po.totalAmount.toLocaleString('en-IN')}</td>
                   </tr>
                 </tfoot>
@@ -275,14 +277,14 @@ function PODetailDrawer({ po, onClose }: { po: VMPurchaseOrder; onClose: () => v
                   onClick={advance}
                   className="flex-1 h-10 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  Mark as {next.charAt(0).toUpperCase() + next.slice(1)}
+                  {t('purchaseOrders.markAs', { status: statusLabel(next) })}
                 </button>
               )}
               <button
-                onClick={() => { updatePOStatus(po.id, 'cancelled'); toast.success('PO cancelled'); onClose() }}
+                onClick={() => { updatePOStatus(po.id, 'cancelled'); toast.success(t('purchaseOrders.poCancelledToast')); onClose() }}
                 className="h-10 px-4 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-sm font-semibold cursor-pointer transition-colors"
               >
-                Cancel PO
+                {t('purchaseOrders.cancelPo')}
               </button>
             </div>
           )}
@@ -297,6 +299,7 @@ function PODetailDrawer({ po, onClose }: { po: VMPurchaseOrder; onClose: () => v
 const STATUSES: (VMPOStatus | 'All')[] = ['All', 'draft', 'sent', 'acknowledged', 'delivered', 'cancelled']
 
 export default function PurchaseOrdersPage() {
+  const t = useTranslations('vendorManager')
   const purchaseOrders = useVendorManagerStore(s => s.purchaseOrders)
 
   const [statusFilter, setStatusFilter] = useState<VMPOStatus | 'All'>('All')
@@ -316,15 +319,15 @@ export default function PurchaseOrdersPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ShoppingCart className="h-6 w-6 text-[var(--color-primary)]" /> Purchase Orders
+            <ShoppingCart className="h-6 w-6 text-[var(--color-accent)]" /> {t('purchaseOrders.title')}
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">{filtered.length} of {purchaseOrders.length} orders</p>
+          <p className="text-sm text-slate-500 mt-0.5">{t('purchaseOrders.count', { filtered: filtered.length, total: purchaseOrders.length })}</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
           className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-bold cursor-pointer transition-colors shadow-sm"
         >
-          <Plus className="h-4 w-4" /> Create PO
+          <Plus className="h-4 w-4" /> {t('purchaseOrders.createPo')}
         </button>
       </div>
 
@@ -334,7 +337,7 @@ export default function PurchaseOrdersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <input
             value={q} onChange={e => setQ(e.target.value)}
-            placeholder="Search PO or vendor…"
+            placeholder={t('purchaseOrders.searchPlaceholder')}
             className="h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white w-52"
           />
         </div>
@@ -348,10 +351,10 @@ export default function PurchaseOrdersPage() {
                 statusFilter === s ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
-              {s.replace('_', ' ')}
+              {s === 'All' ? t('purchaseOrders.tabAll') : (t.has(`poStatus.${s}`) ? t(`poStatus.${s}`) : s.replace('_', ' '))}
               {s !== 'All' && (
                 <span className={cn("ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
-                  statusFilter === s ? "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]" : "bg-slate-200 text-slate-500"
+                  statusFilter === s ? "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]" : "bg-slate-200 text-slate-500"
                 )}>{purchaseOrders.filter(p => p.status === s).length}</span>
               )}
             </button>
@@ -375,19 +378,19 @@ export default function PurchaseOrdersPage() {
                   <p className="font-bold text-slate-800 text-sm mt-0.5 leading-tight">{po.vendorName}</p>
                 </div>
                 <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded-full", s.badge)}>
-                  {po.status.replace('_', ' ')}
+                  {t.has(`poStatus.${po.status}`) ? t(`poStatus.${po.status}`) : po.status.replace('_', ' ')}
                 </span>
               </div>
 
               <div className="flex items-center gap-2 text-xs text-slate-600 mb-3">
                 <Package className="h-3.5 w-3.5 text-slate-400" />
-                {po.items.length} item{po.items.length !== 1 ? 's' : ''}
+                {po.items.length !== 1 ? t('purchaseOrders.itemsOther', { count: po.items.length }) : t('purchaseOrders.itemsOne', { count: po.items.length })}
                 <span className="ml-auto font-bold text-slate-800">₹{po.totalAmount.toLocaleString('en-IN')}</span>
               </div>
 
               <div className="flex items-center gap-1.5 text-xs text-slate-500">
                 <Clock className="h-3 w-3" />
-                <span>Expected {po.expectedDelivery}</span>
+                <span>{t('purchaseOrders.expectedPrefix', { date: po.expectedDelivery })}</span>
                 {po.actualDelivery && (
                   <span className="ml-auto text-emerald-600 font-semibold">✓ {po.actualDelivery}</span>
                 )}
@@ -396,7 +399,7 @@ export default function PurchaseOrdersPage() {
           )
         })}
         {filtered.length === 0 && (
-          <div className="col-span-3 py-16 text-center text-slate-400 text-sm">No purchase orders found</div>
+          <div className="col-span-3 py-16 text-center text-slate-400 text-sm">{t('purchaseOrders.noneFound')}</div>
         )}
       </div>
 

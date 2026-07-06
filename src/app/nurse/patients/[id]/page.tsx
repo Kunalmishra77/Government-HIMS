@@ -11,17 +11,20 @@ import { fluidBalance, ivStatus } from "@/lib/fluids"
 import { newsTrendVitals, trendArrow } from "@/lib/escalation"
 import { Card } from "@/components/ui/card"
 import { NeonBadge } from "@/components/ui/neon-badge"
+import { deriveUhid } from "@/lib/uhid"
 import { news2Token, news2ScoreToken } from "@/lib/statusColors"
 import { ArrowLeft, Pill, Droplets, FileText, ClipboardList, HeartPulse } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 const fmt = (iso: string) => new Date(iso).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
 // MAR slot status → semantic ink (inline, not a raw-palette colour map).
 const statusInk: Record<MarStatus, string> = {
   given: "text-success-strong", held: "text-urgent", missed: "text-danger", due: "text-brand-amber-strong",
-  scheduled: "text-foreground-placeholder", running: "text-primary", prn: "text-primary",
+  scheduled: "text-foreground-placeholder", running: "text-accent", prn: "text-accent",
 }
 
 export default function NursePatientDetail() {
+  const t = useTranslations('nurse')
   const params = useParams<{ id: string }>()
   const id = params?.id
   const inpatients = useInpatientStore(s => s.inpatients)
@@ -34,8 +37,8 @@ export default function NursePatientDetail() {
   if (!ip) {
     return (
       <div className="space-y-4">
-        <Link href="/nurse/patients" className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground-lighter hover:text-foreground-muted"><ArrowLeft className="h-4 w-4" /> All patients</Link>
-        <div className="py-16 text-center text-foreground-placeholder">Patient not found.</div>
+        <Link href="/nurse/patients" className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground-lighter hover:text-foreground-muted"><ArrowLeft className="h-4 w-4" /> {t('patientDetail.allPatients')}</Link>
+        <div className="py-16 text-center text-foreground-placeholder">{t('patientDetail.notFound')}</div>
       </div>
     )
   }
@@ -51,14 +54,17 @@ export default function NursePatientDetail() {
 
   return (
     <div className="space-y-5">
-      <Link href="/nurse/patients" className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground-lighter hover:text-foreground-muted"><ArrowLeft className="h-4 w-4" /> All patients</Link>
+      <Link href="/nurse/patients" className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground-lighter hover:text-foreground-muted"><ArrowLeft className="h-4 w-4" /> {t('patientDetail.allPatients')}</Link>
 
       {/* Header */}
       <Card className="p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{ip.name}</h1>
-            <p className="text-sm text-foreground-lighter mt-0.5">{ip.patientId} · {ip.age}y · {ip.gender} · {ip.ward} bed {ip.bed}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold text-foreground">{ip.name}</h1>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-0.5">{deriveUhid(ip.patientId)}</span>
+            </div>
+            <p className="text-sm text-foreground-lighter mt-0.5">{t('patientDetail.meta', { id: ip.patientId, age: ip.age, gender: ip.gender, ward: ip.ward, bed: ip.bed })}</p>
             <p className="text-sm text-foreground-muted mt-1">{ip.diagnosis}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -75,10 +81,10 @@ export default function NursePatientDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Vitals trend */}
         <Card className="p-5">
-          <div className="flex items-center gap-2 mb-3"><HeartPulse className="h-4 w-4 text-success-strong" /><h2 className="t-title text-foreground">Vitals trend</h2>
-            {news && <span className="ml-auto text-[11px] font-semibold text-foreground-lighter">NEWS {trend.map(t => t.score).join(" → ")}</span>}</div>
+          <div className="flex items-center gap-2 mb-3"><HeartPulse className="h-4 w-4 text-success-strong" /><h2 className="t-title text-foreground">{t('patientDetail.vitalsTrend')}</h2>
+            {news && <span className="ml-auto text-[11px] font-semibold text-foreground-lighter">{t('patientDetail.newsTrend', { trend: trend.map(x => x.score).join(" → ") })}</span>}</div>
           <div className="space-y-2">
-            {vitalsDesc.length === 0 && <p className="text-xs text-foreground-placeholder">No vitals recorded yet.</p>}
+            {vitalsDesc.length === 0 && <p className="text-xs text-foreground-placeholder">{t('patientDetail.noVitals')}</p>}
             {vitalsDesc.map(v => (
               <div key={v.id} className="flex items-center justify-between text-xs border-b border-border-light pb-1.5">
                 <span className="text-foreground-placeholder">{fmt(v.at)}</span>
@@ -91,15 +97,15 @@ export default function NursePatientDetail() {
 
         {/* MAR */}
         <Card className="p-5">
-          <div className="flex items-center gap-2 mb-3"><Pill className="h-4 w-4 text-primary" /><h2 className="t-title text-foreground">Medication (today)</h2></div>
+          <div className="flex items-center gap-2 mb-3"><Pill className="h-4 w-4 text-accent" /><h2 className="t-title text-foreground">{t('patientDetail.medicationToday')}</h2></div>
           <div className="space-y-1.5">
-            {mar.length === 0 && <p className="text-xs text-foreground-placeholder">No active medications.</p>}
+            {mar.length === 0 && <p className="text-xs text-foreground-placeholder">{t('patientDetail.noMedications')}</p>}
             {mar.map(slot => {
               const st = slotStatus(slot, ip.mar, nowMin).status
               return (
                 <div key={slot.key} className="flex items-center justify-between text-xs">
                   <span className="font-medium text-foreground-muted">{slot.medName} {slot.dose} · {slot.slot}</span>
-                  <span className={`font-bold ${statusInk[st]}`}>{st}</span>
+                  <span className={`font-bold ${statusInk[st]}`}>{t.has(`medication.${st}`) ? t(`medication.${st}`) : st}</span>
                 </div>
               )
             })}
@@ -108,11 +114,11 @@ export default function NursePatientDetail() {
 
         {/* Intake / Output */}
         <Card className="p-5">
-          <div className="flex items-center gap-2 mb-3"><Droplets className="h-4 w-4 text-primary" /><h2 className="t-title text-foreground">Fluid balance</h2></div>
+          <div className="flex items-center gap-2 mb-3"><Droplets className="h-4 w-4 text-accent" /><h2 className="t-title text-foreground">{t('patientDetail.fluidBalance')}</h2></div>
           <div className="grid grid-cols-3 gap-2 mb-2">
-            <div className="bg-surface-sunken rounded-lg p-2 text-center"><p className="t-overline text-foreground-placeholder">Intake</p><p className="text-sm font-bold tabular-nums text-primary">{bal.intake} mL</p></div>
-            <div className="bg-surface-sunken rounded-lg p-2 text-center"><p className="t-overline text-foreground-placeholder">Output</p><p className="text-sm font-bold tabular-nums text-brand-amber-strong">{bal.output} mL</p></div>
-            <div className="bg-surface-sunken rounded-lg p-2 text-center"><p className="t-overline text-foreground-placeholder">Net</p><p className={`text-sm font-bold tabular-nums ${bal.net < 0 ? "text-danger" : "text-success-strong"}`}>{bal.net > 0 ? "+" : ""}{bal.net} mL</p></div>
+            <div className="bg-surface-sunken rounded-lg p-2 text-center"><p className="t-overline text-foreground-placeholder">{t('patientDetail.intake')}</p><p className="text-sm font-bold tabular-nums text-accent">{bal.intake} mL</p></div>
+            <div className="bg-surface-sunken rounded-lg p-2 text-center"><p className="t-overline text-foreground-placeholder">{t('patientDetail.output')}</p><p className="text-sm font-bold tabular-nums text-brand-amber-strong">{bal.output} mL</p></div>
+            <div className="bg-surface-sunken rounded-lg p-2 text-center"><p className="t-overline text-foreground-placeholder">{t('patientDetail.net')}</p><p className={`text-sm font-bold tabular-nums ${bal.net < 0 ? "text-danger" : "text-success-strong"}`}>{bal.net > 0 ? "+" : ""}{bal.net} mL</p></div>
           </div>
           {(ip.ivLines ?? []).map(l => {
             const s = ivStatus(l)
@@ -122,9 +128,9 @@ export default function NursePatientDetail() {
 
         {/* Nursing tasks */}
         <Card className="p-5">
-          <div className="flex items-center gap-2 mb-3"><ClipboardList className="h-4 w-4 text-brand-amber-strong" /><h2 className="t-title text-foreground">Tasks</h2></div>
+          <div className="flex items-center gap-2 mb-3"><ClipboardList className="h-4 w-4 text-brand-amber-strong" /><h2 className="t-title text-foreground">{t('patientDetail.tasks')}</h2></div>
           <div className="space-y-1.5">
-            {patientTasks.length === 0 && <p className="text-xs text-foreground-placeholder">No tasks linked to this patient.</p>}
+            {patientTasks.length === 0 && <p className="text-xs text-foreground-placeholder">{t('patientDetail.noTasks')}</p>}
             {patientTasks.map(t => (
               <div key={t.id} className="flex items-center justify-between text-xs">
                 <span className={t.done ? "text-foreground-placeholder line-through" : "text-foreground-muted font-medium"}>{t.title}</span>
@@ -137,7 +143,7 @@ export default function NursePatientDetail() {
 
       {/* Nursing notes / recent timeline */}
       <Card className="p-5">
-        <div className="flex items-center gap-2 mb-3"><FileText className="h-4 w-4 text-foreground-lighter" /><h2 className="t-title text-foreground">Recent notes & events</h2></div>
+        <div className="flex items-center gap-2 mb-3"><FileText className="h-4 w-4 text-foreground-lighter" /><h2 className="t-title text-foreground">{t('patientDetail.recentNotes')}</h2></div>
         <div className="space-y-2.5">
           {notes.map(e => (
             <div key={e.id} className="flex gap-3 text-xs">
@@ -145,7 +151,7 @@ export default function NursePatientDetail() {
               <div><span className="font-bold text-foreground">{e.title}</span>{e.detail ? <span className="text-foreground-muted"> — {e.detail}</span> : null}<span className="text-foreground-placeholder"> · {e.actor}</span></div>
             </div>
           ))}
-          {notes.length === 0 && <p className="text-xs text-foreground-placeholder">No notes yet.</p>}
+          {notes.length === 0 && <p className="text-xs text-foreground-placeholder">{t('patientDetail.noNotes')}</p>}
         </div>
       </Card>
     </div>

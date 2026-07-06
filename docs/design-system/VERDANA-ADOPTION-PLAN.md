@@ -81,7 +81,7 @@ Get those three done and Agentix permanently looks like Verdana — and **stays*
 | Total hardcoded hex occurrences | 3,139 | Migration units (colour) |
 | — of which `#1976e6` (current primary) | 1,593 | 51% — one value |
 | — of which `#0048b5` (primary-dark) | 405 | 13% |
-| — of which `#0891b2` (intake teal) | 114 | The `.intake-theme` sub-brand |
+| — of which `#EE6B26` (intake teal) | 114 | The `.intake-theme` sub-brand |
 | Files with arbitrary type `text-[Npx]` | 352 | Bypass the type scale |
 | Arbitrary `text-[Npx]` occurrences | 3,960 | Migration units (type) |
 | `NeonBadge` call sites | 206 | Conflicts with Verdana "no neon" |
@@ -209,7 +209,7 @@ Verdana defines Buttons, Cards, Inputs, Chips, Lists, Checkboxes, Radios, Toolti
 - **`ai-glow`, `shadow-glow*`, `queue-token-now` glow, `ai-badge` gradient:** soften to diffused elevation; remove glow rings.
 - **`hms-card-glass` / `hms-card-dark-glass`:** off-language for "clean clinical." Mark deprecated; allow only on marketing/hero, not clinical screens.
 - **Multi-stop hero gradients (`gradient-hero` `#002A66→…`):** replace with navy flat or a single-hue subtle gradient.
-- **`.intake-theme` teal sub-brand (`#0891B2`):** Verdana has no teal. **Decision needed (§10):** remap the patient check-in theme to a sanctioned Verdana variant (sage-forward) or retire it. Recommendation: keep the *scoping mechanism*, re-point its values to sage.
+- **`.intake-theme` teal sub-brand (`#EE6B26`):** Verdana has no teal. **Decision needed (§10):** remap the patient check-in theme to a sanctioned Verdana variant (sage-forward) or retire it. Recommendation: keep the *scoping mechanism*, re-point its values to sage.
 
 ---
 

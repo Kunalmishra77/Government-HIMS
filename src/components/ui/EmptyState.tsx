@@ -27,7 +27,7 @@ export function EmptyState({ icon: Icon, title, description, action, secondaryAc
           sm ? "mb-3 h-12 w-12" : "mb-4 h-16 w-16",
         )}
       >
-        <Icon className={cn("text-primary", sm ? "h-6 w-6" : "h-7 w-7")} strokeWidth={1.75} aria-hidden="true" />
+        <Icon className={cn("text-accent", sm ? "h-6 w-6" : "h-7 w-7")} strokeWidth={1.75} aria-hidden="true" />
       </div>
       <p className={cn("text-foreground", sm ? "t-title text-[15px]" : "t-title")}>{title}</p>
       {description && <p className="t-body text-foreground-lighter mt-1.5 max-w-sm">{description}</p>}
@@ -36,7 +36,7 @@ export function EmptyState({ icon: Icon, title, description, action, secondaryAc
           {action && (
             <button
               onClick={action.onClick}
-              className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 text-sm font-bold text-white shadow-sm hover:bg-primary-dark u-press transition-colors cursor-pointer"
+              className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 text-sm font-bold text-[#0D2032] shadow-sm hover:bg-primary-dark u-press transition-colors cursor-pointer"
             >
               {action.label}
             </button>

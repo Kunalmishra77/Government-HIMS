@@ -34,8 +34,8 @@ const STATUS_TINT: Record<TestStatus, string> = {
   awaiting_collection: 'bg-slate-100 text-slate-600',
   collected:           'bg-amber-50 text-amber-700',
   on_bench:            'bg-amber-50 text-amber-700',
-  in_progress:         'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  entered:             'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
+  in_progress:         'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  entered:             'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
   verified:            'bg-emerald-50 text-emerald-700',
   released:            'bg-emerald-50 text-emerald-700',
   rejected:            'bg-red-50 text-red-700',
@@ -148,8 +148,8 @@ export default function PathologyPage() {
                 )}
 
                 {/* Plain-language AI summary */}
-                <div className={cn("rounded-2xl p-3 flex items-start gap-2.5", hasCritical ? "bg-red-50 border border-red-100" : "bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.15)]")}>
-                  <Sparkles className={cn("h-4 w-4 flex-shrink-0 mt-0.5", hasCritical ? "text-red-600" : "text-[var(--color-primary)]")} />
+                <div className={cn("rounded-2xl p-3 flex items-start gap-2.5", hasCritical ? "bg-red-50 border border-red-100" : "bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.15)]")}>
+                  <Sparkles className={cn("h-4 w-4 flex-shrink-0 mt-0.5", hasCritical ? "text-red-600" : "text-[var(--color-accent)]")} />
                   <div className="min-w-0">
                     <p className={cn("text-[11px] font-bold", hasCritical ? "text-red-900" : "text-[var(--color-primary-dark)]")}>What this means · AI explanation (not a diagnosis)</p>
                     <p className={cn("text-[13px] mt-0.5", hasCritical ? "text-red-800" : "text-[var(--color-primary-dark)]")}>{summary}</p>

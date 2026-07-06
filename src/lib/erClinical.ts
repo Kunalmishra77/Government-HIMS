@@ -146,9 +146,9 @@ export type TreatmentArea = typeof TREATMENT_AREAS[number]['code']
 
 export const ESI_STYLE: Record<ESIBand, { label: string; bg: string; fg: string }> = {
   1: { label: 'ESI 1', bg: 'bg-red-100',    fg: 'text-red-700' },
-  2: { label: 'ESI 2', bg: 'bg-orange-100', fg: 'text-orange-700' },
+  2: { label: 'ESI 2', bg: 'bg-accent-soft', fg: 'text-accent' },
   3: { label: 'ESI 3', bg: 'bg-amber-100',  fg: 'text-amber-700' },
-  4: { label: 'ESI 4', bg: 'bg-blue-100',   fg: 'text-blue-700' },
+  4: { label: 'ESI 4', bg: 'bg-surface-sunken',   fg: 'text-accent' },
   5: { label: 'ESI 5', bg: 'bg-emerald-100',fg: 'text-emerald-700' },
 }
 

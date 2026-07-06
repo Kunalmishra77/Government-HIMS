@@ -34,7 +34,7 @@ export function IntakeShell({
       {/* Step Title Header (inside content) */}
       <div className="px-6 pt-6 pb-2 shrink-0">
         {current.milestone && (
-          <p className="text-[12px] font-bold uppercase tracking-wider text-[#0891B2] mb-1">
+          <p className="text-[12px] font-bold uppercase tracking-wider text-[#B84A16] mb-1">
             {current.milestone}
           </p>
         )}
@@ -56,10 +56,10 @@ export function IntakeShell({
             onClick={onCta}
             disabled={ctaDisabled || ctaLoading}
             className={cn(
-              "flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-[17px] font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0891B2]",
+              "flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-[17px] font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#EE6B26]",
               (ctaDisabled || ctaLoading) 
                 ? "cursor-not-allowed bg-slate-200 text-slate-400" 
-                : "bg-[#0891B2] text-white hover:bg-[#0E7490] active:scale-[0.98] shadow-[0_8px_20px_rgba(8,145,178,0.28)]",
+                : "bg-[#EE6B26] text-[#0D2032] hover:bg-[#C2481A] active:scale-[0.98] shadow-[0_8px_20px_rgba(238,107,38,0.28)]",
             )}
           >
             {ctaLoading ? (

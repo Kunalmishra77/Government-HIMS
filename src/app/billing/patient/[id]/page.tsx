@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Receipt, CreditCard, CheckCircle2, AlertCircle, Smartphone, Banknote, ShieldCheck, Sparkles, XCircle, Loader2 } from "lucide-react"
 import { useBillingStore, type ChargeType } from "@/store/useBillingStore"
 import { NeonBadge } from "@/components/ui/neon-badge"
+import { deriveUhid } from "@/lib/uhid"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -13,12 +14,12 @@ import { notifyAndAudit, notifyAndAuditMany } from "@/lib/notifyAndAudit"
 import { useAuthStore } from "@/store/useAuthStore"
 
 const TYPE_CONFIG: Record<ChargeType, { label: string; color: string }> = {
-  consultation: { label: 'Consultation',  color: 'text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)]' },
-  lab:          { label: 'Laboratory',    color: 'text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)]' },
-  radiology:    { label: 'Radiology',     color: 'text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)]' },
-  pharmacy:     { label: 'Pharmacy',      color: 'text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)]' },
-  ward:         { label: 'Ward / Room',   color: 'text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)]' },
-  procedure:    { label: 'Procedure',     color: 'text-orange-600 bg-orange-50' },
+  consultation: { label: 'Consultation',  color: 'text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)]' },
+  lab:          { label: 'Laboratory',    color: 'text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)]' },
+  radiology:    { label: 'Radiology',     color: 'text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)]' },
+  pharmacy:     { label: 'Pharmacy',      color: 'text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)]' },
+  ward:         { label: 'Ward / Room',   color: 'text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)]' },
+  procedure:    { label: 'Procedure',     color: 'text-accent bg-primary-soft' },
   consumable:   { label: 'Consumables',   color: 'text-slate-600 bg-slate-50' },
   nursing:      { label: 'Nursing',       color: 'text-green-600 bg-green-50' },
   ot:           { label: 'OT Charges',    color: 'text-red-600 bg-red-50' },
@@ -129,7 +130,10 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
       <div className="bg-white border shadow-sm rounded-xl p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">{bill.patientName}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-2xl font-bold text-slate-900">{bill.patientName}</h2>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-0.5">{deriveUhid(bill.patientId)}</span>
+            </div>
             <p className="text-sm text-slate-500 mt-1">{bill.id} • {bill.visitType} • {bill.payerType}</p>
             {bill.admissionDate && <p className="text-xs text-slate-400 mt-0.5">Admitted: {new Date(bill.admissionDate).toLocaleDateString('en-IN')}</p>}
           </div>
@@ -145,8 +149,8 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
           {[
             { label: "Gross Total", value: bill.subtotal, color: "text-slate-900" },
             { label: "Discounts", value: -bill.discounts, color: "text-green-600" },
-            { label: "Non-Payables", value: -bill.nonPayables, color: "text-orange-600" },
-            { label: "Insurance", value: -bill.insuranceCovered, color: "text-[var(--color-primary)]" },
+            { label: "Non-Payables", value: -bill.nonPayables, color: "text-accent" },
+            { label: "Insurance", value: -bill.insuranceCovered, color: "text-[var(--color-accent)]" },
             { label: "Patient Due", value: bill.patientDue, color: "text-red-600 text-xl" },
           ].map(({ label, value, color }) => (
             <div key={label} className="text-center p-3 rounded-xl bg-slate-50 border border-slate-100">
@@ -174,7 +178,7 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
               onClick={handleGenerateAISuggestions}
               disabled={loadingAI}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white cursor-pointer disabled:opacity-60 transition-all"
-              style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 2px 8px rgba(8,145,178,0.25)' }}
+              style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 2px 8px rgba(238,107,38,0.25)' }}
             >
               {loadingAI ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               AI Suggest Charges
@@ -268,14 +272,14 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-white border border-[rgba(8,145,178,0.20)] shadow-sm rounded-xl overflow-hidden"
+            className="bg-white border border-[rgba(238,107,38,0.20)] shadow-sm rounded-xl overflow-hidden"
           >
             <div className="flex items-center justify-between px-5 py-4" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark)12,var(--color-primary)0A)' }}>
               <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[var(--color-primary)]" />
+                <Sparkles className="h-5 w-5 text-[var(--color-accent)]" />
                 <span className="font-bold text-slate-900">AI Suggested Charges</span>
                 {aiSuggestions && (
-                  <span className="text-xs font-bold text-[var(--color-primary)] bg-[rgba(8,145,178,0.12)] px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-bold text-[var(--color-accent)] bg-[rgba(238,107,38,0.12)] px-2 py-0.5 rounded-full">
                     {aiSuggestions.length - rejectedIndexes.size} of {aiSuggestions.length} selected
                   </span>
                 )}
@@ -287,7 +291,7 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
 
             {loadingAI && (
               <div className="flex items-center justify-center gap-3 py-10">
-                <Loader2 className="h-5 w-5 text-[var(--color-primary)] animate-spin" />
+                <Loader2 className="h-5 w-5 text-[var(--color-accent)] animate-spin" />
                 <span className="text-sm font-semibold text-slate-500">Analysing ward records and generating charges…</span>
               </div>
             )}
@@ -308,7 +312,7 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
                     return (
                       <div
                         key={i}
-                        className={cn("flex items-start gap-3 px-5 py-3 transition-colors", rejected ? "bg-slate-50 opacity-50" : "hover:bg-[rgba(8,145,178,0.10)]/30")}
+                        className={cn("flex items-start gap-3 px-5 py-3 transition-colors", rejected ? "bg-slate-50 opacity-50" : "hover:bg-[rgba(238,107,38,0.10)]/30")}
                       >
                         <button
                           onClick={() => toggleReject(i)}
@@ -317,7 +321,7 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
                         >
                           {rejected
                             ? <XCircle className="h-5 w-5 text-slate-300" />
-                            : <CheckCircle2 className="h-5 w-5 text-[var(--color-primary)]" />}
+                            : <CheckCircle2 className="h-5 w-5 text-[var(--color-accent)]" />}
                         </button>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-0.5">
@@ -350,7 +354,7 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
                       onClick={handleAcceptSelected}
                       disabled={rejectedIndexes.size === aiSuggestions.length}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white cursor-pointer disabled:opacity-50 transition-all"
-                      style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 2px 8px rgba(8,145,178,0.25)' }}
+                      style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 2px 8px rgba(238,107,38,0.25)' }}
                     >
                       <CheckCircle2 className="h-4 w-4" />
                       Add Selected to Bill
@@ -387,7 +391,7 @@ export default function PatientBillPage({ params }: { params: Promise<{ id: stri
                   <div className="text-right">
                     <p className="text-sm font-bold text-slate-900">₹{(item.amount * item.quantity).toLocaleString('en-IN')}</p>
                     {item.quantity > 1 && <p className="text-xs text-slate-400">₹{item.amount} × {item.quantity}</p>}
-                    {item.isNonPayable && <p className="text-[10px] text-orange-600 font-semibold">Non-payable</p>}
+                    {item.isNonPayable && <p className="text-[10px] text-accent font-semibold">Non-payable</p>}
                   </div>
                 </div>
               ))}

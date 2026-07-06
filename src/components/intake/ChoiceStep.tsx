@@ -88,9 +88,9 @@ export function ChoiceStep({
   }
 
   const chipCls = (sel: boolean) => cn(
-    "font-semibold transition-all border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2] text-center",
+    "font-semibold transition-all border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26] text-center",
     compact ? "rounded-[16px] h-11 px-3.5 text-[14px] flex items-center justify-center whitespace-nowrap" : "rounded-[20px] px-5 py-3.5 text-[16px]",
-    sel ? "bg-[#0891B2] border-[#0891B2] text-white shadow-[0_4px_14px_rgba(8,145,178,0.3)] scale-[0.98]" : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.97]"
+    sel ? "bg-[#EE6B26] border-[#EE6B26] text-[#0D2032] shadow-[0_4px_14px_rgba(238,107,38,0.3)] scale-[0.98]" : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.97]"
   )
 
   return (
@@ -117,9 +117,9 @@ export function ChoiceStep({
             onClick={toggleOther}
             aria-pressed={otherActive}
             className={cn(
-              "font-semibold border border-dashed transition-all active:scale-[0.97] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2]",
+              "font-semibold border border-dashed transition-all active:scale-[0.97] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26]",
               compact ? "rounded-[16px] h-11 px-4 text-[14px]" : "rounded-[20px] px-5 py-3.5 text-[16px]",
-              otherActive ? "bg-[rgba(8,145,178,0.07)] border-[#06B6D4] text-[#0891B2]" : "bg-white border-slate-300 text-[#0891B2] hover:bg-slate-50",
+              otherActive ? "bg-[rgba(238,107,38,0.07)] border-[#F58C4E] text-[#B84A16]" : "bg-white border-slate-300 text-[#B84A16] hover:bg-slate-50",
             )}
           >
             <Plus className="h-4 w-4" aria-hidden="true" /> Other
@@ -142,7 +142,7 @@ export function ChoiceStep({
                   placeholder={listening ? "Listening…" : otherPlaceholder}
                   aria-label="Other — type or speak your own"
                   className={cn(
-                    "intake-input w-full h-12 rounded-[14px] bg-white border-[1.5px] border-[#06B6D4] text-slate-900 text-[15px] placeholder:text-slate-400 pl-4",
+                    "intake-input w-full h-12 rounded-[14px] bg-white border-[1.5px] border-[#F58C4E] text-slate-900 text-[15px] placeholder:text-slate-400 pl-4",
                     voiceSupported ? "pr-12" : "pr-4",
                   )}
                 />
@@ -153,8 +153,8 @@ export function ChoiceStep({
                     aria-label={listening ? "Stop voice input" : "Speak your problem"}
                     aria-pressed={listening}
                     className={cn(
-                      "absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2]",
-                      listening ? "bg-[#0891B2] text-white animate-pulse" : "bg-[rgba(8,145,178,0.07)] text-[#0891B2] hover:bg-[rgba(8,145,178,0.14)]",
+                      "absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26]",
+                      listening ? "bg-[#EE6B26] text-[#0D2032] animate-pulse" : "bg-[rgba(238,107,38,0.07)] text-[#B84A16] hover:bg-[rgba(238,107,38,0.14)]",
                     )}
                   >
                     <Mic className="h-4 w-4" aria-hidden="true" />

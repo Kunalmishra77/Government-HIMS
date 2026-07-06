@@ -1,12 +1,15 @@
 "use client"
 
+import { useTranslations } from "next-intl"
+
 const COLUMNS = [
-  { title: "Platform", links: ["Clinical", "Operations", "Finance", "Support services"] },
-  { title: "Intelligence", links: ["AI radiology triage", "Critical-result SLA", "Predictive operations", "Ops assistant"] },
-  { title: "Trust", links: ["Security", "NABH readiness", "DISHA / DPDP", "AI governance"] },
-]
+  { titleKey: "colPlatform", linkKeys: ["linkClinical", "linkOperations", "linkFinance", "linkSupport"] },
+  { titleKey: "colIntelligence", linkKeys: ["linkAiRadiology", "linkCriticalSla", "linkPredictiveOps", "linkOpsAssistant"] },
+  { titleKey: "colTrust", linkKeys: ["linkSecurity", "linkNabh", "linkDisha", "linkAiGovernance"] },
+] as const
 
 export function LandingFooter() {
+  const t = useTranslations("landing.footer")
   return (
     <footer className="bg-white border-t border-[#EAECF2]">
       <div className="max-w-7xl mx-auto px-5 lg:px-10 py-12">
@@ -16,26 +19,26 @@ export function LandingFooter() {
               <img src="/Agentix logo-health.svg" alt="Agentix HIMS" className="h-10 w-auto object-contain" />
             </div>
             <p className="text-[13px] text-[#667085] mt-4 max-w-xs leading-relaxed">
-              The AI-native operating system for modern hospitals, networks and academic medical centers.
+              {t("tagline")}
             </p>
           </div>
           {COLUMNS.map(col => (
-            <div key={col.title}>
-              <p className="text-[12px] font-bold uppercase tracking-wide text-[#98A2B3]">{col.title}</p>
+            <div key={col.titleKey}>
+              <p className="text-[12px] font-bold uppercase tracking-wide text-[#98A2B3]">{t(col.titleKey)}</p>
               <ul className="mt-3 space-y-2">
-                {col.links.map(l => (
-                  <li key={l}><span className="text-[13px] text-[#475467] hover:text-[#101828] transition-colors cursor-pointer">{l}</span></li>
+                {col.linkKeys.map(k => (
+                  <li key={k}><span className="text-[13px] text-[#475467] hover:text-[#101828] transition-colors cursor-pointer">{t(k)}</span></li>
                 ))}
               </ul>
             </div>
           ))}
         </div>
         <div className="mt-10 pt-6 border-t border-[#EAECF2] flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[12px] text-[#98A2B3]">© 2026 Agentix HIMS Group. All rights reserved.</p>
+          <p className="text-[12px] text-[#98A2B3]">{t("copyright")}</p>
           <div className="flex items-center gap-4 text-[12px] font-medium text-[#667085]">
-            <span className="cursor-pointer hover:text-[#101828]">Privacy</span>
-            <span className="cursor-pointer hover:text-[#101828]">Terms</span>
-            <span className="cursor-pointer hover:text-[#101828]">DPDP</span>
+            <span className="cursor-pointer hover:text-[#101828]">{t("privacy")}</span>
+            <span className="cursor-pointer hover:text-[#101828]">{t("terms")}</span>
+            <span className="cursor-pointer hover:text-[#101828]">{t("dpdp")}</span>
           </div>
         </div>
       </div>

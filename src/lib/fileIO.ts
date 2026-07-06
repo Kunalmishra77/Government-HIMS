@@ -70,7 +70,7 @@ export function printableHtml(title: string, bodyHtml: string): void {
   .page{max-width:760px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 4px 24px rgba(15,23,42,.10)}
 
   /* ── Header ── */
-  .doc-hdr{background:linear-gradient(135deg,#0c6478 0%,#1976E6 60%,#0891b2 100%);padding:26px 36px 22px;display:flex;justify-content:space-between;align-items:flex-start}
+  .doc-hdr{background:linear-gradient(135deg,#0D2032 0%,#C2481A 55%,#EE6B26 100%);padding:26px 36px 22px;display:flex;justify-content:space-between;align-items:flex-start}
   .brand{display:flex;flex-direction:column;gap:4px}
   .brand-name{font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px}
   .brand-name em{color:rgba(255,255,255,.55);font-style:normal}
@@ -80,7 +80,7 @@ export function printableHtml(title: string, bodyHtml: string): void {
   .doc-date{font-size:11px;color:rgba(255,255,255,.7)}
 
   /* ── Divider ── */
-  .doc-divider{height:4px;background:linear-gradient(90deg,#1976E6,#06b6d4,#67e8f9)}
+  .doc-divider{height:4px;background:linear-gradient(90deg,#C2481A,#EE6B26,#F58C4E)}
 
   /* ── Body ── */
   .doc-body{padding:28px 36px 36px}
@@ -92,7 +92,7 @@ export function printableHtml(title: string, bodyHtml: string): void {
   .info-value{font-size:13px;font-weight:600;color:#0f172a}
 
   /* Section headings inside body */
-  h3{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#1976E6;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0}
+  h3{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#B84A16;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0}
 
   /* Tables */
   table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:13px}
@@ -100,7 +100,7 @@ export function printableHtml(title: string, bodyHtml: string): void {
   thead th[style*="right"]{text-align:right}
   tbody td{padding:9px 10px;border-bottom:1px solid #f1f5f9;color:#1e293b;vertical-align:top;line-height:1.5}
   tbody tr:last-child td{border-bottom:none}
-  .total td,.total-row td{font-weight:700;font-size:14.5px;color:#0f172a;background:#ecfeff;border-top:2px solid #1976E6!important;border-bottom:none!important}
+  .total td,.total-row td{font-weight:700;font-size:14.5px;color:#0f172a;background:#FFF3EC;border-top:2px solid #EE6B26!important;border-bottom:none!important}
   td[style*="right"]{text-align:right}
 
   /* Paragraphs */
@@ -118,7 +118,7 @@ export function printableHtml(title: string, bodyHtml: string): void {
   /* ── Footer ── */
   .doc-ftr{margin-top:32px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center}
   .doc-ftr-left{font-size:10px;color:#94a3b8;line-height:1.5}
-  .doc-ftr-badge{font-size:10px;font-weight:700;color:#1976E6;background:#ecfeff;border:1px solid #a5f3fc;padding:3px 10px;border-radius:20px}
+  .doc-ftr-badge{font-size:10px;font-weight:700;color:#B84A16;background:#FFF3EC;border:1px solid #FBD5BC;padding:3px 10px;border-radius:20px}
 
   @media print{
     body{background:white}

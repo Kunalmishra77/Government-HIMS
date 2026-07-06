@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Search, X, Stethoscope, Droplet, Phone, Activity, Video, Building2,
@@ -18,15 +19,16 @@ type Mode = 'in_person' | 'online'
 type Row = Patient & { mode: Mode }
 
 const STATUS_TINT: Record<QueueStatus, string> = {
-  waiting: 'bg-amber-50 text-amber-700', vitals: 'bg-sky-50 text-sky-700', consulting: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]',
-  pharmacy: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]', billing: 'bg-orange-50 text-orange-700', done: 'bg-green-50 text-green-700',
+  waiting: 'bg-amber-50 text-amber-700', vitals: 'bg-surface-sunken text-accent', consulting: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]',
+  pharmacy: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]', billing: 'bg-primary-soft text-accent', done: 'bg-green-50 text-green-700',
 }
 const TRIAGE_TINT: Record<string, string> = {
-  Critical: 'bg-red-100 text-red-700', High: 'bg-orange-100 text-orange-700', Medium: 'bg-amber-100 text-amber-700', Low: 'bg-slate-100 text-slate-500',
+  Critical: 'bg-red-100 text-red-700', High: 'bg-accent-soft text-accent', Medium: 'bg-amber-100 text-amber-700', Low: 'bg-slate-100 text-slate-500',
 }
 const initials = (n: string) => n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
 export default function DoctorRecords() {
+  const t = useTranslations('doctor')
   const router = useRouter()
   const { patients, visits } = usePatientStore()
   const inpatients = useInpatientStore(s => s.inpatients)
@@ -67,20 +69,20 @@ export default function DoctorRecords() {
   }
 
   const TABS: { key: 'all' | Mode; label: string }[] = [
-    { key: 'all', label: 'All' }, { key: 'in_person', label: 'In-person' }, { key: 'online', label: 'Online' },
+    { key: 'all', label: t('records.tabAll') }, { key: 'in_person', label: t('records.tabInPerson') }, { key: 'online', label: t('records.tabOnline') },
   ]
 
   return (
     <div className="pb-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">Patient Records</h1>
-          <p className="text-[13px] text-slate-500 mt-0.5">Your patients only · click any row for the full history</p>
+          <h1 className="text-[24px] font-bold text-slate-900 tracking-tight">{t('records.title')}</h1>
+          <p className="text-[13px] text-slate-500 mt-0.5">{t('records.subtitle')}</p>
         </div>
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, ID or phone…"
-            className="w-full h-10 pl-9 pr-3 rounded-xl bg-white border border-slate-200 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-[rgba(8,145,178,0.30)] focus:ring-2 focus:ring-blue-100" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('records.searchPlaceholder')}
+            className="w-full h-10 pl-9 pr-3 rounded-xl bg-white border border-slate-200 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-[rgba(238,107,38,0.30)] focus:ring-2 focus:ring-primary/20" />
         </div>
       </div>
 
@@ -90,7 +92,7 @@ export default function DoctorRecords() {
           <button key={key} onClick={() => setTab(key)}
             className={cn("flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition", tab === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
             {key === 'online' && <Video className="h-3.5 w-3.5" />}{key === 'in_person' && <Building2 className="h-3.5 w-3.5" />}
-            {label} <span className={cn("text-[11px] font-bold px-1.5 rounded-full", tab === key ? "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]" : "bg-slate-200 text-slate-500")}>{counts[key]}</span>
+            {label} <span className={cn("text-[11px] font-bold px-1.5 rounded-full", tab === key ? "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]" : "bg-slate-200 text-slate-500")}>{counts[key]}</span>
           </button>
         ))}
       </div>
@@ -98,7 +100,7 @@ export default function DoctorRecords() {
       {filtered.length === 0 ? (
         <div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-12 flex flex-col items-center text-center">
           <span className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3"><UsersIcon className="h-6 w-6 text-slate-400" /></span>
-          <p className="text-[14px] font-semibold text-slate-700">No patients found</p>
+          <p className="text-[14px] font-semibold text-slate-700">{t('records.noPatients')}</p>
         </div>
       ) : (
         <div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06),0_4px_16px_rgba(15,23,42,0.04)] overflow-hidden">
@@ -106,7 +108,7 @@ export default function DoctorRecords() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/60">
-                  {['Patient', 'Age / Sex', 'Type', 'Status', 'Chief complaint', 'Priority'].map(h => (
+                  {[t('records.colPatient'), t('records.colAgeSex'), t('records.colType'), t('records.colStatus'), t('records.colChiefComplaint'), t('records.colPriority')].map(h => (
                     <th key={h} className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -114,14 +116,14 @@ export default function DoctorRecords() {
               <tbody>
                 {filtered.map(r => (
                   <tr key={r.id} onClick={() => setSelectedId(r.id)}
-                    className="border-b border-slate-50 last:border-0 hover:bg-[rgba(8,145,178,0.10)]/40 cursor-pointer transition">
+                    className="border-b border-slate-50 last:border-0 hover:bg-[rgba(238,107,38,0.10)]/40 cursor-pointer transition">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <span className={cn("h-9 w-9 rounded-xl text-white flex items-center justify-center font-bold text-[12.5px] flex-shrink-0", r.mode === 'online' ? "bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)]" : "bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)]")}>{initials(r.name)}</span>
                         <div className="min-w-0">
                           <p className="text-[13.5px] font-bold text-slate-900 truncate flex items-center gap-1.5">
                             {r.name}
-                            {admittedIds.has(r.id) && <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 flex items-center gap-0.5"><BedDouble className="h-2.5 w-2.5" /> Admitted</span>}
+                            {admittedIds.has(r.id) && <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 flex items-center gap-0.5"><BedDouble className="h-2.5 w-2.5" /> {t('records.admitted')}</span>}
                           </p>
                           <p className="text-[11.5px] text-slate-400">{r.id} · {r.phone}</p>
                         </div>
@@ -129,8 +131,8 @@ export default function DoctorRecords() {
                     </td>
                     <td className="px-4 py-3 text-[13px] text-slate-600 whitespace-nowrap">{r.age}y · {r.gender}</td>
                     <td className="px-4 py-3">
-                      <span className={cn("inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full", r.mode === 'online' ? "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]" : "bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]")}>
-                        {r.mode === 'online' ? <><Video className="h-3 w-3" /> Online</> : <><Building2 className="h-3 w-3" /> In-person</>}
+                      <span className={cn("inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full", r.mode === 'online' ? "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]" : "bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]")}>
+                        {r.mode === 'online' ? <><Video className="h-3 w-3" /> {t('common.onlineLabel')}</> : <><Building2 className="h-3 w-3" /> {t('common.inPersonLabel')}</>}
                       </span>
                     </td>
                     <td className="px-4 py-3"><span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-full capitalize", STATUS_TINT[r.queueStatus])}>{r.queueStatus}</span></td>
@@ -150,16 +152,16 @@ export default function DoctorRecords() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={() => setSelectedId(null)} />
             <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl overflow-y-auto" role="dialog" aria-modal="true" aria-label="Patient record">
+              className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl overflow-y-auto" role="dialog" aria-modal="true" aria-label={t('records.patientRecord')}>
               <div className="sticky top-0 bg-white border-b border-slate-100 px-5 py-4 flex items-start justify-between gap-3 z-10">
                 <div className="flex items-center gap-3">
                   <span className={cn("h-12 w-12 rounded-2xl text-white flex items-center justify-center font-bold text-[16px]", selected.mode === 'online' ? "bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)]" : "bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)]")}>{initials(selected.name)}</span>
                   <div>
                     <p className="text-[17px] font-bold text-slate-900 leading-tight">{selected.name}</p>
-                    <p className="text-[12.5px] text-slate-500">{selected.id} · {selected.age}y · {selected.gender} · <span className={cn("font-semibold", selected.mode === 'online' ? "text-[var(--color-primary)]" : "text-[var(--color-primary)]")}>{selected.mode === 'online' ? 'Online' : 'In-person'}</span></p>
+                    <p className="text-[12.5px] text-slate-500">{selected.id} · {selected.age}y · {selected.gender} · <span className={cn("font-semibold", selected.mode === 'online' ? "text-[var(--color-accent)]" : "text-[var(--color-accent)]")}>{selected.mode === 'online' ? t('common.onlineLabel') : t('common.inPersonLabel')}</span></p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedId(null)} aria-label="Close" className="p-1.5 rounded-lg hover:bg-slate-100"><X className="h-4.5 w-4.5 text-slate-500" /></button>
+                <button onClick={() => setSelectedId(null)} aria-label={t('common.close')} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="h-4.5 w-4.5 text-slate-500" /></button>
               </div>
 
               <div className="p-5 space-y-5">
@@ -170,26 +172,26 @@ export default function DoctorRecords() {
                   <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1"><Phone className="h-3 w-3" /> {selected.phone}</span>
                 </div>
 
-                <Section title="Vitals">
+                <Section title={t('records.sectionVitals')}>
                   {selected.vitals ? (
                     <div className="grid grid-cols-3 gap-2">
-                      {[['BP', selected.vitals.bp], ['Temp', selected.vitals.temp], ['SpO₂', selected.vitals.spo2], ['Pulse', selected.vitals.pulse], ['Weight', selected.vitals.weight]].map(([k, v]) => (
+                      {[[t('records.vitalBp'), selected.vitals.bp], [t('records.vitalTemp'), selected.vitals.temp], ['SpO₂', selected.vitals.spo2], [t('records.vitalPulse'), selected.vitals.pulse], [t('records.vitalWeight'), selected.vitals.weight]].map(([k, v]) => (
                         <div key={k} className="rounded-xl bg-slate-50 p-2.5"><p className="text-[10.5px] font-semibold text-slate-400">{k}</p><p className="text-[13px] font-bold text-slate-900">{v}</p></div>
                       ))}
                     </div>
-                  ) : <p className="text-[12.5px] text-amber-600 flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Vitals not recorded yet</p>}
+                  ) : <p className="text-[12.5px] text-amber-600 flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> {t('records.vitalsNotRecorded')}</p>}
                 </Section>
 
-                <Section title="Chief complaint">
-                  {selected.symptoms.length ? <div className="flex flex-wrap gap-1.5">{selected.symptoms.map(s => <span key={s} className="text-[12px] font-medium bg-orange-50 text-orange-700 px-2.5 py-1 rounded-full">{s}</span>)}</div> : <p className="text-[12.5px] text-slate-400">None recorded</p>}
+                <Section title={t('records.sectionChiefComplaint')}>
+                  {selected.symptoms.length ? <div className="flex flex-wrap gap-1.5">{selected.symptoms.map(s => <span key={s} className="text-[12px] font-medium bg-primary-soft text-accent px-2.5 py-1 rounded-full">{s}</span>)}</div> : <p className="text-[12.5px] text-slate-400">{t('records.noneRecorded')}</p>}
                 </Section>
                 {selected.history.length > 0 && (
-                  <Section title="Medical history">
+                  <Section title={t('records.sectionMedicalHistory')}>
                     <div className="flex flex-wrap gap-1.5">{selected.history.map(h => <span key={h} className="text-[12px] font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">{h}</span>)}</div>
                   </Section>
                 )}
 
-                <Section title="Past visits">
+                <Section title={t('records.sectionPastVisits')}>
                   {visits.filter(v => v.patientId === selected.id).length ? (
                     <div className="space-y-2">
                       {visits.filter(v => v.patientId === selected.id).map(v => (
@@ -200,13 +202,13 @@ export default function DoctorRecords() {
                         </div>
                       ))}
                     </div>
-                  ) : <p className="text-[12.5px] text-slate-400 flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> No prior visits on record</p>}
+                  ) : <p className="text-[12.5px] text-slate-400 flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> {t('records.noPriorVisits')}</p>}
                 </Section>
               </div>
 
               <div className="sticky bottom-0 bg-white border-t border-slate-100 p-4">
                 <button onClick={() => openConsult(selected)} className="w-full h-11 rounded-xl bg-[var(--color-primary)] text-white font-bold text-[13.5px] flex items-center justify-center gap-2 hover:bg-[var(--color-primary-dark)] transition">
-                  {selected.mode === 'online' ? <Video className="h-4.5 w-4.5" /> : <Stethoscope className="h-4.5 w-4.5" />} Open consultation <ArrowRight className="h-4 w-4" />
+                  {selected.mode === 'online' ? <Video className="h-4.5 w-4.5" /> : <Stethoscope className="h-4.5 w-4.5" />} {t('records.openConsultation')} <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </motion.div>

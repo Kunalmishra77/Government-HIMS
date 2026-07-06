@@ -8,15 +8,16 @@ import { useShiftStore, ALL_WARDS } from "@/store/useShiftStore"
 import { runCopilot, type CopilotCtx } from "@/lib/copilotLLM"
 import { WardSwitcher } from "@/components/nurse/ShiftBanner"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
-const QUICK_PROMPTS = [
-  "Which rounds are due?",
-  "Who are my most acute patients?",
-  "Who's ready for discharge?",
-  "Summarise Kiran Patil for handover",
-  "Show current meds for Kiran Patil",
-  "Who has diabetes?",
-]
+const QUICK_PROMPT_KEYS = [
+  "quickWhichRounds",
+  "quickMostAcute",
+  "quickReadyDischarge",
+  "quickHandoverSummary",
+  "quickCurrentMeds",
+  "quickDiabetes",
+] as const
 
 type Msg = { role: "user" | "ai"; text: string }
 
@@ -27,6 +28,7 @@ function Rich({ text }: { text: string }) {
 }
 
 export default function NurseAiAssistant() {
+  const t = useTranslations('nurse')
   const inpatients = useInpatientStore(s => s.inpatients)
   const activeWard = useShiftStore(s => s.activeWard)
   const nurseName = useShiftStore(s => s.currentNurseName)
@@ -59,8 +61,8 @@ export default function NurseAiAssistant() {
         <div className="flex items-center gap-2.5">
           <span className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-xs"><BrainCircuit className="h-4.5 w-4.5 text-white" /></span>
           <div>
-            <h1 className="text-[15.5px] font-bold text-foreground leading-tight">Nursing Copilot</h1>
-            <p className="text-[11px] text-foreground-placeholder">Grounded in {wardInpatients.length} patient(s) · {activeWard}</p>
+            <h1 className="text-[15.5px] font-bold text-foreground leading-tight">{t('aiAssistant.title')}</h1>
+            <p className="text-[11px] text-foreground-placeholder">{t('aiAssistant.grounded', { count: wardInpatients.length, ward: activeWard })}</p>
           </div>
         </div>
         <WardSwitcher />
@@ -71,12 +73,13 @@ export default function NurseAiAssistant() {
           {messages.length === 0 && !thinking ? (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto px-4">
               <span className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center shadow-sm mb-4"><Sparkles className="h-7 w-7 text-white" /></span>
-              <h2 className="text-[20px] font-bold text-foreground">Your nursing copilot</h2>
-              <p className="text-[13.5px] text-foreground-lighter mt-1.5 leading-relaxed">Ask about your ward — acuity, rounds, meds, vitals, discharges — or get a handover summary. Grounded in the live record.</p>
+              <h2 className="text-[20px] font-bold text-foreground">{t('aiAssistant.emptyTitle')}</h2>
+              <p className="text-[13.5px] text-foreground-lighter mt-1.5 leading-relaxed">{t('aiAssistant.emptySubtitle')}</p>
               <div className="mt-6 flex flex-wrap gap-2 justify-center">
-                {QUICK_PROMPTS.map(p => (
-                  <button key={p} onClick={() => send(p)} className="text-[12.5px] font-medium text-foreground-muted bg-surface border border-border rounded-full px-3.5 py-2 hover:border-primary/30 hover:text-primary hover:bg-accent-soft transition cursor-pointer">{p}</button>
-                ))}
+                {QUICK_PROMPT_KEYS.map(k => {
+                  const prompt = t(`aiAssistant.${k}`)
+                  return <button key={k} onClick={() => send(prompt)} className="text-[12.5px] font-medium text-foreground-muted bg-surface border border-border rounded-full px-3.5 py-2 hover:border-primary/30 hover:text-accent hover:bg-accent-soft transition cursor-pointer">{prompt}</button>
+                })}
               </div>
             </div>
           ) : (
@@ -84,7 +87,7 @@ export default function NurseAiAssistant() {
               {messages.map((m, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={cn("flex gap-2.5", m.role === "user" ? "justify-end" : "justify-start")}>
                   {m.role === "ai" && <span className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 mt-0.5"><BrainCircuit className="h-4 w-4 text-white" /></span>}
-                  <div className={cn("max-w-[80%] rounded-2xl px-4 py-2.5 text-[13.5px] leading-relaxed", m.role === "user" ? "bg-primary text-white rounded-br-md" : "bg-surface border border-border text-foreground-muted rounded-bl-md shadow-sm")}>
+                  <div className={cn("max-w-[80%] rounded-2xl px-4 py-2.5 text-[13.5px] leading-relaxed", m.role === "user" ? "bg-primary text-[#0D2032] rounded-br-md" : "bg-surface border border-border text-foreground-muted rounded-bl-md shadow-sm")}>
                     <Rich text={m.text} />
                   </div>
                 </motion.div>
@@ -103,12 +106,12 @@ export default function NurseAiAssistant() {
         <div className="border-t border-border-light px-4 py-3 bg-surface">
           <div className="max-w-3xl mx-auto flex items-end gap-2">
             <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input) } }} rows={1}
-              placeholder="Ask about your ward, a patient, meds, or a handover summary…"
+              placeholder={t('aiAssistant.inputPlaceholder')}
               className="flex-1 resize-none max-h-32 rounded-2xl border border-border bg-surface-sunken px-4 py-2.5 text-[14px] text-foreground placeholder:text-foreground-placeholder outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/15 transition-colors" />
-            <button onClick={() => send(input)} disabled={!input.trim() || thinking} aria-label="Send"
-              className="u-press h-11 w-11 flex-shrink-0 rounded-2xl bg-primary hover:bg-primary-dark text-white flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer"><Send className="h-4.5 w-4.5" /></button>
+            <button onClick={() => send(input)} disabled={!input.trim() || thinking} aria-label={t('aiAssistant.send')}
+              className="u-press h-11 w-11 flex-shrink-0 rounded-2xl bg-primary hover:bg-primary-dark text-[#0D2032] hover:text-[#0D2032] flex items-center justify-center disabled:opacity-40 transition-colors cursor-pointer"><Send className="h-4.5 w-4.5" /></button>
           </div>
-          <p className="text-[10.5px] text-foreground-placeholder mt-2 flex items-center justify-center gap-1.5"><ShieldAlert className="h-3 w-3" /> AI · answers drawn from the live ward record · verify before acting</p>
+          <p className="text-[10.5px] text-foreground-placeholder mt-2 flex items-center justify-center gap-1.5"><ShieldAlert className="h-3 w-3" /> {t('aiAssistant.disclaimer')}</p>
         </div>
       </section>
     </div>

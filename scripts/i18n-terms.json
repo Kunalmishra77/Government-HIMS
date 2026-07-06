@@ -1,0 +1,6 @@
+{
+  "_comment": "Bulk Hindi terminology corrections. Keys = current wording to replace, values = preferred wording. Applied across every messages/hi/*.json value by scripts/i18n-reterm.mjs. Edit freely, then run: node scripts/i18n-reterm.mjs",
+  "सहेजें": "सेव करें",
+  "चिकित्सक": "डॉक्टर",
+  "दूरभाष": "मोबाइल नंबर"
+}

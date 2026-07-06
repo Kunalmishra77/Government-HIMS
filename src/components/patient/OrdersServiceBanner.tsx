@@ -26,11 +26,11 @@ export function OrdersServiceBanner({
   return (
     <div className={cn(
       "rounded-3xl p-5 border",
-      paid ? "bg-green-50/60 border-green-100" : "bg-[rgba(8,145,178,0.07)]/70 border-[rgba(8,145,178,0.15)]",
+      paid ? "bg-green-50/60 border-green-100" : "bg-[rgba(238,107,38,0.07)]/70 border-[rgba(238,107,38,0.15)]",
     )}>
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
-          <span className={cn("h-9 w-9 rounded-2xl flex items-center justify-center flex-shrink-0", paid ? "bg-green-100 text-green-600" : "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]")}>
+          <span className={cn("h-9 w-9 rounded-2xl flex items-center justify-center flex-shrink-0", paid ? "bg-green-100 text-green-600" : "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]")}>
             <ClipboardList className="h-4.5 w-4.5" />
           </span>
           <div>

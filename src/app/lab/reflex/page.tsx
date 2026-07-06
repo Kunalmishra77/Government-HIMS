@@ -35,16 +35,16 @@ export default function LabReflex() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[#0F172A] flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-[var(--color-primary)]" /> Reflex Tests
+          <Sparkles className="h-6 w-6 text-[var(--color-accent)]" /> Reflex Tests
         </h1>
         <p className="text-sm text-[#64748B] mt-1">AI-suggested follow-up tests triggered automatically when a result trips a rule · one-click to order</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Pending suggestions", value: pending.length, icon: Zap, fg: "text-[var(--color-primary)]", bg: "bg-[rgba(8,145,178,0.07)]" },
+          { label: "Pending suggestions", value: pending.length, icon: Zap, fg: "text-[var(--color-accent)]", bg: "bg-[rgba(238,107,38,0.07)]" },
           { label: "Ordered today", value: ordered.length, icon: CheckCircle, fg: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Active rules", value: 5, icon: Activity, fg: "text-[var(--color-primary)]", bg: "bg-[rgba(8,145,178,0.07)]" },
+          { label: "Active rules", value: 5, icon: Activity, fg: "text-[var(--color-accent)]", bg: "bg-[rgba(238,107,38,0.07)]" },
         ].map(s => (
           <div key={s.label} className={cn("rounded-xl p-4 flex items-center gap-3", s.bg)}>
             <div className="p-2.5 rounded-xl bg-white shadow-sm"><s.icon className={cn("h-5 w-5", s.fg)} /></div>
@@ -56,7 +56,7 @@ export default function LabReflex() {
       {/* Pending */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
-          <Zap className="h-4 w-4 text-[var(--color-primary)]" />
+          <Zap className="h-4 w-4 text-[var(--color-accent)]" />
           <h2 className="text-sm font-bold text-slate-800">Pending suggestions</h2>
           <span className="text-xs text-slate-400">{pending.length}</span>
         </div>
@@ -76,8 +76,8 @@ export default function LabReflex() {
                     <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 flex-wrap">
                       <span className="font-bold">{s.patientName}</span>
                       <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-                      <span className="text-[var(--color-primary)]">{cat?.name ?? s.code}</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]">{cat?.bench ?? '?'}</span>
+                      <span className="text-[var(--color-accent)]">{cat?.name ?? s.code}</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]">{cat?.bench ?? '?'}</span>
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5"><b className="text-slate-700">{s.triggerSummary}</b> · {s.reason}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">suggested {timeAgo(s.createdAt)}</p>
@@ -89,7 +89,7 @@ export default function LabReflex() {
                     </button>
                     <button onClick={() => { orderReflex(s.id); toast.success(`Reflex ${cat?.name ?? s.code} ordered for ${s.patientName}`) }}
                       className="flex items-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-xl cursor-pointer whitespace-nowrap"
-                      style={{ background: "linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))", boxShadow: "0 2px 8px rgba(8,145,178,0.25)" }}>
+                      style={{ background: "linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))", boxShadow: "0 2px 8px rgba(238,107,38,0.25)" }}>
                       <Zap className="h-3.5 w-3.5" /> Order reflex
                     </button>
                   </div>

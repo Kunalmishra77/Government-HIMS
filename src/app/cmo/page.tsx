@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { useCmoSessionStore }    from '@/store/useCmoSessionStore'
 import { useCmoAlertsStore }     from '@/store/useCmoAlertsStore'
 import { useCmoApprovalsStore }  from '@/store/useCmoApprovalsStore'
@@ -22,12 +23,12 @@ import type { Alert, Approval, Facility, DashboardSummary, AiBrief } from '@/typ
 import { cn } from '@/lib/utils'
 
 const LIVE_OPS = [
-  { key: 'opd',            label: 'OPD visits',       route: '/cmo/facilities', icon: <Activity size={14} /> },
-  { key: 'ipdCensus',      label: 'IPD census',        route: '/cmo/beds',       icon: <BedDouble size={14} /> },
-  { key: 'erArrivals',     label: 'ER arrivals',       route: '/cmo/emergency',  icon: <AlertTriangle size={14} /> },
-  { key: 'deliveries',     label: 'Deliveries',        route: '/cmo/mch',        icon: <Baby size={14} /> },
-  { key: 'ambulanceTrips', label: 'Ambulance trips',   route: '/cmo/ambulance',  icon: <Ambulance size={14} /> },
-  { key: 'deathsAll',      label: 'Deaths · all',      route: '/cmo/quality',    icon: <HeartPulse size={14} /> },
+  { key: 'opd',            opKey: 'opd',            route: '/cmo/facilities', icon: <Activity size={14} /> },
+  { key: 'ipdCensus',      opKey: 'ipdCensus',      route: '/cmo/beds',       icon: <BedDouble size={14} /> },
+  { key: 'erArrivals',     opKey: 'erArrivals',     route: '/cmo/emergency',  icon: <AlertTriangle size={14} /> },
+  { key: 'deliveries',     opKey: 'deliveries',     route: '/cmo/mch',        icon: <Baby size={14} /> },
+  { key: 'ambulanceTrips', opKey: 'ambulanceTrips', route: '/cmo/ambulance',  icon: <Ambulance size={14} /> },
+  { key: 'deathsAll',      opKey: 'deathsAll',      route: '/cmo/quality',    icon: <HeartPulse size={14} /> },
 ]
 
 function ageLabel(m: number) {
@@ -53,7 +54,7 @@ function SectionHeader({ title, hindi, action, onAction }: { title: string; hind
       </div>
       {action && (
         <button onClick={onAction}
-          className="flex items-center gap-1 text-[11.5px] font-semibold text-[var(--color-primary)] hover:opacity-80 transition-opacity">
+          className="flex items-center gap-1 text-[11.5px] font-semibold text-[var(--color-accent)] hover:opacity-80 transition-opacity">
           {action} <ArrowRight size={11} />
         </button>
       )}
@@ -62,6 +63,7 @@ function SectionHeader({ title, hindi, action, onAction }: { title: string; hind
 }
 
 export default function CmoHomePage() {
+  const t              = useTranslations('cmo')
   const router         = useRouter()
   const session        = useCmoSessionStore(s => s.session)
   const alerts         = useCmoAlertsStore(s => s.alerts)
@@ -107,16 +109,16 @@ export default function CmoHomePage() {
 
       {/* ── Page header ──────────────────────────────────────── */}
       <CmoPageHeader
-        title={`Namaste, ${session?.name ?? 'Dr. Rajesh Sharma'}`}
-        titleHindi={`नमस्ते, ${session?.nameHindi ?? 'डॉ. राजेश शर्मा'} · ${session?.designation ?? 'CMHO'}`}
-        subtitle={`${session?.facilitiesCount ?? 142} facilities · ${session?.populationLakhs ?? 38.4}L population · Bhopal district`}
+        title={t('home.greeting', { name: session?.name ?? 'Dr. Rajesh Sharma' })}
+        titleHindi={t('home.greetingHindi', { name: session?.nameHindi ?? 'डॉ. राजेश शर्मा', designation: session?.designation ?? 'CMHO' })}
+        subtitle={t('home.subtitle', { facilities: session?.facilitiesCount ?? 142, population: session?.populationLakhs ?? 38.4 })}
         actions={
           <button
             onClick={loadAll}
-            className="flex items-center gap-1.5 text-[12px] font-semibold px-3.5 py-2 rounded-lg border border-[var(--color-border)] text-[var(--color-foreground-muted)] hover:border-[rgba(8,145,178,0.18)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] transition-all duration-150"
+            className="flex items-center gap-1.5 text-[12px] font-semibold px-3.5 py-2 rounded-lg border border-[var(--color-border)] text-[var(--color-foreground-muted)] hover:border-[rgba(238,107,38,0.18)] hover:text-[var(--color-accent)] hover:bg-[var(--color-primary-soft)] transition-all duration-150"
           >
             <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            Refresh
+            {t('common.refresh')}
           </button>
         }
       />
@@ -124,33 +126,33 @@ export default function CmoHomePage() {
       {/* ── Hero KPI row ─────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-4">
         <MetricTile
-          label="District health score"
+          label={t('home.districtHealthScore')}
           value={summary?.districtHealthScore ?? 73}
           delta={summary?.districtHealthScoreDelta ?? 2}
-          hint="↑ from 71 last week"
+          hint={t('home.districtHealthScoreHint')}
           variant="default"
         />
         <MetricTile
-          label="Unacknowledged alerts"
+          label={t('home.unacknowledgedAlerts')}
           value={summary?.criticalAlertsCount ?? criticalCount}
-          hint={`${criticalCount} critical · need action`}
+          hint={t('home.criticalNeedAction', { count: criticalCount })}
           variant="critical"
         />
         <MetricTile
-          label="Pending approvals"
+          label={t('home.pendingApprovals')}
           value={summary?.pendingApprovalsCount ?? pendingCount}
-          hint="indents · transfers · leaves"
+          hint={t('home.pendingApprovalsHint')}
           variant="warning"
         />
       </div>
 
       {/* ── AI 8 AM brief ────────────────────────────────────── */}
       <div
-        className="rounded-2xl border border-[rgba(8,145,178,0.18)] overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%)', boxShadow: 'var(--shadow-card)' }}
+        className="rounded-2xl border border-[rgba(238,107,38,0.18)] overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #F6F9FC 0%, #F6F9FC 100%)', boxShadow: 'var(--shadow-card)' }}
       >
         {/* Header bar */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[rgba(8,145,178,0.18)]/60">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[rgba(238,107,38,0.18)]/60">
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-lg bg-[var(--color-primary)] flex items-center justify-center">
               <Sparkles size={13} className="text-white" />
@@ -158,18 +160,18 @@ export default function CmoHomePage() {
             <div>
               <p className="text-[12.5px] font-bold text-[var(--color-foreground)]"
                  style={{ fontFamily: 'var(--font-heading)' }}>
-                AI सुबह की संक्षिप्ति · 8 AM Brief
+                {t('home.briefTitle')}
               </p>
               <p className="text-[10px] text-[var(--color-foreground-lighter)]">
-                {brief ? new Date(brief.generatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Generating...'} · AI generated
+                {brief ? new Date(brief.generatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : t('home.generating')} · {t('home.aiGenerated')}
               </p>
             </div>
           </div>
           <button
             onClick={() => console.info('[CMO Demo] Play audio brief')}
-            className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-[rgba(8,145,178,0.18)] text-[var(--color-primary)] bg-white hover:bg-[var(--color-primary-soft)] transition-colors"
+            className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-[rgba(238,107,38,0.18)] text-[var(--color-accent)] bg-white hover:bg-[var(--color-primary-soft)] transition-colors"
           >
-            <Volume2 size={11} /> Play audio
+            <Volume2 size={11} /> {t('home.playAudio')}
           </button>
         </div>
 
@@ -177,21 +179,21 @@ export default function CmoHomePage() {
         <div className="px-5 py-4">
           <p className="text-[13.5px] text-[var(--color-foreground)] leading-[1.7]">
             <HindiText>
-              {brief?.bodyText ?? 'कल रात OPD में 4,127 मरीज, IPD में 412 भर्ती, 38 deliveries, 2 maternal deaths under review. Dengue cases wards 14/17/19 में 3.2× baseline — outbreak management में देखें. Hamidia DH में oxygen 4 hrs से कम. 12 doctors AWOL across 4 PHCs. कलेक्टर ब्रीफिंग 10:30 बजे · draft तैयार है.'}
+              {brief?.bodyText ?? t('home.briefBody')}
             </HindiText>
           </p>
 
           {/* Action chips */}
           <div className="flex gap-2 mt-3.5 flex-wrap">
             {(brief?.chips ?? [
-              { label: 'Open Bhopal map', action: 'map' },
-              { label: 'Brief Collector', action: 'brief' },
-              { label: 'View dengue cluster', action: 'surveillance' },
+              { label: t('home.chipOpenMap'), action: 'map' },
+              { label: t('home.chipBriefCollector'), action: 'brief' },
+              { label: t('home.chipViewDengue'), action: 'surveillance' },
             ]).map(chip => (
               <button
                 key={chip.action}
                 onClick={() => chip.action === 'surveillance' ? router.push('/cmo/surveillance') : console.info('[CMO Demo]', chip.action)}
-                className="flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white border border-[rgba(8,145,178,0.18)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white hover:border-[var(--color-primary)] transition-all duration-150"
+                className="flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white border border-[rgba(238,107,38,0.18)] text-[var(--color-accent)] hover:bg-[var(--color-primary)] hover:text-white hover:border-[var(--color-primary)] transition-all duration-150"
               >
                 {chip.label} <ArrowRight size={9} />
               </button>
@@ -209,14 +211,14 @@ export default function CmoHomePage() {
           {/* Critical alerts */}
           <div>
             <SectionHeader
-              title="Critical alerts"
-              action="View all"
+              title={t('home.criticalAlerts')}
+              action={t('home.viewAll')}
               onAction={() => router.push('/cmo/alerts')}
             />
             <div className="space-y-2">
               {criticalAlerts.length === 0 ? (
                 <div className="flex items-center gap-2 px-4 py-4 bg-[var(--color-success-bg)] border border-[border-green-200] rounded-xl text-[12px] text-[#065F46] font-medium">
-                  ✓ No unacknowledged alerts
+                  {t('home.noUnackAlerts')}
                 </div>
               ) : criticalAlerts.map((alert, i) => (
                 <div key={alert.id} style={{ animationDelay: `${i * 40}ms` }} className="cmo-fade-up">
@@ -231,7 +233,7 @@ export default function CmoHomePage() {
                     acknowledged={alert.acknowledged}
                     onAcknowledge={async () => {
                       await acknowledge(alert.id)
-                      toast.success('Alert acknowledged · audit log updated')
+                      toast.success(t('home.alertAcknowledgedAudit'))
                     }}
                     onClick={() => { setDrillAlert(alert); setDrillTab('details') }}
                   />
@@ -243,9 +245,9 @@ export default function CmoHomePage() {
           {/* Facility status */}
           <div>
             <SectionHeader
-              title="Facility status"
-              hindi="शीर्ष 5 सुविधाएं · टैप करें"
-              action="All 142"
+              title={t('home.facilityStatus')}
+              hindi={t('home.facilityStatusHindi')}
+              action={t('home.allFacilities')}
               onAction={() => router.push('/cmo/facilities')}
             />
             <div className="space-y-2">
@@ -253,7 +255,7 @@ export default function CmoHomePage() {
                 <div key={f.id} style={{ animationDelay: `${i * 30}ms` }} className="cmo-fade-up">
                   <FacilityRow
                     name={f.name} type={f.type} block={f.block} status={f.status}
-                    summary={`${f.beds.used}/${f.beds.total} beds · OPD ${f.opdToday}`}
+                    summary={t('home.bedsSummary', { used: f.beds.used, total: f.beds.total, opd: f.opdToday })}
                     alertCount={f.alertsCount}
                     onClick={() => { setDrillFacility(f); setDrillTab('overview') }}
                   />
@@ -268,23 +270,23 @@ export default function CmoHomePage() {
 
           {/* Live operations */}
           <div>
-            <SectionHeader title="Live operations" hindi="आज का लाइव डेटा" />
+            <SectionHeader title={t('home.liveOperations')} hindi={t('home.liveOperationsHindi')} />
             <div className="grid grid-cols-2 gap-2.5">
               {LIVE_OPS.map(tile => (
                 <button
                   key={tile.key}
                   onClick={() => router.push(tile.route)}
-                  className="group flex flex-col gap-1 px-3.5 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-left hover:border-[rgba(8,145,178,0.18)] hover:shadow-[var(--shadow-card-hover)] transition-all duration-150"
+                  className="group flex flex-col gap-1 px-3.5 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-left hover:border-[rgba(238,107,38,0.18)] hover:shadow-[var(--shadow-card-hover)] transition-all duration-150"
                   style={{ boxShadow: 'var(--shadow-card)' }}
                 >
-                  <div className="flex items-center gap-1.5 text-[var(--color-foreground-lighter)] group-hover:text-[var(--color-primary)] transition-colors">
+                  <div className="flex items-center gap-1.5 text-[var(--color-foreground-lighter)] group-hover:text-[var(--color-accent)] transition-colors">
                     {tile.icon}
                   </div>
                   <p className="text-[20px] font-bold text-[var(--color-foreground)] leading-none"
                      style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>
                     {summary?.liveOps[tile.key as keyof typeof summary.liveOps]?.toLocaleString('en-IN') ?? '—'}
                   </p>
-                  <p className="text-[10.5px] font-medium text-[var(--color-foreground-lighter)]">{tile.label}</p>
+                  <p className="text-[10.5px] font-medium text-[var(--color-foreground-lighter)]">{t(`home.ops.${tile.opKey}`)}</p>
                 </button>
               ))}
             </div>
@@ -293,26 +295,26 @@ export default function CmoHomePage() {
           {/* Pending approvals */}
           <div>
             <SectionHeader
-              title="Pending approvals"
-              hindi="हस्ताक्षर की आवश्यकता"
-              action="All"
+              title={t('home.pendingApprovals')}
+              hindi={t('home.pendingApprovalsHindi')}
+              action={t('home.all')}
               onAction={() => router.push('/cmo/approvals')}
             />
             <div className="space-y-2">
               {pendingApprovals.length === 0 ? (
                 <div className="px-4 py-4 bg-[var(--color-success-bg)] border border-[border-green-200] rounded-xl text-[12px] text-[#065F46] font-medium text-center">
-                  ✓ All clear
+                  {t('home.allClear')}
                 </div>
               ) : pendingApprovals.map(apv => (
                 <ApprovalRow
                   key={apv.id}
                   title={apv.title}
                   subtitle={apv.subtitle}
-                  ageLabel={`${apv.ageHours}h ago`}
+                  ageLabel={t('home.opClickToOpen', { hours: apv.ageHours })}
                   status={apv.status}
                   onOpen={() => { setDrillApproval(apv); setDrillTab('details') }}
-                  onApprove={async () => { await approve(apv.id); toast.success('Approved · audit log updated') }}
-                  onReject={async (r) => { await reject(apv.id, r); toast.success('Rejected · audit log updated') }}
+                  onApprove={async () => { await approve(apv.id); toast.success(t('home.approvedAudit')) }}
+                  onReject={async (r) => { await reject(apv.id, r); toast.success(t('home.rejectedAudit')) }}
                 />
               ))}
             </div>
@@ -325,10 +327,10 @@ export default function CmoHomePage() {
         open={!!drillAlert} onClose={() => setDrillAlert(null)}
         title={drillAlert?.title ?? ''} subtitle={`${drillAlert?.facility} · ${drillAlert?.source}`}
         tabs={[
-          { id: 'details', label: 'Details' },
-          { id: 'timeline', label: 'Timeline' },
-          { id: 'actions', label: 'Actions' },
-          { id: 'audit', label: 'Audit' },
+          { id: 'details', label: t('common.details') },
+          { id: 'timeline', label: t('common.timeline') },
+          { id: 'actions', label: t('common.actions') },
+          { id: 'audit', label: t('common.audit') },
         ]}
         activeTab={drillTab} onTabChange={setDrillTab}
         footer={
@@ -336,16 +338,16 @@ export default function CmoHomePage() {
             {drillAlert && !drillAlert.acknowledged && (
               <button onClick={async () => {
                 await acknowledge(drillAlert.id)
-                toast.success('Alert acknowledged')
+                toast.success(t('home.acknowledgedShort'))
                 setDrillAlert(null)
               }}
                 className="flex-1 text-[12.5px] font-semibold py-2.5 rounded-xl bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity">
-                Acknowledge
+                {t('common.acknowledge')}
               </button>
             )}
-            <button onClick={() => { console.info('[CMO Demo] Escalate to state'); toast.success('Escalated to State PMU') }}
+            <button onClick={() => { console.info('[CMO Demo] Escalate to state'); toast.success(t('home.escalatedToState')) }}
               className="text-[12.5px] font-semibold px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-[var(--color-foreground-muted)] hover:bg-slate-50 transition-colors">
-              Escalate to State
+              {t('common.escalateToState')}
             </button>
           </>
         }
@@ -354,12 +356,12 @@ export default function CmoHomePage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2 text-[12.5px]">
               {[
-                ['Severity', <span className="capitalize font-semibold">{drillAlert.severity}</span>],
-                ['Source',   <span className="capitalize font-semibold">{drillAlert.source}</span>],
-                ['Facility', <span className="font-semibold">{drillAlert.facility}</span>],
-                ['Age',      <span className="font-semibold">{ageLabel(drillAlert.ageMinutes)}</span>],
-                ['Status',   <span className="font-semibold">{drillAlert.acknowledged ? '✓ Acknowledged' : 'Open'}</span>],
-                ['Owner',    <span className="font-semibold">{drillAlert.owner?.name ?? 'Unassigned'}</span>],
+                [t('common.severity'), <span className="capitalize font-semibold">{drillAlert.severity}</span>],
+                [t('common.source'),   <span className="capitalize font-semibold">{drillAlert.source}</span>],
+                [t('common.facility'), <span className="font-semibold">{drillAlert.facility}</span>],
+                [t('common.age'),      <span className="font-semibold">{ageLabel(drillAlert.ageMinutes)}</span>],
+                [t('common.status'),   <span className="font-semibold">{drillAlert.acknowledged ? `✓ ${t('common.acknowledged')}` : t('common.open')}</span>],
+                [t('common.owner'),    <span className="font-semibold">{drillAlert.owner?.name ?? t('common.unassigned')}</span>],
               ].map(([k, v]) => (
                 <div key={String(k)} className="bg-[var(--color-surface-raised)] rounded-lg px-3 py-2.5">
                   <p className="text-[10px] text-[var(--color-foreground-lighter)] font-medium uppercase tracking-wide mb-0.5">{k}</p>
@@ -377,7 +379,7 @@ export default function CmoHomePage() {
             {drillAlert.timeline.map((entry, i) => (
               <div key={i} className="flex gap-3">
                 <div className="flex flex-col items-center">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-primary)] border-2 border-white ring-1 ring-[rgba(8,145,178,0.18)] flex-shrink-0 mt-1" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-primary)] border-2 border-white ring-1 ring-[rgba(238,107,38,0.18)] flex-shrink-0 mt-1" />
                   {i < drillAlert.timeline.length - 1 && <span className="w-px flex-1 bg-[var(--color-border)] my-1" />}
                 </div>
                 <div className="pb-4 min-w-0">
@@ -392,12 +394,12 @@ export default function CmoHomePage() {
         )}
         {drillTab === 'actions' && drillAlert && (
           <div className="space-y-2">
-            <p className="text-[11px] font-semibold text-[var(--color-foreground-lighter)] uppercase tracking-wider mb-3">Recommended actions</p>
+            <p className="text-[11px] font-semibold text-[var(--color-foreground-lighter)] uppercase tracking-wider mb-3">{t('common.recommendedActions')}</p>
             {drillAlert.recommendedActions.map((action, i) => (
               <button key={i}
-                onClick={() => { console.info('[CMO Demo] Action:', action); toast.success('Action initiated') }}
-                className="w-full text-left flex items-start gap-3 text-[12.5px] font-medium px-4 py-3 rounded-xl border border-[rgba(8,145,178,0.18)] bg-[var(--color-primary-soft)] text-[#1E40AF] hover:bg-blue-100/70 transition-colors">
-                <span className="text-[var(--color-primary)] font-bold flex-shrink-0">{i + 1}.</span>
+                onClick={() => { console.info('[CMO Demo] Action:', action); toast.success(t('common.actionInitiated')) }}
+                className="w-full text-left flex items-start gap-3 text-[12.5px] font-medium px-4 py-3 rounded-xl border border-[rgba(238,107,38,0.18)] bg-[var(--color-primary-soft)] text-[#0D2032] hover:bg-surface-sunken transition-colors">
+                <span className="text-[var(--color-accent)] font-bold flex-shrink-0">{i + 1}.</span>
                 {action}
               </button>
             ))}
@@ -420,17 +422,17 @@ export default function CmoHomePage() {
       <DrillCard
         open={!!drillFacility} onClose={() => setDrillFacility(null)}
         title={drillFacility?.name ?? ''} subtitle={`${drillFacility?.type} · ${drillFacility?.block}`}
-        tabs={[{ id: 'overview', label: 'Overview' }, { id: 'beds', label: 'Beds' }, { id: 'stock', label: 'Stock' }, { id: 'staff', label: 'Staff' }]}
+        tabs={[{ id: 'overview', label: t('common.overview') }, { id: 'beds', label: t('common.beds') }, { id: 'stock', label: t('common.stock') }, { id: 'staff', label: t('common.staff') }]}
         activeTab={drillTab} onTabChange={setDrillTab}
         footer={
           <>
             <button onClick={() => router.push('/cmo/facilities')}
               className="flex-1 text-[12.5px] font-semibold py-2.5 rounded-xl bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity">
-              Open in live ops
+              {t('home.openInLiveOps')}
             </button>
             <button onClick={() => router.push('/cmo/field-visits')}
               className="text-[12.5px] font-semibold px-4 py-2.5 rounded-xl border border-[var(--color-border)] hover:bg-slate-50 transition-colors">
-              Schedule visit
+              {t('home.scheduleVisit')}
             </button>
           </>
         }
@@ -438,17 +440,17 @@ export default function CmoHomePage() {
         {drillFacility && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <MetricTile label="Beds occupied" value={`${drillFacility.beds.used}/${drillFacility.beds.total}`} />
-              <MetricTile label="OPD today" value={drillFacility.opdToday} />
-              <MetricTile label="IPD census" value={drillFacility.ipdCensusToday} />
-              <MetricTile label="Active alerts" value={drillFacility.alertsCount} variant={drillFacility.alertsCount > 0 ? 'critical' : 'success'} />
+              <MetricTile label={t('home.bedsOccupied')} value={`${drillFacility.beds.used}/${drillFacility.beds.total}`} />
+              <MetricTile label={t('home.opdToday')} value={drillFacility.opdToday} />
+              <MetricTile label={t('home.ipdCensus')} value={drillFacility.ipdCensusToday} />
+              <MetricTile label={t('home.activeAlerts')} value={drillFacility.alertsCount} variant={drillFacility.alertsCount > 0 ? 'critical' : 'success'} />
             </div>
             <div className="bg-[var(--color-surface-raised)] rounded-xl px-4 py-3 space-y-2 text-[12.5px]">
               {[
-                ['Staff count', drillFacility.staffCount],
-                ['NQAS score', drillFacility.nqasScore ?? 'N/A'],
-                ['Last visited', drillFacility.lastVisited ?? 'Not on record'],
-                ['Population', drillFacility.population.toLocaleString('en-IN')],
+                [t('home.staffCount'), drillFacility.staffCount],
+                [t('home.nqasScore'), drillFacility.nqasScore ?? t('common.notApplicable')],
+                [t('home.lastVisited'), drillFacility.lastVisited ?? t('common.notOnRecord')],
+                [t('home.population'), drillFacility.population.toLocaleString('en-IN')],
               ].map(([k, v]) => (
                 <div key={String(k)} className="flex justify-between">
                   <span className="text-[var(--color-foreground-lighter)]">{k}</span>
@@ -467,14 +469,14 @@ export default function CmoHomePage() {
         footer={
           <>
             <button onClick={async () => {
-              if (drillApproval) { await approve(drillApproval.id); toast.success('Approved · audit log updated'); setDrillApproval(null) }
+              if (drillApproval) { await approve(drillApproval.id); toast.success(t('home.approvedAudit')); setDrillApproval(null) }
             }}
               className="flex-1 text-[12.5px] font-semibold py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
-              स्वीकार करें · Approve
+              {t('home.approveHindi')}
             </button>
             <button onClick={() => setDrillApproval(null)}
               className="text-[12.5px] font-semibold px-4 py-2.5 rounded-xl border border-[var(--color-border)] hover:bg-slate-50 transition-colors">
-              Cancel
+              {t('common.cancel')}
             </button>
           </>
         }
@@ -483,10 +485,10 @@ export default function CmoHomePage() {
           <div className="space-y-4 text-[12.5px]">
             <div className="bg-[var(--color-surface-raised)] rounded-xl px-4 py-3 space-y-2">
               {[
-                ['Type',      drillApproval.type],
-                ['Raised by', drillApproval.raisedBy],
-                ['Role',      drillApproval.raisedByRole],
-                ...(drillApproval.amount ? [['Amount', `₹${drillApproval.amount.toLocaleString('en-IN')}`]] : []),
+                [t('common.type'),      drillApproval.type],
+                [t('common.raisedBy'), drillApproval.raisedBy],
+                [t('common.role'),      drillApproval.raisedByRole],
+                ...(drillApproval.amount ? [[t('common.amount'), `₹${drillApproval.amount.toLocaleString('en-IN')}`]] : []),
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between">
                   <span className="text-[var(--color-foreground-lighter)]">{k}</span>
@@ -495,14 +497,14 @@ export default function CmoHomePage() {
               ))}
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-[var(--color-foreground-lighter)] uppercase tracking-wide mb-2">Justification</p>
+              <p className="text-[11px] font-semibold text-[var(--color-foreground-lighter)] uppercase tracking-wide mb-2">{t('common.justification')}</p>
               <p className="text-[var(--color-foreground-muted)] leading-relaxed">{drillApproval.justification}</p>
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-[var(--color-foreground-lighter)] uppercase tracking-wide mb-2">Documents</p>
+              <p className="text-[11px] font-semibold text-[var(--color-foreground-lighter)] uppercase tracking-wide mb-2">{t('common.documents')}</p>
               <div className="space-y-1.5">
                 {drillApproval.documents.map(doc => (
-                  <div key={doc.name} className="flex items-center gap-2 text-[var(--color-primary)] cursor-pointer hover:opacity-80">
+                  <div key={doc.name} className="flex items-center gap-2 text-[var(--color-accent)] cursor-pointer hover:opacity-80">
                     <span className="text-[11px]">📄</span>
                     <span className="text-[12px] font-medium underline underline-offset-2">{doc.name}</span>
                   </div>

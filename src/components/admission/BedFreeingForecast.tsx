@@ -37,8 +37,8 @@ interface BedPrediction {
 
 const WINDOW_BUCKETS: { key: Window; max: EtaHrs; label: string; tint: string }[] = [
   { key: 'now',  max: 0.5, label: 'Now / overdue', tint: 'border-emerald-300 bg-emerald-50 text-emerald-700' },
-  { key: '2h',   max: 2,   label: 'Next 2h',        tint: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]' },
-  { key: '4h',   max: 4,   label: '2-4h',           tint: 'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]' },
+  { key: '2h',   max: 2,   label: 'Next 2h',        tint: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]' },
+  { key: '4h',   max: 4,   label: '2-4h',           tint: 'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]' },
   { key: '8h',   max: 8,   label: '4-8h',           tint: 'border-amber-200 bg-amber-50 text-amber-700' },
   { key: '24h',  max: 24,  label: '8-24h',          tint: 'border-slate-200 bg-slate-50 text-slate-600' },
 ]
@@ -161,14 +161,14 @@ export function BedFreeingForecast() {
   const totalNext24h = predictions.length
 
   return (
-    <div className="rounded-xl bg-white border border-[rgba(8,145,178,0.20)] overflow-hidden"
-      style={{ background: "linear-gradient(135deg,rgba(8,145,178,0.04),rgba(14,159,110,0.03))" }}>
-      <div className="px-4 py-3 border-b border-[rgba(8,145,178,0.15)] flex items-center justify-between flex-wrap gap-2">
+    <div className="rounded-xl bg-white border border-[rgba(238,107,38,0.20)] overflow-hidden"
+      style={{ background: "var(--color-surface-sunken)" }}>
+      <div className="px-4 py-3 border-b border-[rgba(238,107,38,0.15)] flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />AI bed-freeing forecast
+          <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />AI bed-freeing forecast
         </h2>
         <p className="text-[11px] text-slate-500">
-          <b className="text-[var(--color-primary)]">{totalNext4h}</b> beds expected free in next 4h ·
+          <b className="text-[var(--color-accent)]">{totalNext4h}</b> beds expected free in next 4h ·
           {' '}<b className="text-slate-700">{totalNext24h}</b> in next 24h
         </p>
       </div>

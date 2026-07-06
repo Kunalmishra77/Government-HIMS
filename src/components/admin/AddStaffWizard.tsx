@@ -253,7 +253,7 @@ export function AddStaffWizard({ open, onClose, onCreated }: AddStaffWizardProps
               <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <User className="h-5 w-5 text-[var(--color-primary)]" />Add Staff Member
+                    <User className="h-5 w-5 text-[var(--color-accent)]" />Add Staff Member
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">Step {step} of 3 · {step === 1 ? 'Identity' : step === 2 ? 'Role-specific fields' : 'Access & permissions'}</p>
                 </div>
@@ -451,15 +451,15 @@ export function AddStaffWizard({ open, onClose, onCreated }: AddStaffWizardProps
 
                 {step === 3 && (
                   <>
-                    <div className="rounded-xl border border-cyan-200 bg-[rgba(8,145,178,0.07)]/30 p-4">
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)] mb-2">Login & access</p>
+                    <div className="rounded-xl border border-primary/20 bg-[rgba(238,107,38,0.07)]/30 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-accent)] mb-2">Login & access</p>
                       <Field label="Login ID" icon={Shield} required>
                         <div className="flex items-center gap-2">
                           <input value={access.loginId} onChange={(e) => setAccess({ ...access, loginId: e.target.value })}
                             className={INPUT} />
                           <button type="button"
                             onClick={() => setAccess({ ...access, loginId: suggestLoginId() })}
-                            className="text-[11px] font-bold text-[var(--color-primary)] hover:underline cursor-pointer whitespace-nowrap">Suggest</button>
+                            className="text-[11px] font-bold text-[var(--color-accent)] hover:underline cursor-pointer whitespace-nowrap">Suggest</button>
                         </div>
                       </Field>
                       <label className="flex items-center gap-2 mt-3 cursor-pointer">
@@ -532,7 +532,7 @@ export function AddStaffWizard({ open, onClose, onCreated }: AddStaffWizardProps
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────
-const INPUT = 'w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400'
+const INPUT = 'w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary'
 
 function Field({ label, icon: Icon, required, children }: { label: string; icon: React.ElementType; required?: boolean; children: React.ReactNode }) {
   return (

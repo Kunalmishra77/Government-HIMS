@@ -1,6 +1,8 @@
 "use client"
 
 import { use, useEffect, useRef, useState } from "react"
+import { useTranslations } from "next-intl"
+import { LocaleToggle } from "@/components/ui/LocaleToggle"
 import { useConsentStore } from "@/store/useConsentStore"
 import { useInpatientStore } from "@/store/useInpatientStore"
 import { useNotificationStore } from "@/store/useNotificationStore"
@@ -45,22 +47,23 @@ function StepDots({ step, total }: { step: number; total: number }) {
 
 // ── Error screen ──────────────────────────────────────────────────────────────
 function ConsentErrorScreen({ reason }: { reason: string }) {
-  const messages: Record<string, { title: string; body: string }> = {
-    expired:      { title: 'Link Expired', body: 'This consent link has expired. Please ask the doctor to send a new link.' },
-    invalid:      { title: 'Invalid Link', body: 'This consent link is invalid or has already been used. Please contact the hospital.' },
-    already_signed: { title: 'Already Signed', body: 'Consent has already been submitted for this procedure. No further action is needed.' },
-    missing:      { title: 'Link Not Found', body: 'This consent link could not be found. Please ask the doctor to resend it.' },
+  const t = useTranslations('consent')
+  const keyMap: Record<string, { title: string; body: string }> = {
+    expired:        { title: 'expiredTitle', body: 'expiredBody' },
+    invalid:        { title: 'invalidTitle', body: 'invalidBody' },
+    already_signed: { title: 'alreadySignedTitle', body: 'alreadySignedBody' },
+    missing:        { title: 'missingTitle', body: 'missingBody' },
   }
-  const msg = messages[reason] ?? messages.invalid
+  const keys = keyMap[reason] ?? keyMap.invalid
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="max-w-sm w-full text-center">
         <div className="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200">
           <AlertTriangle className="h-8 w-8 text-red-500" />
         </div>
-        <h1 className="text-xl font-bold text-slate-800 mb-2">{msg.title}</h1>
-        <p className="text-slate-500 text-sm leading-relaxed">{msg.body}</p>
-        <p className="mt-6 text-xs text-slate-400">Agentix HIMS · Secure Consent Portal</p>
+        <h1 className="text-xl font-bold text-slate-800 mb-2">{t(`error.${keys.title}`)}</h1>
+        <p className="text-slate-500 text-sm leading-relaxed">{t(`error.${keys.body}`)}</p>
+        <p className="mt-6 text-xs text-slate-400">{t('brandName')} · {t('portalTagline')}</p>
       </div>
     </div>
   )
@@ -110,8 +113,8 @@ function OtpInput({ onComplete }: { onComplete: (otp: string) => void }) {
           onKeyDown={e => handleKey(i, e)}
           className={cn(
             "w-11 h-14 text-center text-xl font-bold rounded-xl border-2 outline-none transition-colors",
-            d ? "border-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] text-[var(--color-primary-dark)]" : "border-slate-200 bg-white text-slate-900",
-            "focus:border-[var(--color-primary)] focus:bg-[rgba(8,145,178,0.07)]",
+            d ? "border-[var(--color-primary)] bg-[rgba(238,107,38,0.07)] text-[var(--color-primary-dark)]" : "border-slate-200 bg-white text-slate-900",
+            "focus:border-[var(--color-primary)] focus:bg-[rgba(238,107,38,0.07)]",
           )}
           autoFocus={i === 0}
         />
@@ -143,6 +146,7 @@ function ConsentSection({ title, items, icon }: { title: string; items: string[]
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ConsentPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params)
+  const t = useTranslations('consent')
   const hydrated = useHydrated()
 
   const getByToken   = useConsentStore(s => s.getByToken)
@@ -179,11 +183,11 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
     markViewed(record.id)
     auditLog({
       userId: 'public_consent',
-      userName: record.nok.name || 'Next of Kin',
+      userName: record.nok.name || t('audit.nokFallback'),
       action: 'consent_viewed',
       resource: 'consent',
       resourceId: record.id,
-      detail: `Consent link opened for ${record.procedureName} · patient ${record.patientName}`,
+      detail: t('audit.viewedDetail', { procedure: record.procedureName, patient: record.patientName }),
     })
     setStep(1)
   }, [hydrated]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -215,8 +219,8 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
     addNotif({
       type: 'consent_signed',
       priority: 'high',
-      title: `Consent received · ${record.patientName}`,
-      body: `${record.nok.name} (${record.nok.relationship}) has signed consent for ${record.procedureName}. Procedure may now proceed.`,
+      title: t('notify.title', { patient: record.patientName }),
+      body: t('notify.body', { name: record.nok.name, relationship: record.nok.relationship, procedure: record.procedureName }),
       targetRole: 'doctor',
       patientName: record.patientName,
       channels: ['in_app'],
@@ -229,7 +233,7 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
       action: 'consent_signed',
       resource: 'consent',
       resourceId: record.id,
-      detail: `Digital consent signed for ${record.procedureName} by ${record.nok.name} (${record.nok.relationship})`,
+      detail: t('audit.signedDetail', { procedure: record.procedureName, name: record.nok.name, relationship: record.nok.relationship }),
     })
 
     setSubmitting(false)
@@ -240,7 +244,7 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
   if (!hydrated || step === 0) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-[var(--color-primary)] animate-spin" />
+        <Loader2 className="h-8 w-8 text-[var(--color-accent)] animate-spin" />
       </div>
     )
   }
@@ -256,7 +260,7 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
       <div className="bg-[var(--color-primary)] px-4 py-2.5 text-center">
         <p className="text-xs text-[rgba(255,255,255,0.75)] flex items-center justify-center gap-1.5">
           <Lock className="h-3 w-3" />
-          Secure Digital Consent Portal · Agentix HIMS
+          {t('secureBanner')}
         </p>
       </div>
 
@@ -267,8 +271,11 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
             <Hospital className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="font-bold text-slate-900 text-sm">Agentix HIMS</p>
-            <p className="text-xs text-slate-500">Digital Consent Form</p>
+            <p className="font-bold text-slate-900 text-sm">{t('brandName')}</p>
+            <p className="text-xs text-slate-500">{t('brandSubtitle')}</p>
+          </div>
+          <div className="ml-auto">
+            <LocaleToggle />
           </div>
         </div>
 
@@ -281,25 +288,25 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
                 <div className="h-14 w-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-amber-200">
                   <FileText className="h-7 w-7 text-amber-600" />
                 </div>
-                <h1 className="text-xl font-bold text-slate-900">Consent Required</h1>
-                <p className="text-sm text-slate-500 mt-1">Your signature is needed to proceed</p>
+                <h1 className="text-xl font-bold text-slate-900">{t('info.title')}</h1>
+                <p className="text-sm text-slate-500 mt-1">{t('info.subtitle')}</p>
               </div>
 
               <div className="bg-slate-50 rounded-xl p-4 space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500 font-semibold">Patient</span>
+                  <span className="text-slate-500 font-semibold">{t('info.patient')}</span>
                   <span className="font-bold text-slate-800">{record.patientName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 font-semibold">Procedure</span>
+                  <span className="text-slate-500 font-semibold">{t('info.procedure')}</span>
                   <span className="font-bold text-slate-800 text-right max-w-[55%]">{record.procedureName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 font-semibold">Doctor</span>
+                  <span className="text-slate-500 font-semibold">{t('info.doctor')}</span>
                   <span className="font-bold text-slate-800">{record.requestedBy}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-semibold">Expires</span>
+                  <span className="text-slate-500 font-semibold">{t('info.expires')}</span>
                   <span className="flex items-center gap-1 text-amber-700 font-semibold">
                     <Clock className="h-3.5 w-3.5" />
                     {new Date(record.expiresAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
@@ -307,15 +314,15 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500 leading-relaxed bg-[rgba(8,145,178,0.07)] rounded-xl p-3 border border-[rgba(8,145,178,0.15)]">
-                You are being asked to provide consent as the next-of-kin / legal guardian of the above patient. Please read the consent form carefully before signing.
+              <p className="text-xs text-slate-500 leading-relaxed bg-[rgba(238,107,38,0.07)] rounded-xl p-3 border border-[rgba(238,107,38,0.15)]">
+                {t('info.guardianNote')}
               </p>
 
               <button
                 onClick={() => setStep(2)}
                 className="w-full h-12 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] active:scale-[0.98] text-white font-bold flex items-center justify-center gap-2 transition-all"
               >
-                Continue to Verify <ChevronRight className="h-4 w-4" />
+                {t('info.continueButton')} <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -327,12 +334,12 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
             <StepDots step={1} total={3} />
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
               <div className="text-center">
-                <div className="h-14 w-14 bg-[rgba(8,145,178,0.07)] rounded-full flex items-center justify-center mx-auto mb-3 border border-[rgba(8,145,178,0.20)]">
-                  <Shield className="h-7 w-7 text-[var(--color-primary)]" />
+                <div className="h-14 w-14 bg-[rgba(238,107,38,0.07)] rounded-full flex items-center justify-center mx-auto mb-3 border border-[rgba(238,107,38,0.20)]">
+                  <Shield className="h-7 w-7 text-[var(--color-accent)]" />
                 </div>
-                <h2 className="text-xl font-bold text-slate-900">Verify Identity</h2>
+                <h2 className="text-xl font-bold text-slate-900">{t('otp.title')}</h2>
                 <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                  Enter the 6-digit code provided by the treating doctor
+                  {t('otp.subtitle')}
                 </p>
               </div>
 
@@ -341,12 +348,12 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
               {otpError && (
                 <div className="flex items-center gap-2 bg-red-50 text-red-700 rounded-xl px-4 py-3 text-sm font-semibold border border-red-200">
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                  Incorrect code. Please check with the doctor and try again.
+                  {t('otp.error')}
                 </div>
               )}
 
               <p className="text-center text-xs text-slate-400">
-                This code was shared with your doctor when they sent the consent link.
+                {t('otp.hint')}
               </p>
             </div>
           </div>
@@ -359,10 +366,10 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/60">
                 <h2 className="font-bold text-slate-900 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-[var(--color-primary)]" />
-                  Consent for {record.procedureName}
+                  <FileText className="h-4 w-4 text-[var(--color-accent)]" />
+                  {t('form.heading', { procedure: record.procedureName })}
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">Please read all sections before signing</p>
+                <p className="text-xs text-slate-500 mt-0.5">{t('form.readAll')}</p>
               </div>
 
               <div className="px-6 py-5 max-h-[55vh] overflow-y-auto">
@@ -372,40 +379,40 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
                       <div key={i} className={cn("h-3 bg-slate-100 rounded-full animate-pulse", i % 3 === 2 ? "w-3/4" : "w-full")} />
                     ))}
                     <p className="text-xs text-center text-slate-400 pt-2 flex items-center justify-center gap-1.5">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Generating consent form…
+                      <Loader2 className="h-3 w-3 animate-spin" /> {t('form.generating')}
                     </p>
                   </div>
                 ) : consentContent && (
                   <div className="text-sm">
-                    <div className="mb-5 p-4 bg-[rgba(8,145,178,0.07)] rounded-xl border border-[rgba(8,145,178,0.15)]">
-                      <h3 className="font-bold text-[var(--color-primary-dark)] text-sm mb-1.5">Procedure Overview</h3>
+                    <div className="mb-5 p-4 bg-[rgba(238,107,38,0.07)] rounded-xl border border-[rgba(238,107,38,0.15)]">
+                      <h3 className="font-bold text-[var(--color-primary-dark)] text-sm mb-1.5">{t('form.procedureOverview')}</h3>
                       <p className="text-[var(--color-primary-dark)] leading-relaxed text-xs">{consentContent.procedureOverview}</p>
                     </div>
 
                     <ConsentSection
-                      title="Risks"
+                      title={t('form.risks')}
                       items={consentContent.risks}
                       icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
                     />
                     <ConsentSection
-                      title="Benefits"
+                      title={t('form.benefits')}
                       items={consentContent.benefits}
                       icon={<CheckCircle className="h-4 w-4 text-emerald-500" />}
                     />
                     <ConsentSection
-                      title="Alternatives"
+                      title={t('form.alternatives')}
                       items={consentContent.alternatives}
                       icon={<ChevronRight className="h-4 w-4 text-slate-400" />}
                     />
                     <ConsentSection
-                      title="Your Rights as a Patient"
+                      title={t('form.patientRights')}
                       items={consentContent.patientRights}
-                      icon={<Shield className="h-4 w-4 text-[var(--color-primary)]" />}
+                      icon={<Shield className="h-4 w-4 text-[var(--color-accent)]" />}
                     />
 
                     <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
                       <h3 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-1.5">
-                        <PenLine className="h-4 w-4 text-slate-600" /> Declaration
+                        <PenLine className="h-4 w-4 text-slate-600" /> {t('form.declaration')}
                       </h3>
                       <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{consentContent.declarationText}</p>
                     </div>
@@ -425,7 +432,7 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
                       className="mt-0.5 h-4 w-4 rounded accent-blue-600 cursor-pointer flex-shrink-0"
                     />
                     <span className="text-xs text-slate-600 leading-relaxed">
-                      I have read and understood the consent form above, and I give my informed consent for this procedure.
+                      {t('form.declarationCheckbox')}
                     </span>
                   </label>
 
@@ -437,7 +444,7 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
                   />
 
                   {!declared && (
-                    <p className="text-[11px] text-slate-400 text-center">Check the declaration above to enable signing</p>
+                    <p className="text-[11px] text-slate-400 text-center">{t('form.checkToEnable')}</p>
                   )}
 
                   <button
@@ -446,7 +453,7 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
                     className="w-full h-12 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] active:scale-[0.98] text-white font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                    {submitting ? 'Submitting…' : 'Submit Consent'}
+                    {submitting ? t('form.submitting') : t('form.submit')}
                   </button>
                 </div>
               )}
@@ -460,27 +467,30 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
             <div className="h-20 w-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5 border-2 border-emerald-200 shadow-sm">
               <CheckCircle className="h-10 w-10 text-emerald-500" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Consent Submitted</h1>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">{t('done.title')}</h1>
             <p className="text-slate-500 text-sm leading-relaxed max-w-xs mx-auto mb-6">
-              Thank you, {record.nok.name}. Your consent for <strong>{record.procedureName}</strong> has been
-              received and the medical team has been notified.
+              {t.rich('done.thankYou', {
+                name: record.nok.name,
+                procedure: record.procedureName,
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </p>
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 text-left text-sm space-y-3 mb-6">
               <div className="flex justify-between">
-                <span className="text-slate-500">Patient</span>
+                <span className="text-slate-500">{t('done.patient')}</span>
                 <span className="font-bold text-slate-800">{record.patientName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Signed by</span>
+                <span className="text-slate-500">{t('done.signedBy')}</span>
                 <span className="font-bold text-slate-800">{record.nok.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Relationship</span>
+                <span className="text-slate-500">{t('done.relationship')}</span>
                 <span className="font-bold text-slate-800">{record.nok.relationship}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Time</span>
+                <span className="text-slate-500">{t('done.time')}</span>
                 <span className="font-bold text-slate-800">{new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
@@ -488,14 +498,14 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
             {/* Signature thumbnail */}
             {sig && (
               <div className="bg-white rounded-xl border border-slate-200 p-3 mb-5 inline-block">
-                <p className="text-xs text-slate-400 mb-1 text-center">Your signature</p>
+                <p className="text-xs text-slate-400 mb-1 text-center">{t('done.yourSignature')}</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={sig} alt="Signature" className="h-12 w-auto mx-auto" />
+                <img src={sig} alt={t('done.signatureAlt')} className="h-12 w-auto mx-auto" />
               </div>
             )}
 
-            <p className="text-xs text-slate-400">You may safely close this window.</p>
-            <p className="mt-4 text-xs text-slate-300">Agentix HIMS · Secure Consent Portal</p>
+            <p className="text-xs text-slate-400">{t('done.closeWindow')}</p>
+            <p className="mt-4 text-xs text-slate-300">{t('brandName')} · {t('portalTagline')}</p>
           </div>
         )}
       </div>

@@ -1,0 +1,89 @@
+{
+  "dashboard": {
+    "title": "एम्बुलेंस डैशबोर्ड",
+    "subtitle": "फ्लीट मैनेजमेंट, डिस्पैच और ट्रिप ट्रैकिंग",
+    "available": "उपलब्ध",
+    "onTrip": "ट्रिप पर",
+    "maintenance": "मेंटेनेंस",
+    "activeTrips": "एक्टिव ट्रिप्स",
+    "fleetStatus": "फ्लीट स्टेटस",
+    "driver": "ड्राइवर: {name}",
+    "noActiveTripsTitle": "कोई एक्टिव ट्रिप नहीं",
+    "noActiveTripsDesc": "सभी गाड़ियां उपलब्ध हैं या स्टैंडबाय पर हैं",
+    "chiefComplaint": "मुख्य शिकायत: {complaint}"
+  },
+  "dispatch": {
+    "title": "डिस्पैच कंसोल",
+    "activeTrips": "एक्टिव ट्रिप्स ({count})",
+    "noActiveTrips": "अभी कोई एक्टिव ट्रिप नहीं है।",
+    "stageProgress": "{total} में से {current}",
+    "advanceTo": "→ {stage}",
+    "fleet": "फ्लीट",
+    "logFuel": "फ्यूल लॉग करें",
+    "newDispatch": "नया डिस्पैच",
+    "selectVehicle": "गाड़ी चुनें *",
+    "chooseVehicle": "— उपलब्ध गाड़ी चुनें —",
+    "pickupLocation": "पिकअप लोकेशन *",
+    "pickupPlaceholder": "स्ट्रीट का पता",
+    "destination": "डेस्टिनेशन *",
+    "destinationPlaceholder": "हॉस्पिटल / फैसिलिटी",
+    "chiefComplaint": "मुख्य शिकायत",
+    "complaintPlaceholder": "जैसे सीने में दर्द, RTA, बेहोशी",
+    "callerName": "कॉलर का नाम",
+    "callerPhone": "कॉलर का फोन",
+    "dispatchNow": "अभी डिस्पैच करें",
+    "fuelModalTitle": "फ्यूल लॉग करें · {vehicle}",
+    "close": "बंद करें",
+    "newFuelLevel": "नया फ्यूल लेवल (%)",
+    "cancel": "कैंसल करें",
+    "save": "सेव करें",
+    "toast": {
+      "fuelSaved": "{vehicle} का फ्यूल {pct}% पर",
+      "dispatchRequired": "गाड़ी + पिकअप + डेस्टिनेशन जरूरी है",
+      "dispatched": "डिस्पैच हो गया · {driver} + ER को सूचना दी गई",
+      "driverFallback": "ड्राइवर",
+      "tripClosed": "ट्रिप क्लोज़ · {vehicle} अब उपलब्ध है",
+      "stageAdvanced": "{vehicle} → {stage}"
+    },
+    "notify": {
+      "fuelTitle": "फ्यूल लॉग हुआ · {vehicle}",
+      "fuelBody": "{vehicle} के लिए फ्यूल {pct}% तक भरा गया।",
+      "dispatchTitle": "डिस्पैच · {vehicle}",
+      "dispatchBody": "{driver} को {pickup} → {destination}{complaint} भेजा गया। कॉलर: {caller} {phone}।",
+      "callerUnknown": "अज्ञात",
+      "tripClosedTitle": "ट्रिप क्लोज़ · {vehicle}",
+      "tripClosedBody": "{vehicle} वापस आ गई। {pickup} → {destination}।"
+    }
+  },
+  "log": {
+    "title": "ट्रिप लॉग",
+    "subtitle": "लाइव डिस्पैच कंसोल · रिस्पॉन्स-टाइम ट्रैकिंग · NABH COP एविडेंस",
+    "tabActive": "एक्टिव",
+    "tabHistory": "हिस्ट्री",
+    "noTrips": "इस व्यू में कोई ट्रिप नहीं",
+    "dispatchedAt": "डिस्पैच हुआ {time} ({mins} मिनट पहले)",
+    "callerPrefix": "कॉलर:",
+    "responseTime": "रिस्पॉन्स टाइम: {mins} मिनट",
+    "completedAt": "पूरा हुआ {time}",
+    "advanceTo": "{stage} पर आगे बढ़ाएं",
+    "footer": "डिस्पैच और कंप्लीशन पर रिस्पॉन्स टाइम एविडेंस के साथ NABH COP ऑडिट इवेंट फायर होते हैं।"
+  },
+  "status": {
+    "available": "उपलब्ध",
+    "on_trip": "ट्रिप पर",
+    "maintenance": "मेंटेनेंस",
+    "out_of_service": "सेवा में नहीं",
+    "dispatched": "डिस्पैच हुआ",
+    "en_route": "रास्ते में",
+    "at_scene": "मौके पर",
+    "transporting": "ट्रांसपोर्ट हो रहा",
+    "completed": "पूरा हुआ",
+    "cancelled": "कैंसल"
+  },
+  "tripType": {
+    "emergency": "इमरजेंसी",
+    "transfer": "ट्रांसफर",
+    "discharge": "डिस्चार्ज",
+    "routine": "रूटीन"
+  }
+}

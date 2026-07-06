@@ -1,0 +1,67 @@
+{
+  "brandName": "Agentix HIMS",
+  "portalTagline": "Secure Consent Portal",
+  "secureBanner": "Secure Digital Consent Portal · Agentix HIMS",
+  "brandSubtitle": "Digital Consent Form",
+  "error": {
+    "expiredTitle": "Link Expired",
+    "expiredBody": "This consent link has expired. Please ask the doctor to send a new link.",
+    "invalidTitle": "Invalid Link",
+    "invalidBody": "This consent link is invalid or has already been used. Please contact the hospital.",
+    "alreadySignedTitle": "Already Signed",
+    "alreadySignedBody": "Consent has already been submitted for this procedure. No further action is needed.",
+    "missingTitle": "Link Not Found",
+    "missingBody": "This consent link could not be found. Please ask the doctor to resend it."
+  },
+  "audit": {
+    "nokFallback": "Next of Kin",
+    "viewedDetail": "Consent link opened for {procedure} · patient {patient}",
+    "signedDetail": "Digital consent signed for {procedure} by {name} ({relationship})"
+  },
+  "notify": {
+    "title": "Consent received · {patient}",
+    "body": "{name} ({relationship}) has signed consent for {procedure}. Procedure may now proceed."
+  },
+  "info": {
+    "title": "Consent Required",
+    "subtitle": "Your signature is needed to proceed",
+    "patient": "Patient",
+    "procedure": "Procedure",
+    "doctor": "Doctor",
+    "expires": "Expires",
+    "guardianNote": "You are being asked to provide consent as the next-of-kin / legal guardian of the above patient. Please read the consent form carefully before signing.",
+    "continueButton": "Continue to Verify"
+  },
+  "otp": {
+    "title": "Verify Identity",
+    "subtitle": "Enter the 6-digit code provided by the treating doctor",
+    "error": "Incorrect code. Please check with the doctor and try again.",
+    "hint": "This code was shared with your doctor when they sent the consent link."
+  },
+  "form": {
+    "heading": "Consent for {procedure}",
+    "readAll": "Please read all sections before signing",
+    "generating": "Generating consent form…",
+    "procedureOverview": "Procedure Overview",
+    "risks": "Risks",
+    "benefits": "Benefits",
+    "alternatives": "Alternatives",
+    "patientRights": "Your Rights as a Patient",
+    "declaration": "Declaration",
+    "declarationCheckbox": "I have read and understood the consent form above, and I give my informed consent for this procedure.",
+    "checkToEnable": "Check the declaration above to enable signing",
+    "submitting": "Submitting…",
+    "submit": "Submit Consent"
+  },
+  "done": {
+    "title": "Consent Submitted",
+    "thankYou": "Thank you, {name}. Your consent for <strong>{procedure}</strong> has been received and the medical team has been notified.",
+    "patient": "Patient",
+    "signedBy": "Signed by",
+    "relationship": "Relationship",
+    "time": "Time",
+    "yourSignature": "Your signature",
+    "signatureAlt": "Signature",
+    "closeWindow": "You may safely close this window."
+  }
+}

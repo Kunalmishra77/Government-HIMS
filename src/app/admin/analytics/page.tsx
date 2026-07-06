@@ -10,6 +10,7 @@ import {
 } from "recharts"
 import { useAuditStore, moduleOf, severityOf } from "@/store/useAuditStore"
 import { buildNabhEvidence, NABH_CHAPTERS } from "@/lib/nabhEvidence"
+import { useTranslations } from "next-intl"
 
 const OPD_VOLUME = [
   { date: 'May 4', General: 82, Cardiology: 34, Ortho: 21, Gynae: 18 },
@@ -51,13 +52,14 @@ const maxRev = Math.max(...REVENUE.map(r => r.opd + r.pharmacy))
 
 const DISEASE = [
   { disease: 'URTI / Respiratory', count: 312, pct: 38, color: 'bg-[var(--color-primary)]' },
-  { disease: 'Gastro / GI Disorders', count: 178, pct: 22, color: 'bg-[rgba(8,145,178,0.07)]0' },
+  { disease: 'Gastro / GI Disorders', count: 178, pct: 22, color: 'bg-[rgba(238,107,38,0.07)]0' },
   { disease: 'Hypertension', count: 143, pct: 17, color: 'bg-[var(--color-primary)]' },
   { disease: 'Diabetes Follow-up', count: 112, pct: 14, color: 'bg-amber-500' },
   { disease: 'Orthopaedic', count: 73, pct: 9, color: 'bg-red-500' },
 ]
 
 export default function AdminAnalytics() {
+  const t = useTranslations('admin')
   const entries = useAuditStore(s => s.entries)
 
   // Cross-role operations snapshot built from the live audit trail.
@@ -80,50 +82,50 @@ export default function AdminAnalytics() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <h2 className="text-lg font-bold">Analytics &amp; Insights</h2>
+      <h2 className="text-lg font-bold">{t('analytics.title')}</h2>
 
       {/* Operations Snapshot — live from the audit trail */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="rounded-xl bg-white border border-slate-200 p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-[var(--color-primary)]" />
-              <h3 className="text-sm font-bold text-slate-900">Operations snapshot</h3>
+              <Activity className="h-4 w-4 text-[var(--color-accent)]" />
+              <h3 className="text-sm font-bold text-slate-900">{t('analytics.opsSnapshot')}</h3>
               <span className="text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                live from audit trail
+                {t('analytics.liveFromAudit')}
               </span>
             </div>
-            <Link href="/audit/dashboard" className="text-xs font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1">
-              Open audit dashboard <ArrowRight className="h-3 w-3" />
+            <Link href="/audit/dashboard" className="text-xs font-bold text-[var(--color-accent)] hover:underline flex items-center gap-1">
+              {t('analytics.openAuditDashboard')} <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
             <div className="rounded-lg bg-slate-50 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Events</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('analytics.events')}</p>
               <p className="text-xl font-black text-slate-900 mt-0.5">{ops.total}</p>
             </div>
             <div className="rounded-lg bg-red-50 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-red-700">Critical</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-red-700">{t('analytics.critical')}</p>
               <p className="text-xl font-black text-red-700 mt-0.5">{ops.sev.critical}</p>
             </div>
             <div className="rounded-lg bg-amber-50 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-amber-700">Warning</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-amber-700">{t('analytics.warning')}</p>
               <p className="text-xl font-black text-amber-700 mt-0.5">{ops.sev.warning}</p>
             </div>
             <div className="rounded-lg bg-emerald-50 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">NABH chapters</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">{t('analytics.nabhChapters')}</p>
               <p className="text-xl font-black text-emerald-700 mt-0.5">{ops.ready}/{NABH_CHAPTERS.length}</p>
             </div>
           </div>
           <div className="space-y-1.5">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Events by module</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('analytics.eventsByModule')}</p>
             {ops.sortedModules.slice(0, 8).map(([m, n]) => (
               <div key={m}>
                 <p className="text-[11px] text-slate-600 flex items-center justify-between">
                   <span className="font-semibold">{m}</span><b>{n}</b>
                 </p>
                 <div className="h-1 mt-0.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[rgba(8,145,178,0.07)]0" style={{ width: `${(n / maxModuleCount) * 100}%` }} />
+                  <div className="h-full bg-[rgba(238,107,38,0.07)]0" style={{ width: `${(n / maxModuleCount) * 100}%` }} />
                 </div>
               </div>
             ))}
@@ -132,11 +134,11 @@ export default function AdminAnalytics() {
 
         <div className="rounded-xl bg-white border border-slate-200 p-5">
           <div className="flex items-center gap-2 mb-3">
-            <ShieldCheck className="h-4 w-4 text-[var(--color-primary)]" />
-            <h3 className="text-sm font-bold text-slate-900">Critical follow-ups</h3>
+            <ShieldCheck className="h-4 w-4 text-[var(--color-accent)]" />
+            <h3 className="text-sm font-bold text-slate-900">{t('analytics.criticalFollowups')}</h3>
           </div>
           {ops.recentCritical.length === 0 ? (
-            <p className="text-xs text-slate-400 italic">No critical events in this window.</p>
+            <p className="text-xs text-slate-400 italic">{t('analytics.noCriticalEvents')}</p>
           ) : (
             <div className="space-y-2">
               {ops.recentCritical.map(e => (
@@ -155,23 +157,23 @@ export default function AdminAnalytics() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl bg-gradient-to-br from-[rgba(8,145,178,0.08)] to-[rgba(8,145,178,0.06)] p-5 border border-[rgba(8,145,178,0.15)]/60"
+        className="rounded-xl bg-surface-sunken p-5 border border-[rgba(238,107,38,0.15)]/60"
       >
         <div className="flex items-start gap-4">
           <div className="h-10 w-10 rounded-xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
-            <Sparkles className="h-5 w-5 text-[var(--color-primary)]" />
+            <Sparkles className="h-5 w-5 text-[var(--color-accent)]" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5">
-              <p className="text-sm font-bold text-slate-900">AI Weekly Summary</p>
-              <span className="text-[10px] font-bold text-[var(--color-primary)] bg-[rgba(8,145,178,0.12)] px-2 py-0.5 rounded-full uppercase tracking-wide">Week of May 5–9</span>
+              <p className="text-sm font-bold text-slate-900">{t('analytics.weeklySummary')}</p>
+              <span className="text-[10px] font-bold text-[var(--color-accent)] bg-[rgba(238,107,38,0.12)] px-2 py-0.5 rounded-full uppercase tracking-wide">{t('analytics.weekOf')}</span>
             </div>
             <p className="text-sm text-slate-700 leading-relaxed">
-              Hospital performance this week: OPD load up <strong>12%</strong> with General Medicine and Cardiology leading demand. Pharmacy queue efficiency improved <strong>18%</strong> following new workflow adoption. Patient satisfaction holding at <strong>4.7/5</strong>.
+              {t.rich('analytics.weeklyNarrative', { b: (chunks) => <strong>{chunks}</strong> })}
             </p>
             <div className="flex items-center gap-1.5 mt-3 p-2.5 bg-amber-50/80 rounded-lg border border-amber-100/60">
               <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-              <p className="text-xs font-semibold text-amber-800">High-alert: Cardiology wait times trending upward — avg 34 min vs 22 min last week. Consider adding a slot.</p>
+              <p className="text-xs font-semibold text-amber-800">{t('analytics.highAlert')}</p>
             </div>
           </div>
         </div>
@@ -179,8 +181,8 @@ export default function AdminAnalytics() {
 
       {/* Recharts: OPD Daily Volume — Line Chart */}
       <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <h3 className="font-bold text-slate-900 mb-1">Daily OPD Volume by Specialty</h3>
-        <p className="text-xs text-slate-500 mb-4">May 4–10, 2026</p>
+        <h3 className="font-bold text-slate-900 mb-1">{t('analytics.opdVolumeTitle')}</h3>
+        <p className="text-xs text-slate-500 mb-4">{t('analytics.opdVolumeDates')}</p>
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={OPD_VOLUME}>
             <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
@@ -199,23 +201,23 @@ export default function AdminAnalytics() {
       {/* Recharts: Bed Occupancy — Bar Chart + Payer Mix — Pie Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h3 className="font-bold text-slate-900 mb-1">Bed Occupancy by Ward</h3>
-          <p className="text-xs text-slate-500 mb-4">Current snapshot</p>
+          <h3 className="font-bold text-slate-900 mb-1">{t('analytics.bedOccupancyTitle')}</h3>
+          <p className="text-xs text-slate-500 mb-4">{t('analytics.currentSnapshot')}</p>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={BED_OCCUPANCY} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
               <XAxis type="number" domain={[0, 60]} tick={{ fontSize: 11, fill: '#64748B' }} />
               <YAxis dataKey="ward" type="category" width={72} tick={{ fontSize: 11, fill: '#64748B' }} />
               <Tooltip contentStyle={{ borderRadius: '0.75rem', border: '1px solid #E2E8F0', fontSize: 12 }} />
-              <Bar dataKey="occupied" name="Occupied" fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
-              <Bar dataKey="total" name="Capacity" fill="#E2E8F0" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="occupied" name={t('analytics.occupied')} fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="total" name={t('analytics.capacity')} fill="#E2E8F0" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h3 className="font-bold text-slate-900 mb-1">Payer Mix</h3>
-          <p className="text-xs text-slate-500 mb-4">Revenue by payment source — May 2026</p>
+          <h3 className="font-bold text-slate-900 mb-1">{t('analytics.payerMix')}</h3>
+          <p className="text-xs text-slate-500 mb-4">{t('analytics.payerMixSub')}</p>
           <ResponsiveContainer width="100%" height={220}>
             <RPieChart>
               <Pie data={PAYER_MIX} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, value }) => `${value}%`} labelLine={false}>
@@ -223,7 +225,7 @@ export default function AdminAnalytics() {
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(v) => [`${v}%`, 'Share']} contentStyle={{ borderRadius: '0.75rem', border: '1px solid #E2E8F0', fontSize: 12 }} />
+              <Tooltip formatter={(v) => [`${v}%`, t('analytics.share')]} contentStyle={{ borderRadius: '0.75rem', border: '1px solid #E2E8F0', fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </RPieChart>
           </ResponsiveContainer>
@@ -234,12 +236,12 @@ export default function AdminAnalytics() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="font-bold text-slate-900">Revenue Trend</h3>
-            <p className="text-xs text-slate-500">OPD + Pharmacy revenue (last 7 months)</p>
+            <h3 className="font-bold text-slate-900">{t('analytics.revenueTrend')}</h3>
+            <p className="text-xs text-slate-500">{t('analytics.revenueTrendSub')}</p>
           </div>
           <div className="flex gap-4 text-xs">
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[var(--color-primary)] inline-block" />OPD</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[rgba(8,145,178,0.07)]0 inline-block" />Pharmacy</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[rgba(238,107,38,0.07)]0 inline-block" />{t('analytics.pharmacy')}</span>
           </div>
         </div>
         <div className="flex items-end gap-3 h-44">
@@ -254,7 +256,7 @@ export default function AdminAnalytics() {
                   <motion.div
                     initial={{ height: 0 }} animate={{ height: `${pharmH}%` }}
                     transition={{ delay: 0.2 + i * 0.05, duration: 0.5 }}
-                    className="w-full bg-[rgba(8,145,178,0.07)]0 rounded-t-sm"
+                    className="w-full bg-[rgba(238,107,38,0.07)]0 rounded-t-sm"
                     style={{ height: `${pharmH}%` }}
                   />
                   <motion.div
@@ -273,14 +275,14 @@ export default function AdminAnalytics() {
 
       {/* Disease Pattern */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-white rounded-xl border border-slate-200 p-6">
-        <h3 className="font-bold text-slate-900 mb-1">Disease Pattern Analysis</h3>
-        <p className="text-xs text-slate-500 mb-5">AI-identified top diagnoses — May 2026</p>
+        <h3 className="font-bold text-slate-900 mb-1">{t('analytics.diseasePattern')}</h3>
+        <p className="text-xs text-slate-500 mb-5">{t('analytics.diseasePatternSub')}</p>
         <div className="space-y-4">
           {DISEASE.map(({ disease, count, pct, color }, i) => (
             <div key={disease}>
               <div className="flex justify-between text-sm mb-1.5">
                 <span className="font-medium text-slate-700">{disease}</span>
-                <span className="text-slate-500 font-semibold">{count} cases ({pct}%)</span>
+                <span className="text-slate-500 font-semibold">{t('analytics.cases', { count, pct })}</span>
               </div>
               <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                 <motion.div
@@ -297,21 +299,21 @@ export default function AdminAnalytics() {
       {/* KPI Summary */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Monthly Revenue', value: '₹15.8L', trend: '+18%', up: true },
-          { label: 'Avg Wait Time', value: '18 min', trend: '−44%', up: true },
-          { label: 'Patient Satisfaction', value: '4.7 / 5', trend: '+0.3', up: true },
-          { label: 'Rx via System', value: '94%', trend: '+22%', up: true },
-        ].map(({ label, value, trend, up }, i) => (
+          { labelKey: 'analytics.kpiMonthlyRevenue', value: '₹15.8L', trend: '+18%', up: true },
+          { labelKey: 'analytics.kpiAvgWaitTime', value: '18 min', trend: '−44%', up: true },
+          { labelKey: 'analytics.kpiSatisfaction', value: '4.7 / 5', trend: '+0.3', up: true },
+          { labelKey: 'analytics.kpiRxViaSystem', value: '94%', trend: '+22%', up: true },
+        ].map(({ labelKey, value, trend, up }, i) => (
           <motion.div
-            key={label}
+            key={labelKey}
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
             className="bg-white rounded-xl border border-slate-200 p-4"
           >
-            <p className="text-xs text-slate-500 uppercase font-semibold tracking-wider">{label}</p>
+            <p className="text-xs text-slate-500 uppercase font-semibold tracking-wider">{t(labelKey)}</p>
             <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
             <span className={`inline-flex items-center gap-1 text-xs font-semibold mt-1 ${up ? 'text-green-600' : 'text-red-600'}`}>
               {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-              {trend} vs last month
+              {t('analytics.trendVsLastMonth', { trend })}
             </span>
           </motion.div>
         ))}

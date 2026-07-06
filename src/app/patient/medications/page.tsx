@@ -48,7 +48,7 @@ export default function MedicationsPage() {
           <div key={m.name} className="rounded-3xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <span className="h-11 w-11 rounded-2xl bg-[rgba(8,145,178,0.07)] flex items-center justify-center flex-shrink-0"><Pill className="h-5.5 w-5.5 text-[var(--color-primary)]" /></span>
+                <span className="h-11 w-11 rounded-2xl bg-[rgba(238,107,38,0.07)] flex items-center justify-center flex-shrink-0"><Pill className="h-5.5 w-5.5 text-[var(--color-accent)]" /></span>
                 <div>
                   <p className="text-[16px] font-bold text-slate-900">{m.name}</p>
                   <p className="text-[13px] text-slate-500">{m.purpose}</p>
@@ -62,7 +62,7 @@ export default function MedicationsPage() {
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <span className="text-[12px] font-semibold text-slate-400 flex items-center gap-1 mr-1"><Clock className="h-3.5 w-3.5" /> Reminders</span>
-              {m.times.map(t => <span key={t} className="text-[12.5px] font-semibold px-2.5 py-1 rounded-lg bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)]">{t}</span>)}
+              {m.times.map(t => <span key={t} className="text-[12.5px] font-semibold px-2.5 py-1 rounded-lg bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)]">{t}</span>)}
             </div>
 
             <div className="mt-3 flex items-center justify-between">

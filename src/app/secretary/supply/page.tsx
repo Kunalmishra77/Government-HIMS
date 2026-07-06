@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Package, AlertTriangle, TrendingDown, CheckCircle } from 'lucide-react'
 
 const CATEGORIES = [
@@ -18,13 +19,14 @@ const MPPHSCL = [
 ]
 
 export default function SupplyPage() {
+  const t = useTranslations('secretary')
   const totalStockout = CATEGORIES.reduce((s, c) => s + c.stockoutDistricts, 0)
 
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">Supply Chain & MPPHSCL</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">आपूर्ति श्रृंखला · Medicines, vaccines, consumables state tracking</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('supply.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('supply.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -40,7 +42,7 @@ export default function SupplyPage() {
       {totalStockout > 0 && (
         <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-center gap-3">
           <AlertTriangle className="h-5 w-5 text-rose-600 flex-shrink-0" />
-          <p className="text-sm text-rose-700 font-medium">{totalStockout} district-level stockouts detected across categories — mobilize from district depot reserves</p>
+          <p className="text-sm text-rose-700 font-medium">{t('supply.stockoutAlert', { count: totalStockout })}</p>
         </div>
       )}
 
@@ -51,13 +53,13 @@ export default function SupplyPage() {
               <div>
                 <p className="text-sm font-bold text-[var(--color-foreground)]">{c.name}</p>
                 <p className="text-xs text-[var(--color-foreground-muted)] mt-0.5">
-                  {c.stockoutDistricts > 0 ? <span className="text-rose-600 font-medium">{c.stockoutDistricts} districts with stockouts · </span> : ''}
-                  {c.adeqDistricts} adequate
+                  {c.stockoutDistricts > 0 ? <span className="text-rose-600 font-medium">{t('supply.districtsStockout', { count: c.stockoutDistricts })}</span> : ''}
+                  {t('supply.adequate', { count: c.adeqDistricts })}
                 </p>
               </div>
               <div className="text-right">
                 <p className={`text-lg font-bold ${c.stockPct < 80 ? 'text-rose-600' : c.stockPct < 90 ? 'text-amber-600' : 'text-emerald-600'}`}>{c.stockPct}%</p>
-                <p className="text-[10px] text-[var(--color-foreground-lighter)]">adequacy</p>
+                <p className="text-[10px] text-[var(--color-foreground-lighter)]">{t('supply.adequacy')}</p>
               </div>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden mb-2">
@@ -65,7 +67,7 @@ export default function SupplyPage() {
             </div>
             {c.criticalItems.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
-                <span className="text-[10px] text-[var(--color-foreground-lighter)]">Critical:</span>
+                <span className="text-[10px] text-[var(--color-foreground-lighter)]">{t('supply.critical')}</span>
                 {c.criticalItems.map(item => (
                   <span key={item} className="text-[10px] bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full">{item}</span>
                 ))}

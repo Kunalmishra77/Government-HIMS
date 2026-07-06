@@ -20,21 +20,24 @@ import { useHRStore } from "@/store/useHRStore"
 import { OnShiftTeam } from "@/components/clinical/OnShiftTeam"
 import { SepsisWatchPanel } from "@/components/nurse/SepsisWatchPanel"
 import { CareTeamPresenceCard } from "@/components/clinical/CareTeamPresenceCard"
-import { Activity, AlertCircle, Bed, Stethoscope, Clock, CheckCircle, Pill, Droplets, LogOut, ArrowDownToLine, FileText, ShieldAlert, Info, Video, VideoOff, Send, TrendingUp } from "lucide-react"
+import { Activity, AlertCircle, Bed, Stethoscope, Clock, CheckCircle, Pill, Droplets, LogOut, ArrowDownToLine, FileText, ShieldAlert, Info, Video, VideoOff, Send, TrendingUp, ClipboardCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { NeonBadge } from "@/components/ui/neon-badge"
 import { CompactKPI } from "@/components/ui/CompactKPI"
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { news2Token } from "@/lib/statusColors"
 import { cn } from "@/lib/utils"
+import { deriveUhid } from "@/lib/uhid"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 // Avatar tint by triage acuity (inline, not a colour-map const).
 const triageAvatar = (level?: string) =>
   level === "Critical" ? "bg-danger" : level === "High" ? "bg-warning" : "bg-brand-amber"
 
 export default function NurseDashboard() {
+  const t = useTranslations('nurse')
   const { patients, activeNurses, availableBeds, updateVitals, dismissAlert } = useWard()
   const { initDischarge, dischargeQueue, setClearance } = useDischargeStore()
   const addNursingNote = useInpatientStore(s => s.addNursingNote)
@@ -79,7 +82,7 @@ export default function NurseDashboard() {
       resourceId: patientId,
       detail: `Camera feed approved for ${patientName}'s family in ${wardRoom}`,
     })
-    toast.success(`Camera feed approved for ${patientName}'s family`)
+    toast.success(t('dashboard.cameraApproved', { name: patientName }))
   }
 
   const handleDeclineCamera = (requestId: string, patientName: string, patientId: string) => {
@@ -92,7 +95,7 @@ export default function NurseDashboard() {
       resourceId: patientId,
       detail: `Camera request declined for ${patientName}`,
     })
-    toast.info(`Camera request declined for ${patientName}`)
+    toast.info(t('dashboard.cameraDeclined', { name: patientName }))
   }
 
   const incomingTransfers = admissionRequests.filter(r => r.status === 'Assigned')
@@ -119,7 +122,7 @@ export default function NurseDashboard() {
     setClearance(patient.id, 'nursing', 'cleared')
     addNursingNote(patient.id, `Nursing discharge clearance completed${note ? `: ${note}` : ''}. Routed to discharge desk.`, 'Anjali Desai')
     log({ userId: 'nurse_portal', userName: 'Anjali Desai', action: 'discharge_nursing_cleared', resource: 'patient', resourceId: patient.id, detail: `Nursing clearance for ${patient.name} → discharge desk` })
-    toast.success(`Nursing cleared — ${patient.name} sent to the discharge desk`)
+    toast.success(t('dashboard.nursingCleared', { name: patient.name }))
     setDischargingPatient(null)
   }
 
@@ -139,7 +142,7 @@ export default function NurseDashboard() {
       comorbidities: data.profile.chronicConditions,
     })
     handleSaveVitals(patient.id, data.vitals)
-    toast.success(`Profile completed for ${patient.name}`)
+    toast.success(t('dashboard.profileCompleted', { name: patient.name }))
   }
   const wardMeta = (id: string) => { const ip = inpatients.find(i => i.patientId === id); return { age: ip?.age ?? 0, gender: ip?.gender ?? 'Male' } }
   const wardInitial = (id: string): Partial<PatientProfile> => {
@@ -185,7 +188,7 @@ export default function NurseDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <CompactKPI label="Active Patients" value={patients.length} tone="ok" icon={<Activity className="h-4 w-4 text-success-strong" />} />
         <CompactKPI label="Critical Alerts" value={criticalPatients.length} tone="danger" icon={<AlertCircle className="h-4 w-4 text-danger-strong" />} />
-        <CompactKPI label="Available Beds" value={availableBeds} tone="info" icon={<Bed className="h-4 w-4 text-primary" />} />
+        <CompactKPI label="Available Beds" value={availableBeds} tone="info" icon={<Bed className="h-4 w-4 text-accent" />} />
         <CompactKPI label="Nurses on Duty" value={activeNurses} tone="neutral" icon={<Stethoscope className="h-4 w-4 text-foreground-lighter" />} />
       </div>
 
@@ -223,7 +226,7 @@ export default function NurseDashboard() {
               </div>
               <div>
                 <h2 className="t-title text-primary-dark">Incoming Transfers</h2>
-                <p className="text-xs text-primary font-medium">Patients assigned a bed — awaiting arrival</p>
+                <p className="text-xs text-accent font-medium">Patients assigned a bed — awaiting arrival</p>
               </div>
             </div>
             <NeonBadge variant="blue" dot pulse>{incomingTransfers.length} incoming</NeonBadge>
@@ -247,6 +250,7 @@ export default function NurseDashboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-bold text-sm text-foreground">{req.patientName}</p>
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">{deriveUhid(req.patientId)}</span>
                         <span className="text-xs text-foreground-placeholder">{req.patientAge}y · {req.patientGender}</span>
                         {req.triageLevel && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-danger-bg text-danger-strong border border-danger/25">{req.triageLevel}</span>}
                       </div>
@@ -260,7 +264,7 @@ export default function NurseDashboard() {
                       {bundle && (
                         <button
                           onClick={() => setExpandedBundleId(isExpanded ? null : req.id)}
-                          className="p-1.5 rounded-lg text-primary hover:bg-accent-soft transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-accent hover:bg-accent-soft transition-colors cursor-pointer"
                           title="View documents"
                         >
                           <FileText className="h-4 w-4" />
@@ -291,15 +295,15 @@ export default function NurseDashboard() {
                         )}
                         {bundle.specialInstructions && (
                           <div className="flex items-start gap-2 p-2 rounded-lg bg-accent-soft">
-                            <Info className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                            <Info className="h-3.5 w-3.5 text-accent mt-0.5 flex-shrink-0" />
                             <p className="text-xs font-medium text-primary-dark">{bundle.specialInstructions}</p>
                           </div>
                         )}
                         {bundle.prescriptions.length > 0 && (
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <Pill className="h-3.5 w-3.5 text-primary" />
+                            <Pill className="h-3.5 w-3.5 text-accent" />
                             {bundle.prescriptions.map((p, j) => (
-                              <span key={j} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent-soft text-primary border border-primary/20">{p.medicine}</span>
+                              <span key={j} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent-soft text-accent border border-primary/20">{p.medicine}</span>
                             ))}
                           </div>
                         )}
@@ -420,71 +424,69 @@ export default function NurseDashboard() {
         <SectionHeader icon={Activity} title="Ward Overview" count={patients.length} className="mb-4" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {patients.map(patient => (
-            <Card key={patient.id} className="p-5 flex flex-col justify-between u-lift">
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <Link href={`/nurse/patients/${patient.id}`} className="font-bold text-foreground hover:text-primary hover:underline">{patient.name}</Link>
-                    <p className="text-sm font-medium text-foreground-lighter flex items-center gap-1 mt-0.5">
-                      <Bed className="h-3.5 w-3.5" aria-hidden="true" /> {patient.bedNumber}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1.5">
-                    <NeonBadge
-                      variant={patient.condition === 'Critical' ? 'danger' : patient.condition === 'Stable' ? 'success' : 'warning'}
-                    >
-                      {patient.condition}
-                    </NeonBadge>
-                    {patient.news && (
-                      <NeonBadge variant={news2Token(patient.news.band).variant}>NEWS {patient.news.score}</NeonBadge>
-                    )}
-                  </div>
+            <Card key={patient.id} className="p-5 flex flex-col gap-4 u-lift">
+              <div className="flex justify-between items-start gap-3">
+                <div className="min-w-0">
+                  <Link href={`/nurse/patients/${patient.id}`} className="font-bold text-foreground hover:text-accent hover:underline truncate block">{patient.name}</Link>
+                  <p className="text-sm font-medium text-foreground-lighter flex items-center gap-1 mt-0.5">
+                    <Bed className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" /> {patient.bedNumber}
+                  </p>
                 </div>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <NeonBadge
+                    variant={patient.condition === 'Critical' ? 'danger' : patient.condition === 'Stable' ? 'success' : 'warning'}
+                  >
+                    {patient.condition}
+                  </NeonBadge>
+                  {patient.news && (
+                    <NeonBadge variant={news2Token(patient.news.band).variant}>NEWS {patient.news.score}</NeonBadge>
+                  )}
+                </div>
+              </div>
 
-                <div className="bg-surface-sunken rounded-xl p-3 grid grid-cols-3 gap-2 mb-4">
-                  {(() => {
-                    const r = patient.latestRecord
-                    const items: { label: string; value: string; abnormal: boolean }[] = [
-                      { label: 'HR',   value: `${patient.vitals.hr} bpm`, abnormal: patient.vitals.hr > 100 || (patient.vitals.hr > 0 && patient.vitals.hr < 50) },
-                      { label: 'BP',   value: patient.vitals.bp,          abnormal: r?.systolicBP != null && (r.systolicBP < 100 || r.systolicBP >= 180) },
-                      { label: 'SpO2', value: `${patient.vitals.spo2}%`,  abnormal: patient.vitals.spo2 > 0 && patient.vitals.spo2 < 95 },
-                      ...(r?.rr != null ? [{ label: 'RR', value: `${r.rr}/min`, abnormal: r.rr < 12 || r.rr > 20 }] : []),
-                      { label: 'Temp', value: `${patient.vitals.temp}°F`, abnormal: patient.vitals.temp >= 100.4 },
-                      ...(r?.bloodGlucose != null ? [{ label: 'Glucose', value: `${r.bloodGlucose}`, abnormal: r.bloodGlucose < 70 || r.bloodGlucose > 250 }] : []),
-                      ...(r?.pain != null ? [{ label: 'Pain', value: `${r.pain}/10`, abnormal: r.pain >= 7 }] : []),
-                    ]
-                    return items.map(({ label, value, abnormal }) => (
-                      <div key={label}>
-                        <p className="text-[10px] text-foreground-lighter uppercase tracking-wider font-bold">{label}</p>
-                        <p className={cn("font-bold text-sm tabular-nums", abnormal ? 'text-danger' : 'text-foreground')}>
-                          {value}
-                          {abnormal && <span className="ml-1 text-[9px] bg-danger-bg text-danger px-1 rounded font-bold">!</span>}
-                        </p>
-                      </div>
-                    ))
-                  })()}
-                </div>
+              <div className="bg-surface-sunken rounded-xl p-3 grid grid-cols-3 gap-x-2 gap-y-3">
+                {(() => {
+                  const r = patient.latestRecord
+                  const items: { label: string; value: string; abnormal: boolean }[] = [
+                    { label: 'HR',   value: `${patient.vitals.hr} bpm`, abnormal: patient.vitals.hr > 100 || (patient.vitals.hr > 0 && patient.vitals.hr < 50) },
+                    { label: 'BP',   value: patient.vitals.bp,          abnormal: r?.systolicBP != null && (r.systolicBP < 100 || r.systolicBP >= 180) },
+                    { label: 'SpO2', value: `${patient.vitals.spo2}%`,  abnormal: patient.vitals.spo2 > 0 && patient.vitals.spo2 < 95 },
+                    ...(r?.rr != null ? [{ label: 'RR', value: `${r.rr}/min`, abnormal: r.rr < 12 || r.rr > 20 }] : []),
+                    { label: 'Temp', value: `${patient.vitals.temp}°F`, abnormal: patient.vitals.temp >= 100.4 },
+                    ...(r?.bloodGlucose != null ? [{ label: 'Glucose', value: `${r.bloodGlucose}`, abnormal: r.bloodGlucose < 70 || r.bloodGlucose > 250 }] : []),
+                    ...(r?.pain != null ? [{ label: 'Pain', value: `${r.pain}/10`, abnormal: r.pain >= 7 }] : []),
+                  ]
+                  return items.map(({ label, value, abnormal }) => (
+                    <div key={label} className="min-w-0">
+                      <p className="text-[10px] text-foreground-lighter uppercase tracking-wider font-bold">{label}</p>
+                      <p className={cn("font-bold text-sm tabular-nums flex items-center gap-1", abnormal ? 'text-danger' : 'text-foreground')}>
+                        <span className="truncate">{value}</span>
+                        {abnormal && <span className="text-[9px] bg-danger-bg text-danger px-1 rounded font-bold flex-shrink-0">!</span>}
+                      </p>
+                    </div>
+                  ))
+                })()}
               </div>
 
               {/* Current meds/IV drips */}
               {((patient.currentMedications?.filter(m => m.status === 'Active') ?? []).length > 0 ||
                 (patient.ivDrips?.filter(d => d.status === 'Running') ?? []).length > 0) && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
+                <div className="flex flex-wrap gap-1.5">
                   {patient.currentMedications?.filter(m => m.status === 'Active').map((med, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-accent-soft px-2 py-0.5 rounded-full">
+                    <span key={i} className="inline-flex items-center gap-1 text-[10px] font-bold text-accent bg-accent-soft px-2 py-0.5 rounded-full">
                       <Pill className="h-2.5 w-2.5" /> {med.name}
                     </span>
                   ))}
                   {patient.ivDrips?.filter(d => d.status === 'Running').map((drip, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-accent-soft px-2 py-0.5 rounded-full">
+                    <span key={i} className="inline-flex items-center gap-1 text-[10px] font-bold text-accent bg-accent-soft px-2 py-0.5 rounded-full">
                       <Droplets className="h-2.5 w-2.5" /> {drip.fluid}
                     </span>
                   ))}
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-3 border-t border-border-light">
-                <div className="flex items-center gap-2 text-xs text-foreground-lighter">
+              <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-border-light">
+                <div className="flex items-center gap-2 text-xs text-foreground-lighter min-w-0">
                   <Clock className="h-3 w-3" aria-hidden="true" /> {patient.lastChecked}
                   {(patient.rounds?.length ?? 0) > 0 && (
                     <span className="text-success-strong font-medium">· Rounded</span>
@@ -497,15 +499,15 @@ export default function NurseDashboard() {
                   <button
                     onClick={() => setDischargingPatient(patient)}
                     title="Nursing discharge clearance"
-                    className="flex items-center gap-1 text-xs font-bold text-foreground-lighter hover:text-brand-amber-strong hover:bg-warning-bg transition-colors cursor-pointer px-2 py-1 rounded-lg"
+                    className="flex items-center gap-1 text-xs font-bold text-foreground-lighter hover:text-brand-amber-strong hover:bg-warning-bg transition-colors cursor-pointer px-2.5 py-1.5 rounded-lg"
                   >
                     <LogOut className="h-3.5 w-3.5" /> Discharge
                   </button>
                   <button
                     onClick={() => setEditingPatient(patient)}
-                    className="text-sm font-bold text-success-strong hover:text-success transition-colors cursor-pointer px-2 py-1 rounded-lg hover:bg-success-bg"
+                    className="flex items-center gap-1 text-xs font-bold text-success-strong hover:text-success hover:bg-success-bg transition-colors cursor-pointer px-2.5 py-1.5 rounded-lg"
                   >
-                    {profileDone(patient.id) ? 'Update Vitals' : 'Complete profile'}
+                    <ClipboardCheck className="h-3.5 w-3.5" /> {profileDone(patient.id) ? 'Update Vitals' : 'Complete Vitals'}
                   </button>
                 </div>
               </div>

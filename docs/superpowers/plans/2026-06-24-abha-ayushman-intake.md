@@ -230,9 +230,9 @@ In `PaymentStep`, find the payer grid section (lines 124–139):
             const sel = form.payer === val
             return (
               <button key={val} onClick={() => update({ payer: val })} aria-pressed={sel}
-                className={cn("flex flex-col items-center gap-1.5 py-3.5 rounded-2xl border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7490]",
-                  sel ? "bg-[#0E7490] border-[#0E7490] text-white" : "bg-white border-slate-200 text-slate-700")}>
-                <Icon className={cn("h-5 w-5", sel ? "text-white" : "text-[#0E7490]")} />
+                className={cn("flex flex-col items-center gap-1.5 py-3.5 rounded-2xl border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26]",
+                  sel ? "bg-[#EE6B26] border-[#EE6B26] text-white" : "bg-white border-slate-200 text-slate-700")}>
+                <Icon className={cn("h-5 w-5", sel ? "text-white" : "text-[#EE6B26]")} />
                 <span className="text-[14px] font-semibold">{label}</span>
               </button>
             )
@@ -260,13 +260,13 @@ Replace with:
                 onClick={() => update({ payer: val, govtSchemeVerified: false, schemeName: '' })}
                 aria-pressed={sel}
                 className={cn(
-                  "flex flex-col items-center gap-1.5 py-3 rounded-2xl border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7490]",
+                  "flex flex-col items-center gap-1.5 py-3 rounded-2xl border transition-all active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26]",
                   sel
-                    ? isGovt ? "bg-green-600 border-green-600 text-white" : "bg-[#0E7490] border-[#0E7490] text-white"
+                    ? isGovt ? "bg-green-600 border-green-600 text-white" : "bg-[#EE6B26] border-[#EE6B26] text-white"
                     : "bg-white border-slate-200 text-slate-700",
                 )}
               >
-                <Icon className={cn("h-5 w-5", sel ? "text-white" : isGovt ? "text-green-600" : "text-[#0E7490]")} />
+                <Icon className={cn("h-5 w-5", sel ? "text-white" : isGovt ? "text-green-600" : "text-[#EE6B26]")} />
                 <span className="text-[12px] font-semibold text-center leading-tight">{label}</span>
               </button>
             )
@@ -279,14 +279,14 @@ Replace with:
 
 Find line 120 in `PaymentStep`:
 ```tsx
-        <p className="text-[26px] font-bold text-slate-900">{form.payer === 'cashless' ? <span className="text-[15px] font-bold text-[#0E7490]">Cashless</span> : `₹${fee}`}</p>
+        <p className="text-[26px] font-bold text-slate-900">{form.payer === 'cashless' ? <span className="text-[15px] font-bold text-[#EE6B26]">Cashless</span> : `₹${fee}`}</p>
 ```
 
 Replace with:
 ```tsx
         <p className="text-[26px] font-bold text-slate-900">
           {form.payer === 'cashless'
-            ? <span className="text-[15px] font-bold text-[#0E7490]">Cashless</span>
+            ? <span className="text-[15px] font-bold text-[#EE6B26]">Cashless</span>
             : form.payer === 'govtScheme'
               ? <span className="text-[14px] font-bold text-green-600">Cashless · {form.schemeName || 'Ayushman'}</span>
               : `₹${fee}`}
@@ -378,7 +378,7 @@ After the closing `)}` of the `{form.payer === 'cashless' && ...}` block (after 
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setShowAadhaarFallback(true)}
-                  className="text-[12px] font-semibold text-[#0E7490] underline underline-offset-2"
+                  className="text-[12px] font-semibold text-[#EE6B26] underline underline-offset-2"
                 >
                   Try Aadhaar-linked search
                 </button>

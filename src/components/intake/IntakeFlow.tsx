@@ -2,29 +2,30 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTranslations } from "next-intl"
 import Image from "next/image"
 import { Activity, ArrowRight, ShieldCheck, Clock, HeartPulse } from "lucide-react"
 import { usePatientStore } from "@/store/usePatientStore"
 import { registerPatientFromIntake } from "@/lib/intake/register"
 import { NeonBadge } from "@/components/ui/neon-badge"
 import {
-  initialForm, visibleSteps, canContinue, STEP_TITLES, triageScore, suggestDepartments,
+  initialForm, visibleSteps, canContinue, triageScore, suggestDepartments,
   SYMPTOMS, type IntakeForm, type StepId,
 } from "@/lib/intake/data"
 import { IntakeShell } from "./IntakeShell"
 import { IntakeAppShell } from "./IntakeAppShell"
 import { ChoiceStep } from "./ChoiceStep"
-import { MethodStep, AadhaarScanStep } from "./CaptureSteps"
+import { AadhaarScanStep } from "./CaptureSteps"
 import { VoiceAssistantFlow } from "./VoiceAssistantFlow"
 import { AboutStep, ReportsStep, FamilyStep } from "./FieldSteps"
-import { ConsultTypeStep, SlotStep, PaymentStep } from "./ConsultSteps"
+import { SlotStep, PaymentStep } from "./ConsultSteps"
 import { ReviewStep, SuccessStep } from "./ReviewSuccess"
 import { DurationStep } from "./DurationStep"
 import { DepartmentStep } from "./DepartmentStep"
 
 export function IntakeFlow() {
+  const t = useTranslations("intake")
   const { patients, addPatient, generateFamilyToken } = usePatientStore()
-  const voiceSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
 
   const [form, setForm] = useState<IntakeForm>(initialForm)
   const [current, setCurrent] = useState<StepId>('welcome')
@@ -46,16 +47,19 @@ export function IntakeFlow() {
   const progressSteps: StepId[] = visible.filter(id => id !== 'welcome' && id !== 'success')
   const isSubmitStep = current === 'payment'
 
-  const MILESTONE: Record<StepId, string> = {
-    welcome: '', consultType: 'Visit type', method: 'Identity', aadhaar: 'Identity', voice: 'Identity',
-    about: 'About you', symptoms: 'Symptoms', symptomDuration: 'Symptoms', department: 'Symptoms',
-    slot: 'Appointment', reports: 'Appointment', family: 'Appointment', review: 'Confirm', payment: 'Confirm', success: '',
+  const milestoneFor = (id: StepId): string => {
+    switch (id) {
+      case 'aadhaar': case 'voice': return t('milestone.identity')
+      case 'about': return t('milestone.aboutYou')
+      case 'symptoms': case 'symptomDuration': case 'department': return t('milestone.symptoms')
+      case 'slot': case 'reports': case 'family': return t('milestone.appointment')
+      case 'review': case 'payment': return t('milestone.confirm')
+      default: return ''
+    }
   }
 
   const stepSummary = (id: StepId): string => {
     switch (id) {
-      case 'consultType': return form.consultationType === 'video' ? 'Video consultation' : 'In-person OPD'
-      case 'method': return form.method === 'aadhaar' ? 'Aadhaar' : form.method === 'voice' ? 'Voice' : 'Typed details'
       case 'aadhaar': return form.abhaId ? `ABHA ${form.abhaId}` : 'Aadhaar scanned'
       case 'voice': return 'Described symptoms'
       case 'about': return [form.name, form.age && `${form.age}y`, form.gender].filter(Boolean).join(' · ')
@@ -77,7 +81,7 @@ export function IntakeFlow() {
   // Completed progress steps, in the order they were visited.
   const doneSteps = history
     .filter((id): id is StepId => id !== 'welcome' && progressSteps.includes(id))
-    .map(id => ({ id, title: STEP_TITLES[id], milestone: MILESTONE[id], summary: stepSummary(id) }))
+    .map(id => ({ id, title: t(`stepTitle.${id}`), milestone: milestoneFor(id), summary: stepSummary(id) }))
 
   const jumpToStep = (id: string) => {
     const target = id as StepId
@@ -119,19 +123,19 @@ export function IntakeFlow() {
       return (
         <div className="flex flex-col flex-1 justify-center px-8 relative h-full">
           {/* Ambient medical gradient */}
-          <div aria-hidden className="pointer-events-none absolute -top-12 -right-12 h-80 w-80 rounded-full opacity-60 blur-3xl" style={{ background: 'radial-gradient(circle, rgba(34,211,238,0.22), transparent 70%)' }} />
-          <div aria-hidden className="pointer-events-none absolute -bottom-16 -left-12 h-80 w-80 rounded-full opacity-50 blur-3xl" style={{ background: 'radial-gradient(circle, rgba(8,145,178,0.12), transparent 70%)' }} />
+          <div aria-hidden className="pointer-events-none absolute -top-12 -right-12 h-80 w-80 rounded-full opacity-60 blur-3xl" style={{ background: 'radial-gradient(circle, rgba(238,107,38,0.22), transparent 70%)' }} />
+          <div aria-hidden className="pointer-events-none absolute -bottom-16 -left-12 h-80 w-80 rounded-full opacity-50 blur-3xl" style={{ background: 'radial-gradient(circle, rgba(238,107,38,0.12), transparent 70%)' }} />
 
           <div className="relative z-10 flex flex-col items-center justify-center text-center -mt-12">
-            <div className="h-24 w-24 rounded-[32px] flex items-center justify-center shadow-[0_16px_40px_rgba(8,145,178,0.35)]" style={{ background: 'radial-gradient(circle at 32% 28%, #67E8F9 0%, #22D3EE 40%, #0891B2 100%)' }}>
+            <div className="h-24 w-24 rounded-[32px] flex items-center justify-center shadow-[0_16px_40px_rgba(238,107,38,0.35)]" style={{ background: 'radial-gradient(circle at 32% 28%, #FBD5BC 0%, #F7B98E 40%, #EE6B26 100%)' }}>
               <HeartPulse className="h-11 w-11 text-white" aria-hidden="true" />
             </div>
-            <h1 className="text-[34px] font-bold text-slate-900 tracking-tight leading-tight mt-8">Welcome to<br />Agentix HIMS</h1>
-            <p className="text-[17px] text-slate-500 mt-4 max-w-[290px] leading-relaxed">Check in for your visit in a few simple steps — just speak, or type if you prefer.</p>
+            <h1 className="text-[32px] font-bold text-slate-900 tracking-tight leading-tight mt-8 whitespace-pre-line">{t('welcome.title')}</h1>
+            <p className="text-[16.5px] text-slate-500 mt-4 max-w-[310px] leading-relaxed">{t('welcome.subtitle')}</p>
 
             <div className="flex items-center gap-2 mt-8">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(8,145,178,0.08)] px-3 py-1.5 text-[13px] font-semibold text-[#0E7490]"><ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> Private &amp; secure</span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-[13px] font-semibold text-slate-600"><Clock className="h-3.5 w-3.5" aria-hidden="true" /> About 2 minutes</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(238,107,38,0.08)] px-3 py-1.5 text-[13px] font-semibold text-[#B84A16]"><ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> {t('welcome.badgePrivate')}</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-[13px] font-semibold text-slate-600"><Clock className="h-3.5 w-3.5" aria-hidden="true" /> {t('welcome.badgeTime')}</span>
             </div>
           </div>
 
@@ -139,19 +143,23 @@ export function IntakeFlow() {
             <div className="shadow-2xl rounded-2xl pointer-events-auto">
               <button
                 onClick={goNext}
-                className="w-full h-14 rounded-2xl font-semibold text-[17px] text-white bg-[#0891B2] hover:bg-[#0E7490] transition-all shadow-[0_10px_24px_rgba(8,145,178,0.3)] active:scale-[0.98] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0891B2] focus-visible:ring-offset-2 cursor-pointer"
+                className="w-full h-14 rounded-2xl font-semibold text-[17px] text-[#0D2032] bg-[#EE6B26] hover:bg-[#C2481A] transition-all shadow-[0_10px_24px_rgba(238,107,38,0.3)] active:scale-[0.98] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EE6B26] focus-visible:ring-offset-2 cursor-pointer"
               >
-                Get started <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                {t('welcome.start')} <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <p className="text-center text-[13px] text-slate-400 mt-4">No app needed · works right in your browser</p>
+            <p className="text-center text-[13px] text-slate-400 mt-4">{t('welcome.footer')}</p>
           </div>
         </div>
       )
     }
 
     if (current === 'voice') {
-      return <VoiceAssistantFlow form={form} update={update} onTypeInstead={() => { update({ method: 'type' }); setHistory(h => [...h, 'voice']); setCurrent('about') }} />
+      return <VoiceAssistantFlow form={form} update={update} onExitToForm={(method) => {
+        update({ method })
+        setHistory(h => [...h, 'voice'])
+        setCurrent(method === 'aadhaar' ? 'aadhaar' : 'about')
+      }} />
     }
 
     if (current === 'success') {
@@ -162,21 +170,19 @@ export function IntakeFlow() {
     const triage = triageScore(form.symptoms, form.symptomDurations)
     const renderBody = () => {
       switch (current) {
-        case 'consultType': return <ConsultTypeStep form={form} update={update} />
-        case 'method': return <MethodStep form={form} update={update} voiceSupported={voiceSupported} />
         case 'aadhaar': return <AadhaarScanStep form={form} update={update} />
         case 'about': return <AboutStep form={form} update={update} />
         case 'symptoms': {
           const aiBar = form.symptoms.length > 0 ? (
-            <div className="flex items-center justify-between px-4 py-2.5 rounded-[14px] bg-white border border-[rgba(8,145,178,0.15)] shadow-[0_2px_12px_rgba(5,150,105,0.12)]">
+            <div className="flex items-center justify-between px-4 py-2.5 rounded-[14px] bg-white border border-[rgba(238,107,38,0.15)] shadow-[0_2px_12px_rgba(5,150,105,0.12)]">
               <span className="flex items-center gap-2.5">
-                <span className="h-8 w-8 rounded-full bg-[rgba(8,145,178,0.07)] flex items-center justify-center border border-[rgba(8,145,178,0.15)]"><Activity className="h-4 w-4 text-[#0891B2]" aria-hidden="true" /></span>
-                <span className="text-[13px] font-bold text-slate-900">AI Assessment</span>
+                <span className="h-8 w-8 rounded-full bg-[rgba(238,107,38,0.07)] flex items-center justify-center border border-[rgba(238,107,38,0.15)]"><Activity className="h-4 w-4 text-[#B84A16]" aria-hidden="true" /></span>
+                <span className="text-[13px] font-bold text-slate-900">{t('symptomsUi.aiAssessment')}</span>
               </span>
-              <NeonBadge variant={triage.variant} dot pulse className="px-3 py-1">{triage.level}</NeonBadge>
+              <NeonBadge variant={triage.variant} dot pulse className="px-3 py-1">{t(`triage.${triage.level}`)}</NeonBadge>
             </div>
           ) : null
-          return <ChoiceStep fill columns={2} compact options={SYMPTOMS.map(s => ({ value: s, label: s }))} value={form.symptoms} onChange={v => update({ symptoms: v, departments: suggestDepartments(v) })} multi otherEnabled otherPlaceholder="Describe your problem…" footer={aiBar} />
+          return <ChoiceStep fill columns={2} compact options={SYMPTOMS.map(s => ({ value: s, label: t(`symptom.${s}`) }))} value={form.symptoms} onChange={v => update({ symptoms: v, departments: suggestDepartments(v) })} multi otherEnabled otherPlaceholder={t('symptomsUi.otherPlaceholder')} footer={aiBar} />
         }
         case 'symptomDuration': return <DurationStep symptoms={form.symptoms} durations={form.symptomDurations} onChange={d => update({ symptomDurations: d })} />
         case 'department': return <DepartmentStep form={form} update={update} />
@@ -194,14 +200,14 @@ export function IntakeFlow() {
         doneSteps={doneSteps}
         current={{
           id: current,
-          title: STEP_TITLES[current],
-          milestone: MILESTONE[current],
+          title: t(`stepTitle.${current}`),
+          milestone: milestoneFor(current),
           stepNumber: progressSteps.indexOf(current) + 1,
           totalSteps: progressSteps.length,
         }}
         onEditStep={jumpToStep}
         onBack={history.length > 0 ? goBack : undefined}
-        ctaLabel={isSubmitStep ? (form.payer === 'cashless' ? 'Confirm booking' : 'Pay & confirm') : 'Continue'}
+        ctaLabel={isSubmitStep ? (form.payer === 'cashless' ? t('cta.confirmBooking') : t('cta.payConfirm')) : t('cta.continue')}
         onCta={isSubmitStep ? handleSubmit : goNext}
         ctaDisabled={!canContinue(current, form)}
         ctaLoading={submitting}
@@ -216,10 +222,10 @@ export function IntakeFlow() {
   const totalSteps = isFormStep ? progressSteps.length : undefined
   const showBack = history.length > 0 && current !== 'success' && current !== 'welcome'
   
-  const headerTitle = current === 'welcome' || current === 'success' 
+  const headerTitle = current === 'welcome' || current === 'success'
     ? <Image src="/Agentix logo-health.svg" alt="Agentix HIMS" width={180} height={36} className="h-9 w-auto" priority />
-    : current === 'voice' ? 'Voice Check-in' 
-    : 'Patient Check-in'
+    : current === 'voice' ? t('shell.headerVoice')
+    : t('shell.headerCheckin')
 
   return (
     <IntakeAppShell

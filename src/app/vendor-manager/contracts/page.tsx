@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -32,22 +33,23 @@ function daysRemaining(endDate: string): number {
 
 // ─── Add Contract schema ──────────────────────────────────────────────────────
 
-const AddContractSchema = z.object({
-  vendorId:   z.string().min(1, 'Select a vendor'),
-  title:      z.string().min(3, 'Title is required'),
-  value:      z.coerce.number().min(1, 'Value must be > 0'),
-  startDate:  z.string().min(1, 'Start date required'),
-  endDate:    z.string().min(1, 'End date required'),
+const makeAddContractSchema = (t: (k: string) => string) => z.object({
+  vendorId:   z.string().min(1, t('contracts.errSelectVendor')),
+  title:      z.string().min(3, t('contracts.errTitleRequired')),
+  value:      z.coerce.number().min(1, t('contracts.errValuePositive')),
+  startDate:  z.string().min(1, t('contracts.errStartRequired')),
+  endDate:    z.string().min(1, t('contracts.errEndRequired')),
   status:     z.enum(['draft', 'active', 'expiring_soon', 'expired', 'terminated']),
   autoRenew:  z.boolean(),
 })
-type AddContractForm = z.infer<typeof AddContractSchema>
+type AddContractForm = z.infer<ReturnType<typeof makeAddContractSchema>>
 
 function AddContractModal({ onClose }: { onClose: () => void }) {
+  const t = useTranslations('vendorManager')
   const vendors     = useVendorManagerStore(s => s.vendors)
   const addContract = useVendorManagerStore(s => s.addContract)
   const { register, handleSubmit, watch, formState: { errors } } = useForm<AddContractForm>({
-    resolver: zodResolver(AddContractSchema) as Resolver<AddContractForm>,
+    resolver: zodResolver(makeAddContractSchema(t)) as Resolver<AddContractForm>,
     defaultValues: { status: 'active', autoRenew: false },
   })
 
@@ -65,7 +67,7 @@ function AddContractModal({ onClose }: { onClose: () => void }) {
       status:     data.status,
       autoRenew:  data.autoRenew,
     })
-    toast.success('Contract created')
+    toast.success(t('contracts.createdToast'))
     onClose()
   }
 
@@ -79,15 +81,15 @@ function AddContractModal({ onClose }: { onClose: () => void }) {
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <h2 className="font-bold text-slate-900 flex items-center gap-2">
-            <Plus className="h-4 w-4 text-[var(--color-primary)]" /> New Contract
+            <Plus className="h-4 w-4 text-[var(--color-accent)]" /> {t('contracts.modalTitle')}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 cursor-pointer"><X className="h-4 w-4" /></button>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
           <div>
-            <label className="text-xs font-semibold text-slate-600 mb-1 block">Vendor *</label>
+            <label className="text-xs font-semibold text-slate-600 mb-1 block">{t('contracts.vendorLabel')}</label>
             <select {...register('vendorId')} className={selectCls}>
-              <option value="">Select vendor…</option>
+              <option value="">{t('contracts.selectVendor')}</option>
               {vendors.filter(v => v.status === 'active').map(v => (
                 <option key={v.id} value={v.id}>{v.name}</option>
               ))}
@@ -95,46 +97,46 @@ function AddContractModal({ onClose }: { onClose: () => void }) {
             {errors.vendorId && <p className={errCls}>{errors.vendorId.message}</p>}
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-600 mb-1 block">Contract Title *</label>
-            <input {...register('title')} className={inputCls} placeholder="e.g. Annual Equipment Maintenance" />
+            <label className="text-xs font-semibold text-slate-600 mb-1 block">{t('contracts.contractTitleLabel')}</label>
+            <input {...register('title')} className={inputCls} placeholder={t('contracts.contractTitlePlaceholder')} />
             {errors.title && <p className={errCls}>{errors.title.message}</p>}
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-600 mb-1 block">Contract Value (₹) *</label>
-            <input {...register('value')} type="number" className={inputCls} placeholder="1200000" />
+            <label className="text-xs font-semibold text-slate-600 mb-1 block">{t('contracts.contractValueLabel')}</label>
+            <input {...register('value')} type="number" className={inputCls} placeholder={t('contracts.contractValuePlaceholder')} />
             {errors.value && <p className={errCls}>{errors.value.message}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Start Date *</label>
+              <label className="text-xs font-semibold text-slate-600 mb-1 block">{t('contracts.startDateLabel')}</label>
               <input {...register('startDate')} type="date" className={inputCls} />
               {errors.startDate && <p className={errCls}>{errors.startDate.message}</p>}
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">End Date *</label>
+              <label className="text-xs font-semibold text-slate-600 mb-1 block">{t('contracts.endDateLabel')}</label>
               <input {...register('endDate')} type="date" className={inputCls} />
               {errors.endDate && <p className={errCls}>{errors.endDate.message}</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Status</label>
+              <label className="text-xs font-semibold text-slate-600 mb-1 block">{t('contracts.statusLabel')}</label>
               <select {...register('status')} className={selectCls}>
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
+                <option value="draft">{t('contracts.statusDraft')}</option>
+                <option value="active">{t('contracts.statusActive')}</option>
               </select>
             </div>
             <div className="flex items-end pb-0.5">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input {...register('autoRenew')} type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[var(--color-primary)] cursor-pointer" />
-                <span className="text-sm font-semibold text-slate-600">Auto-Renew</span>
+                <input {...register('autoRenew')} type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[var(--color-accent)] cursor-pointer" />
+                <span className="text-sm font-semibold text-slate-600">{t('contracts.autoRenewLabel')}</span>
               </label>
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
+            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">{t('contracts.cancel')}</button>
             <button type="submit" className="flex-1 h-10 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-bold flex items-center justify-center gap-2 cursor-pointer">
-              <CheckCircle className="h-4 w-4" /> Create Contract
+              <CheckCircle className="h-4 w-4" /> {t('contracts.createContract')}
             </button>
           </div>
         </form>
@@ -148,6 +150,7 @@ function AddContractModal({ onClose }: { onClose: () => void }) {
 type TabKey = 'all' | 'active' | 'expiring' | 'expired'
 
 export default function ContractsPage() {
+  const t = useTranslations('vendorManager')
   const contracts        = useVendorManagerStore(s => s.contracts)
   const terminateContract = useVendorManagerStore(s => s.terminateContract)
 
@@ -174,15 +177,15 @@ export default function ContractsPage() {
   , [contracts])
 
   const tabs: { key: TabKey; label: string; count?: number }[] = [
-    { key: 'all',      label: 'All',           count: contracts.length },
-    { key: 'active',   label: 'Active',         count: contracts.filter(c => c.status === 'active').length },
-    { key: 'expiring', label: 'Expiring Soon',  count: expiringCount },
-    { key: 'expired',  label: 'Expired / Terminated' },
+    { key: 'all',      label: t('contracts.tabAll'),      count: contracts.length },
+    { key: 'active',   label: t('contracts.tabActive'),   count: contracts.filter(c => c.status === 'active').length },
+    { key: 'expiring', label: t('contracts.tabExpiring'), count: expiringCount },
+    { key: 'expired',  label: t('contracts.tabExpired') },
   ]
 
   const handleTerminate = (id: string) => {
     terminateContract(id)
-    toast.success('Contract terminated')
+    toast.success(t('contracts.terminatedToast'))
     setConfirm(null)
   }
 
@@ -192,15 +195,15 @@ export default function ContractsPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <FileText className="h-6 w-6 text-[var(--color-primary)]" /> Contracts
+            <FileText className="h-6 w-6 text-[var(--color-accent)]" /> {t('contracts.title')}
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">{filtered.length} contract{filtered.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-slate-500 mt-0.5">{filtered.length !== 1 ? t('contracts.countOther', { count: filtered.length }) : t('contracts.countOne', { count: filtered.length })}</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
           className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-bold cursor-pointer transition-colors shadow-sm"
         >
-          <Plus className="h-4 w-4" /> New Contract
+          <Plus className="h-4 w-4" /> {t('contracts.newContract')}
         </button>
       </div>
 
@@ -209,10 +212,10 @@ export default function ContractsPage() {
         <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
           <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
           <p className="text-sm font-semibold text-amber-800">
-            {expiringCount} contract{expiringCount > 1 ? 's' : ''} expiring within 30 days — initiate renewal now to avoid supply disruption.
+            {expiringCount > 1 ? t('contracts.expiringBannerOther', { count: expiringCount }) : t('contracts.expiringBannerOne', { count: expiringCount })}
           </p>
           <button onClick={() => setTab('expiring')} className="ml-auto text-xs font-bold text-amber-700 hover:text-amber-900 cursor-pointer underline">
-            View
+            {t('contracts.view')}
           </button>
         </div>
       )}
@@ -232,7 +235,7 @@ export default function ContractsPage() {
               {t.label}
               {t.count !== undefined && (
                 <span className={cn("ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
-                  tab === t.key ? "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]" : "bg-slate-200 text-slate-500"
+                  tab === t.key ? "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]" : "bg-slate-200 text-slate-500"
                 )}>{t.count}</span>
               )}
             </button>
@@ -242,7 +245,7 @@ export default function ContractsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <input
             value={q} onChange={e => setQ(e.target.value)}
-            placeholder="Search contracts…"
+            placeholder={t('contracts.searchPlaceholder')}
             className="h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white w-56"
           />
         </div>
@@ -254,14 +257,14 @@ export default function ContractsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 border-b border-slate-100 bg-slate-50/50">
-                <th className="px-5 py-3">Vendor / Title</th>
-                <th className="px-5 py-3">Value</th>
-                <th className="px-5 py-3">Start</th>
-                <th className="px-5 py-3">End</th>
-                <th className="px-5 py-3">Days Left</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Auto-Renew</th>
-                <th className="px-5 py-3">Actions</th>
+                <th className="px-5 py-3">{t('contracts.colVendorTitle')}</th>
+                <th className="px-5 py-3">{t('contracts.colValue')}</th>
+                <th className="px-5 py-3">{t('contracts.colStart')}</th>
+                <th className="px-5 py-3">{t('contracts.colEnd')}</th>
+                <th className="px-5 py-3">{t('contracts.colDaysLeft')}</th>
+                <th className="px-5 py-3">{t('contracts.colStatus')}</th>
+                <th className="px-5 py-3">{t('contracts.colAutoRenew')}</th>
+                <th className="px-5 py-3">{t('contracts.colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -282,31 +285,31 @@ export default function ContractsPage() {
                         "font-bold text-xs flex items-center gap-1",
                         days < 0 ? 'text-red-600' : days <= 30 ? 'text-amber-600' : 'text-slate-600'
                       )}>
-                        {days < 0 ? `${Math.abs(days)}d ago` : `${days}d`}
+                        {days < 0 ? t('contracts.daysAgo', { days: Math.abs(days) }) : t('contracts.daysLeft', { days })}
                         {days >= 0 && days <= 30 && <Calendar className="h-3 w-3" />}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
                       <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded-full", CONTRACT_STATUS_STYLE[c.status])}>
-                        {c.status.replace('_', ' ')}
+                        {t.has(`contractStatus.${c.status}`) ? t(`contractStatus.${c.status}`) : c.status.replace('_', ' ')}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-slate-600 text-xs">
-                      {c.autoRenew ? <span className="text-emerald-600 font-semibold">Yes</span> : <span className="text-slate-400">No</span>}
+                      {c.autoRenew ? <span className="text-emerald-600 font-semibold">{t('contracts.yes')}</span> : <span className="text-slate-400">{t('contracts.no')}</span>}
                     </td>
                     <td className="px-5 py-3.5">
                       {isTerminable && (
                         confirm === c.id ? (
                           <div className="flex items-center gap-1">
-                            <button onClick={() => handleTerminate(c.id)} className="text-[10px] font-bold text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded cursor-pointer">Confirm</button>
-                            <button onClick={() => setConfirm(null)} className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 px-2 py-1 cursor-pointer">Cancel</button>
+                            <button onClick={() => handleTerminate(c.id)} className="text-[10px] font-bold text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded cursor-pointer">{t('contracts.confirm')}</button>
+                            <button onClick={() => setConfirm(null)} className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 px-2 py-1 cursor-pointer">{t('contracts.cancel')}</button>
                           </div>
                         ) : (
                           <button
                             onClick={() => setConfirm(c.id)}
                             className="text-[10px] font-semibold text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-2 py-1 rounded cursor-pointer transition-colors"
                           >
-                            Terminate
+                            {t('contracts.terminate')}
                           </button>
                         )
                       )}
@@ -316,7 +319,7 @@ export default function ContractsPage() {
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-slate-400 text-sm">No contracts match your filters</td>
+                  <td colSpan={8} className="px-5 py-12 text-center text-slate-400 text-sm">{t('contracts.noMatch')}</td>
                 </tr>
               )}
             </tbody>

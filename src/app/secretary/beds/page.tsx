@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { BedDouble } from 'lucide-react'
 
-const WARD_TYPES = ['ICU', 'HDU', 'General', 'Paediatric', 'Maternity', 'Burns', 'Isolation']
+const WARD_KEYS = ['wardIcu', 'wardHdu', 'wardGeneral', 'wardPaediatric', 'wardMaternity', 'wardBurns', 'wardIsolation']
 const DISTRICTS = [
   { name: 'Bhopal', icu: { total: 120, used: 98 }, hdu: { total: 80, used: 72 }, general: { total: 800, used: 620 }, paediatric: { total: 80, used: 55 }, maternity: { total: 120, used: 88 }, burns: { total: 20, used: 8 }, isolation: { total: 40, used: 12 } },
   { name: 'Indore', icu: { total: 140, used: 135 }, hdu: { total: 90, used: 85 }, general: { total: 900, used: 780 }, paediatric: { total: 90, used: 75 }, maternity: { total: 140, used: 115 }, burns: { total: 25, used: 20 }, isolation: { total: 50, used: 18 } },
@@ -28,6 +29,7 @@ function OccupancyCell({ used, total }: { used: number; total: number }) {
 }
 
 export default function BedsPage() {
+  const t = useTranslations('secretary')
   const [search, setSearch] = useState('')
   const filtered = DISTRICTS.filter(d => d.name.toLowerCase().includes(search.toLowerCase()))
 
@@ -39,15 +41,15 @@ export default function BedsPage() {
   return (
     <div className="p-6 space-y-5 max-w-screen-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">State Bed Network</h1>
-        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">बेड नेटवर्क · {DISTRICTS.length} major districts shown · 52 district matrix</p>
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{t('beds.title')}</h1>
+        <p className="text-sm text-[var(--color-foreground-muted)] mt-0.5">{t('beds.subtitle', { count: DISTRICTS.length })}</p>
       </div>
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'ICU occupancy', value: `${Math.round((usedICU/totalICU)*100)}%`, sub: `${usedICU}/${totalICU} beds`, warn: usedICU/totalICU > 0.9 },
-          { label: 'General occupancy', value: `${Math.round((usedGen/totalGen)*100)}%`, sub: `${usedGen}/${totalGen} beds`, warn: false },
-          { label: 'Districts at capacity', value: '3', sub: 'ICU > 95%', warn: true },
-          { label: 'Available ICU beds', value: String(totalICU - usedICU), sub: 'State-wide free', warn: false },
+          { label: t('beds.kpiIcuOccupancy'), value: `${Math.round((usedICU/totalICU)*100)}%`, sub: t('beds.kpiIcuOccupancySub', { used: usedICU, total: totalICU }), warn: usedICU/totalICU > 0.9 },
+          { label: t('beds.kpiGeneralOccupancy'), value: `${Math.round((usedGen/totalGen)*100)}%`, sub: t('beds.kpiGeneralOccupancySub', { used: usedGen, total: totalGen }), warn: false },
+          { label: t('beds.kpiAtCapacity'), value: '3', sub: t('beds.kpiAtCapacitySub'), warn: true },
+          { label: t('beds.kpiAvailableIcu'), value: String(totalICU - usedICU), sub: t('beds.kpiAvailableIcuSub'), warn: false },
         ].map(k => (
           <div key={k.label} className="bg-white border border-[var(--color-border)] rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
             <p className="text-xs text-[var(--color-foreground-muted)]">{k.label}</p>
@@ -56,13 +58,13 @@ export default function BedsPage() {
           </div>
         ))}
       </div>
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search district..." className="border border-[var(--color-border)] rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('beds.searchPlaceholder')} className="border border-[var(--color-border)] rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
       <div className="bg-white border border-[var(--color-border)] rounded-2xl overflow-auto" style={{ boxShadow: 'var(--shadow-card)' }}>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-raised)]">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">District</th>
-              {WARD_TYPES.map(w => <th key={w} className="px-3 py-3 text-center text-xs font-semibold text-[var(--color-foreground-muted)]">{w}</th>)}
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-foreground-muted)]">{t('common.district')}</th>
+              {WARD_KEYS.map(w => <th key={w} className="px-3 py-3 text-center text-xs font-semibold text-[var(--color-foreground-muted)]">{t(`beds.${w}`)}</th>)}
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">

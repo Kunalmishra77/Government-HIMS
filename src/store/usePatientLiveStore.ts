@@ -65,10 +65,15 @@ interface LiveState {
   token: number
   aheadOfYou: number
   etaMinutes: number
+  // The booked appointment, carried through from check-in so the dashboard can
+  // show the arrival-time guidance. ISO date + a display time like "11:00 AM".
+  apptDate: string
+  apptTime: string
+  doctor: string
   events: LiveEvent[]
   advance: () => void
   pushEvent: (type: LiveEventType, title: string, detail?: string, room?: string) => void
-  startVisit: (token: number, mode?: LiveMode) => void
+  startVisit: (token: number, mode?: LiveMode, apptDate?: string, apptTime?: string, doctor?: string) => void
   reset: () => void
 }
 
@@ -91,6 +96,9 @@ export const usePatientLiveStore = create<LiveState>()(persist((set, get) => ({
   token: 4,
   aheadOfYou: 3,
   etaMinutes: 18,
+  apptDate: '',
+  apptTime: '',
+  doctor: 'Dr. Priya Nair',
   events: seedEvents('in_person', 4),
 
   advance: () => {
@@ -124,16 +132,19 @@ export const usePatientLiveStore = create<LiveState>()(persist((set, get) => ({
   pushEvent: (type, title, detail, room) => set(s => ({ events: [mkEvent(type, title, detail, room), ...s.events] })),
 
   // Begin a fresh journey for a newly onboarded patient.
-  startVisit: (token, mode = 'in_person') => set({
+  startVisit: (token, mode = 'in_person', apptDate = '', apptTime = '', doctor = 'Dr. Priya Nair') => set({
     mode,
     stage: mode === 'video' ? 'booked' : 'waiting',
     token,
     aheadOfYou: mode === 'video' ? 1 : 3,
     etaMinutes: mode === 'video' ? 10 : 18,
+    apptDate,
+    apptTime,
+    doctor: doctor || 'Dr. Priya Nair',
     events: seedEvents(mode, token),
   }),
 
-  reset: () => get().startVisit(get().token, get().mode),
+  reset: () => { const s = get(); s.startVisit(s.token, s.mode, s.apptDate, s.apptTime, s.doctor) },
 }),
   {
     name: 'agentix-patientlivestore', version: 1,

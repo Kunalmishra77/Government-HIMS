@@ -5,6 +5,7 @@ import {
   ClipboardList, Scissors, CreditCard, FileText, Shield, Heart, Package, Droplets, Utensils,
   Trash2, Truck, ShieldCheck, Users,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { Reveal } from "./Reveal"
 
 const GROUPS = [
@@ -27,13 +28,14 @@ const GROUPS = [
 ]
 
 export function ModulesBento() {
+  const t = useTranslations("landing.modules")
   return (
     <section id="platform" className="scroll-mt-20 py-20 lg:py-28 bg-white border-y border-[#EAECF2]">
       <div className="max-w-7xl mx-auto px-5 lg:px-10">
-        <Reveal className="max-w-2xl">
-          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--color-primary)]">One platform, every department</p>
-          <h2 className="text-[30px] lg:text-[38px] font-bold text-[#101828] tracking-tight mt-2">25 connected modules. One source of truth.</h2>
-          <p className="text-[15.5px] text-[#475467] mt-3">No more disconnected systems for lab, pharmacy, imaging and billing. Every team works in one operating system — so the patient journey flows end to end.</p>
+        <Reveal className="max-w-2xl mx-auto text-center">
+          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--color-accent)]">{t("eyebrow")}</p>
+          <h2 className="text-[30px] lg:text-[38px] font-bold text-[#101828] tracking-tight mt-2">{t("title")}</h2>
+          <p className="text-[15.5px] text-[#475467] mt-3">{t("subtitle")}</p>
         </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10">

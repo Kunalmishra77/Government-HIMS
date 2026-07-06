@@ -1,0 +1,10 @@
+{
+  "title": "Insurance",
+  "claims": "Claims",
+  "preAuth": "Pre-Auth",
+  "documents": "Documents",
+  "policyNumber": "Policy Number",
+  "insurer": "Insurer",
+  "claimAmount": "Claim Amount",
+  "submit": "Submit Claim"
+}

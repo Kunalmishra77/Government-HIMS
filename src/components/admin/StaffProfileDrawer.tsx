@@ -26,7 +26,7 @@ const STATUS_TINT: Record<StaffMember['status'], string> = {
 
 const SHIFT_DOT: Record<ShiftType, string> = {
   Morning: 'bg-amber-500',
-  Evening: 'bg-[rgba(8,145,178,0.07)]0',
+  Evening: 'bg-[rgba(238,107,38,0.07)]0',
   Night:   'bg-[var(--color-primary)]',
   Off:     'bg-slate-200',
 }
@@ -483,7 +483,7 @@ export function StaffProfileDrawer({ staffId, onClose }: StaffProfileDrawerProps
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────
-const INPUT = 'w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400'
+const INPUT = 'w-full h-9 px-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

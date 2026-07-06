@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import { ScanLine, Info, Sparkles, Image as ImageIcon, ZoomIn, RotateCw, Contrast } from "lucide-react"
 import { useRadiologyStudiesStore } from "@/store/useRadiologyStudiesStore"
 import { detectFindings } from "@/lib/radiologyAI"
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils"
 const VIEWABLE = new Set(["acquired", "reading", "reported", "verified", "released"])
 
 export default function RadiologyViewer() {
+  const t = useTranslations("radiology")
   const studies = useRadiologyStudiesStore(s => s.studies)
   const list = useMemo(() => studies.filter(s => VIEWABLE.has(s.status)), [studies])
   const [selectedId, setSelectedId] = useState<string | null>(list[0]?.id ?? null)
@@ -22,18 +24,19 @@ export default function RadiologyViewer() {
   return (
     <div className="space-y-5">
       <p className="t-body text-foreground-lighter">
-        Image viewer with AI findings overlay · worklist from live RIS studies
+        {t("viewer.subtitle")}
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Study list */}
         <div className="space-y-2">
-          <p className="t-overline text-foreground-lighter">Worklist ({list.length})</p>
-          {list.length === 0 && <p className="text-sm text-foreground-placeholder">No acquired studies.</p>}
+          <p className="t-overline text-foreground-lighter">{t("viewer.worklist", { count: list.length })}</p>
+          {list.length === 0 && <p className="text-sm text-foreground-placeholder">{t("viewer.noAcquired")}</p>}
           {list.map((s) => (
             <button key={s.id} onClick={() => setSelectedId(s.id)}
               className={cn("u-press w-full text-left bg-surface rounded-xl border p-3 transition-all", selectedId === s.id ? "border-primary-dark ring-1 ring-primary-dark" : "border-border hover:border-border-strong")}>
               <p className="font-bold text-foreground text-sm truncate">{s.patientName}</p>
+              <p className="text-[10px] font-bold text-emerald-700 truncate">{s.uhid}</p>
               <p className="text-xs text-foreground-lighter truncate">{s.modality} · {s.bodyPart}</p>
               <p className="text-[10px] text-foreground-placeholder mt-0.5">{s.id} · {s.status}</p>
             </button>
@@ -60,21 +63,21 @@ export default function RadiologyViewer() {
                   ))}
                 </div>
                 <div className="absolute bottom-3 left-3 text-[11px] text-white/60">
-                  <p className="font-bold text-white/80">{selected.patientName}</p>
+                  <p className="font-bold text-white/80">{selected.patientName} <span className="text-emerald-300">{selected.uhid}</span></p>
                   <p>{selected.name} · {selected.bodyPart}</p>
                 </div>
-                <span className="absolute bottom-3 right-3 text-[9px] text-white/40">AI overlay · demo render</span>
+                <span className="absolute bottom-3 right-3 text-[9px] text-white/40">{t("viewer.aiOverlayDemo")}</span>
               </>
             ) : (
               <div className="text-center">
                 <ScanLine className="h-16 w-16 text-slate-700 mb-3 mx-auto" />
-                <p className="text-slate-400 font-medium">Select a study to open viewer</p>
+                <p className="text-slate-400 font-medium">{t("viewer.selectToOpen")}</p>
               </div>
             )}
           </div>
           <div className="mt-3 flex items-start gap-2 p-3 bg-surface-sunken border border-border rounded-xl text-xs text-foreground-lighter">
             <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-            Full DICOM rendering uses Cornerstone.js / OHIF (post-launch). AI findings + heatmap regions shown here are simulated decision support — verify against source images.
+            {t("viewer.viewerDisclaimer")}
           </div>
         </div>
 
@@ -82,12 +85,12 @@ export default function RadiologyViewer() {
         <div className="hms-card p-4">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="h-4 w-4 text-primary-dark" />
-            <h3 className="t-title text-foreground">AI findings</h3>
+            <h3 className="t-title text-foreground">{t("viewer.aiFindings")}</h3>
           </div>
           {!selected ? (
-            <EmptyState icon={ScanLine} title="Select a study" size="sm" />
+            <EmptyState icon={ScanLine} title={t("viewer.selectStudy")} size="sm" />
           ) : findings.length === 0 ? (
-            <EmptyState icon={Sparkles} title="No AI findings" size="sm" />
+            <EmptyState icon={Sparkles} title={t("viewer.noAiFindings")} size="sm" />
           ) : (
             <div className="space-y-2.5">
               {findings.map(f => (

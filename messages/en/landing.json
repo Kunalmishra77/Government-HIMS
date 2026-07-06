@@ -1,0 +1,87 @@
+{
+  "nav": {
+    "home": "Home",
+    "platform": "Platform",
+    "product": "Product",
+    "security": "Security",
+    "outcomes": "Outcomes"
+  },
+  "cta": {
+    "abdmSandbox": "ABDM Sandbox",
+    "patientCheckIn": "Patient Check-In",
+    "login": "Log in",
+    "launchConsole": "Launch console"
+  },
+  "hero": {
+    "badge": "AI-native hospital operating system",
+    "titleLine1": "Run your hospital on",
+    "titleEmphasis": "intelligence",
+    "subtitle": "One enterprise platform unifying every department — clinical, operations, finance and support — with AI woven through the workflow: triage, decision support, predictive operations and closed-loop safety.",
+    "pillarAiNative": "AI-Native",
+    "pillarEnterprise": "Enterprise Healthcare",
+    "pillarUnified": "Unified Platform",
+    "ctaSecondary": "See it live"
+  },
+  "trustStrip": {
+    "tagline": "Built for hospitals, multi-hospital networks & academic medical centers"
+  },
+  "launcher": {
+    "eyebrow": "Enter your workspace",
+    "title": "Select your portal",
+    "subtitle": "{count} role-based consoles across clinical, operations, finance & support — each tailored to the team that uses it.",
+    "demo": "Demo — pick any role to explore",
+    "checkinButton": "Patient Self Check-In (Public Kiosk)"
+  },
+  "modules": {
+    "eyebrow": "One platform, every department",
+    "title": "25 connected modules. One source of truth.",
+    "subtitle": "No more disconnected systems for lab, pharmacy, imaging and billing. Every team works in one operating system — so the patient journey flows end to end."
+  },
+  "ayushman": {
+    "eyebrow": "Govt scheme · cashless ready",
+    "titleLine1": "AB-PMJAY & ABHA — native,",
+    "titleLine2": "not bolted on",
+    "subtitle": "Every Ayushman beneficiary walks in, gets verified in seconds, and proceeds cashless — with pre-auth auto-submitted to NHA. No staff effort. No billing friction. No re-entry anywhere."
+  },
+  "product": {
+    "eyebrow": "Live at a glance",
+    "title": "Your hospital, live at a glance",
+    "subtitle": "One connected dashboard — patients, revenue, staff, inventory, beds and ABHA, all reading from the same live source of truth."
+  },
+  "trust": {
+    "eyebrow": "Trust & governance",
+    "title": "Enterprise-grade trust, built in",
+    "subtitle": "Healthcare runs on trust. Security, compliance and AI governance aren’t add-ons here — they’re the foundation CIOs, CMOs and compliance teams can stand behind."
+  },
+  "outcomes": {
+    "eyebrow": "Outcomes that matter",
+    "title": "Run on intelligence. Measure the difference.",
+    "subtitle": "Illustrative targets for a connected, AI-native hospital — the metrics leadership is judged on."
+  },
+  "finalCta": {
+    "title": "Step into the AI-native hospital",
+    "subtitle": "Step into any role and experience the AI-native hospital operating system — clinical, operations, finance and support, unified."
+  },
+  "footer": {
+    "tagline": "The AI-native operating system for modern hospitals, networks and academic medical centers.",
+    "colPlatform": "Platform",
+    "colIntelligence": "Intelligence",
+    "colTrust": "Trust",
+    "linkClinical": "Clinical",
+    "linkOperations": "Operations",
+    "linkFinance": "Finance",
+    "linkSupport": "Support services",
+    "linkAiRadiology": "AI radiology triage",
+    "linkCriticalSla": "Critical-result SLA",
+    "linkPredictiveOps": "Predictive operations",
+    "linkOpsAssistant": "Ops assistant",
+    "linkSecurity": "Security",
+    "linkNabh": "NABH readiness",
+    "linkDisha": "DISHA / DPDP",
+    "linkAiGovernance": "AI governance",
+    "copyright": "© 2026 Agentix HIMS Group. All rights reserved.",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "dpdp": "DPDP"
+  }
+}

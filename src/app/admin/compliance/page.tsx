@@ -15,6 +15,7 @@ import { useHRStore } from "@/store/useHRStore"
 import { buildNabhEvidence } from "@/lib/nabhEvidence"
 import { cn } from "@/lib/utils"
 import { NabhEvidenceLiveCockpit } from "@/components/admin/NabhEvidenceLiveCockpit"
+import { useTranslations } from "next-intl"
 
 const today = () => new Date().toISOString().split('T')[0]!
 const daysUntil = (s: string) => Math.round((new Date(s + 'T00:00:00').getTime() - new Date(today() + 'T00:00:00').getTime()) / 86400000)
@@ -29,6 +30,7 @@ function liveStatutoryStatus(entry: { status: StatutoryStatus; dueDate: string }
 }
 
 export default function ComplianceCockpit() {
+  const t = useTranslations('admin')
   const auditEntries = useAuditStore(s => s.entries)
   const statutoryEntries = useStatutoryStore(s => s.entries)
   const vendors = useVendorStore(s => s.vendors)
@@ -90,7 +92,6 @@ export default function ComplianceCockpit() {
 
   // ─── Credentials expiring (cross-link to HR phase) ───────────────────
   const creds = useMemo(() => {
-    const t = today()
     let expiringSoon = 0
     let expired = 0
     for (const member of credentials) {
@@ -127,16 +128,16 @@ export default function ComplianceCockpit() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-[var(--color-primary)]" />Compliance Command Centre
+            <ShieldCheck className="h-6 w-6 text-[var(--color-accent)]" />{t('compliance.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            NABH · DISHA / DPDP · BMW (CPCB) · Statutory returns · MoUs · Credentials — all in one cockpit
+            {t('compliance.subtitle')}
           </p>
         </div>
         <div className={cn('inline-flex items-center gap-2 px-4 py-2 rounded-xl ring-1', scoreTint)}>
           <ShieldCheck className="h-5 w-5" />
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wide opacity-80">Overall score</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide opacity-80">{t('compliance.overallScore')}</p>
             <p className="text-2xl font-black tabular-nums leading-none">{overallScore}<span className="text-sm font-bold opacity-70"> / 100</span></p>
           </div>
         </div>
@@ -149,49 +150,49 @@ export default function ComplianceCockpit() {
       {/* 6-stream KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <StreamTile
-          label="NABH chapters"
+          label={t('compliance.streamNabh')}
           value={`${nabh.ready} / ${nabh.total}`}
-          sub={`${nabh.totalEvents} evidence events`}
+          sub={t('compliance.evidenceEvents', { count: nabh.totalEvents })}
           icon={ShieldCheck}
           tint={nabh.ready === nabh.total ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}
           href="/quality/nabh"
         />
         <StreamTile
-          label="DISHA / DPDP"
-          value={disha.breaches > 0 ? 'BREACH' : 'Clean'}
-          sub={`${disha.rtbfOpen} RTBF · ${disha.consents} consents`}
+          label={t('compliance.streamDisha')}
+          value={disha.breaches > 0 ? t('compliance.breach') : t('compliance.clean')}
+          sub={t('compliance.rtbfConsents', { rtbf: disha.rtbfOpen, consents: disha.consents })}
           icon={Lock}
           tint={disha.breaches > 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}
           href="/admin/disha"
         />
         <StreamTile
-          label="BMW / CPCB"
+          label={t('compliance.streamBmw')}
           value={`${bmw.score}%`}
-          sub={`${(bmw.yellowKg + bmw.redKg).toFixed(1)}kg disposed`}
+          sub={t('compliance.kgDisposed', { kg: (bmw.yellowKg + bmw.redKg).toFixed(1) })}
           icon={Trash2}
           tint={bmw.score >= 90 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}
           href="/bmw/reports"
         />
         <StreamTile
-          label="Statutory"
-          value={statutory.counts.overdue > 0 ? `${statutory.counts.overdue} overdue` : `${statutory.counts.due_soon} due`}
-          sub={`${statutory.counts.filed} filed YTD`}
+          label={t('compliance.streamStatutory')}
+          value={statutory.counts.overdue > 0 ? t('compliance.overdueCount', { count: statutory.counts.overdue }) : t('compliance.dueCount', { count: statutory.counts.due_soon })}
+          sub={t('compliance.filedYtd', { count: statutory.counts.filed })}
           icon={Calendar}
           tint={statutory.counts.overdue > 0 ? 'bg-red-50 border-red-200 text-red-700' : statutory.counts.due_soon > 0 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}
           href="/admin/statutory"
         />
         <StreamTile
-          label="MoUs"
+          label={t('compliance.streamMous')}
           value={`${mous.expired.length + mous.expiring.length}`}
-          sub={`${mous.expired.length} expired · ${mous.expiring.length} ≤90d`}
+          sub={t('compliance.mousSub', { expired: mous.expired.length, expiring: mous.expiring.length })}
           icon={Truck}
           tint={mous.expired.length > 0 ? 'bg-red-50 border-red-200 text-red-700' : mous.expiring.length > 0 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}
           href="/admin/vendors"
         />
         <StreamTile
-          label="Credentials"
+          label={t('compliance.streamCredentials')}
           value={`${creds.expiringSoon + creds.expired}`}
-          sub={`${creds.expired} expired · ${creds.expiringSoon} ≤90d`}
+          sub={t('compliance.credsSub', { expired: creds.expired, expiring: creds.expiringSoon })}
           icon={BadgeCheck}
           tint={creds.expired > 0 ? 'bg-red-50 border-red-200 text-red-700' : creds.expiringSoon > 0 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}
           href="/admin/credentials"
@@ -202,13 +203,13 @@ export default function ComplianceCockpit() {
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[var(--color-primary)]" />NABH chapter readiness
-            <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] px-2 py-0.5 rounded">
-              {nabh.ready}/{nabh.total} ready
+            <ShieldCheck className="h-4 w-4 text-[var(--color-accent)]" />{t('compliance.nabhReadiness')}
+            <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] px-2 py-0.5 rounded">
+              {t('compliance.readyCount', { ready: nabh.ready, total: nabh.total })}
             </span>
           </h3>
-          <Link href="/audit/reports" className="text-[11px] font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1">
-            Full evidence report <ArrowRight className="h-3 w-3" />
+          <Link href="/audit/reports" className="text-[11px] font-bold text-[var(--color-accent)] hover:underline flex items-center gap-1">
+            {t('compliance.fullEvidenceReport')} <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
@@ -229,14 +230,14 @@ export default function ComplianceCockpit() {
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-[var(--color-primary)]" />Statutory · next 14 days
+              <Calendar className="h-4 w-4 text-[var(--color-accent)]" />{t('compliance.statutoryNext14')}
             </h3>
-            <Link href="/admin/statutory" className="text-[11px] font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1">
-              Calendar <ChevronRight className="h-3 w-3" />
+            <Link href="/admin/statutory" className="text-[11px] font-bold text-[var(--color-accent)] hover:underline flex items-center gap-1">
+              {t('compliance.calendar')} <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
           {statutory.next14.length === 0 ? (
-            <p className="text-xs text-slate-400 italic py-3 text-center">Nothing due in the next 2 weeks.</p>
+            <p className="text-xs text-slate-400 italic py-3 text-center">{t('compliance.nothingDue')}</p>
           ) : (
             <div className="space-y-1.5">
               {statutory.next14.map(e => {
@@ -252,7 +253,7 @@ export default function ComplianceCockpit() {
                     </div>
                     <span className={cn('text-[10px] font-black tabular-nums',
                       d < 0 ? 'text-red-700' : d <= 7 ? 'text-amber-700' : 'text-slate-600')}>
-                      {d === 0 ? 'TODAY' : d > 0 ? `${d}d` : `-${Math.abs(d)}d`}
+                      {d === 0 ? t('compliance.today') : d > 0 ? `${d}d` : `-${Math.abs(d)}d`}
                     </span>
                   </div>
                 )
@@ -265,14 +266,14 @@ export default function ComplianceCockpit() {
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <Truck className="h-4 w-4 text-amber-600" />Vendor MoUs · expiring soon
+              <Truck className="h-4 w-4 text-amber-600" />{t('compliance.vendorMous')}
             </h3>
-            <Link href="/admin/vendors" className="text-[11px] font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1">
-              Vendors <ChevronRight className="h-3 w-3" />
+            <Link href="/admin/vendors" className="text-[11px] font-bold text-[var(--color-accent)] hover:underline flex items-center gap-1">
+              {t('compliance.vendors')} <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
           {[...mous.expired, ...mous.expiring.slice(0, 5)].length === 0 ? (
-            <p className="text-xs text-slate-400 italic py-3 text-center">All MoUs current.</p>
+            <p className="text-xs text-slate-400 italic py-3 text-center">{t('compliance.allMousCurrent')}</p>
           ) : (
             <div className="space-y-1.5">
               {[...mous.expired, ...mous.expiring.slice(0, 5)].slice(0, 6).map(v => (
@@ -282,7 +283,7 @@ export default function ComplianceCockpit() {
                   'bg-slate-50 border-slate-200')}>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-slate-800 truncate">{v.name}</p>
-                    <p className="text-[10px] text-slate-500 truncate">MoU expires {fmtDate(v.mouExpiry)}</p>
+                    <p className="text-[10px] text-slate-500 truncate">{t('compliance.mouExpires', { date: fmtDate(v.mouExpiry) })}</p>
                   </div>
                   <span className={cn('text-[10px] font-black tabular-nums flex-shrink-0',
                     v.days < 0 ? 'text-red-700' : v.days <= 30 ? 'text-amber-700' : 'text-slate-600')}>
@@ -298,25 +299,25 @@ export default function ComplianceCockpit() {
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <Trash2 className="h-4 w-4 text-amber-700" />BMW / CPCB this month
+              <Trash2 className="h-4 w-4 text-amber-700" />{t('compliance.bmwThisMonth')}
             </h3>
-            <Link href="/bmw/reports" className="text-[11px] font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1">
-              Reports <ChevronRight className="h-3 w-3" />
+            <Link href="/bmw/reports" className="text-[11px] font-bold text-[var(--color-accent)] hover:underline flex items-center gap-1">
+              {t('compliance.reports')} <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-amber-700">Yellow</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-amber-700">{t('compliance.yellow')}</p>
               <p className="text-base font-black text-amber-700 mt-1 tabular-nums">{bmw.yellowKg.toFixed(1)}<span className="text-[10px] font-bold">kg</span></p>
             </div>
             <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-red-700">Red</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-red-700">{t('compliance.red')}</p>
               <p className="text-base font-black text-red-700 mt-1 tabular-nums">{bmw.redKg.toFixed(1)}<span className="text-[10px] font-bold">kg</span></p>
             </div>
             <div className={cn('rounded-lg p-3 text-center border',
               bmw.score >= 90 ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200')}>
               <p className={cn('text-[10px] font-bold uppercase tracking-wide',
-                bmw.score >= 90 ? 'text-emerald-700' : 'text-amber-700')}>Compliance</p>
+                bmw.score >= 90 ? 'text-emerald-700' : 'text-amber-700')}>{t('compliance.complianceLabel')}</p>
               <p className={cn('text-base font-black mt-1 tabular-nums',
                 bmw.score >= 90 ? 'text-emerald-700' : 'text-amber-700')}>{bmw.score}%</p>
             </div>
@@ -327,16 +328,16 @@ export default function ComplianceCockpit() {
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <Lock className="h-4 w-4 text-rose-600" />DISHA / DPDP recent activity
+              <Lock className="h-4 w-4 text-rose-600" />{t('compliance.dishaRecent')}
             </h3>
-            <Link href="/admin/disha" className="text-[11px] font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1">
-              Full log <ChevronRight className="h-3 w-3" />
+            <Link href="/admin/disha" className="text-[11px] font-bold text-[var(--color-accent)] hover:underline flex items-center gap-1">
+              {t('compliance.fullLog')} <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
           {(() => {
             const dishaRecent = auditEntries.filter(e => e.action.startsWith('disha_')).slice(0, 5)
             if (dishaRecent.length === 0) {
-              return <p className="text-xs text-slate-400 italic py-3 text-center">No DISHA events yet.</p>
+              return <p className="text-xs text-slate-400 italic py-3 text-center">{t('compliance.noDishaEvents')}</p>
             }
             return (
               <div className="space-y-1.5">
@@ -363,8 +364,7 @@ export default function ComplianceCockpit() {
 
       <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
         <Sparkles className="h-3 w-3" />
-        Overall score is heuristic: 100 minus penalties for overdue statutory (×8), breaches (×15), open RTBF (×3),
-        expired MoUs (×5), expired credentials (×4), BMW non-compliant logs (×3), missing NABH chapters (×2).
+        {t('compliance.scoreNote')}
       </p>
     </div>
   )

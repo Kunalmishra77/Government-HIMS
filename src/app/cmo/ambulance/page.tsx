@@ -1,6 +1,7 @@
 "use client"
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Ambulance as AmbulanceIcon, MapPin, Brain, ChevronRight } from 'lucide-react'
 import { useCmoAmbulancesStore } from '@/store/useCmoAmbulancesStore'
 import { CmoPageHeader } from '@/components/cmo/layout/CmoPageHeader'
@@ -14,12 +15,12 @@ const REROUTE_OPTIONS = [
   { id: 'fac_ch_bairagarh', name: 'CH Bairagarh',  eta: 31, capability: '✓ Emergency · ✗ OT · ✗ CCU' },
 ]
 
-const STATUS_CONFIG: Record<Ambulance['status'], { label: string; badge: string }> = {
-  'idle':              { label: 'Idle',         badge: 'bg-slate-100 text-slate-600' },
-  'dispatched':        { label: 'Dispatched',   badge: 'bg-blue-100 text-blue-700' },
-  'at-incident':       { label: 'At incident',  badge: 'bg-amber-100 text-amber-700' },
-  'en-route-facility': { label: 'En route →',   badge: 'bg-emerald-100 text-emerald-700' },
-  'returning':         { label: 'Returning',    badge: 'bg-slate-100 text-slate-600' },
+const STATUS_CONFIG: Record<Ambulance['status'], { labelKey: string; badge: string }> = {
+  'idle':              { labelKey: 'ambulance.statusIdle',        badge: 'bg-slate-100 text-slate-600' },
+  'dispatched':        { labelKey: 'ambulance.statusDispatched',  badge: 'bg-surface-sunken text-accent' },
+  'at-incident':       { labelKey: 'ambulance.atIncident',        badge: 'bg-amber-100 text-amber-700' },
+  'en-route-facility': { labelKey: 'ambulance.enRoute',           badge: 'bg-emerald-100 text-emerald-700' },
+  'returning':         { labelKey: 'ambulance.returning',         badge: 'bg-slate-100 text-slate-600' },
 }
 
 function VitalChip({ label, value, alert }: { label: string; value: string | number; alert: boolean }) {
@@ -36,6 +37,7 @@ function VitalChip({ label, value, alert }: { label: string; value: string | num
 }
 
 export default function CmoAmbulancePage() {
+  const t          = useTranslations('cmo')
   const ambulances = useCmoAmbulancesStore(s => s.ambulances)
   const reroute    = useCmoAmbulancesStore(s => s.reroute)
 
@@ -51,16 +53,16 @@ export default function CmoAmbulancePage() {
   return (
     <div className="max-w-5xl mx-auto space-y-5 cmo-fade-up">
       <CmoPageHeader
-        title="Ambulance command · एम्बुलेंस कमांड"
-        titleHindi="23 वाहन · 8 सक्रिय · लाइव ट्रैकिंग"
-        subtitle={`${active.length} active · ${enRoute.length} en route · ${atIncident.length} at incident · ${returning.length} returning`}
+        title={t('ambulance.title')}
+        titleHindi={t('ambulance.titleHindi')}
+        subtitle={t('ambulance.subtitle', { active: active.length, enRoute: enRoute.length, atIncident: atIncident.length, returning: returning.length })}
       />
 
       <div className="grid grid-cols-4 gap-3">
-        <MetricTile label="Active ambulances" value={active.length} />
-        <MetricTile label="En route →" value={enRoute.length} variant="info" />
-        <MetricTile label="At incident" value={atIncident.length} variant="warning" />
-        <MetricTile label="Returning" value={returning.length} />
+        <MetricTile label={t('ambulance.activeAmbulances')} value={active.length} />
+        <MetricTile label={t('ambulance.enRoute')} value={enRoute.length} variant="info" />
+        <MetricTile label={t('ambulance.atIncident')} value={atIncident.length} variant="warning" />
+        <MetricTile label={t('ambulance.returning')} value={returning.length} />
       </div>
 
       {/* En-route cards */}
@@ -68,10 +70,10 @@ export default function CmoAmbulancePage() {
         <div>
           <p className="text-[13px] font-bold text-[var(--color-foreground)] mb-3"
              style={{ fontFamily: 'var(--font-heading)' }}>
-            En route — live feed
+            {t('ambulance.enRouteLiveFeed')}
             <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600">
               <span className="cmo-live-pulse h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Live
+              {t('ambulance.live')}
             </span>
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -97,7 +99,7 @@ export default function CmoAmbulancePage() {
                   <div className="px-4 py-3 border-b border-[var(--color-border)]">
                     <p className="text-[13px] font-bold text-[var(--color-foreground)] leading-snug"
                        style={{ fontFamily: 'var(--font-heading)' }}>
-                      {amb.patient.name ?? 'Unknown'}{amb.patient.age ? `, ${amb.patient.age} ${amb.patient.gender}` : ''}
+                      {amb.patient.name ?? t('ambulance.unknown')}{amb.patient.age ? `, ${amb.patient.age} ${amb.patient.gender}` : ''}
                     </p>
                     <p className="text-[11.5px] text-[var(--color-foreground-muted)] mt-0.5 line-clamp-2">{amb.patient.chiefComplaint}</p>
 
@@ -114,9 +116,9 @@ export default function CmoAmbulancePage() {
                 {/* AI prediction */}
                 {amb.aiPrediction && (
                   <div className="px-4 py-2 flex items-start gap-2 border-b border-[var(--color-border)]">
-                    <Brain size={13} className="text-[var(--color-primary)] mt-0.5 flex-shrink-0" />
+                    <Brain size={13} className="text-[var(--color-accent)] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-[11.5px] font-semibold text-[#1E40AF]">{amb.aiPrediction.diagnosis}</p>
+                      <p className="text-[11.5px] font-semibold text-[#0D2032]">{amb.aiPrediction.diagnosis}</p>
                       <p className="text-[10px] text-[var(--color-foreground-lighter)]">{amb.aiPrediction.confidence}% · {amb.aiPrediction.specialty}</p>
                     </div>
                   </div>
@@ -131,12 +133,12 @@ export default function CmoAmbulancePage() {
                   <div className="flex items-center gap-2">
                     <span className="text-[14px] font-bold text-emerald-700 tabular-nums"
                           style={{ fontFamily: 'var(--font-heading)' }}>
-                      {Math.round(amb.etaMinutes ?? 0)} min
+                      {t('ambulance.minSuffix', { min: Math.round(amb.etaMinutes ?? 0) })}
                     </span>
                     <button
                       onClick={e => { e.stopPropagation(); setRerouteAmb(amb); setSelectedRoute(null) }}
-                      className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[var(--color-border)] text-[var(--color-foreground-muted)] hover:border-[rgba(8,145,178,0.18)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] transition-all">
-                      Re-route
+                      className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[var(--color-border)] text-[var(--color-foreground-muted)] hover:border-[rgba(238,107,38,0.18)] hover:text-[var(--color-accent)] hover:bg-[var(--color-primary-soft)] transition-all">
+                      {t('ambulance.reroute')}
                     </button>
                   </div>
                 </div>
@@ -146,17 +148,17 @@ export default function CmoAmbulancePage() {
                   <div className="px-4 pb-3 flex gap-1.5 flex-wrap">
                     {amb.receivingFacilityStatus.specialistPaged && (
                       <span className="text-[9px] font-semibold bg-[var(--color-success-bg)] text-[#065F46] border border-[border-green-200] px-2 py-0.5 rounded-full">
-                        Specialist paged
+                        {t('ambulance.specialistPaged')}
                       </span>
                     )}
                     {amb.receivingFacilityStatus.bedReserved && (
                       <span className="text-[9px] font-semibold bg-[var(--color-success-bg)] text-[#065F46] border border-[border-green-200] px-2 py-0.5 rounded-full">
-                        Bed {amb.receivingFacilityStatus.bedId}
+                        {t('ambulance.bedLabel', { id: amb.receivingFacilityStatus.bedId ?? "" })}
                       </span>
                     )}
                     {amb.receivingFacilityStatus.otPrepStarted && (
                       <span className="text-[9px] font-semibold bg-[var(--color-warning-bg)] text-[#92400E] border border-[border-amber-200] px-2 py-0.5 rounded-full">
-                        OT prep
+                        {t('ambulance.otPrep')}
                       </span>
                     )}
                   </div>
@@ -171,7 +173,7 @@ export default function CmoAmbulancePage() {
       {[...atIncident, ...returning].length > 0 && (
         <div>
           <p className="text-[13px] font-bold text-[var(--color-foreground)] mb-2"
-             style={{ fontFamily: 'var(--font-heading)' }}>Other active vehicles</p>
+             style={{ fontFamily: 'var(--font-heading)' }}>{t('ambulance.otherActiveVehicles')}</p>
           <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden"
                style={{ boxShadow: 'var(--shadow-card)' }}>
             {[...atIncident, ...returning].map((amb, i) => {
@@ -183,7 +185,7 @@ export default function CmoAmbulancePage() {
                     i % 2 === 1 ? 'bg-[var(--color-surface-raised)]' : '')}>
                   <AmbulanceIcon size={14} className="text-[var(--color-foreground-lighter)] flex-shrink-0" />
                   <span className="text-[12.5px] font-semibold text-[var(--color-foreground)] min-w-[140px]">{amb.vehicleNumber}</span>
-                  <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0', badge.badge)}>{badge.label}</span>
+                  <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0', badge.badge)}>{t(badge.labelKey)}</span>
                   <span className="text-[11.5px] text-[var(--color-foreground-muted)] flex-1 truncate">
                     {amb.patient?.chiefComplaint ?? amb.currentLocation.address}
                   </span>
@@ -203,11 +205,11 @@ export default function CmoAmbulancePage() {
           <>
             <button onClick={() => { setRerouteAmb(drill); setDrill(null); setSelectedRoute(null) }}
               className="text-[12.5px] font-semibold px-4 py-2.5 rounded-xl border border-[var(--color-border)] hover:bg-slate-50">
-              Re-route
+              {t('ambulance.reroute')}
             </button>
-            <button onClick={() => { console.info('[CMO Demo] Page specialist'); toast.success('Specialist paged') }}
+            <button onClick={() => { console.info('[CMO Demo] Page specialist'); toast.success(t('ambulance.specialistPagedToast')) }}
               className="flex-1 text-[12.5px] font-semibold py-2.5 rounded-xl bg-[var(--color-primary)] text-white hover:opacity-90">
-              Page specialist
+              {t('ambulance.pageSpecialist')}
             </button>
           </>
         }
@@ -216,9 +218,9 @@ export default function CmoAmbulancePage() {
           <div className="space-y-4">
             <div className="bg-[var(--color-surface-raised)] rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-[15px] font-bold text-[var(--color-foreground)]" style={{ fontFamily: 'var(--font-heading)' }}>
-                {drill.patient.name ?? 'Unknown patient'}{drill.patient.age ? `, ${drill.patient.age} yrs` : ''}
+                {drill.patient.name ?? t('ambulance.unknownPatient')}{drill.patient.age ? `, ${drill.patient.age} yrs` : ''}
               </p>
-              {drill.patient.abhaId && <p className="text-[11px] text-[var(--color-foreground-lighter)] mt-0.5">ABHA: {drill.patient.abhaId}</p>}
+              {drill.patient.abhaId && <p className="text-[11px] text-[var(--color-foreground-lighter)] mt-0.5">{t('ambulance.abha', { id: drill.patient.abhaId })}</p>}
               <p className="text-[12.5px] text-[var(--color-foreground-muted)] mt-1.5">{drill.patient.chiefComplaint}</p>
             </div>
             <div className="grid grid-cols-4 gap-2">
@@ -230,18 +232,18 @@ export default function CmoAmbulancePage() {
               ].map(v => <VitalChip key={v.label} {...v} />)}
             </div>
             {drill.aiPrediction && (
-              <div className="bg-[var(--color-primary-soft)] border border-[rgba(8,145,178,0.18)] rounded-xl p-4">
-                <p className="text-[13px] font-bold text-[var(--color-foreground)]">AI diagnosis: {drill.aiPrediction.diagnosis}</p>
-                <p className="text-[12px] text-[var(--color-foreground-muted)] mt-0.5">{drill.aiPrediction.confidence}% confidence · {drill.aiPrediction.specialty}</p>
+              <div className="bg-[var(--color-primary-soft)] border border-[rgba(238,107,38,0.18)] rounded-xl p-4">
+                <p className="text-[13px] font-bold text-[var(--color-foreground)]">{t('ambulance.aiDiagnosis', { diagnosis: drill.aiPrediction.diagnosis })}</p>
+                <p className="text-[12px] text-[var(--color-foreground-muted)] mt-0.5">{t('ambulance.confidenceSpecialty', { confidence: drill.aiPrediction.confidence, specialty: drill.aiPrediction.specialty })}</p>
               </div>
             )}
             {drill.receivingFacilityStatus && (
               <div className="bg-[var(--color-surface-raised)] rounded-xl border border-[var(--color-border)] p-4 space-y-2 text-[12.5px]">
-                <p className="font-bold text-[var(--color-foreground)]">Receiving facility prep</p>
+                <p className="font-bold text-[var(--color-foreground)]">{t('ambulance.receivingFacilityPrep')}</p>
                 {[
-                  { label: 'Specialist paged', done: drill.receivingFacilityStatus.specialistPaged },
-                  { label: `Bed reserved${drill.receivingFacilityStatus.bedId ? ` (${drill.receivingFacilityStatus.bedId})` : ''}`, done: drill.receivingFacilityStatus.bedReserved },
-                  { label: 'OT prep started', done: drill.receivingFacilityStatus.otPrepStarted },
+                  { label: t('ambulance.specialistPaged'), done: drill.receivingFacilityStatus.specialistPaged },
+                  { label: drill.receivingFacilityStatus.bedId ? t('ambulance.bedReservedWith', { id: drill.receivingFacilityStatus.bedId }) : t('ambulance.bedReserved'), done: drill.receivingFacilityStatus.bedReserved },
+                  { label: t('ambulance.otPrepStarted'), done: drill.receivingFacilityStatus.otPrepStarted },
                 ].map(item => (
                   <div key={item.label} className="flex items-center gap-2">
                     <span className={cn('h-2 w-2 rounded-full flex-shrink-0', item.done ? 'bg-emerald-500' : 'bg-slate-300')} />
@@ -251,11 +253,11 @@ export default function CmoAmbulancePage() {
               </div>
             )}
             <div className="text-[12px] text-[var(--color-foreground-muted)] space-y-0.5">
-              <p>Driver: <strong>{drill.driver.name}</strong> · {drill.driver.phone}</p>
-              <p>EMT: <strong>{drill.emt.name}</strong> ({drill.emt.certificationLevel})</p>
+              <p>{t('ambulance.driver', { name: drill.driver.name, phone: drill.driver.phone })}</p>
+              <p>{t('ambulance.emt', { name: drill.emt.name, level: drill.emt.certificationLevel })}</p>
               {drill.etaMinutes !== undefined && (
                 <p className="font-semibold text-emerald-700 mt-1">
-                  ETA: {Math.round(drill.etaMinutes)} min → {drill.destinationFacility?.name}
+                  {t('ambulance.eta', { min: Math.round(drill.etaMinutes), facility: drill.destinationFacility?.name ?? '' })}
                 </p>
               )}
             </div>
@@ -265,23 +267,23 @@ export default function CmoAmbulancePage() {
 
       {/* Re-route */}
       <DrillCard open={!!rerouteAmb} onClose={() => setRerouteAmb(null)}
-        title="Re-route ambulance" subtitle={rerouteAmb?.vehicleNumber}
+        title={t('ambulance.rerouteTitle')} subtitle={rerouteAmb?.vehicleNumber}
         footer={
           <button disabled={!selectedRoute}
             onClick={async () => {
               if (rerouteAmb && selectedRoute) {
                 await reroute(rerouteAmb.id, selectedRoute.id, selectedRoute.name, selectedRoute.eta)
                 setRerouteAmb(null)
-                toast.success(`Rerouted to ${selectedRoute.name} · ETA ${selectedRoute.eta} min`)
+                toast.success(t('ambulance.reroutedToast', { facility: selectedRoute.name, eta: selectedRoute.eta }))
               }
             }}
             className="flex-1 text-[12.5px] font-semibold py-2.5 rounded-xl bg-[var(--color-primary)] text-white hover:opacity-90 disabled:opacity-40">
-            Confirm reroute
+            {t('ambulance.confirmReroute')}
           </button>
         }
       >
         <div className="space-y-3">
-          <p className="text-[12px] text-[var(--color-foreground-lighter)]">Select alternative facility (AI-ranked by capability + proximity):</p>
+          <p className="text-[12px] text-[var(--color-foreground-lighter)]">{t('ambulance.selectAlternative')}</p>
           {REROUTE_OPTIONS.map(opt => (
             <button key={opt.id} onClick={() => setSelectedRoute(opt)}
               className={cn(
@@ -297,7 +299,7 @@ export default function CmoAmbulancePage() {
                 </p>
                 <span className="text-[14px] font-bold text-emerald-700 tabular-nums"
                       style={{ fontFamily: 'var(--font-heading)' }}>
-                  {opt.eta} min
+                  {t('ambulance.minSuffix', { min: opt.eta })}
                 </span>
               </div>
               <p className="text-[11px] text-[var(--color-foreground-lighter)] mt-0.5">{opt.capability}</p>

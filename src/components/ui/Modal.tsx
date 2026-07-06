@@ -87,7 +87,7 @@ export function Modal({
           >
             <header className="flex items-start gap-3 px-5 py-4 border-b border-border">
               {Icon && (
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent-soft text-primary flex-shrink-0">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent-soft text-accent flex-shrink-0">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
               )}

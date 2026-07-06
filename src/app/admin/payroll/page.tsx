@@ -17,6 +17,7 @@ import { toast } from "sonner"
 import { useDialogs } from "@/components/ui/ConfirmDialog"
 import { printableHtml } from "@/lib/fileIO"
 import { notifyAndAuditMany } from "@/lib/notifyAndAudit"
+import { useTranslations } from "next-intl"
 
 const fmtINR = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
 const fmtDate = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -46,6 +47,7 @@ interface PayrollRow {
 }
 
 export default function PayrollPage() {
+  const t = useTranslations('admin')
   const currentUser = useAuthStore(s => s.currentUser)
   const staff = useHRStore(s => s.staff)
   const shifts = useHRStore(s => s.shifts)
@@ -113,12 +115,12 @@ export default function PayrollPage() {
   }, [rows])
 
   const handleLockPeriod = async () => {
-    if (!canClose) { toast.error("You don't have permission to lock payroll"); return }
-    if (isLocked) { toast.error('Period already locked'); return }
+    if (!canClose) { toast.error(t('payroll.noPermission')); return }
+    if (isLocked) { toast.error(t('payroll.alreadyLocked')); return }
     const ok = await confirm({
-      title: `Lock payroll for ${label}?`,
-      body: `Net ₹${Math.round(totals.netPay).toLocaleString('en-IN')} across ${rows.length} staff. Once locked, the period cannot be edited without an override.`,
-      confirmLabel: 'Lock period',
+      title: t('payroll.lockTitle', { label }),
+      body: t('payroll.lockBody', { net: Math.round(totals.netPay).toLocaleString('en-IN'), count: rows.length }),
+      confirmLabel: t('payroll.lockPeriod'),
       tone: 'warn',
     })
     if (!ok) return
@@ -143,11 +145,11 @@ export default function PayrollPage() {
     // M11-B — notify Finance + HR that the period is locked.
     notifyAndAuditMany(['admin', 'audit_officer'], {
       type: 'system', priority: 'medium',
-      title: `Payroll locked · ${label}`,
-      body: `${rows.length} staff · gross ${fmtINR(totals.totalGross)} · net ${fmtINR(totals.netPay)}. Period frozen — no edits without override.`,
+      title: t('payroll.notifyTitle', { label }),
+      body: t('payroll.notifyBody', { count: rows.length, gross: fmtINR(totals.totalGross), net: fmtINR(totals.netPay) }),
       audit: { action: 'finance_period_closed', resource: 'payroll_period', resourceId: period.id, detail: `${label} payroll locked`, userName: actorName },
     })
-    toast.success(`Payroll locked for ${label} · Finance + Audit notified`)
+    toast.success(t('payroll.lockedToast', { label }))
   }
 
   // M11-B — generate a per-row payslip PDF (printable HTML window).
@@ -199,7 +201,7 @@ export default function PayrollPage() {
       a.href = url; a.download = `payroll-${month}.csv`; a.click()
       URL.revokeObjectURL(url)
     }
-    toast.success(`Exported ${rows.length} payroll rows`)
+    toast.success(t('payroll.exported', { count: rows.length }))
   }
 
   return (
@@ -207,26 +209,26 @@ export default function PayrollPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <IndianRupee className="h-6 w-6 text-emerald-600" />Payroll Preview
+            <IndianRupee className="h-6 w-6 text-emerald-600" />{t('payroll.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Per-staff salary · OT · deductions · monthly close → audit-locked period · DEMO calculation (not real payroll engine)
+            {t('payroll.subtitle')}
           </p>
         </div>
         <div className="flex gap-2">
           <button onClick={exportCSV}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
-            <Download className="h-3.5 w-3.5" />Export
+            <Download className="h-3.5 w-3.5" />{t('payroll.export')}
           </button>
           {canClose && !isLocked && (
             <button onClick={handleLockPeriod}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
-              <Lock className="h-3.5 w-3.5" />Lock period
+              <Lock className="h-3.5 w-3.5" />{t('payroll.lockPeriod')}
             </button>
           )}
           {isLocked && (
             <span className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <CheckCircle2 className="h-3.5 w-3.5" />Period locked
+              <CheckCircle2 className="h-3.5 w-3.5" />{t('payroll.periodLocked')}
             </span>
           )}
         </div>
@@ -244,31 +246,31 @@ export default function PayrollPage() {
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search staff…"
+            placeholder={t('payroll.searchPlaceholder')}
             className="w-full pl-8 pr-3 py-1.5 text-xs font-bold border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300" />
         </div>
         <div className="flex items-center gap-1.5">
           <Filter className="h-3.5 w-3.5 text-slate-400" />
           <Select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}
             className="text-xs font-bold border border-slate-300 rounded-xl px-2 py-1.5 bg-white">
-            {departments.map(d => <option key={d}>{d}</option>)}
+            {departments.map(d => <option key={d} value={d}>{d === 'All' ? t('payroll.allDepts') : d}</option>)}
           </Select>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <KPI label="Staff" value={rows.length.toString()} tint="bg-slate-50 border-slate-200 text-slate-700" />
-        <KPI label="Base salary" value={fmtINR(totals.baseGross)} tint="bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[#0E7490]" />
-        <KPI label="OT pay" value={fmtINR(totals.overtimePay)} tint="bg-[rgba(8,145,178,0.07)] border-[rgba(8,145,178,0.20)] text-[#0E7490]" />
-        <KPI label="Deductions" value={fmtINR(totals.deductions)} tint="bg-amber-50 border-amber-200 text-amber-700" />
-        <KPI label="Net payable" value={fmtINR(totals.netPay)} tint="bg-emerald-50 border-emerald-200 text-emerald-700" />
+        <KPI label={t('payroll.kpiStaff')} value={rows.length.toString()} tint="bg-slate-50 border-slate-200 text-slate-700" />
+        <KPI label={t('payroll.kpiBaseSalary')} value={fmtINR(totals.baseGross)} tint="bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[#B84A16]" />
+        <KPI label={t('payroll.kpiOtPay')} value={fmtINR(totals.overtimePay)} tint="bg-[rgba(238,107,38,0.07)] border-[rgba(238,107,38,0.20)] text-[#B84A16]" />
+        <KPI label={t('payroll.kpiDeductions')} value={fmtINR(totals.deductions)} tint="bg-amber-50 border-amber-200 text-amber-700" />
+        <KPI label={t('payroll.kpiNetPayable')} value={fmtINR(totals.netPay)} tint="bg-emerald-50 border-emerald-200 text-emerald-700" />
       </div>
 
       {/* Dept breakdown */}
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-[#0E7490]" />Cost by department · {label}
+          <TrendingUp className="h-4 w-4 text-[#B84A16]" />{t('payroll.costByDept', { label })}
         </h3>
         <div className="space-y-2">
           {deptBreakdown.map(([dept, amt]) => {
@@ -280,7 +282,7 @@ export default function PayrollPage() {
                   <b className="tabular-nums">{fmtINR(amt)} <span className="text-slate-400 text-[10px] ml-1">{pct.toFixed(1)}%</span></b>
                 </p>
                 <div className="h-1.5 mt-0.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[rgba(8,145,178,0.07)]0" style={{ width: `${pct}%` }} />
+                  <div className="h-full bg-[rgba(238,107,38,0.07)]0" style={{ width: `${pct}%` }} />
                 </div>
               </div>
             )
@@ -293,14 +295,14 @@ export default function PayrollPage() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              {['Staff', 'Dept', 'Hours', 'Base', 'OT', 'Gross', 'Deduction', 'Net', ''].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{h}</th>
+              {[['colStaff','Staff'],['colDept','Dept'],['colHours','Hours'],['colBase','Base'],['colOt','OT'],['colGross','Gross'],['colDeduction','Deduction'],['colNet','Net'],['colEmpty','']].map(([k]) => (
+                <th key={k} className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{k === 'colEmpty' ? '' : t(`payroll.${k}`)}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400 italic">No staff payroll data.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400 italic">{t('payroll.noData')}</td></tr>
             ) : rows.map((r, i) => (
               <motion.tr key={r.staff.id}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.005 }}
@@ -312,15 +314,15 @@ export default function PayrollPage() {
                 <td className="px-4 py-3 text-xs text-slate-600">{r.staff.department}</td>
                 <td className="px-4 py-3 text-xs tabular-nums">
                   <span className="text-slate-800">{r.scheduledHours}h</span>
-                  {r.overtimeHours > 0 && <span className="text-[#0E7490] font-bold"> + {r.overtimeHours}h OT</span>}
+                  {r.overtimeHours > 0 && <span className="text-[#B84A16] font-bold"> {t('payroll.otSuffix', { hours: r.overtimeHours })}</span>}
                 </td>
                 <td className="px-4 py-3 text-xs font-bold text-slate-800 tabular-nums">{fmtINR(r.baseGross)}</td>
-                <td className={cn('px-4 py-3 text-xs font-bold tabular-nums', r.overtimePay > 0 ? 'text-[#0E7490]' : 'text-slate-400')}>{fmtINR(r.overtimePay)}</td>
+                <td className={cn('px-4 py-3 text-xs font-bold tabular-nums', r.overtimePay > 0 ? 'text-[#B84A16]' : 'text-slate-400')}>{fmtINR(r.overtimePay)}</td>
                 <td className="px-4 py-3 text-xs font-bold text-slate-800 tabular-nums">{fmtINR(r.totalGross)}</td>
                 <td className="px-4 py-3 text-xs text-amber-700 tabular-nums">−{fmtINR(r.deductions)}</td>
                 <td className="px-4 py-3 text-xs font-black text-emerald-700 tabular-nums">{fmtINR(r.netPay)}</td>
                 <td className="px-4 py-3 text-right">
-                  <button onClick={() => downloadPayslip(r)} className="text-[10.5px] font-bold text-[#0E7490] bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.14)] border border-[rgba(8,145,178,0.20)] px-2 py-1 rounded cursor-pointer">Payslip</button>
+                  <button onClick={() => downloadPayslip(r)} className="text-[10.5px] font-bold text-[#B84A16] bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.14)] border border-[rgba(238,107,38,0.20)] px-2 py-1 rounded cursor-pointer">{t('payroll.payslip')}</button>
                 </td>
               </motion.tr>
             ))}
@@ -329,18 +331,17 @@ export default function PayrollPage() {
       </div>
 
       <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
-        <Sparkles className="h-3 w-3" />Demo deduction rate {Math.round(DEFAULT_DEDUCTION_RATE * 100)}% (PF + ESI + tax bucket).
-        Real engine integration (Zoho/Tally/SAP) is out of scope.
+        <Sparkles className="h-3 w-3" />{t('payroll.deductionNote', { rate: Math.round(DEFAULT_DEDUCTION_RATE * 100) })}
       </p>
 
       {payrollPeriods.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <h3 className="text-sm font-bold text-slate-800 mb-3">Locked periods · {payrollPeriods.length}</h3>
+          <h3 className="text-sm font-bold text-slate-800 mb-3">{t('payroll.lockedPeriods', { count: payrollPeriods.length })}</h3>
           <div className="space-y-1.5">
             {payrollPeriods.slice(-5).reverse().map(p => (
               <div key={p.id} className="flex items-center justify-between text-xs">
                 <span className="text-slate-700">{fmtDate(p.from)} → {fmtDate(p.to)}</span>
-                <span className="font-bold text-emerald-700 tabular-nums">{fmtINR(p.totalNet)} net · {p.staffCount} staff</span>
+                <span className="font-bold text-emerald-700 tabular-nums">{t('payroll.netStaff', { net: fmtINR(p.totalNet), count: p.staffCount })}</span>
                 <span className="text-[10px] text-slate-400">{p.closedBy}</span>
               </div>
             ))}

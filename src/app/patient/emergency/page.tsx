@@ -21,10 +21,10 @@ const AREA_LABEL: Record<string, string> = {
 
 const ESI_TINT: Record<number, string> = {
   1: 'bg-red-100 text-red-800 ring-red-200',
-  2: 'bg-orange-100 text-orange-800 ring-orange-200',
+  2: 'bg-accent-soft text-accent ring-primary/25',
   3: 'bg-amber-100 text-amber-800 ring-amber-200',
   4: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
-  5: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary-dark)] ring-blue-200',
+  5: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-primary-dark)] ring-primary/25',
 }
 
 function plainNEWS2(band: 'low' | 'medium' | 'high') {
@@ -269,7 +269,7 @@ export default function PatientEmergencyPage() {
             call <b className="text-red-700">102</b> or visit our 24×7 ER directly.
           </p>
           <div className="flex items-center justify-center gap-2 mt-4">
-            <Link href="/patient/help" className="text-xs font-bold text-[var(--color-primary)] bg-[rgba(8,145,178,0.07)] hover:bg-[rgba(8,145,178,0.12)] px-3 py-2 rounded-xl flex items-center gap-1">
+            <Link href="/patient/help" className="text-xs font-bold text-[var(--color-accent)] bg-[rgba(238,107,38,0.07)] hover:bg-[rgba(238,107,38,0.12)] px-3 py-2 rounded-xl flex items-center gap-1">
               Help &amp; emergency contacts <ArrowRight className="h-3 w-3" />
             </Link>
           </div>

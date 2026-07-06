@@ -15,7 +15,7 @@ interface Props {
 
 const statusConfig: Record<FacilityStatus, { dot: string; badge: string; leftBorder: string }> = {
   ok:       { dot: 'bg-[var(--color-success)]',  badge: 'bg-[var(--color-success-bg)] text-green-700 border-green-200',    leftBorder: '' },
-  watch:    { dot: 'bg-[var(--color-info)]',      badge: 'bg-[var(--color-info-bg)] text-blue-700 border-blue-200',         leftBorder: '' },
+  watch:    { dot: 'bg-[var(--color-info)]',      badge: 'bg-[var(--color-info-bg)] text-accent border-border',         leftBorder: '' },
   warning:  { dot: 'bg-[var(--color-warning)]',  badge: 'bg-[var(--color-warning-bg)] text-amber-700 border-amber-200',    leftBorder: 'border-l-2 border-l-amber-400' },
   critical: { dot: 'bg-[var(--color-danger)]',   badge: 'bg-[var(--color-danger-bg)] text-red-700 border-red-200',         leftBorder: 'border-l-2 border-l-[var(--color-danger)]' },
 }
@@ -51,7 +51,7 @@ export function FacilityRow({ name, type, block, status, summary, alertCount, on
         </div>
       )}
 
-      <ChevronRight size={13} className="text-[var(--color-foreground-lighter)] flex-shrink-0 group-hover:text-[var(--color-primary)] transition-colors" />
+      <ChevronRight size={13} className="text-[var(--color-foreground-lighter)] flex-shrink-0 group-hover:text-[var(--color-accent)] transition-colors" />
     </div>
   )
 }

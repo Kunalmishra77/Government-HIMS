@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 import { useAmbulanceStore } from "@/store/useAmbulanceStore"
 import { Truck, Activity, CheckCircle2, Gauge, AlertCircle } from "lucide-react"
 import { StatCard } from "@/components/ui/stat-card"
@@ -18,27 +19,28 @@ const STATUS_BADGE: Record<VehicleStatus, { variant: "success" | "primary" | "wa
 }
 
 export default function AmbulanceDashboard() {
+  const t = useTranslations('ambulance')
   const { vehicles, trips, availableVehicles } = useAmbulanceStore()
   const activeTrips = trips.filter((t) => !['completed', 'cancelled'].includes(t.status))
 
   return (
     <div className="space-y-6 pt-6">
       <PageHeader
-        title="Ambulance Dashboard"
-        subtitle="Fleet management, dispatch, and trip tracking"
+        title={t('dashboard.title')}
+        subtitle={t('dashboard.subtitle')}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Available"     value={availableVehicles().length}                         icon={CheckCircle2} color="green" delay={0} />
-        <StatCard label="On Trip"       value={vehicles.filter((v) => v.status === 'on_trip').length}    icon={Truck}        color="blue"  delay={0.05} />
-        <StatCard label="Maintenance"   value={vehicles.filter((v) => v.status === 'maintenance').length} icon={AlertCircle}  color="amber" delay={0.1} />
-        <StatCard label="Active Trips"  value={activeTrips.length}                                 icon={Activity}     color="slate" delay={0.15} />
+        <StatCard label={t('dashboard.available')}    value={availableVehicles().length}                         icon={CheckCircle2} color="green" delay={0} />
+        <StatCard label={t('dashboard.onTrip')}       value={vehicles.filter((v) => v.status === 'on_trip').length}    icon={Truck}        color="blue"  delay={0.05} />
+        <StatCard label={t('dashboard.maintenance')}  value={vehicles.filter((v) => v.status === 'maintenance').length} icon={AlertCircle}  color="amber" delay={0.1} />
+        <StatCard label={t('dashboard.activeTrips')}  value={activeTrips.length}                                 icon={Activity}     color="slate" delay={0.15} />
       </div>
 
       {/* Fleet Status */}
       <div className="bg-white rounded-xl border border-slate-200 p-5">
         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <Truck className="h-4 w-4 text-orange-500" /> Fleet Status
+          <Truck className="h-4 w-4 text-accent" /> {t('dashboard.fleetStatus')}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {vehicles.map((v, i) => {
@@ -52,7 +54,7 @@ export default function AmbulanceDashboard() {
                 <div>
                   <p className="font-bold text-slate-900 text-sm">{v.vehicleNumber}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{v.type}</p>
-                  <p className="text-xs text-slate-500">Driver: {v.driverName}</p>
+                  <p className="text-xs text-slate-500">{t('dashboard.driver', { name: v.driverName })}</p>
                   {v.fuelLevel !== undefined && (
                     <div className="flex items-center gap-1 mt-1.5">
                       <Gauge className="h-3 w-3 text-slate-400" />
@@ -66,7 +68,7 @@ export default function AmbulanceDashboard() {
                     </div>
                   )}
                 </div>
-                <Badge variant={sb.variant}>{v.status.replace('_', ' ').toUpperCase()}</Badge>
+                <Badge variant={sb.variant}>{(t.has(`status.${v.status}`) ? t(`status.${v.status}`) : v.status).toUpperCase()}</Badge>
               </motion.div>
             )
           })}
@@ -76,26 +78,26 @@ export default function AmbulanceDashboard() {
       {/* Active Trips */}
       <div className="bg-white rounded-xl border border-slate-200 p-5">
         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <Activity className="h-4 w-4 text-[var(--color-primary)]" /> Active Trips
+          <Activity className="h-4 w-4 text-[var(--color-accent)]" /> {t('dashboard.activeTrips')}
         </h3>
         {activeTrips.length === 0 ? (
-          <EmptyState icon={CheckCircle2} title="No active trips" description="All vehicles are available or on standby" />
+          <EmptyState icon={CheckCircle2} title={t('dashboard.noActiveTripsTitle')} description={t('dashboard.noActiveTripsDesc')} />
         ) : (
           <div className="space-y-3">
             {activeTrips.map((trip, i) => (
               <motion.div
                 key={trip.id}
                 initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="flex items-center justify-between p-4 bg-[rgba(8,145,178,0.07)] border border-[rgba(8,145,178,0.20)] rounded-xl"
+                className="flex items-center justify-between p-4 bg-[rgba(238,107,38,0.07)] border border-[rgba(238,107,38,0.20)] rounded-xl"
               >
                 <div>
-                  <p className="font-bold text-slate-800 text-sm">{trip.vehicleNumber} — {trip.tripType.toUpperCase()}</p>
+                  <p className="font-bold text-slate-800 text-sm">{trip.vehicleNumber} — {(t.has(`tripType.${trip.tripType}`) ? t(`tripType.${trip.tripType}`) : trip.tripType).toUpperCase()}</p>
                   <p className="text-xs text-slate-600 mt-0.5">{trip.pickupLocation} → {trip.destination}</p>
                   {trip.chiefComplaint && (
-                    <p className="text-xs text-red-600 mt-0.5">Chief complaint: {trip.chiefComplaint}</p>
+                    <p className="text-xs text-red-600 mt-0.5">{t('dashboard.chiefComplaint', { complaint: trip.chiefComplaint })}</p>
                   )}
                 </div>
-                <Badge variant="primary">{trip.status.replace('_', ' ').toUpperCase()}</Badge>
+                <Badge variant="primary">{(t.has(`status.${trip.status}`) ? t(`status.${trip.status}`) : trip.status).toUpperCase()}</Badge>
               </motion.div>
             ))}
           </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   ShieldCheck, ChevronDown, ChevronRight, CheckCircle, Stethoscope, Clock, ShieldAlert,
   Ban, UserCheck,
@@ -23,20 +24,22 @@ const priorityStatus = (p: Priority): Status =>
   p === "STAT" || p === "Critical" || p === "Stroke" || p === "Trauma" ? "critical"
     : p === "Urgent" ? "urgent" : "neutral"
 
-const timeAgo = (iso?: string) => {
+type TFn = ReturnType<typeof useTranslations<"radiology">>
+const timeAgo = (t: TFn, iso?: string) => {
   if (!iso) return ""
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
-  if (mins < 1) return "just now"
-  if (mins < 60) return `${mins}m ago`
-  return `${Math.round(mins / 60)}h ago`
+  if (mins < 1) return t("common.justNow")
+  if (mins < 60) return t("common.minsAgo", { mins })
+  return t("common.hoursAgo", { hours: Math.round(mins / 60) })
 }
 const isCriticalStudy = (s: RadiologyStudy) => isCriticalText(s.reportSections.impression) || isCriticalText(s.reportSections.findings)
 
 export default function Verification() {
+  const t = useTranslations("radiology")
   const studies = useRadiologyStudiesStore(s => s.studies)
   const consultantVerify = useRadiologyStudiesStore(s => s.consultantVerify)
   const currentUser = useAuthStore(s => s.currentUser)
-  const me: RadTech = { id: currentUser?.id ?? "RD-202", name: currentUser?.name ?? "Verifier" }
+  const me: RadTech = { id: currentUser?.id ?? "RD-202", name: currentUser?.name ?? t("verification.defaultMeName") }
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -52,24 +55,24 @@ export default function Verification() {
   return (
     <div className="space-y-5">
       <p className="t-body text-foreground-lighter">
-        Resident → consultant sign-off · AI consistency gate · releases to ordering doctor and patient
+        {t("verification.subtitle")}
       </p>
 
       <div className="space-y-2">
         {pending.length === 0 && (
-          <EmptyState icon={ShieldCheck} title="No reports pending verification" size="sm" />
+          <EmptyState icon={ShieldCheck} title={t("verification.nonePending")} size="sm" />
         )}
         {pending.map(s => {
           const isCritical = isCriticalStudy(s)
           return (
-            <VerificationRow key={s.id} s={s}
+            <VerificationRow key={s.id} s={s} t={t}
               expanded={expandedId === s.id}
               onToggle={() => setExpandedId(id => id === s.id ? null : s.id)}
               onVerify={() => {
                 // AI consistency gate — block release on inconsistent/missing impression.
                 const consistency = checkReportConsistency(s)
                 if (!consistency.data.ok) {
-                  toast.error(`Release blocked: ${consistency.data.issues[0]}`)
+                  toast.error(t("verification.toastReleaseBlocked", { issue: consistency.data.issues[0] }))
                   setExpandedId(s.id)
                   return
                 }
@@ -78,12 +81,18 @@ export default function Verification() {
                 notifyAndAuditMany(['doctor', 'patient'], {
                   type: isCritical ? 'critical_value' : 'system',
                   priority: isCritical ? 'critical' : 'medium',
-                  title: `${s.name} verified${isCritical ? ' · CRITICAL' : ''} · ${s.patientName}`,
-                  body: `${s.modality} ${s.name} for ${s.patientName} (${s.patientId}) verified and released by ${me.name}. Ordering doctor: ${s.doctorName}.${isCritical ? ' Critical impression — review immediately.' : ''}`,
+                  title: isCritical
+                    ? t("verification.notifyVerifiedTitleCritical", { name: s.name, patient: s.patientName })
+                    : t("verification.notifyVerifiedTitle", { name: s.name, patient: s.patientName }),
+                  body: isCritical
+                    ? t("verification.notifyVerifiedBodyCritical", { modality: s.modality, name: s.name, patient: s.patientName, patientId: s.patientId, verifier: me.name, doctor: s.doctorName })
+                    : t("verification.notifyVerifiedBody", { modality: s.modality, name: s.name, patient: s.patientName, patientId: s.patientId, verifier: me.name, doctor: s.doctorName }),
                   patientName: s.patientName,
-                  audit: { action, resource: 'radiology_study', resourceId: s.id, detail: `Verified ${s.modality} ${s.name} for ${s.patientId}${isCritical ? ' (critical)' : ''}`, userName: me.name },
+                  audit: { action, resource: 'radiology_study', resourceId: s.id, detail: isCritical
+                    ? t("verification.notifyVerifiedDetailCritical", { modality: s.modality, name: s.name, patientId: s.patientId })
+                    : t("verification.notifyVerifiedDetail", { modality: s.modality, name: s.name, patientId: s.patientId }), userName: me.name },
                 })
-                toast.success(`${s.name} verified & released · ${s.doctorName} notified`)
+                toast.success(t("verification.toastVerified", { name: s.name, doctor: s.doctorName }))
               }} />
           )
         })}
@@ -94,11 +103,12 @@ export default function Verification() {
 
 function VerificationRow(props: {
   s: RadiologyStudy
+  t: TFn
   expanded: boolean
   onToggle: () => void
   onVerify: () => void
 }) {
-  const { s, expanded } = props
+  const { s, t, expanded } = props
   const cat = RADIOLOGY_CATALOG[s.code]
   const tmpl = cat ? TEMPLATE_SECTIONS[cat.template] : []
   const minsElapsed = Math.round((Date.now() - new Date(s.orderedAt).getTime()) / 60000)
@@ -115,34 +125,34 @@ function VerificationRow(props: {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-foreground truncate">{s.patientName}</span>
             <span className="text-[11px] font-bold text-foreground-placeholder">{s.patientId}</span>
-            <span className="text-[12px] font-bold text-primary">{s.name}</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-primary">{s.modality}</span>
+            <span className="text-[12px] font-bold text-accent">{s.name}</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-accent">{s.modality}</span>
             {s.residentReadBy && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-soft text-primary-dark flex items-center gap-0.5">
-                <UserCheck className="h-3 w-3" />Resident read
+                <UserCheck className="h-3 w-3" />{t("verification.residentRead")}
               </span>
             )}
             {isCritical && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-danger-bg text-danger-strong flex items-center gap-0.5">
-                <ShieldAlert className="h-3 w-3" />CRITICAL
+                <ShieldAlert className="h-3 w-3" />{t("verification.critical")}
               </span>
             )}
             {blocked && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-warning-bg text-brand-amber-strong flex items-center gap-0.5">
-                <Ban className="h-3 w-3" />Consistency
+                <Ban className="h-3 w-3" />{t("verification.consistency")}
               </span>
             )}
           </div>
           <p className="text-xs text-foreground-lighter mt-0.5 truncate flex items-center gap-1">
-            <Stethoscope className="h-3 w-3" />read by {s.readingBy?.name ?? "—"}
+            <Stethoscope className="h-3 w-3" />{t("verification.readByLine", { name: s.readingBy?.name ?? t("common.dash") })}
             <span className="text-foreground-placeholder mx-1">·</span>
-            <Clock className="h-3 w-3" />{minsElapsed}m elapsed · reported {timeAgo(s.reportedAt)}
+            <Clock className="h-3 w-3" />{t("verification.elapsedReported", { mins: minsElapsed, ago: timeAgo(t, s.reportedAt) })}
           </p>
         </button>
 
         <button onClick={props.onVerify}
           className={cn("u-press flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl cursor-pointer whitespace-nowrap transition-colors", blocked ? "bg-warning-bg text-brand-amber-strong ring-1 ring-warning/30" : "text-white bg-success hover:bg-success-strong shadow-xs")}>
-          {blocked ? <Ban className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}{blocked ? "Resolve to release" : "Consultant verify & release"}
+          {blocked ? <Ban className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}{blocked ? t("verification.resolveToRelease") : t("verification.consultantVerifyRelease")}
         </button>
         <button onClick={props.onToggle} className="p-1.5 rounded-lg hover:bg-surface-sunken cursor-pointer text-foreground-placeholder">
           {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -156,11 +166,11 @@ function VerificationRow(props: {
             {blocked ? <ShieldAlert className="h-4 w-4 text-brand-amber-strong flex-shrink-0 mt-0.5" /> : <CheckCircle className="h-4 w-4 text-success-strong flex-shrink-0 mt-0.5" />}
             <div>
               <p className={cn("text-[12px] font-bold", blocked ? "text-brand-amber-strong" : "text-success-strong")}>
-                AI consistency check {blocked ? "— release blocked" : "— passed"}
+                {blocked ? t("verification.aiConsistencyBlocked") : t("verification.aiConsistencyPassed")}
               </p>
               {blocked
                 ? <ul className="text-[11.5px] text-brand-amber-strong list-disc ml-4 mt-0.5">{consistency.data.issues.map((i, k) => <li key={k}>{i}</li>)}</ul>
-                : <p className="text-[11.5px] text-success-strong">Findings ↔ impression are consistent and required sections complete.</p>}
+                : <p className="text-[11.5px] text-success-strong">{t("verification.consistencyPassedText")}</p>}
             </div>
           </div>
           {tmpl.map(sec => {

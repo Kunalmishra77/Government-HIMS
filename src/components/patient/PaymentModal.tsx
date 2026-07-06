@@ -78,8 +78,8 @@ export function PaymentModal({ open, amount, purpose, description, patientId, pa
               <div className="space-y-1.5">
                 {CHANNELS.map(({ key, label, icon: Icon, sub }) => (
                   <button key={key} onClick={() => setChannel(key)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl ring-1 transition cursor-pointer text-left ${channel === key ? 'ring-blue-300 bg-[rgba(8,145,178,0.07)]/60' : 'ring-slate-200 hover:bg-slate-50'}`}>
-                    <span className={`h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 ${channel === key ? 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]' : 'bg-slate-100 text-slate-600'}`}>
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl ring-1 transition cursor-pointer text-left ${channel === key ? 'ring-primary/25 bg-[rgba(238,107,38,0.07)]/60' : 'ring-slate-200 hover:bg-slate-50'}`}>
+                    <span className={`h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 ${channel === key ? 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]' : 'bg-slate-100 text-slate-600'}`}>
                       <Icon className="h-4 w-4" />
                     </span>
                     <span className="flex-1 min-w-0">
@@ -98,7 +98,7 @@ export function PaymentModal({ open, amount, purpose, description, patientId, pa
             </>
           ) : busy ? (
             <div className="py-10 text-center">
-              <Loader2 className="h-8 w-8 text-[var(--color-primary)] animate-spin mx-auto mb-3" />
+              <Loader2 className="h-8 w-8 text-[var(--color-accent)] animate-spin mx-auto mb-3" />
               <p className="text-[13px] font-semibold text-slate-700">Processing payment…</p>
               <p className="text-[11.5px] text-slate-500 mt-1">{CHANNEL_LABEL[channel]} · ₹{amount.toLocaleString('en-IN')}</p>
             </div>

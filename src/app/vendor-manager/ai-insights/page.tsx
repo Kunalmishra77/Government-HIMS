@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { useVendorManagerStore } from "@/store/useVendorManagerStore"
 import { invokeVendorCopilot, type VendorCopilotResponse } from "@/ai-services/vendor-copilot"
 import {
@@ -20,7 +21,6 @@ const PRIORITY_CONFIG = {
     dot:   'bg-red-500',
     icon:  AlertTriangle,
     iconCls: 'text-red-500',
-    label: 'Urgent',
   },
   warning: {
     card:  'border-amber-200 bg-amber-50/40',
@@ -28,15 +28,13 @@ const PRIORITY_CONFIG = {
     dot:   'bg-amber-500',
     icon:  AlertTriangle,
     iconCls: 'text-amber-500',
-    label: 'Warning',
   },
   info: {
-    card:  'border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]/30',
-    badge: 'bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]',
-    dot:   'bg-[rgba(8,145,178,0.07)]0',
+    card:  'border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]/30',
+    badge: 'bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]',
+    dot:   'bg-[rgba(238,107,38,0.07)]0',
     icon:  Info,
-    iconCls: 'text-[var(--color-primary)]',
-    label: 'Info',
+    iconCls: 'text-[var(--color-accent)]',
   },
   positive: {
     card:  'border-emerald-200 bg-emerald-50/30',
@@ -44,7 +42,6 @@ const PRIORITY_CONFIG = {
     dot:   'bg-emerald-500',
     icon:  CheckCircle,
     iconCls: 'text-emerald-500',
-    label: 'Positive',
   },
 }
 
@@ -63,26 +60,26 @@ function ConfidenceMeter({ value }: { value: number }) {
 
 // ─── Risk distribution chart ──────────────────────────────────────────────────
 
-function RiskDistributionChart({ vendors }: { vendors: { riskLevel: string }[] }) {
+function RiskDistributionChart({ vendors, t }: { vendors: { riskLevel: string }[]; t: ReturnType<typeof useTranslations> }) {
   const counts = { low: 0, medium: 0, high: 0 }
   vendors.forEach(v => { counts[v.riskLevel as keyof typeof counts]++ })
   const data = [
-    { name: 'Low Risk',    value: counts.low,    color: '#16a34a' },
-    { name: 'Medium Risk', value: counts.medium, color: '#d97706' },
-    { name: 'High Risk',   value: counts.high,   color: '#dc2626' },
+    { name: t('aiInsights.lowRisk'),    value: counts.low,    color: '#16a34a' },
+    { name: t('aiInsights.mediumRisk'), value: counts.medium, color: '#d97706' },
+    { name: t('aiInsights.highRisk'),   value: counts.high,   color: '#dc2626' },
   ].filter(d => d.value > 0)
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
       <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-        <Shield className="h-4 w-4 text-[var(--color-primary)]" /> Risk Distribution
+        <Shield className="h-4 w-4 text-[var(--color-accent)]" /> {t('aiInsights.riskDistribution')}
       </h2>
       <ResponsiveContainer width="100%" height={160}>
         <PieChart>
           <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={3}>
             {data.map(entry => <Cell key={entry.name} fill={entry.color} />)}
           </Pie>
-          <Tooltip formatter={(v) => [Number(v), 'Vendors']} />
+          <Tooltip formatter={(v) => [Number(v), t('aiInsights.vendorsTooltip')]} />
         </PieChart>
       </ResponsiveContainer>
       <div className="mt-2 space-y-1.5">
@@ -103,6 +100,7 @@ function RiskDistributionChart({ vendors }: { vendors: { riskLevel: string }[] }
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function AIInsightsPage() {
+  const t = useTranslations('vendorManager')
   const vendors        = useVendorManagerStore(s => s.vendors)
   const contracts      = useVendorManagerStore(s => s.contracts)
   const payments       = useVendorManagerStore(s => s.payments)
@@ -134,11 +132,11 @@ export default function AIInsightsPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-[var(--color-primary)]" /> AI Insights
+            <Sparkles className="h-6 w-6 text-[var(--color-accent)]" /> {t('aiInsights.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Vendor Copilot · AI-powered procurement intelligence
-            {lastRefreshed && <span className="ml-2 text-slate-400">· Updated {lastRefreshed}</span>}
+            {t('aiInsights.subtitle')}
+            {lastRefreshed && <span className="ml-2 text-slate-400">{t('aiInsights.updated', { time: lastRefreshed })}</span>}
           </p>
         </div>
         <button
@@ -147,7 +145,7 @@ export default function AIInsightsPage() {
           className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-bold cursor-pointer transition-colors shadow-sm disabled:opacity-60"
         >
           <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-          Refresh Insights
+          {t('aiInsights.refreshInsights')}
         </button>
       </div>
 
@@ -159,8 +157,8 @@ export default function AIInsightsPage() {
               {chip}
             </span>
           ))}
-          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]">
-            Session {copilotData.sessionId}
+          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]">
+            {t('aiInsights.session', { id: copilotData.sessionId })}
           </span>
         </div>
       )}
@@ -170,11 +168,11 @@ export default function AIInsightsPage() {
         <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-900 text-white">
           <Sparkles className="h-5 w-5 text-[var(--color-primary-light)] flex-shrink-0" />
           <p className="text-sm font-semibold flex-1">
-            Copilot detected{' '}
-            {urgentCount > 0 && <span className="text-red-400">{urgentCount} urgent issue{urgentCount > 1 ? 's' : ''}</span>}
-            {urgentCount > 0 && warningCount > 0 && ' and '}
-            {warningCount > 0 && <span className="text-amber-400">{warningCount} warning{warningCount > 1 ? 's' : ''}</span>}
-            {' '}requiring your attention.
+            {t('aiInsights.copilotDetected')}{' '}
+            {urgentCount > 0 && <span className="text-red-400">{urgentCount > 1 ? t('aiInsights.urgentIssuesOther', { count: urgentCount }) : t('aiInsights.urgentIssuesOne', { count: urgentCount })}</span>}
+            {urgentCount > 0 && warningCount > 0 && t('aiInsights.andConnector')}
+            {warningCount > 0 && <span className="text-amber-400">{warningCount > 1 ? t('aiInsights.warningsOther', { count: warningCount }) : t('aiInsights.warningsOne', { count: warningCount })}</span>}
+            {t('aiInsights.requiringAttention')}
           </p>
         </div>
       )}
@@ -200,7 +198,7 @@ export default function AIInsightsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded-full", cfg.badge)}>
-                          {cfg.label}
+                          {t.has(`priority.${p}`) ? t(`priority.${p}`) : p}
                         </span>
                         <h3 className="font-bold text-slate-900 text-sm">{insight.data.title}</h3>
                       </div>
@@ -208,13 +206,13 @@ export default function AIInsightsPage() {
 
                       <div className="mt-3 flex items-center gap-4 flex-wrap">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-semibold uppercase text-slate-400">Confidence</span>
+                          <span className="text-[10px] font-semibold uppercase text-slate-400">{t('aiInsights.confidence')}</span>
                           <ConfidenceMeter value={insight.confidence} />
                         </div>
-                        <span className="text-[10px] text-slate-400">via {insight.data.sourceService}</span>
+                        <span className="text-[10px] text-slate-400">{t('aiInsights.viaSource', { source: insight.data.sourceService })}</span>
                         {insight.data.actions && insight.data.actions[0] && (
                           <Link href={(insight.data.actions[0].payload as { path: string }).path} className="ml-auto">
-                            <button className="text-xs font-bold text-[var(--color-primary)] hover:text-[var(--color-primary)] flex items-center gap-1 cursor-pointer">
+                            <button className="text-xs font-bold text-[var(--color-accent)] hover:text-[var(--color-accent)] flex items-center gap-1 cursor-pointer">
                               {insight.data.actions[0].label} <ChevronRight className="h-3 w-3" />
                             </button>
                           </Link>
@@ -228,32 +226,32 @@ export default function AIInsightsPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">
               <Sparkles className="h-10 w-10 mb-3 text-slate-300" />
-              <p className="text-sm font-semibold">No insights yet</p>
-              <p className="text-xs mt-1">Click &quot;Refresh Insights&quot; to run the AI analysis</p>
+              <p className="text-sm font-semibold">{t('aiInsights.noInsightsYet')}</p>
+              <p className="text-xs mt-1">{t('aiInsights.noInsightsHint')}</p>
             </div>
           )}
         </div>
 
         {/* Right column: risk distribution + legend */}
         <div className="space-y-5">
-          <RiskDistributionChart vendors={vendors} />
+          <RiskDistributionChart vendors={vendors} t={t} />
 
           {/* Confidence legend */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
             <h2 className="font-bold text-slate-900 mb-3 flex items-center gap-2 text-sm">
-              <TrendingUp className="h-4 w-4 text-[var(--color-primary)]" /> Confidence Tiers
+              <TrendingUp className="h-4 w-4 text-[var(--color-accent)]" /> {t('aiInsights.confidenceTiers')}
             </h2>
             <div className="space-y-2 text-xs">
               {[
-                { range: '≥ 85%', label: 'High',   color: '#16a34a', desc: 'Strong evidence, low uncertainty' },
-                { range: '60–84%',label: 'Medium', color: '#d97706', desc: 'Moderate confidence, review advised' },
-                { range: '< 60%', label: 'Low',    color: '#dc2626', desc: 'Limited data, human review required' },
-              ].map(t => (
-                <div key={t.label} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50">
-                  <div className="h-3 w-3 rounded-full flex-shrink-0 mt-0.5" style={{ background: t.color }} />
+                { range: t('aiInsights.tierHighRange'),   label: t('aiInsights.tierHigh'),   color: '#16a34a', desc: t('aiInsights.tierHighDesc') },
+                { range: t('aiInsights.tierMediumRange'), label: t('aiInsights.tierMedium'), color: '#d97706', desc: t('aiInsights.tierMediumDesc') },
+                { range: t('aiInsights.tierLowRange'),    label: t('aiInsights.tierLow'),    color: '#dc2626', desc: t('aiInsights.tierLowDesc') },
+              ].map(tier => (
+                <div key={tier.label} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50">
+                  <div className="h-3 w-3 rounded-full flex-shrink-0 mt-0.5" style={{ background: tier.color }} />
                   <div>
-                    <span className="font-bold text-slate-700">{t.label} ({t.range})</span>
-                    <p className="text-slate-500 mt-0.5">{t.desc}</p>
+                    <span className="font-bold text-slate-700">{tier.label} ({tier.range})</span>
+                    <p className="text-slate-500 mt-0.5">{tier.desc}</p>
                   </div>
                 </div>
               ))}
@@ -261,9 +259,9 @@ export default function AIInsightsPage() {
           </div>
 
           {/* Disclaimer */}
-          <div className="rounded-2xl border border-[rgba(8,145,178,0.20)] bg-[rgba(8,145,178,0.07)]/40 p-4 text-xs text-[var(--color-primary-dark)]">
-            <p className="font-bold mb-1">AI Disclaimer</p>
-            <p className="leading-relaxed">All insights are AI-generated for decision support. Verify critical findings before acting. Confidence scores reflect data quality, not business certainty.</p>
+          <div className="rounded-2xl border border-[rgba(238,107,38,0.20)] bg-[rgba(238,107,38,0.07)]/40 p-4 text-xs text-[var(--color-primary-dark)]">
+            <p className="font-bold mb-1">{t('aiInsights.aiDisclaimer')}</p>
+            <p className="leading-relaxed">{t('aiInsights.aiDisclaimerBody')}</p>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { Calendar, Clock, ArrowRight, CheckCircle2, Video, Building2, Settings, Plane, CalendarClock } from "lucide-react"
 import { usePatientStore, type QueueStatus } from "@/store/usePatientStore"
@@ -25,7 +26,7 @@ function slotStatus(q: QueueStatus): Slot {
   if (q === "consulting") return "in-progress"
   return "upcoming"
 }
-const SLOT_LABEL: Record<Slot, string> = { done: "Seen", "in-progress": "In progress", upcoming: "Upcoming" }
+const SLOT_LABEL_KEY: Record<Slot, string> = { done: "slotSeen", "in-progress": "slotInProgress", upcoming: "slotUpcoming" }
 const SLOT_VARIANT = { done: "success", "in-progress": "blue", upcoming: "muted" } as const
 
 // "09:10 AM" / "03:20 PM" → minutes since midnight (for correct chronological sort).
@@ -38,6 +39,7 @@ function toMinutes(t: string): number {
 }
 
 export default function DoctorSchedule() {
+  const t = useTranslations('doctor')
   const router = useRouter()
   const reduce = useReducedMotion()
   const patients = usePatientStore(s => s.patients)
@@ -69,30 +71,30 @@ export default function DoctorSchedule() {
           the page leads with a slim context/action row instead of repeating it. */}
       <div className="flex items-center justify-between gap-3 mb-5">
         <p className="t-body text-foreground-lighter">
-          {dateLabel} · <span className="font-semibold text-foreground-muted tabular-nums">{mine.length}</span> {mine.length === 1 ? 'patient' : 'patients'} today
+          {t.rich('schedule.patientsToday', { date: dateLabel, count: mine.length, b: (c) => <span className="font-semibold text-foreground-muted tabular-nums">{c}</span> })}
         </p>
         <Link
           href="/doctor/settings"
           className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-[13px] font-semibold text-foreground-muted bg-surface border border-border hover:border-border-hover hover:text-foreground shadow-sm transition-colors flex-shrink-0"
         >
-          <Settings className="h-3.5 w-3.5" /> Edit availability
+          <Settings className="h-3.5 w-3.5" /> {t('schedule.editAvailability')}
         </Link>
       </div>
 
       {/* Availability — driven by Settings */}
       <div className="hms-card p-4 flex flex-wrap items-center gap-2.5 mb-5">
         <span className="flex items-center gap-1.5 t-label text-foreground">
-          <Clock className="h-4 w-4 text-primary" /> {profile.hoursStart}–{profile.hoursEnd}
+          <Clock className="h-4 w-4 text-accent" /> {profile.hoursStart}–{profile.hoursEnd}
         </span>
         <NeonBadge variant={profile.availableForOPD ? "blue" : "muted"} className="text-[11.5px] px-2 py-0.5">
-          <Building2 className="h-3 w-3" /> OPD {profile.availableForOPD ? 'on' : 'off'}
+          <Building2 className="h-3 w-3" /> {profile.availableForOPD ? t('schedule.opdOn') : t('schedule.opdOff')}
         </NeonBadge>
         <NeonBadge variant={profile.availableForOnline ? "blue" : "muted"} className="text-[11.5px] px-2 py-0.5">
-          <Video className="h-3 w-3" /> Online {profile.availableForOnline ? 'on' : 'off'}
+          <Video className="h-3 w-3" /> {profile.availableForOnline ? t('schedule.onlineOn') : t('schedule.onlineOff')}
         </NeonBadge>
         {profile.onLeave && (
           <NeonBadge variant="warning" className="text-[11.5px] px-2 py-0.5">
-            <Plane className="h-3 w-3" /> On leave{profile.leaveUntil ? ` · until ${new Date(profile.leaveUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : ''}
+            <Plane className="h-3 w-3" /> {t('schedule.onLeave')}{profile.leaveUntil ? t('schedule.onLeaveUntil', { date: new Date(profile.leaveUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) }) : ''}
           </NeonBadge>
         )}
       </div>
@@ -101,8 +103,8 @@ export default function DoctorSchedule() {
         <div className="hms-card">
           <EmptyState
             icon={CalendarClock}
-            title="No patients scheduled today"
-            description="Patients assigned to you for today's OPD will appear here in time order."
+            title={t('schedule.noPatientsTitle')}
+            description={t('schedule.noPatientsDesc')}
           />
         </div>
       ) : (
@@ -125,17 +127,17 @@ export default function DoctorSchedule() {
                   <p className="t-title text-foreground truncate">{p.name}</p>
                   <p className="t-caption text-foreground-lighter truncate">{p.age}y · {p.symptoms[0] ?? p.department}</p>
                 </div>
-                <NeonBadge variant={SLOT_VARIANT[slot]} className="text-[11px] px-2.5 py-1 flex-shrink-0">{SLOT_LABEL[slot]}</NeonBadge>
+                <NeonBadge variant={SLOT_VARIANT[slot]} className="text-[11px] px-2.5 py-1 flex-shrink-0">{t(`schedule.${SLOT_LABEL_KEY[slot]}`)}</NeonBadge>
                 {done ? (
                   <span className="w-28 t-caption font-semibold text-success flex items-center justify-end gap-1">
-                    <CheckCircle2 className="h-4 w-4" /> Done
+                    <CheckCircle2 className="h-4 w-4" /> {t('schedule.done')}
                   </span>
                 ) : (
                   <button
                     onClick={() => openConsult(p.id)}
-                    className="w-28 h-9 rounded-full bg-primary hover:bg-primary-dark text-white text-[12.5px] font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition cursor-pointer"
+                    className="w-28 h-9 rounded-full bg-primary hover:bg-primary-dark text-[#0D2032] hover:text-[#0D2032] text-[12.5px] font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition cursor-pointer"
                   >
-                    Open <ArrowRight className="h-3.5 w-3.5" />
+                    {t('schedule.open')} <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 )}
               </motion.div>
@@ -150,7 +152,7 @@ export default function DoctorSchedule() {
           <div className="space-y-2.5">
             {upcomingAppts.map(a => (
               <div key={a.id} className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 shadow-card">
-                <span className="h-9 w-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-accent-soft text-primary">
+                <span className="h-9 w-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-accent-soft text-accent">
                   {a.mode === 'online' ? <Video className="h-[18px] w-[18px]" /> : <Building2 className="h-[18px] w-[18px]" />}
                 </span>
                 <div className="flex-1 min-w-0">

@@ -83,7 +83,7 @@ export function DrillCard({ open, onClose, title, subtitle, tabs, activeTab, onT
                 className={cn(
                   'text-[12px] font-semibold px-3 py-2.5 border-b-2 -mb-px whitespace-nowrap transition-all duration-150',
                   activeTab === tab.id
-                    ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
+                    ? 'border-[var(--color-primary)] text-[var(--color-accent)]'
                     : 'border-transparent text-[var(--color-foreground-lighter)] hover:text-[var(--color-foreground-muted)]',
                 )}
               >

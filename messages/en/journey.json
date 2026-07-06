@@ -1,0 +1,9 @@
+{
+  "back": "Back",
+  "unknownPatient": "Unknown patient",
+  "male": "Male",
+  "female": "Female",
+  "ageYears": "{age}y",
+  "ageGender": "{age}y · {gender}",
+  "admitted": "Admitted {date}"
+}

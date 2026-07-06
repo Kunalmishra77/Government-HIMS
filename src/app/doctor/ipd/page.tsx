@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { AnimatePresence } from "framer-motion"
 import { HeartPulse, Stethoscope, AlarmClock, FileSignature, CheckCircle, Clock, Send } from "lucide-react"
 import { useInpatientStore, nextRound, isRoundDue, type Inpatient, type Condition } from "@/store/useInpatientStore"
@@ -27,42 +28,57 @@ import { useAuthStore } from "@/store/useAuthStore"
 
 // ── Consent status badge ──────────────────────────────────────────────────────
 function ConsentStatusBadge({ status }: { status: string }) {
+  const t = useTranslations('doctor')
   if (status === 'signed') return (
     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-      <CheckCircle className="h-2.5 w-2.5" /> Consent Signed
+      <CheckCircle className="h-2.5 w-2.5" /> {t('ipd.consentSigned')}
     </span>
   )
   if (status === 'viewed' || status === 'sent') return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]">
-      <Clock className="h-2.5 w-2.5" /> {status === 'viewed' ? 'Link Opened' : 'Link Sent'}
+    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]">
+      <Clock className="h-2.5 w-2.5" /> {status === 'viewed' ? t('ipd.linkOpened') : t('ipd.linkSent')}
     </span>
   )
   if (status === 'expired') return (
     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
-      <Clock className="h-2.5 w-2.5" /> Link Expired
+      <Clock className="h-2.5 w-2.5" /> {t('ipd.linkExpired')}
     </span>
   )
   return (
     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-      <FileSignature className="h-2.5 w-2.5" /> Awaiting Consent
+      <FileSignature className="h-2.5 w-2.5" /> {t('ipd.awaitingConsent')}
     </span>
   )
 }
 
 const CONDITION_TINT: Record<Condition, string> = {
-  Critical: 'bg-red-50 text-red-700 border-red-200', Serious: 'bg-orange-50 text-orange-700 border-orange-200',
-  Stable: 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] border-[rgba(8,145,178,0.20)]', Improving: 'bg-green-50 text-green-700 border-green-200',
-  'Discharge-ready': 'bg-[rgba(8,145,178,0.07)] text-[var(--color-primary)] border-[rgba(8,145,178,0.20)]',
+  Critical: 'bg-red-50 text-red-700 border-red-200', Serious: 'bg-primary-soft text-accent border-primary/20',
+  Stable: 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] border-[rgba(238,107,38,0.20)]', Improving: 'bg-green-50 text-green-700 border-green-200',
+  'Discharge-ready': 'bg-[rgba(238,107,38,0.07)] text-[var(--color-accent)] border-[rgba(238,107,38,0.20)]',
 }
-function dueLabel(ip: Inpatient): { text: string; due: boolean } {
+type DueLabel =
+  | { key: 'noRoundScheduled'; due: false }
+  | { key: 'roundDueNow'; due: true }
+  | { key: 'roundDueAgo'; hours: number; due: true }
+  | { key: 'nextRoundHrs'; hours: number; mins: number; due: false }
+  | { key: 'nextRoundMins'; mins: number; due: false }
+function dueLabel(ip: Inpatient): DueLabel {
   const n = nextRound(ip)
-  if (!n) return { text: 'No round scheduled', due: false }
+  if (!n) return { key: 'noRoundScheduled', due: false }
   const mins = Math.round((new Date(n.scheduledAt).getTime() - Date.now()) / 60000)
-  if (mins <= 0) return { text: `Round due ${mins < -60 ? `${Math.round(-mins / 60)}h ago` : 'now'}`, due: true }
-  return { text: mins >= 60 ? `Next round in ~${Math.floor(mins / 60)}h ${mins % 60}m` : `Next round in ~${mins}m`, due: false }
+  if (mins <= 0) return mins < -60 ? { key: 'roundDueAgo', hours: Math.round(-mins / 60), due: true } : { key: 'roundDueNow', due: true }
+  return mins >= 60 ? { key: 'nextRoundHrs', hours: Math.floor(mins / 60), mins: mins % 60, due: false } : { key: 'nextRoundMins', mins, due: false }
 }
 
 export default function DoctorIpd() {
+  const t = useTranslations('doctor')
+  const dueText = (ip: Inpatient): string => {
+    const d = dueLabel(ip)
+    if (d.key === 'roundDueAgo') return t('ipd.roundDueAgo', { hours: d.hours })
+    if (d.key === 'nextRoundHrs') return t('ipd.nextRoundHrs', { hours: d.hours, mins: d.mins })
+    if (d.key === 'nextRoundMins') return t('ipd.nextRoundMins', { mins: d.mins })
+    return t(`ipd.${d.key}`)
+  }
   const router = useRouter()
   const inpatients = useInpatientStore(s => s.inpatients)
   const initiateDischarge = useInpatientStore(s => s.initiateDischarge)
@@ -100,18 +116,18 @@ export default function DoctorIpd() {
   // Early-warning: push high-risk / overdue-round patients into the inbox (once,
   // after store rehydration; deduped by patient + title so reloads don't pile up).
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       const store = useNotificationStore.getState()
       inpatients.filter(i => i.stage !== 'discharged').forEach(ip => {
         const ins = ipdInsights(ip)
         const overdue = isRoundDue(ip)
         if (ins.risk !== 'high' && !overdue) return
-        const title = ins.risk === 'high' ? 'Deterioration risk' : 'Round overdue'
+        const title = ins.risk === 'high' ? t('ipd.deteriorationRisk') : t('ipd.roundOverdue')
         if (store.notifications.some(n => n.patientName === ip.name && n.title === title)) return
         store.add({ type: 'system', priority: ins.risk === 'high' ? 'critical' : 'high', title, body: `${ip.name} (${ip.ward} · ${ip.bed}) — ${ins.flag}`, channels: ['in_app'], targetRole: 'doctor', patientName: ip.name })
       })
     }, 400)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -158,7 +174,7 @@ export default function DoctorIpd() {
         }
       />
 
-      <ClientOnly fallback={<div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-12 flex items-center justify-center"><div className="h-7 w-7 rounded-full border-4 border-[rgba(8,145,178,0.20)] border-t-blue-600 animate-spin" role="status" aria-label="Loading inpatients" /></div>}>
+      <ClientOnly fallback={<div className="rounded-2xl bg-white shadow-[0_1px_4px_rgba(15,23,42,0.06)] p-12 flex items-center justify-center"><div className="h-7 w-7 rounded-full border-4 border-primary/20 border-t-primary animate-spin" role="status" aria-label="Loading inpatients" /></div>}>
 
       {/* M4-W1 — S2: NEWS2 ambient watcher. Renders a banner per inpatient
           whose most-recent vital crosses the NEWS2 threshold. Silent below. */}
@@ -209,7 +225,7 @@ export default function DoctorIpd() {
                 <span className={cn("h-9 w-9 rounded-xl flex items-center justify-center flex-shrink-0", ip.condition === 'Critical' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600')}><HeartPulse className="h-4.5 w-4.5" /></span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13.5px] font-bold text-slate-900 truncate">{ip.name} <span className={cn("ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full border", CONDITION_TINT[ip.condition])}>{ip.condition}</span></p>
-                  <p className="text-[11.5px] text-slate-500 truncate">{ip.ward} · Bed {ip.bed} · {dueLabel(ip).text}</p>
+                  <p className="text-[11.5px] text-slate-500 truncate">{ip.ward} · Bed {ip.bed} · {dueText(ip)}</p>
                 </div>
                 <button onClick={() => setRoundFor(ip)} className="h-9 px-4 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-[12.5px] font-bold flex items-center gap-1.5 flex-shrink-0 active:scale-95 transition">
                   <Stethoscope className="h-3.5 w-3.5" /> Start round

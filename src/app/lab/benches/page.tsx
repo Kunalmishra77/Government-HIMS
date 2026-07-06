@@ -28,8 +28,8 @@ const STATUS_STYLE: Record<TestStatus, string> = {
   awaiting_collection: "bg-slate-100 text-slate-500",
   collected:           "bg-amber-100 text-amber-700",
   on_bench:            "bg-amber-100 text-amber-700",
-  in_progress:         "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]",
-  entered:             "bg-[rgba(8,145,178,0.12)] text-[var(--color-primary)]",
+  in_progress:         "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]",
+  entered:             "bg-[rgba(238,107,38,0.12)] text-[var(--color-accent)]",
   verified:            "bg-emerald-100 text-emerald-700",
   released:            "bg-slate-100 text-slate-500",
   rejected:            "bg-red-100 text-red-700",
@@ -120,11 +120,57 @@ export default function LabBenches() {
     return counts
   }, [orders])
 
+  // Queue = collected/on-bench specimens no technician has started yet; they wait here
+  // until someone accepts them. Processing = tests a technician has claimed and is working.
+  const isQueued = (t: TestRun) => (t.status === "on_bench" || t.status === "collected") && !t.assignedTo
+  const queueRows = rows.filter(r => isQueued(r.test))
+  const processingRows = rows.filter(r => !isQueued(r.test))
+
+  const renderBenchRow = ({ order, test }: { order: LabOrder; test: TestRun }) => {
+    const analyzer = LAB_CATALOG[test.code]?.analyzer as AnalyzerId | undefined
+    const qcBlocked = isBlocked(analyzer, qcViolations)
+    return (
+      <BenchRow key={test.id} order={order} test={test} me={me}
+        expanded={expandedId === test.id}
+        rejecting={rejecting === test.id} rejectReason={rejectReason}
+        qcBlocked={qcBlocked}
+        qcAnalyzer={analyzer}
+        overriding={overridingId === test.id}
+        overrideReason={overrideReason}
+        setOverrideReason={setOverrideReason}
+        onStartOverride={() => { setOverridingId(test.id); setOverrideReason("") }}
+        onCancelOverride={() => { setOverridingId(null); setOverrideReason("") }}
+        onConfirmOverride={() => {
+          if (!analyzer) return
+          if (!overrideReason.trim()) { toast.error("Override reason required"); return }
+          qcOverride(analyzer, me.name, overrideReason.trim())
+          setOverridingId(null); setOverrideReason("")
+          toast.success(`${analyzer} override recorded · release unblocked`)
+        }}
+        onToggle={() => setExpandedId(id => id === test.id ? null : test.id)}
+        onClaim={() => { claim(test.id, me); setExpandedId(test.id); toast.success(`${test.name} accepted onto your counter`) }}
+        onUnclaim={() => { unclaim(test.id); toast(`${test.name} released to the bench`) }}
+        onEnter={(analyte, value) => enterAnalyte(test.id, analyte, value)}
+        onFinish={() => {
+          if (test.analytes.some(a => a.value === "" || a.value === undefined)) {
+            toast.error("All analyte values are required before sending for verification."); return
+          }
+          finishEntry(test.id, me); toast.success(`${test.name} sent for verification`)
+        }}
+        onVerify={() => { verifyTest(test.id, me); toast.success(`${test.name} verified`) }}
+        onRelease={() => { releaseTest(test.id); toast.success(`${test.name} released · doctor notified`) }}
+        onStartReject={() => { setRejecting(test.id); setRejectReason("contaminated") }}
+        onCancelReject={() => setRejecting(null)}
+        setRejectReason={setRejectReason}
+        onConfirmReject={() => { rejectTest(test.id, rejectReason); setRejecting(null); toast(`${test.name} rejected (${rejectReason})`) }} />
+    )
+  }
+
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-[#0F172A] flex items-center gap-2">
-          <Microscope className="h-6 w-6 text-[var(--color-primary)]" /> Benches
+          <Microscope className="h-6 w-6 text-[var(--color-accent)]" /> Benches
         </h1>
         <p className="text-sm text-[#64748B] mt-1">Claim → enter results → send for verification → verify → release · live H/L/Critical flagging against reference ranges</p>
       </div>
@@ -150,52 +196,37 @@ export default function LabBenches() {
         </button>
       </div>
 
-      <div className="space-y-2">
-        {rows.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-            <FlaskConical className="h-9 w-9 mb-2 opacity-40" />
-            <p className="text-sm font-semibold">No tests on this bench right now</p>
+      {rows.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+          <FlaskConical className="h-9 w-9 mb-2 opacity-40" />
+          <p className="text-sm font-semibold">No tests on this bench right now</p>
+        </div>
+      )}
+
+      {/* Queue — collected specimens waiting for a technician to start */}
+      {queueRows.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-amber-600" />
+            <h2 className="text-sm font-bold text-slate-700">Queue — awaiting technician</h2>
+            <span className="text-[11px] font-bold text-amber-700 bg-amber-100 rounded-full px-2 py-0.5">{queueRows.length}</span>
+            <span className="text-[11px] text-slate-400">Accept a specimen to start processing</span>
           </div>
-        )}
-        {rows.map(({ order, test }) => {
-          const analyzer = LAB_CATALOG[test.code]?.analyzer as AnalyzerId | undefined
-          const qcBlocked = isBlocked(analyzer, qcViolations)
-          return (
-          <BenchRow key={test.id} order={order} test={test} me={me}
-            expanded={expandedId === test.id}
-            rejecting={rejecting === test.id} rejectReason={rejectReason}
-            qcBlocked={qcBlocked}
-            qcAnalyzer={analyzer}
-            overriding={overridingId === test.id}
-            overrideReason={overrideReason}
-            setOverrideReason={setOverrideReason}
-            onStartOverride={() => { setOverridingId(test.id); setOverrideReason("") }}
-            onCancelOverride={() => { setOverridingId(null); setOverrideReason("") }}
-            onConfirmOverride={() => {
-              if (!analyzer) return
-              if (!overrideReason.trim()) { toast.error("Override reason required"); return }
-              qcOverride(analyzer, me.name, overrideReason.trim())
-              setOverridingId(null); setOverrideReason("")
-              toast.success(`${analyzer} override recorded · release unblocked`)
-            }}
-            onToggle={() => setExpandedId(id => id === test.id ? null : test.id)}
-            onClaim={() => { claim(test.id, me); setExpandedId(test.id); toast.success(`${test.name} accepted onto your counter`) }}
-            onUnclaim={() => { unclaim(test.id); toast(`${test.name} released to the bench`) }}
-            onEnter={(analyte, value) => enterAnalyte(test.id, analyte, value)}
-            onFinish={() => {
-              if (test.analytes.some(a => a.value === "" || a.value === undefined)) {
-                toast.error("All analyte values are required before sending for verification."); return
-              }
-              finishEntry(test.id, me); toast.success(`${test.name} sent for verification`)
-            }}
-            onVerify={() => { verifyTest(test.id, me); toast.success(`${test.name} verified`) }}
-            onRelease={() => { releaseTest(test.id); toast.success(`${test.name} released · doctor notified`) }}
-            onStartReject={() => { setRejecting(test.id); setRejectReason("contaminated") }}
-            onCancelReject={() => setRejecting(null)}
-            setRejectReason={setRejectReason}
-            onConfirmReject={() => { rejectTest(test.id, rejectReason); setRejecting(null); toast(`${test.name} rejected (${rejectReason})`) }} />
-        )})}
-      </div>
+          {queueRows.map(renderBenchRow)}
+        </div>
+      )}
+
+      {/* Processing — tests a technician has claimed and is actively working */}
+      {processingRows.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Microscope className="h-4 w-4 text-[var(--color-accent)]" />
+            <h2 className="text-sm font-bold text-slate-700">On bench — processing</h2>
+            <span className="text-[11px] font-bold text-[var(--color-accent)] bg-[rgba(238,107,38,0.12)] rounded-full px-2 py-0.5">{processingRows.length}</span>
+          </div>
+          {processingRows.map(renderBenchRow)}
+        </div>
+      )}
     </div>
   )
 }
@@ -231,7 +262,7 @@ function BenchRow(props: {
             <span className="text-[11px] font-bold text-slate-400">{order.patientId}</span>
             {order.wardBed && <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-0.5"><Bed className="h-3 w-3" />{order.wardBed}</span>}
             <span className="text-[11px] font-semibold text-slate-500">·</span>
-            <span className="text-[12px] font-bold text-[var(--color-primary)]">{test.name}</span>
+            <span className="text-[12px] font-bold text-[var(--color-accent)]">{test.name}</span>
             <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", STATUS_STYLE[test.status])}>{STATUS_LABEL[test.status]}</span>
             {test.assignedTo && <span className="text-[11px] font-semibold text-slate-400">· {mine ? "your counter" : `on ${test.assignedTo.name}`}</span>}
           </div>
@@ -269,7 +300,7 @@ function BenchRow(props: {
             <div className="flex items-center gap-1.5 flex-wrap">
               <input value={overrideReason} onChange={e => props.setOverrideReason(e.target.value)}
                 placeholder="Override reason"
-                className="w-44 h-7 px-2 text-[11px] rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                className="w-44 h-7 px-2 text-[11px] rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/25" />
               <button onClick={props.onConfirmOverride} className="text-[11px] font-bold text-white bg-red-600 hover:bg-red-700 px-2.5 py-1 rounded-lg cursor-pointer">Confirm override</button>
               <button onClick={props.onCancelOverride} className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 cursor-pointer">Cancel</button>
             </div>
@@ -313,7 +344,7 @@ function BenchRow(props: {
                               const v = spec.isText ? raw : (raw === "" ? "" : Number(raw))
                               props.onEnter(spec.analyte, v)
                             }}
-                            className="w-full h-9 px-2.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm" />
+                            className="w-full h-9 px-2.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 text-sm" />
                         ) : (
                           <span className="text-sm font-bold text-slate-800">{result?.value ?? "—"} <span className="text-[11px] font-normal text-slate-400">{spec.unit}</span></span>
                         )}
@@ -369,7 +400,7 @@ function ActionBtn({ onClick, children, icon: Icon, tone = "brand" }: { onClick:
     <button onClick={onClick}
       className={cn("flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-nowrap",
         tone === "ghost" && "text-slate-600 bg-slate-100 hover:bg-slate-200")}
-      style={tone === "brand" ? { background: "linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))", color: "#fff", boxShadow: "0 2px 8px rgba(8,145,178,0.25)" } : undefined}>
+      style={tone === "brand" ? { background: "linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))", color: "#fff", boxShadow: "0 2px 8px rgba(238,107,38,0.25)" } : undefined}>
       <Icon className="h-3.5 w-3.5" />{children}
     </button>
   )
