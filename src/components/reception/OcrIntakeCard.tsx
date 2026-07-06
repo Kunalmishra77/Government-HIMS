@@ -137,7 +137,7 @@ export function OcrIntakeCard({ onApply, className }: Props) {
         <ScanLine className="h-3.5 w-3.5 text-[var(--color-accent)]" />
         <h3 className="text-[12.5px] font-semibold text-[var(--color-primary-dark)]">AI Scan & Fill</h3>
         <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[var(--color-accent)]">
-          <Sparkles className="h-3 w-3" /> Mock OCR — instant intake
+          <Sparkles className="h-3 w-3" /> OCR — instant intake
         </span>
       </header>
 
@@ -180,7 +180,7 @@ export function OcrIntakeCard({ onApply, className }: Props) {
               </button>
               <button type="button" onClick={(e) => { e.stopPropagation(); startScan() }}
                 className="inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white">
-                <Camera className="h-3 w-3" /> Demo scan
+                <Camera className="h-3 w-3" /> Scan document
               </button>
             </div>
             <input

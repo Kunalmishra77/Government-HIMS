@@ -14,6 +14,20 @@ import { getSupabaseClient } from '@/lib/supabase/client'
 
 export type RealDoctor = { id: string; name: string; department: string }
 
+// Whether a patient belongs on a given doctor's OPD board. True when the patient
+// is explicitly assigned to this doctor, OR when their assigned doctor is not a
+// currently-active real doctor — i.e. a registration/seed default (like
+// 'Dr. Priya Nair') that no logged-in real doctor owns, so the patient is never
+// stranded before consultation on a name-string mismatch. Preserves strict
+// per-doctor routing between two on-duty real doctors.
+export function belongsToDoctorQueue(
+  patientDoctor: string,
+  currentDoctorName: string | undefined,
+  activeDoctorNames: string[],
+): boolean {
+  return patientDoctor === currentDoctorName || !activeDoctorNames.includes(patientDoctor)
+}
+
 export async function listActiveDoctors(): Promise<RealDoctor[]> {
   try {
     const { data, error } = await getSupabaseClient()

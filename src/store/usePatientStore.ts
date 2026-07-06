@@ -7,6 +7,7 @@ import { useAuditStore } from '@/store/useAuditStore'
 import { usePatientProfileStore, emptyProfile } from '@/store/usePatientProfileStore'
 import { useJourneyStore, type JourneyState } from '@/store/useJourneyStore'
 import type { VitalsRecord } from '@/store/useInpatientStore'
+import { DEMO_PATIENTS } from '@/lib/demo-patients'
 import { getSupabaseClient } from '@/lib/supabase/client'
 
 export type QueueStatus = 'waiting' | 'vitals' | 'consulting' | 'pharmacy' | 'billing' | 'done'
@@ -478,9 +479,17 @@ const MOCK_APPOINTMENTS: Appointment[] = [
   },
 ]
 
+// Full OPD board seed: the 50 diverse demo patients first, then the original
+// mock cohort (kept because the lab/radiology/pharmacy seeds cross-reference
+// their ids). De-duped by id so a re-seed never doubles a patient.
+const SEED_PATIENTS: Patient[] = (() => {
+  const seen = new Set<string>()
+  return [...DEMO_PATIENTS, ...MOCK_PATIENTS].filter(p => (seen.has(p.id) ? false : (seen.add(p.id), true)))
+})()
+
 export const usePatientStore = create<PatientState>()(persist((set, get) => ({
-  patients: MOCK_PATIENTS,
-  queue: MOCK_PATIENTS.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)),
+  patients: SEED_PATIENTS,
+  queue: SEED_PATIENTS.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)),
   visits: MOCK_VISITS,
   appointments: MOCK_APPOINTMENTS,
   selectedPatient: null,
@@ -917,7 +926,7 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
   },
 }),
   {
-    name: 'agentix-patientstore', version: 6,
+    name: 'agentix-patientstore', version: 7,
     storage: createJSONStorage(() => localStorage),
     skipHydration: true,
     // v3 added identity fields (source / uhid / abhaId) and reseeded the demo board.
@@ -944,6 +953,20 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
           .filter(p => p.queueStatus === 'waiting' && !p.uhid && p.registeredDate === TODAY && !existingIds.has(p.id))
           .map((p, i) => ({ ...p, token: maxToken + 1 + i }))
         const patients = [...prev.patients, ...needsAadhaar]
+        return {
+          ...prev,
+          patients,
+          queue: patients.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)),
+        } as PatientState
+      }
+      if (version < 7) {
+        // v7 — prepend the 50-patient demo cohort onto whatever board is
+        // persisted (dedup by id), so an existing session gets a full,
+        // active-hospital OPD board without wiping any real registrations.
+        const prev = persisted as PatientState
+        const existingIds = new Set(prev.patients.map(p => p.id))
+        const fresh = DEMO_PATIENTS.filter(p => !existingIds.has(p.id))
+        const patients = [...fresh, ...prev.patients]
         return {
           ...prev,
           patients,

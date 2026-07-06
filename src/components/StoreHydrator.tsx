@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { getSupabaseClient } from "@/lib/supabase/client"
+import { syncStoreAcrossTabs } from "@/lib/cross-tab-sync"
 import { useMessagingStore } from "@/store/useMessagingStore"
 import { useNotificationStore } from "@/store/useNotificationStore"
 import { useInpatientStore } from "@/store/useInpatientStore"
@@ -58,6 +59,23 @@ import { useWhatsAppStore } from "@/store/useWhatsAppStore"
 // Phase-1: also bootstrap the mock API and bridge the audit store.
 export function StoreHydrator() {
   useEffect(() => {
+    // ── Live cross-tab real-time sync ──────────────────────────────────────
+    // Each department runs in its own browser tab; an action in one tab (e.g.
+    // Reception → Send to Vitals, Nurse → record vitals, Doctor → order labs)
+    // is broadcast to every other tab so the next department's queue updates
+    // instantly, with no page refresh. Only the shared clinical/workflow stores
+    // are synced — per-user drafts (consultation notes, auth) stay tab-local.
+    const syncCleanups = [
+      syncStoreAcrossTabs(usePatientStore, 'patients'),
+      syncStoreAcrossTabs(useLabOrdersStore, 'lab-orders'),
+      syncStoreAcrossTabs(useRadiologyStudiesStore, 'radiology'),
+      syncStoreAcrossTabs(usePharmacyStore, 'pharmacy'),
+      syncStoreAcrossTabs(usePharmacyInventoryStore, 'pharmacy-inventory'),
+      syncStoreAcrossTabs(useAdmissionStore, 'admission'),
+      syncStoreAcrossTabs(useInpatientStore, 'inpatient'),
+      syncStoreAcrossTabs(useNursingStore, 'nursing'),
+    ]
+
     // Pre-existing persisted stores (Phase 0).
     useMessagingStore.persist.rehydrate()
     useNotificationStore.persist.rehydrate()
@@ -166,6 +184,8 @@ export function StoreHydrator() {
         console.error('[StoreHydrator] real admission/inpatient hydration failed:', err)
       }
     })()
+
+    return () => { syncCleanups.forEach((fn) => fn()) }
   }, [])
   return null
 }

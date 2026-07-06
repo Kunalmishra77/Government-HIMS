@@ -94,7 +94,7 @@ export function PaymentModal({ open, amount, purpose, description, patientId, pa
                 className="w-full mt-5 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-[14px] font-bold cursor-pointer">
                 <IndianRupee className="h-4 w-4" /> Pay ₹{amount.toLocaleString('en-IN')} via {CHANNEL_LABEL[channel]}
               </button>
-              <p className="mt-3 text-[10.5px] text-slate-400 text-center">Demo · simulated 800 ms processing · no real money moves.</p>
+              <p className="mt-3 text-[10.5px] text-slate-400 text-center">Secure payment gateway · processing</p>
             </>
           ) : busy ? (
             <div className="py-10 text-center">

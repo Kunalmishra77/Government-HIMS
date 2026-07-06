@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { usePatientStore } from "@/store/usePatientStore"
 import { deriveUhid } from "@/lib/uhid"
+import { listActiveDoctors, belongsToDoctorQueue } from "@/lib/opd-doctors"
 import { useAuthStore } from "@/store/useAuthStore"
 import { useConsultationStore } from "@/store/useConsultationStore"
 import { useDoctorStatsStore } from "@/store/useDoctorStatsStore"
@@ -261,6 +262,17 @@ export default function DoctorDashboard() {
   } = useConsultationStore()
   const recordStat = useDoctorStatsStore(s => s.record)
   const doctorId = currentUser?.id ?? 'DR-1012'
+
+  // Names of currently-active real doctors, so the queue can tell a patient
+  // genuinely assigned to ANOTHER on-duty doctor apart from one still carrying a
+  // registration/seed default (e.g. self-check-in's 'Dr. Priya Nair'). Without
+  // this, a patient registered via voice/appointment (always 'Dr. Priya Nair')
+  // never matches a real logged-in doctor's profile name and silently drops off
+  // the board even after vitals — the exact vitals→doctor break.
+  const [activeDoctorNames, setActiveDoctorNames] = useState<string[]>([])
+  useEffect(() => {
+    void listActiveDoctors().then((docs) => setActiveDoctorNames(docs.map((d) => d.name)))
+  }, [])
   const { addPrescription: addToPharmacy } = usePharmacyStore()
   const setPharmacyRealId = usePharmacyStore(s => s.setRealId)
   const { addOrderFromDoctor: addLabToStore } = useLabStore()
@@ -354,8 +366,13 @@ export default function DoctorDashboard() {
     return () => clearTimeout(t)
   }, [noteSaved])
 
-  // This doctor's patients only (today's OPD list assigned to them).
-  const mine     = patients.filter(p => p.doctor === currentUser?.name)
+  // This doctor's patients: those explicitly assigned to them by name, PLUS any
+  // patient whose assigned doctor is NOT a currently-active real doctor (i.e. a
+  // registration/seed default like 'Dr. Priya Nair' that no logged-in real
+  // doctor "owns"). This keeps strict per-doctor routing when multiple real
+  // doctors are on duty, while ensuring a vitals-completed patient is never
+  // stranded before consultation just because of a name-string mismatch.
+  const mine     = patients.filter(p => belongsToDoctorQueue(p.doctor, currentUser?.name, activeDoctorNames))
   const queue    = mine.filter(p => ["waiting","vitals","consulting"].includes(p.queueStatus))
   const seen     = mine.filter(p => ["pharmacy","billing","done"].includes(p.queueStatus)).length
   const filtered = DRUGS.filter(d => d.toLowerCase().includes(medSearch.toLowerCase()) && medSearch.length > 0)

@@ -144,7 +144,7 @@ export function FamilyInviteCard({ className }: { className?: string }) {
           <p className="text-[11.5px] text-slate-500">One tap → secure tracker link · no medical data</p>
         </div>
         <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-emerald-700">
-          <Sparkles className="h-3 w-3" /> Mock WhatsApp
+          <Sparkles className="h-3 w-3" /> WhatsApp
         </span>
       </header>
 
