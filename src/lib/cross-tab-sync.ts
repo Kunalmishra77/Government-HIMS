@@ -33,13 +33,15 @@ export function syncStoreAcrossTabs<T extends object>(store: StoreApi<T>, channe
 
   const channel = new BroadcastChannel(`agentix-sync:${channelName}`)
   let applyingRemote = false
+  console.info(`[sync] ready: ${channelName}`)
 
   const unsub = store.subscribe((state) => {
     if (applyingRemote) return // don't echo a change we just received
     try {
       channel.postMessage(dataOnly(state as AnyState))
-    } catch {
-      // Non-cloneable payload (rare) — skip this frame rather than throw.
+      console.info(`[sync] → broadcast ${channelName}`)
+    } catch (err) {
+      console.warn(`[sync] ✗ broadcast ${channelName} failed (non-cloneable)`, err)
     }
   })
 
@@ -48,6 +50,7 @@ export function syncStoreAcrossTabs<T extends object>(store: StoreApi<T>, channe
     try {
       // Merge (replace=false) so each tab's local action functions are preserved.
       store.setState(event.data as Partial<T>)
+      console.info(`[sync] ← applied ${channelName}`)
     } finally {
       applyingRemote = false
     }

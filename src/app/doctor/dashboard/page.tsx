@@ -571,6 +571,7 @@ export default function DoctorDashboard() {
     })
     sendToPharmacy()
     recordStat(doctorId, 'prescriptions', prescriptions.length)
+    console.info(`[workflow] sendRx(${currentPatient.id}) → Pharmacy queue · ${medicines.length} medicine(s), status 'queued'`)
     toast.success("Prescription sent to Pharmacy")
 
     // Phase 3 Task 4 — same additive real-backend bridge as dispatchLabOrder/dispatchRadOrder

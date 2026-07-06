@@ -504,6 +504,8 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
         queue: updated.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)),
       }
     })
+    const nowInStatus = get().patients.filter(p => p.queueStatus === status).length
+    console.info(`[workflow] updateStatus(${id} → ${status}) · ${nowInStatus} patient(s) now '${status}'`)
     const p = get().patients.find(x => x.id === id)
     syncJourneyStage(id, status)
     // Reception sending a patient for vitals alerts the nursing station.
@@ -677,6 +679,7 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
         queue: updated.filter(p => ['waiting', 'vitals', 'consulting'].includes(p.queueStatus)),
       }
     })
+    console.info(`[workflow] recordOpdVitals(${id}) → queueStatus 'consulting' (moves to Doctor queue)`)
 
     // Phase 2 — also mirror this into the real backend when this patient has a
     // real visit (Task 8) and a real signed-in staff session exists. As in
