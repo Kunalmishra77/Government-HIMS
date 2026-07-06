@@ -13,7 +13,7 @@ import {
   Droplets, Utensils, Truck, Heart, BookOpen, AlertTriangle, ShieldAlert,
   Sparkles, ChevronRight, MessageSquare, MessageSquarePlus, Video, Siren, Menu, ShoppingCart, Send,
   List, Star, Building2, ArrowLeftRight, MapPin, Baby, Bug,
-  Droplet, Cpu, SlidersHorizontal, RefreshCw, UserPlus,
+  Droplet, Cpu, SlidersHorizontal, RefreshCw, UserPlus, Gauge,
 } from "lucide-react"
 import { useAuthStore, type Role } from "@/store/useAuthStore"
 import { usePatientStore } from "@/store/usePatientStore"
@@ -263,6 +263,7 @@ const navByRole: Record<Role, NavItem[]> = {
     { href: '/admin/assistant',       label: 'item.admin_assistant',       icon: Sparkles },
     { href: '/admin/command-center',  label: 'item.admin_command_center',  icon: Activity },
     { href: '/admin/dashboard',       label: 'item.admin_dashboard',       icon: LayoutDashboard },
+    { href: '/admin/coo',             label: 'item.admin_coo',             icon: Gauge },
     { href: '/admin/users',           label: 'item.admin_users',           icon: UserCog },
     { href: '/admin/credentials',     label: 'item.admin_credentials',     icon: ShieldCheck },
     { href: '/admin/operations',      label: 'item.admin_operations',      icon: Workflow },
