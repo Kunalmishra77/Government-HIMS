@@ -5,10 +5,10 @@ import { NextRequest, NextResponse } from 'next/server'
 // and multilingual, so the same voice handles English and Hindi prompts —
 // `language_code` nudges pronunciation per turn.
 
-// Single voice for the whole assistant — "Priyanka Sogam" (1zUSi8LeHs9M2mV8X6YS),
-// a Hindi professional voice. Professional voices need a PAID ElevenLabs plan; on
-// the free tier the API returns 402 and speak() falls back to the browser voice.
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '1zUSi8LeHs9M2mV8X6YS'
+// Single voice for the whole assistant (dbRp1Hw332UcnMDkPsOt). Professional
+// voices need a PAID ElevenLabs plan; on the free tier the API returns 402 and
+// speak() falls back to the browser voice.
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'dbRp1Hw332UcnMDkPsOt'
 const MODEL_ID = process.env.ELEVENLABS_MODEL_ID || 'eleven_flash_v2_5'
 
 export async function POST(req: NextRequest) {
