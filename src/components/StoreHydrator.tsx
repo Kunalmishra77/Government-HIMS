@@ -4,7 +4,6 @@ import { useEffect } from "react"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { getSupabaseClient } from "@/lib/supabase/client"
 import { syncStoreAcrossTabs } from "@/lib/cross-tab-sync"
-import { bindOrderSync } from "@/lib/cross-device-orders"
 import { useMessagingStore } from "@/store/useMessagingStore"
 import { useNotificationStore } from "@/store/useNotificationStore"
 import { useInpatientStore } from "@/store/useInpatientStore"
@@ -179,7 +178,6 @@ export function StoreHydrator() {
     // performance gate, NOT a security/authorization gate (the service-role
     // routes it calls enforce nothing yet — see their FOLLOW-UP notes).
     let pollTimer: ReturnType<typeof setInterval> | null = null
-    let orderSyncCleanups: Array<() => void> = []
     void (async () => {
       try {
         // Gate DB hydration on the active STAFF role, not a Supabase session. The
@@ -200,14 +198,17 @@ export function StoreHydrator() {
           useRadiologyStudiesStore.getState().hydrateReal(),
           usePharmacyStore.getState().hydrateReal(),
         ])
-        // Auto-publish local changes to shared lab/radiology/pharmacy orders back
-        // to the board (e.g. Lab releases a result, Pharmacy dispenses) so other
-        // devices see the progress. Only orders already on the board are pushed.
-        orderSyncCleanups = [
-          bindOrderSync(useLabOrdersStore, 'lab', (s) => s.orders),
-          bindOrderSync(useRadiologyStudiesStore, 'radiology', (s) => s.studies),
-          bindOrderSync(usePharmacyStore, 'pharmacy', (s) => s.prescriptions),
-        ]
+        // NOTE: we deliberately do NOT auto-publish local store changes back to
+        // the board here. Doing so (via a store.subscribe push) created a runaway
+        // feedback loop: pushOrder → DB write → Supabase Realtime `opd_orders`
+        // event → hydrateReal → merge mutates the store → subscribe fires →
+        // pushOrder again → … (thousands of req/s, exhausting the DB pool). Orders
+        // are published exactly once at dispatch (addOrder/addPrescription call
+        // pushOrder); every module then PULLS via poll + realtime below. This is
+        // one-way (dispatch → board → modules), so it can't loop.
+        // FOLLOW-UP: to propagate later status changes (result released,
+        // dispensed) cross-device, push from those specific mutations, not a blanket subscribe.
+
         // Poll fallback (staff only): guarantees a patient checked in / advanced
         // — or a lab/radiology/pharmacy order dispatched — on another device
         // shows up within a few seconds even where Supabase Realtime can't
@@ -252,7 +253,6 @@ export function StoreHydrator() {
 
     return () => {
       syncCleanups.forEach((fn) => fn())
-      orderSyncCleanups.forEach((fn) => fn())
       if (liveChannel) void getSupabaseClient().removeChannel(liveChannel)
       if (pollTimer) clearInterval(pollTimer)
     }
