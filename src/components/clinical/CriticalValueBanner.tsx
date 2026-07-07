@@ -67,14 +67,6 @@ export function CriticalValueBanner({ role = 'both', className }: Props) {
     })
   }, [entries, role])
 
-  // Tick a second-resolution timer so the soft-blocker countdown chip
-  // re-renders. We only keep it running when there ARE open events.
-  useEffect(() => {
-    if (open.length === 0) return
-    const i = setInterval(() => setTick((t) => t + 1), 1000)
-    return () => clearInterval(i)
-  }, [open.length])
-
   if (open.length === 0) return null
 
   function doAck(eventId: string) {
@@ -104,9 +96,6 @@ export function CriticalValueBanner({ role = 'both', className }: Props) {
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)} role="alert" aria-live="assertive" suppressHydrationWarning>
       {open.map((e) => {
-        // Soft blocker — 2 min from the event time (mock).
-        const eventTs = new Date(e.timestamp).getTime()
-        const soft = Math.max(0, 120 - Math.floor((Date.now() - eventTs) / 1000))
         return (
           <div
             key={e.id}
@@ -115,11 +104,6 @@ export function CriticalValueBanner({ role = 'both', className }: Props) {
           >
             <ShieldAlert className="h-3.5 w-3.5 text-rose-600 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-rose-800 whitespace-nowrap">Critical lab value</span>
-            {soft > 0 && (
-              <span className="hidden sm:inline text-[10px] font-mono text-rose-500 whitespace-nowrap">
-                {Math.floor(soft / 60)}:{String(soft % 60).padStart(2, '0')}
-              </span>
-            )}
             <button
               type="button"
               onClick={() => router.push('/audit/log')}

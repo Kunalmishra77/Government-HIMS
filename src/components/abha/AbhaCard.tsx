@@ -44,6 +44,8 @@ export interface AbhaCardProps {
   data?: Partial<AbhaCardData>
   /** Render the reverse (instructions) face below the front. Default true. */
   showBack?: boolean
+  /** Denser layout that fits narrow containers (drawers) without scrolling. */
+  compact?: boolean
   className?: string
 }
 
@@ -126,15 +128,15 @@ function AbdmLogo({ className }: { className?: string }) {
 }
 
 // ── National Health Authority lockup (emblem + wordmark) ─────────────────────
-function NhaLockup() {
+function NhaLockup({ compact }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2 text-white">
-      <NationalEmblem className="h-12 w-auto shrink-0" />
+      <NationalEmblem className={cn("w-auto shrink-0", compact ? "h-8" : "h-12")} />
       <div className="leading-[0.95]">
-        <p className="text-[15px] font-extrabold lowercase tracking-tight">national</p>
-        <p className="text-[15px] font-extrabold lowercase tracking-tight">health</p>
-        <p className="text-[15px] font-extrabold lowercase tracking-tight">authority</p>
-        <p className="mt-0.5 text-[6px] font-semibold tracking-[0.18em] text-white/80" style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
+        <p className={cn("font-extrabold lowercase tracking-tight", compact ? "text-[9px]" : "text-[15px]")}>national</p>
+        <p className={cn("font-extrabold lowercase tracking-tight", compact ? "text-[9px]" : "text-[15px]")}>health</p>
+        <p className={cn("font-extrabold lowercase tracking-tight", compact ? "text-[9px]" : "text-[15px]")}>authority</p>
+        <p className={cn("mt-0.5 font-semibold tracking-[0.18em] text-white/80", compact ? "text-[5px]" : "text-[6px]")} style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
           सत्यमेव जयते
         </p>
       </div>
@@ -142,25 +144,25 @@ function NhaLockup() {
   )
 }
 
-function CardHeader() {
+function CardHeader({ compact }: { compact?: boolean }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-5 py-3.5" style={{ backgroundColor: ABHA_NAVY }}>
-      <NhaLockup />
+    <div className={cn("flex items-center justify-between gap-3", compact ? "px-3 py-2" : "px-5 py-3.5")} style={{ backgroundColor: ABHA_NAVY }}>
+      <NhaLockup compact={compact} />
       <div className="text-center text-white">
-        <p className="text-[15px] font-semibold leading-tight">Ayushman Bharat Health Account (ABHA)</p>
-        <p className="text-[14px] leading-tight" style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
+        <p className={cn("font-semibold leading-tight", compact ? "text-[9px]" : "text-[15px]")}>Ayushman Bharat Health Account (ABHA)</p>
+        <p className={cn("leading-tight", compact ? "text-[8px]" : "text-[14px]")} style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
           आयुष्मान भारत स्वास्थ्य खाता (आभा)
         </p>
       </div>
-      <AbdmLogo className="h-14 w-14 shrink-0" />
+      <AbdmLogo className={cn("shrink-0", compact ? "h-9 w-9" : "h-14 w-14")} />
     </div>
   )
 }
 
-function Field({ label, labelHindi, children }: { label: string; labelHindi: string; children: React.ReactNode }) {
+function Field({ label, labelHindi, compact, children }: { label: string; labelHindi: string; compact?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[13px] text-slate-700">
+      <p className={cn("text-slate-700", compact ? "text-[10px]" : "text-[13px]")}>
         {label}/{" "}
         <span style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>{labelHindi}</span>
       </p>
@@ -169,7 +171,7 @@ function Field({ label, labelHindi, children }: { label: string; labelHindi: str
   )
 }
 
-function AbhaCardFront({ data }: { data: AbhaCardData }) {
+function AbhaCardFront({ data, compact }: { data: AbhaCardData; compact?: boolean }) {
   const qrPayload = JSON.stringify({
     name: data.name,
     abhaNumber: data.abhaNumber,
@@ -181,12 +183,12 @@ function AbhaCardFront({ data }: { data: AbhaCardData }) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <CardHeader />
-      <div className="px-6 py-6">
-        <div className="flex gap-6">
+      <CardHeader compact={compact} />
+      <div className={compact ? "px-4 py-4" : "px-6 py-6"}>
+        <div className={cn("flex", compact ? "gap-3" : "gap-6")}>
           {/* Photo */}
           <div className="shrink-0">
-            <div className="h-[136px] w-[112px] overflow-hidden rounded-sm border border-slate-300 bg-slate-100">
+            <div className={cn("overflow-hidden rounded-sm border border-slate-300 bg-slate-100", compact ? "h-[86px] w-[68px]" : "h-[136px] w-[112px]")}>
               {data.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={data.photoUrl} alt={data.name} className="h-full w-full object-cover" />
@@ -199,42 +201,42 @@ function AbhaCardFront({ data }: { data: AbhaCardData }) {
               )}
             </div>
             {data.aadhaarVerified && (
-              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10.5px] font-bold text-green-700 border border-green-200">
-                <ShieldCheck className="h-3 w-3" /> Aadhaar verified
+              <span className={cn("mt-2 inline-flex items-center gap-1 rounded-full bg-green-50 font-bold text-green-700 border border-green-200", compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10.5px]")}>
+                <ShieldCheck className={compact ? "h-2.5 w-2.5" : "h-3 w-3"} /> Aadhaar verified
               </span>
             )}
           </div>
 
           {/* Identity block */}
-          <div className="min-w-0 flex-1 space-y-3">
-            <Field label="Name" labelHindi="नाम">
-              <p className="text-[20px] font-bold leading-tight text-slate-900">{data.name}</p>
+          <div className={cn("min-w-0 flex-1", compact ? "space-y-2" : "space-y-3")}>
+            <Field label="Name" labelHindi="नाम" compact={compact}>
+              <p className={cn("font-bold leading-tight text-slate-900", compact ? "text-[15px]" : "text-[20px]")}>{data.name}</p>
               {data.nameHindi && (
-                <p className="text-[18px] font-bold leading-tight text-slate-900" style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
+                <p className={cn("font-bold leading-tight text-slate-900", compact ? "text-[13px]" : "text-[18px]")} style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
                   {data.nameHindi}
                 </p>
               )}
             </Field>
 
-            <Field label="Abha Number" labelHindi="आभा-संख्या">
-              <p className="text-[24px] font-bold leading-tight tracking-wide text-slate-900">{data.abhaNumber}</p>
+            <Field label="Abha Number" labelHindi="आभा-संख्या" compact={compact}>
+              <p className={cn("font-bold leading-tight tracking-wide text-slate-900", compact ? "text-[17px]" : "text-[24px]")}>{data.abhaNumber}</p>
             </Field>
 
-            <Field label="Abha Address" labelHindi="आभा पता">
-              <p className="text-[20px] font-bold leading-tight text-slate-900">{data.abhaAddress}</p>
+            <Field label="Abha Address" labelHindi="आभा पता" compact={compact}>
+              <p className={cn("font-bold leading-tight text-slate-900 break-all", compact ? "text-[14px]" : "text-[20px]")}>{data.abhaAddress}</p>
             </Field>
           </div>
 
           {/* QR */}
           <div className="shrink-0 self-start">
-            <QRCodeSVG value={qrPayload} size={132} level="M" marginSize={0} />
+            <QRCodeSVG value={qrPayload} size={compact ? 76 : 132} level="M" marginSize={0} />
           </div>
         </div>
 
         {/* Demographics row */}
-        <div className="mt-7 grid grid-cols-3 gap-4">
-          <Field label="Gender" labelHindi="लिंग">
-            <p className="text-[17px] font-bold text-slate-900">
+        <div className={cn("grid grid-cols-3", compact ? "mt-4 gap-3" : "mt-7 gap-4")}>
+          <Field label="Gender" labelHindi="लिंग" compact={compact}>
+            <p className={cn("font-bold text-slate-900", compact ? "text-[13px]" : "text-[17px]")}>
               {data.gender}
               {data.genderHindi && (
                 <>
@@ -244,26 +246,26 @@ function AbhaCardFront({ data }: { data: AbhaCardData }) {
               )}
             </p>
           </Field>
-          <Field label="Date Of Birth" labelHindi="जन्मतिथि">
-            <p className="text-[17px] font-bold text-slate-900">{data.dob}</p>
+          <Field label="Date Of Birth" labelHindi="जन्मतिथि" compact={compact}>
+            <p className={cn("font-bold text-slate-900", compact ? "text-[13px]" : "text-[17px]")}>{data.dob}</p>
           </Field>
-          <Field label="Mobile" labelHindi="मोबाइल">
-            <p className="text-[17px] font-bold text-slate-900">{data.mobile}</p>
+          <Field label="Mobile" labelHindi="मोबाइल" compact={compact}>
+            <p className={cn("font-bold text-slate-900", compact ? "text-[13px]" : "text-[17px]")}>{data.mobile}</p>
           </Field>
         </div>
 
         {/* Guardian + address */}
         {(data.fathersName || data.address) && (
-          <div className="mt-5 grid grid-cols-3 gap-4 border-t border-slate-100 pt-4">
+          <div className={cn("grid grid-cols-3 border-t border-slate-100", compact ? "mt-4 gap-3 pt-3" : "mt-5 gap-4 pt-4")}>
             {data.fathersName && (
-              <Field label="Father's Name" labelHindi="पिता का नाम">
-                <p className="text-[15px] font-bold text-slate-900">{data.fathersName}</p>
+              <Field label="Father's Name" labelHindi="पिता का नाम" compact={compact}>
+                <p className={cn("font-bold text-slate-900", compact ? "text-[12px]" : "text-[15px]")}>{data.fathersName}</p>
               </Field>
             )}
             {data.address && (
               <div className="col-span-2">
-                <Field label="Address" labelHindi="पता">
-                  <p className="text-[13.5px] font-semibold leading-snug text-slate-800">
+                <Field label="Address" labelHindi="पता" compact={compact}>
+                  <p className={cn("font-semibold leading-snug text-slate-800", compact ? "text-[11.5px]" : "text-[13.5px]")}>
                     {[data.address, data.district, data.state].filter(Boolean).join(", ")}{data.pincode ? ` – ${data.pincode}` : ""}
                   </p>
                 </Field>
@@ -300,22 +302,22 @@ const INSTRUCTIONS: { en: React.ReactNode; hi: string }[] = [
   },
 ]
 
-function AbhaCardBack() {
+function AbhaCardBack({ compact }: { compact?: boolean }) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <CardHeader />
-      <div className="px-6 py-5">
-        <div className="flex items-center justify-between">
-          <p className="text-[15px] font-bold text-slate-900">Instructions</p>
-          <p className="text-[15px] font-bold text-slate-900">Toll-Free Number: 1800 114 477</p>
+      <CardHeader compact={compact} />
+      <div className={compact ? "px-4 py-4" : "px-6 py-5"}>
+        <div className="flex items-center justify-between gap-2">
+          <p className={cn("font-bold text-slate-900", compact ? "text-[12px]" : "text-[15px]")}>Instructions</p>
+          <p className={cn("font-bold text-slate-900", compact ? "text-[11px]" : "text-[15px]")}>Toll-Free: 1800 114 477</p>
         </div>
-        <ul className="mt-4 space-y-3">
+        <ul className={cn(compact ? "mt-3 space-y-2" : "mt-4 space-y-3")}>
           {INSTRUCTIONS.map((item, i) => (
             <li key={i} className="flex gap-2.5">
               <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-900" />
               <div className="space-y-0.5">
-                <p className="text-[12.5px] leading-snug text-slate-800">{item.en}</p>
-                <p className="text-[12.5px] leading-snug text-slate-800" style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
+                <p className={cn("leading-snug text-slate-800", compact ? "text-[11px]" : "text-[12.5px]")}>{item.en}</p>
+                <p className={cn("leading-snug text-slate-800", compact ? "text-[11px]" : "text-[12.5px]")} style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
                   {item.hi}
                 </p>
               </div>
@@ -327,12 +329,12 @@ function AbhaCardBack() {
   )
 }
 
-export function AbhaCard({ data, showBack = true, className }: AbhaCardProps) {
+export function AbhaCard({ data, showBack = true, compact = false, className }: AbhaCardProps) {
   const merged = { ...DEFAULT_DATA, ...data }
   return (
-    <div className={cn("mx-auto w-full max-w-[680px] space-y-5", className)}>
-      <AbhaCardFront data={merged} />
-      {showBack && <AbhaCardBack />}
+    <div className={cn("mx-auto w-full", compact ? "max-w-full space-y-3" : "max-w-[680px] space-y-5", className)}>
+      <AbhaCardFront data={merged} compact={compact} />
+      {showBack && <AbhaCardBack compact={compact} />}
     </div>
   )
 }

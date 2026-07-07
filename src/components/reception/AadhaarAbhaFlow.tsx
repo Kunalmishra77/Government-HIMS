@@ -37,12 +37,14 @@ export interface AadhaarAbhaResult {
 
 interface Props {
   onComplete: (r: AadhaarAbhaResult) => void
+  /** The patient being verified, so the ABHA card shows their name. */
+  patientName?: string
   className?: string
 }
 
 type Stage = "capture" | "otp" | "abha" | "done"
 
-export function AadhaarAbhaFlow({ onComplete, className }: Props) {
+export function AadhaarAbhaFlow({ onComplete, patientName, className }: Props) {
   const audit = useAuditStore((s) => s.log)
   const [stage, setStage] = useState<Stage>("capture")
   const [busy, setBusy] = useState(false)
@@ -276,16 +278,20 @@ export function AadhaarAbhaFlow({ onComplete, className }: Props) {
               </div>
             </div>
 
-            {/* Official ABHA card — same as the walk-in registration flow. */}
+            {/* Full official ABHA card (front + instructions back, nothing
+                skipped), just in compact sizing so it fits the drawer.
+                `nameHindi`/`genderHindi` are explicitly cleared so the
+                component's placeholder defaults never leak onto a real card. */}
             <AbhaCard
-              showBack={false}
-              className="max-w-full"
+              compact
               data={{
-                name: demographics.name,
+                name: patientName ?? demographics.name,
+                nameHindi: undefined,
                 fathersName: demographics.fathersName,
                 abhaNumber: abhaId,
                 abhaAddress: `${abhaId.replace(/\D/g, "")}@abdm`,
                 gender: demographics.gender,
+                genderHindi: undefined,
                 dob: demographics.dob,
                 mobile: demographics.phone,
                 address: demographics.address,

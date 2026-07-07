@@ -294,7 +294,7 @@ export default function OpdQueuePage() {
           </div>
         ) : undefined}
       >
-        {verifyingId && <AadhaarAbhaFlow key={verifyingId} onComplete={handleVerified} />}
+        {verifyingId && <AadhaarAbhaFlow key={verifyingId} patientName={verifyingPatient?.name} onComplete={handleVerified} />}
       </SideDrawer>
     </div>
   )
