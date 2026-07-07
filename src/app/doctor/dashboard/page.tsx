@@ -107,85 +107,69 @@ function PatientProfileHeader({ patient, onOpenHistory }: { patient: Patient; on
   const vitals = patient.vitals ? Object.entries(patient.vitals) : []
 
   return (
-    <div className="hms-card sticky top-0 z-20 p-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        <Avatar name={patient.name} size="lg" className="h-11 w-11 flex-shrink-0" />
+    <div className="hms-card sticky top-0 z-20 p-3">
+      {/* Row 1 — identity + history */}
+      <div className="flex items-center gap-2.5">
+        <Avatar name={patient.name} size="md" className="h-9 w-9 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-base font-bold text-foreground">{patient.name}</h2>
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-success bg-success-bg border border-success/25 rounded-lg px-2 py-0.5">
-              <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />{patient.uhid ?? deriveUhid(patient.id)}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <h2 className="text-sm font-bold text-foreground truncate">{patient.name}</h2>
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success bg-success-bg border border-success/25 rounded-lg px-1.5 py-0.5">
+              <BadgeCheck className="h-3 w-3" aria-hidden="true" />{patient.uhid ?? deriveUhid(patient.id)}
             </span>
-            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-accent-soft text-accent tabular-nums">#{patient.token}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-accent-soft text-accent tabular-nums">#{patient.token}</span>
             {acuity && <NeonBadge variant={acuity.variant}>{acuity.label} triage</NeonBadge>}
           </div>
-          <p className="text-xs font-medium mt-0.5 text-foreground-lighter">
+          <p className="text-[11px] font-medium mt-0.5 text-foreground-lighter truncate">
             {patient.id} · {patient.age}y · {patient.gender} · {patient.phone}
           </p>
         </div>
-        {vitals.length > 0 && (
-          <div className="flex gap-1.5 flex-wrap flex-shrink-0">
-            {vitals.map(([k, v]) => (
-              <div key={k} className="text-center px-2.5 py-1.5 rounded-lg bg-surface-sunken">
-                <p className="t-overline text-foreground-lighter">{k}</p>
-                <p className="text-sm font-bold text-foreground tabular-nums">{v}</p>
-              </div>
+        <button
+          onClick={onOpenHistory}
+          title={historyBrief(patient)}
+          className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer bg-surface-sunken border border-border hover:brightness-[0.98]"
+        >
+          <FileText className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+          <span className="hidden sm:inline text-foreground-muted">History</span>
+          <ArrowRight className="h-3.5 w-3.5 text-foreground-lighter" aria-hidden="true" />
+        </button>
+      </div>
+
+      {/* Row 2 — clinical chips on one horizontal-scroll row (alerts · CC · allergy · vitals · symptoms) */}
+      <div className="mt-2 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {alerts.length > 0 && (
+          <span role="alert" className="shrink-0 inline-flex items-center gap-1 text-[11px] font-bold text-danger-strong bg-danger-bg border border-danger/20 rounded-full px-2 py-0.5">
+            <AlertCircle className="h-3.5 w-3.5 text-danger flex-shrink-0" aria-hidden="true" /> {alerts.join(' · ')}
+          </span>
+        )}
+        <span className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-surface-sunken">
+          <HeartPulse className="h-3.5 w-3.5 text-primary flex-shrink-0" aria-hidden="true" />
+          <span className="t-overline text-foreground-lighter">CC</span>
+          <span className="text-xs font-semibold text-foreground">{chief}</span>
+        </span>
+        <span className={cn(
+          'shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5',
+          hasAllergy ? 'bg-danger-bg' : 'bg-surface-sunken'
+        )}>
+          <ShieldAlert className={cn('h-3.5 w-3.5 flex-shrink-0', hasAllergy ? 'text-danger' : 'text-foreground-lighter')} aria-hidden="true" />
+          <span className="t-overline text-foreground-lighter">Allergy</span>
+          <span className={cn('text-xs font-semibold', hasAllergy ? 'text-danger' : 'text-foreground')}>{allergyText}</span>
+        </span>
+        {vitals.map(([k, v]) => (
+          <span key={k} className="shrink-0 inline-flex items-center gap-1 rounded-lg px-2 py-1 bg-surface-sunken">
+            <span className="t-overline text-foreground-lighter">{k}</span>
+            <span className="text-xs font-bold text-foreground tabular-nums leading-none">{v}</span>
+          </span>
+        ))}
+        {patient.symptoms.length > 0 && (
+          <>
+            <span className="shrink-0 h-4 w-px bg-border mx-0.5" aria-hidden="true" />
+            {patient.symptoms.map((s, i) => (
+              <span key={i} className="shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-urgent-bg text-urgent">{s}</span>
             ))}
-          </div>
+          </>
         )}
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3">
-        <div className="flex items-start gap-2">
-          <HeartPulse className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-primary" aria-hidden="true" />
-          <div className="min-w-0">
-            <p className="t-overline text-foreground-lighter">Chief complaint</p>
-            <p className="text-sm font-semibold text-foreground">{chief}</p>
-          </div>
-        </div>
-        <div className="flex items-start gap-2">
-          <ShieldAlert className={cn('h-3.5 w-3.5 mt-0.5 flex-shrink-0', hasAllergy ? 'text-danger' : 'text-foreground-lighter')} aria-hidden="true" />
-          <div className="min-w-0">
-            <p className="t-overline text-foreground-lighter">Allergies</p>
-            <p className={cn('text-sm font-semibold', hasAllergy ? 'text-danger' : 'text-foreground')}>{allergyText}</p>
-          </div>
-        </div>
-      </div>
-
-      {alerts.length > 0 && (
-        <div className="mt-2.5 flex items-start gap-2 rounded-xl px-3 py-2 bg-danger-bg border border-danger/20" role="alert">
-          <AlertCircle className="h-4 w-4 text-danger flex-shrink-0 mt-0.5" aria-hidden="true" />
-          <div className="min-w-0">
-            <p className="t-overline text-danger">Critical medical alerts</p>
-            <p className="text-sm font-semibold text-danger-strong leading-snug">{alerts.join(' · ')}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Symptoms — inline label + chips, kept tight */}
-      <div className="mt-3 flex items-start gap-2 flex-wrap">
-        <p className="t-overline text-foreground-lighter mt-1.5">Symptoms</p>
-        <div className="flex flex-wrap gap-1.5 flex-1 min-w-0">
-          {patient.symptoms.length > 0 ? patient.symptoms.map((s, i) => (
-            <span key={i} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-urgent-bg text-urgent">{s}</span>
-          )) : <span className="text-sm font-medium italic text-foreground-lighter mt-0.5">No symptoms recorded</span>}
-        </div>
-      </div>
-
-      {/* History — compact preview, opens full history in a drawer */}
-      <button
-        onClick={onOpenHistory}
-        className="mt-2.5 w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left transition cursor-pointer bg-surface-sunken border border-border hover:brightness-[0.98]"
-      >
-        <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 2px 6px rgba(238,107,38,0.25)' }}>
-          <FileText className="h-3.5 w-3.5 text-white" aria-hidden="true" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="t-overline text-foreground-lighter">History</p>
-          <p className="text-sm font-medium text-foreground-muted truncate">{historyBrief(patient)}</p>
-        </div>
-        <ArrowRight className="h-4 w-4 text-foreground-lighter flex-shrink-0" aria-hidden="true" />
-      </button>
     </div>
   )
 }
@@ -1010,7 +994,7 @@ export default function DoctorDashboard() {
             <div className="hms-card p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-primary)', boxShadow: '0 2px 6px rgba(238,107,38,0.25)' }}>
+                  <div className="h-7 w-7 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,var(--color-primary-dark),var(--color-primary))', boxShadow: '0 3px 8px rgba(238,107,38,0.30)' }}>
                     <Activity className="h-3.5 w-3.5 text-white" aria-hidden="true" />
                   </div>
                   <h3 className="text-sm font-bold text-foreground">Consultation Notes</h3>
@@ -1253,44 +1237,49 @@ export default function DoctorDashboard() {
                 </div>
                 <h3 className="text-sm font-bold text-foreground">Clinical Actions</h3>
               </div>
-              <button
-                onClick={completeConsult}
-                className="w-full h-10 px-4 mb-3 rounded-xl font-bold text-[13px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-success/60 focus-visible:ring-offset-2"
-                style={{ background: 'linear-gradient(135deg,var(--color-success),var(--color-success-strong))', boxShadow: '0 4px 12px rgba(22,163,74,0.30)' }}
-              >
-                <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Complete consultation <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </button>
-              <div className="grid grid-cols-2 gap-2.5">
+              {/* Order actions — uniform 2×2 tiles (icon + count top row, label below) */}
+              <div className="grid grid-cols-2 gap-2">
                 {([
-                  { key: 'lab', label: 'Order Lab Tests', icon: FlaskConical, count: labOrders.length },
-                  { key: 'radiology', label: 'Radiology Scan', icon: ScanLine, count: radiologyOrders.length },
-                  { key: 'referral', label: 'Refer Specialist', icon: GitBranch, count: referrals.length },
-                  { key: 'admit', label: 'Admit Patient', icon: Bed, count: admissionOrder?.sent ? 1 : 0 },
+                  { key: 'lab', label: 'Lab Tests', icon: FlaskConical, count: labOrders.length },
+                  { key: 'radiology', label: 'Radiology', icon: ScanLine, count: radiologyOrders.length },
+                  { key: 'referral', label: 'Referral', icon: GitBranch, count: referrals.length },
+                  { key: 'admit', label: 'Admit', icon: Bed, count: admissionOrder?.sent ? 1 : 0 },
                 ] as const).map(({ key, label, icon: Icon, count }) => (
                   <button
                     key={key}
                     onClick={() => setActiveDrawer(key)}
                     className={cn(
-                      "relative flex flex-col items-center justify-center gap-2 px-2 py-3.5 rounded-xl text-[12px] font-bold text-center leading-tight transition active:scale-[0.98] cursor-pointer border focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
+                      "flex flex-col items-start gap-2 p-3 rounded-xl text-[12.5px] font-bold leading-tight transition active:scale-[0.98] cursor-pointer border hover:brightness-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
                       key === 'admit'
-                        ? "col-span-2 flex-row bg-danger-bg text-danger border-danger/20 focus-visible:ring-danger/50"
+                        ? "bg-danger-bg text-danger border-danger/20 focus-visible:ring-danger/50"
                         : "bg-accent-soft text-accent border-accent/15 focus-visible:ring-primary/50"
                     )}
                   >
-                    <Icon className="h-5 w-5" aria-hidden="true" />
+                    <span className="flex items-center justify-between w-full">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                      {count > 0 && (
+                        <span
+                          aria-label={`${count} pending`}
+                          className={cn(
+                            "h-5 min-w-[20px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white tabular-nums",
+                            key === 'admit' ? "bg-danger" : "bg-primary"
+                          )}
+                        >{count}</span>
+                      )}
+                    </span>
                     <span>{label}</span>
-                    {count > 0 && (
-                      <span
-                        aria-label={`${count} pending`}
-                        className={cn(
-                          "absolute top-1.5 right-1.5 h-5 min-w-[20px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white tabular-nums",
-                          key === 'admit' ? "bg-danger" : "bg-primary"
-                        )}
-                      >{count}</span>
-                    )}
                   </button>
                 ))}
               </div>
+
+              {/* Terminal primary CTA — after the order actions, matching the consultation flow */}
+              <button
+                onClick={completeConsult}
+                className="w-full h-11 px-4 mt-3 rounded-xl font-bold text-[13px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-success/60 focus-visible:ring-offset-2"
+                style={{ background: 'linear-gradient(135deg,var(--color-success),var(--color-success-strong))', boxShadow: '0 4px 12px rgba(22,163,74,0.30)' }}
+              >
+                <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Complete consultation <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
 
             {/* Bed Availability */}
