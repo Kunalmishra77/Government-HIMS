@@ -4,10 +4,11 @@
 // OTHER machines. Each order is pushed to the shared `opd_orders` table as its
 // full JSON payload and pulled back verbatim — no per-schema mapping. Every
 // module hydrates + polls this board, so orders (and their status as modules
-// process them) propagate to every device. All three modules run as
-// authenticated staff, so they read/write the board directly (RLS:
-// opd_orders_all_staff).
-import { getSupabaseClient } from '@/lib/supabase/client'
+// process them) propagate to every device. Push/pull go through the service-role
+// /api/opd-order route (NOT a direct client read/write): the demo role-switcher
+// login has no Supabase session and opd_orders RLS requires an authenticated
+// staff session, so a direct browser call returns nothing for demo staff. The
+// route bypasses that so the board works for every login.
 import type { StoreApi } from 'zustand'
 
 export type OrderType = 'lab' | 'radiology' | 'pharmacy'
@@ -21,21 +22,22 @@ const sharedIds = new Set<string>()
 export async function pushOrder(type: OrderType, order: OrderLike): Promise<void> {
   sharedIds.add(order.id)
   try {
-    await getSupabaseClient().from('opd_orders').upsert({
-      id: order.id, order_type: type,
-      patient_id: order.patientId ?? null, patient_name: order.patientName ?? null,
-      status: order.status ?? null, payload: order, updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' })
-  } catch { /* not authed / offline — the local order still stands */ }
+    await fetch('/api/opd-order', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type, order }),
+    })
+  } catch { /* offline — the local order still stands */ }
 }
 
 export async function pullOrders<T extends { id: string }>(type: OrderType): Promise<T[]> {
   try {
-    const { data, error } = await getSupabaseClient().from('opd_orders').select('payload').eq('order_type', type)
-    if (error || !data) return []
-    const out = data.map((r) => r.payload as T)
-    out.forEach((o) => sharedIds.add(o.id))
-    return out
+    const res = await fetch(`/api/opd-order?type=${type}`, { cache: 'no-store' })
+    if (!res.ok) return []
+    const { orders } = (await res.json()) as { orders: T[] }
+    if (!orders?.length) return []
+    orders.forEach((o) => sharedIds.add(o.id))
+    return orders
   } catch { return [] }
 }
 

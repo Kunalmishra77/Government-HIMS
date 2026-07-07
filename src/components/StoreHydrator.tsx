@@ -168,23 +168,30 @@ export function StoreHydrator() {
     // layout), so calling both hydrateReal()s here closes the gap for every
     // current and future consumer, regardless of which page loads first.
     //
-    // Both hydrateReal() implementations already no-op without a live
-    // Supabase session AND are idempotent (they re-check current state at
-    // commit time before appending), so calling them here is safe even
+    // The hydrateReal() implementations are idempotent (they re-check current
+    // state at commit time before appending), so calling them here is safe even
     // though a handful of pages (admission/dashboard, doctor/ipd,
     // doctor/ipd/[id], nurse/dashboard, patient/ipd) also still call
     // hydrateReal() on their own mount for freshness on revisit during a
     // long-lived session — see those files for why that's intentionally
-    // kept, not removed. The session check below is a performance-only
-    // skip (avoids the dynamic `@/lib/api` import + network round trip) for
-    // the many fully public/unauthenticated pages (e.g. /p/[uhid]) that can
-    // never have a live session — it is NOT a security/authorization gate.
+    // kept, not removed. The staff-role check below skips this work on the
+    // patient portal + public pages (e.g. /p/[uhid]) — it is a scoping/
+    // performance gate, NOT a security/authorization gate (the service-role
+    // routes it calls enforce nothing yet — see their FOLLOW-UP notes).
     let pollTimer: ReturnType<typeof setInterval> | null = null
     let orderSyncCleanups: Array<() => void> = []
     void (async () => {
       try {
-        const { data: { session } } = await getSupabaseClient().auth.getSession()
-        if (!session) return
+        // Gate DB hydration on the active STAFF role, not a Supabase session. The
+        // demo role-switcher login (the common path) creates no Supabase session,
+        // so gating on a session skipped the whole shared-queue hydration for
+        // demo staff — which is exactly why the OPD queue never synced across
+        // browsers/machines. Any non-patient role is a department console that
+        // needs the shared queue; the reads themselves go through service-role
+        // routes (/api/opd-queue, /api/opd-order) that work without a session.
+        await useAuthStore.persist.rehydrate()
+        const role = useAuthStore.getState().activeRole
+        if (!role || role === 'patient') return
         await Promise.all([
           usePatientStore.getState().hydrateReal(),
           useAdmissionStore.getState().hydrateReal(),

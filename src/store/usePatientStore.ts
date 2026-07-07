@@ -566,31 +566,16 @@ export const usePatientStore = create<PatientState>()(persist((set, get) => ({
 
   hydrateReal: async () => {
     try {
-      const { Patients, Visits } = await import('@/lib/api')
-      const [dbPatients, dbVisits] = await Promise.all([Patients.list(), Visits.active()])
-      if (!dbVisits.length) return
-      const byId = new Map(dbPatients.map(p => [p.id, p]))
-      const VISIT_TO_QUEUE: Partial<Record<string, QueueStatus>> = {
-        scheduled: 'waiting', waiting: 'waiting', vitals: 'vitals',
-        consulting: 'consulting', pharmacy: 'pharmacy', billing: 'billing',
-      }
-      const today = new Date().toISOString().slice(0, 10)
-      const fromDb: Patient[] = []
-      for (const v of dbVisits) {
-        const dp = byId.get(v.patientId)
-        const qs = VISIT_TO_QUEUE[v.status]
-        if (!dp || !qs) continue
-        fromDb.push({
-          id: dp.id, uhid: dp.uhid, name: dp.fullName, age: dp.age ?? 30,
-          gender: dp.sex === 'Female' ? 'Female' : dp.sex === 'Other' ? 'Other' : 'Male',
-          phone: dp.phone ?? '', bloodGroup: dp.bloodGroup ?? 'A+', token: v.token ?? 0,
-          queueStatus: qs, estimatedWait: v.estimatedWaitMin ?? 0,
-          doctor: v.doctorName ?? 'Dr. Priya Nair', department: v.department ?? 'General Medicine',
-          vitals: null, symptoms: v.symptoms ?? [], history: [],
-          registeredAt: '', registeredDate: today, triageLevel: v.triageLevel ?? 'Low',
-          source: 'appointment', aadhaarVerified: dp.aadhaarVerified, abhaId: dp.abhaId, visitId: v.id,
-        })
-      }
+      // Read the live queue through the service-role /api/opd-queue route instead
+      // of a direct client read. The demo role-switcher login has no Supabase
+      // session, and the visits/patients RLS SELECT policies require a real
+      // authenticated staff session — so a browser read returns nothing for demo
+      // staff and the queue never syncs cross-device. The server route bypasses
+      // that, so it works for every staff login (demo or real).
+      const res = await fetch('/api/opd-queue', { cache: 'no-store' })
+      if (!res.ok) return
+      const { patients: fromDb } = (await res.json()) as { patients: Patient[] }
+      if (!fromDb?.length) return
       set((s) => {
         // Update status/visitId of already-present DB-linked patients, then add
         // any real patients this device hasn't seen (dedup by id).
