@@ -875,15 +875,6 @@ export default function DoctorDashboard() {
     ? `You're marked on leave${leaveUntil ? ` until ${new Date(leaveUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : ''}`
     : 'You are not currently accepting in-person consultations'
 
-  // M4.1 — Shift-gate. If the doctor is Off per HR roster today, show a softer
-  // (info) banner alongside the leave banner.
-  const todayIso = new Date().toISOString().split('T')[0]!
-  const getShiftFromHR = useHRStore(s => s.getShift)
-  const todayShift = useAuthStore.getState().currentUser
-    ? getShiftFromHR(useAuthStore.getState().currentUser!.id, todayIso)
-    : 'Off'
-  const offShiftBanner = !leaveBanner && todayShift === 'Off'
-
   return (
     <div className="flex flex-col lg:h-full lg:min-h-0 gap-4 px-1 py-1">
 
@@ -893,16 +884,6 @@ export default function DoctorDashboard() {
           <AlertCircle className="h-4 w-4 text-brand-amber-strong flex-shrink-0 mt-0.5" aria-hidden="true" />
           <p className="text-[13px] text-foreground leading-relaxed flex-1 min-w-0">
             <b>{leaveLabel}.</b> Starting a consultation will prompt for confirmation. Update this in <b>Settings</b>.
-          </p>
-        </div>
-      )}
-
-      {/* M4.1 — Off-shift soft banner (HR roster check) */}
-      {offShiftBanner && (
-        <div className="absolute top-0 left-0 right-0 z-30 mx-4 mt-2 rounded-xl bg-primary-soft border border-accent/20 px-4 py-2.5 flex items-start gap-2.5 shadow-sm" role="status">
-          <AlertCircle className="h-4 w-4 text-accent flex-shrink-0 mt-0.5" aria-hidden="true" />
-          <p className="text-[13px] text-accent leading-relaxed flex-1 min-w-0">
-            <b>You&apos;re scheduled Off today per the roster.</b> You can still start a consultation if needed; it&apos;ll be logged with that context.
           </p>
         </div>
       )}
