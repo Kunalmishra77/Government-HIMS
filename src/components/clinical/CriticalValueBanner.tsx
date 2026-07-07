@@ -19,7 +19,7 @@
  */
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ShieldAlert, Phone, Check, FlaskConical, X, ChevronDown, Clock } from "lucide-react"
+import { ShieldAlert, Check, FlaskConical } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuditStore } from "@/store/useAuditStore"
 
@@ -98,8 +98,11 @@ export function CriticalValueBanner({ role = 'both', className }: Props) {
   // layout stable; client-mount swaps in real banners.
   if (!mounted) return <div className={cn("space-y-2", className)} role="alert" aria-live="assertive" suppressHydrationWarning />
 
+  // Compact pill form — keeps the closed-loop acknowledge action but takes
+  // minimal vertical space so the clinical workspace stays roomy. Full context
+  // (patient · value · source) is on hover (title) and one tap away in Trail.
   return (
-    <div className={cn("space-y-2", className)} role="alert" aria-live="assertive" suppressHydrationWarning>
+    <div className={cn("flex flex-wrap items-center gap-2", className)} role="alert" aria-live="assertive" suppressHydrationWarning>
       {open.map((e) => {
         // Soft blocker — 2 min from the event time (mock).
         const eventTs = new Date(e.timestamp).getTime()
@@ -107,48 +110,32 @@ export function CriticalValueBanner({ role = 'both', className }: Props) {
         return (
           <div
             key={e.id}
-            className="rounded-2xl ring-2 ring-rose-300/80 bg-rose-50/90 px-4 py-3 flex items-start gap-3 shadow-sm"
+            title={e.detail ?? `Critical result on ${e.resourceId}`}
+            className="inline-flex items-center gap-1.5 rounded-full ring-1 ring-rose-300 bg-rose-50 py-0.5 pl-2 pr-1 shadow-sm"
           >
-            <ShieldAlert className="h-5 w-5 text-rose-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-[14px] font-bold text-rose-900">Critical lab value</p>
-                <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-white ring-1 ring-rose-200 text-rose-700">
-                  needs acknowledgement
-                </span>
-                {soft > 0 ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-mono text-rose-700">
-                    <Clock className="h-3 w-3" /> soft-block {Math.floor(soft / 60)}:{String(soft % 60).padStart(2, '0')}
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-mono text-rose-700">blocker cleared</span>
-                )}
-              </div>
-              <p className="text-[12.5px] text-rose-800 mt-1.5 leading-snug">
-                {e.detail ?? `Critical result on ${e.resourceId}`}
-              </p>
-              <p className="text-[10.5px] text-rose-600 mt-0.5">
-                Source: {e.resource} {e.resourceId ? `· ${e.resourceId}` : ''}
-                · audited {mounted ? new Date(e.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : '—'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => router.push('/audit/log')}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold bg-white hover:bg-rose-50 text-rose-700 ring-1 ring-rose-200"
-                title="Open audit trail"
-              >
-                <FlaskConical className="h-3 w-3" /> Trail
-              </button>
-              <button
-                type="button"
-                onClick={() => doAck(e.id)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-semibold bg-rose-600 hover:bg-rose-700 text-white"
-              >
-                <Check className="h-3 w-3" /> Acknowledge ({role})
-              </button>
-            </div>
+            <ShieldAlert className="h-3.5 w-3.5 text-rose-600 flex-shrink-0" />
+            <span className="text-[11px] font-semibold text-rose-800 whitespace-nowrap">Critical lab value</span>
+            {soft > 0 && (
+              <span className="hidden sm:inline text-[10px] font-mono text-rose-500 whitespace-nowrap">
+                {Math.floor(soft / 60)}:{String(soft % 60).padStart(2, '0')}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => router.push('/audit/log')}
+              title="Open audit trail"
+              aria-label="Open audit trail"
+              className="inline-flex items-center justify-center h-5 w-5 rounded-full text-rose-600 hover:bg-rose-100"
+            >
+              <FlaskConical className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => doAck(e.id)}
+              className="inline-flex items-center gap-1 h-5 pl-1.5 pr-2 rounded-full text-[10.5px] font-semibold bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              <Check className="h-3 w-3" /> Ack
+            </button>
           </div>
         )
       })}

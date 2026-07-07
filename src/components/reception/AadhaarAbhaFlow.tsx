@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useAuditStore } from "@/store/useAuditStore"
 import { usePatientStore } from "@/store/usePatientStore"
+import { AbhaCard } from "@/components/abha/AbhaCard"
 import { generateUhid, findUhidByAbha } from "@/lib/intake/register"
 import {
   extractAadhaarFromQr, parseAadhaarUpload, sendAadhaarOtp, verifyAadhaarOtp,
@@ -263,15 +264,37 @@ export function AadhaarAbhaFlow({ onComplete, className }: Props) {
 
         {/* Stage 4 — done */}
         {stage === "done" && demographics && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-center space-y-1.5">
-            <div className="mx-auto h-10 w-10 rounded-full bg-emerald-500 flex items-center justify-center">
-              <Check className="h-5 w-5 text-white" />
+          <div className="space-y-3">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-center space-y-1.5">
+              <div className="mx-auto h-10 w-10 rounded-full bg-emerald-500 flex items-center justify-center">
+                <Check className="h-5 w-5 text-white" />
+              </div>
+              <p className="text-[13px] font-bold text-emerald-800">Hospital identity established</p>
+              <div className="text-[12px] text-slate-600 space-y-0.5">
+                <p>UHID <b className="font-mono">{uhid}</b></p>
+                <p>ABHA <b className="font-mono">{abhaId}</b> {abhaExisting ? "(retrieved)" : "(new)"}</p>
+              </div>
             </div>
-            <p className="text-[13px] font-bold text-emerald-800">Hospital identity established</p>
-            <div className="text-[12px] text-slate-600 space-y-0.5">
-              <p>UHID <b className="font-mono">{uhid}</b></p>
-              <p>ABHA <b className="font-mono">{abhaId}</b> {abhaExisting ? "(retrieved)" : "(new)"}</p>
-            </div>
+
+            {/* Official ABHA card — same as the walk-in registration flow. */}
+            <AbhaCard
+              showBack={false}
+              className="max-w-full"
+              data={{
+                name: demographics.name,
+                fathersName: demographics.fathersName,
+                abhaNumber: abhaId,
+                abhaAddress: `${abhaId.replace(/\D/g, "")}@abdm`,
+                gender: demographics.gender,
+                dob: demographics.dob,
+                mobile: demographics.phone,
+                address: demographics.address,
+                district: demographics.district,
+                state: demographics.state,
+                pincode: demographics.pincode,
+                aadhaarVerified: true,
+              }}
+            />
           </div>
         )}
       </div>

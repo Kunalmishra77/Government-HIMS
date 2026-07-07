@@ -9,7 +9,7 @@ import { usePatientStore } from "@/store/usePatientStore"
 import { registerPatientFromIntake } from "@/lib/intake/register"
 import { NeonBadge } from "@/components/ui/neon-badge"
 import {
-  initialForm, visibleSteps, canContinue, triageScore, suggestDepartments,
+  initialForm, visibleSteps, canContinue, triageScore,
   SYMPTOMS, type IntakeForm, type StepId,
 } from "@/lib/intake/data"
 import { IntakeShell } from "./IntakeShell"
@@ -182,7 +182,9 @@ export function IntakeFlow() {
               <NeonBadge variant={triage.variant} dot pulse className="px-3 py-1">{t(`triage.${triage.level}`)}</NeonBadge>
             </div>
           ) : null
-          return <ChoiceStep fill columns={2} compact options={SYMPTOMS.map(s => ({ value: s, label: t(`symptom.${s}`) }))} value={form.symptoms} onChange={v => update({ symptoms: v, departments: suggestDepartments(v) })} multi otherEnabled otherPlaceholder={t('symptomsUi.otherPlaceholder')} footer={aiBar} />
+          // Symptoms drive the AI *recommendations* shown on the Department step,
+          // but must NOT pre-select any department — the patient taps to choose.
+          return <ChoiceStep fill columns={2} compact options={SYMPTOMS.map(s => ({ value: s, label: t(`symptom.${s}`) }))} value={form.symptoms} onChange={v => update({ symptoms: v })} multi otherEnabled otherPlaceholder={t('symptomsUi.otherPlaceholder')} footer={aiBar} />
         }
         case 'symptomDuration': return <DurationStep symptoms={form.symptoms} durations={form.symptomDurations} onChange={d => update({ symptomDurations: d })} />
         case 'department': return <DepartmentStep form={form} update={update} />
