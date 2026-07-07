@@ -816,9 +816,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* M4-W1 — Closed-loop critical-value banner. Visible only when
               an unack'd lab_critical_callback exists, and only on the
               roles that own the loop (doctor, nurse). */}
-          {(activeRole === 'doctor' || activeRole === 'nurse') ? (
+          {activeRole === 'nurse' ? (
             <div className="max-w-7xl mx-auto mb-3">
-              <CriticalValueBanner role={activeRole === 'doctor' ? 'doctor' : 'nurse'} />
+              <CriticalValueBanner role="nurse" />
             </div>
           ) : null}
 
