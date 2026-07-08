@@ -11,8 +11,15 @@ import {
   Building2,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { type Role } from "@/store/useAuthStore"
+import { useAuthStore, type Role } from "@/store/useAuthStore"
 import { cn } from "@/lib/utils"
+
+// Modules with a real Supabase-backed integration (RLS, cross-device DB) — these
+// require a genuine sign-in. Every other portal is a front-end demo/mock, so it
+// opens straight away in demo mode (no login prompt) via the local demo role.
+const BACKEND_ROLES: Role[] = [
+  'doctor', 'nurse', 'pharmacy', 'lab', 'radiology', 'reception', 'admin', 'bed_manager',
+]
 
 type RoleCard = { role: Role; label: string; desc: string; icon: React.ElementType; href: string }
 
@@ -72,8 +79,15 @@ export function PortalLauncher() {
   const [loadingHref, setLoadingHref]   = React.useState<string | null>(null)
   const [activeTab, setActiveTab] = React.useState("clinical")
 
-  const handleLogin = (_role: Role, _href: string) => {
-    router.push("/login")
+  const handleLaunch = (role: Role, href: string) => {
+    // Backend-integrated modules need a real sign-in (RLS + shared DB). The rest
+    // are demo-only, so open them directly under the local demo role — no login.
+    if (BACKEND_ROLES.includes(role)) {
+      router.push("/login")
+      return
+    }
+    useAuthStore.getState().setRole(role)
+    router.push(href)
   }
   const activeGroup = allRoleGroups.find(g => g.id === activeTab) ?? allRoleGroups[0]
   const totalRoles = allRoleGroups.reduce((n, g) => n + g.roles.length, 0)
@@ -115,7 +129,7 @@ export function PortalLauncher() {
               const isSelected = selectedHref === href
               const isLoading  = loadingHref  === href
               return (
-                <button key={href} onClick={() => handleLogin(role, href)} disabled={!!loadingHref}
+                <button key={href} onClick={() => handleLaunch(role, href)} disabled={!!loadingHref}
                   className={cn("group flex items-start gap-3 p-4 rounded-2xl text-left cursor-pointer w-full bg-white border transition-all duration-200",
                     isSelected ? "border-[var(--color-primary)] shadow-[0_0_0_1px_var(--color-primary),0_8px_24px_rgba(238,107,38,0.12)]"
                       : "border-[#EAECF2] hover:border-[#D0D5DD] hover:shadow-[0_6px_18px_rgba(16,24,40,0.08)] hover:-translate-y-0.5",
